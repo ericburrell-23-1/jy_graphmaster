@@ -1,0 +1,30 @@
+NAME : B-n31-k5
+COMMENT : (Augerat et al, No of trucks: 5, Optimal value: )
+TYPE : CVRP
+DIMENSION : 8
+EDGE_WEIGHT_TYPE : EUC_2D 
+CAPACITY : 4
+NODE_COORD_SECTION 
+ 1 0 0
+ 2 999 1000
+ 3 1000 999
+ 4 1000 1000
+ 5 999 999
+ 6 998 999
+ 7 999 998
+ 8 998 998
+
+DEMAND_SECTION 
+1 0 
+2 1 
+3 1 
+4 1 
+5 1 
+6 1 
+7 1 
+8 1 
+
+DEPOT_SECTION 
+ 1  
+ -1  
+EOF 
