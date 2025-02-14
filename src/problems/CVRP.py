@@ -1,4 +1,4 @@
-
+from collections import ChainMap
 from src.problems.optimization_problem import OptimizationProblem
 from src.common.state import State
 from src.common.action import Action
@@ -95,10 +95,38 @@ class CVRP(OptimizationProblem):
         for node in self.demands.keys():
             self.nodes.append(node)
 
+        #Make default dictionary for actions
+        number_of_resources=num_customers + 1
+        self.default_min_resource_vector=np.array([])
+        self.default_max_resource_vector=np.array([])
+        self.default_resource_consumption_vector=np.array([])
+        self.default_min_resource_dict = {}
+        self.default_max_resource_dict = {}
+        self.default_resource_consumption_dict = {}
+        self.default_min_resource_dict["cap_remain"]=0
+        self.default_max_resource_dict["cap_remain"]=self.capacity
+        self.default_resource_consumption_dict["cap_remain"]=0
+        self.default_min_resource_vector=np.zeros(number_of_resources)
+        self.default_max_resource_vector=np.ones(number_of_resources)
+        self.default_max_resource_vector[self.resource_name_to_index["cap_remain"]]=self.capacity
+        #put in 
+        self.default_resource_consumption_vec=np.zeros(number_of_resources)
+        for u in self.nodes:
+            self.default_min_resource_dict[f'can_visit: {u}'] = 0
+            self.default_max_resource_dict[f'can_visit: {u}'] = 1
+            self.default_resource_consumption_dict[f'can_visit: {u}'] = 0
+        
+        self.default_exog_name_to_coeff_dict = {}
+        for node in self.nodes():
+             self.default_exog_name_to_coeff_dict[("Cover", node)] = 0
+
+        idx = 0
         for origin_node in self.nodes:
             if origin_node > 0:
                 # DEFINE COVERAGE CONSTRAINT RHS
-                self.constraint_name_to_index[("Cover", origin_node)] = idx
+                self.constraint_name_to_index[str("Cover", origin_node)] = idx
+                self.rhs_constraint_name_to_index[str("Cover", origin_node)] = idx
+                self.rhs_index_to_constraint_name[idx]=str("Cover", origin_node)
                 idx += 1
 
             for destination_node in self.nodes:
@@ -109,40 +137,63 @@ class CVRP(OptimizationProblem):
                 cost = self._distance(origin_node, destination_node)
                 contribution_vector = zeros(num_customers)
                 if origin_node > 0:
-                    contribution_vector[self.constraint_name_to_index[("Cover", origin_node)]] = 1
-                min_resource_vector = {"cap_remain": self.demands[origin_node] + self.demands[destination_node]}
-                resource_consumption_vector = {"cap_remain": -self.demands[origin_node]}
-                max_resource_vector = {"cap_remain": float('inf')}
-                if origin_node == -1:
-                    for u in self.nodes:
-                        if u not in (-1,-2):
-                            min_resource_vector[f'can_visit: {u}'] = 0
-                            resource_consumption_vector[f'can_visit: {u}']=0
-                            max_resource_vector[f'can_visit: {u}']=1
-                if destination_node == -2:
-                    for u in self.nodes:
-                        if u not in (-1,-2):
-                            if u == origin_node:
-                                resource_consumption_vector[f'can_visit: {u}']=-1
-                            else:
-                                resource_consumption_vector[f'can_visit: {u}']=0
-                            min_resource_vector[f'can_visit: {u}'] = 0
-                            max_resource_vector[f'can_visit: {u}']=1
-                else:
-                    for u in self.nodes:
-                        if u not in (-1,-2):
-                            if u == destination_node:
-                                min_resource_vector[f'can_visit: {u}'] = 1
-                            else:
-                                min_resource_vector[f'can_visit: {u}'] = 0
-                            if u == origin_node:
-                                resource_consumption_vector[f'can_visit: {u}'] = -1
-                            else:
-                                resource_consumption_vector[f'can_visit: {u}'] = 0
-                            max_resource_vector[f'can_visit: {u}'] = 1
-                action = Action(origin_node, destination_node, cost, contribution_vector, min_resource_vector, resource_consumption_vector, max_resource_vector)
+                    contribution_vector[self.constraint_name_to_index[str("Cover", origin_node)]] = 1
+                partial_min_resource_dict = {"cap_remain": self.demands[origin_node] + self.demands[destination_node]}
+                partial_max_resource_dict = {"cap_remain": self.capacity}
+                partial_resource_consumption_dict = {"cap_remain": -self.demands[origin_node]}
+                
+                if origin_node != -1:
+                    partial_resource_consumption_dict = {[f'can_visit: {origin_node}']: -1}
+                if destination_node!=-2:
+                    partial_min_resource_dict = {[f'can_visit: {destination_node}']: 1}
+
+                min_resource_dict = ChainMap(partial_min_resource_dict, self.default_min_resource_dict)
+                max_resource_dict = ChainMap(partial_max_resource_dict, self.default_max_resource_dict)
+                resource_consumption_dict = ChainMap(partial_resource_consumption_dict, self.default_resource_consumption_dict)
+                action = Action(origin_node, destination_node, cost, contribution_vector, min_resource_dict, resource_consumption_dict, max_resource_dict)
 
                 self.actions[origin_node, destination_node] = [action]
+                #start delete
+                
+                #if origin_node == -1:
+                #    for u in self.nodes:
+                #        if u not in (-1,-2):
+                #            min_resource_vector[f'can_visit: {u}'] = 0
+                #            resource_consumption_vector[f'can_visit: {u}']=0
+                #            max_resource_vector[f'can_visit: {u}']=1
+                
+                #if destination_node == -2:
+                    #new version
+                    #partial_min_resource_dict[f'can_visit: {destination_node}'] = 1
+                    #old version
+                    #for u in self.nodes:
+                    #    if u not in (-1,-2):
+                    #        if u == origin_node:
+                    #            resource_consumption_vector[f'can_visit: {u}']=-1
+                    #        else:
+                    #            resource_consumption_vector[f'can_visit: {u}']=0
+                    #        min_resource_vector[f'can_visit: {u}'] = 0
+                    #        max_resource_vector[f'can_visit: {u}']=1
+                #else:
+                    
+                #    partial_resource_consumption_dict[f'can_visit: {origin_node}'] = -1
+                    
+                    #old version
+                #    for u in self.nodes:
+                #        if u not in (-1,-2):
+                #            if u == destination_node:
+                #                min_resource_vector[f'can_visit: {u}'] = 1
+                #            else:
+                #                min_resource_vector[f'can_visit: {u}'] = 0
+                #            if u == origin_node:
+                #                resource_consumption_vector[f'can_visit: {u}'] = -1
+                #            else:
+                #                resource_consumption_vector[f'can_visit: {u}'] = 0
+                #            max_resource_vector[f'can_visit: {u}'] = 1
+                #end delete
+                #action = Action(origin_node, destination_node, cost, contribution_vector, min_resource_vector, resource_consumption_vector, max_resource_vector)
+
+                #self.actions[origin_node, destination_node] = [action]
 
 
     def _create_initial_res_actions(self):

@@ -13,7 +13,13 @@ class OptimizationProblem(ABC):
         self.file_type: str = file_type
         self.nodes: List[int] = []
         self.rhs_vector: ndarray = array([])
-        self.initial_resource_state: Dict[str, int] = {}
+        self.rhs_dict: Dict[str, float] = {}
+        self.rhs_constraint_name_to_index: Dict[str, int] = {}
+        self.rhs_index_to_constraint_name: Dict[int, str] = {}
+        self.initial_resource_vector: ndarray = array([])
+        self.initial_resource_dict: Dict[str, int] = {}
+        self.resource_name_to_index: Dict[str, int] = {}
+        self.resource_index_to_name: Dict[int, str] = {}
         self.actions: Dict[Tuple[int, int], Action] = {}
         self.initial_res_states: Set[State] = set()
         self.initial_res_actions: Set[Action] = set()
