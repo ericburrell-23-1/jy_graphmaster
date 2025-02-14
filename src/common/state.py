@@ -1,12 +1,14 @@
 from random import randint
 from typing import List
 class State:
-    def __init__(self, node:int, resource_vector, successor_states, predecessor_states):
+    def __init__(self, node:int, resource_vector, successor_states, predecessor_states, column_index: int = None):
         self.state_id = randint(10**3,10**9)
         self.node = node
         self.resources = resource_vector
+        # Please justify why these next two properties exist
         self.successor_states : List[State] = successor_states
         self.predecessor_states : List[State] = predecessor_states
+        self.column_index = column_index
 
     def __eq__(self, other: 'State') -> bool:
         """
