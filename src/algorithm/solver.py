@@ -49,17 +49,7 @@ class GraphMaster:
         self.current_solution = None
         self.rhs_exog_vec = rhs_exog_vec
         self.initial_resource_state = initial_resource_state
-        # self.pricer = PricingProblem(
-        #     self.actions,
-        #     self.initial_resource_state,
-        #     self.nodes,
-        # )
-
-        self.res_states: Set[State] = initial_res_states
-        self.res_states: Set[Action] = initial_res_actions
         self.state_update_function = state_update_module
-        #self.multi_graph: Optional[MultiStateGraph] = None
-        self.restricted_master_problem = None   
         self.multi_graph = Full_Multi_Graph_Object_given_l(initial_res_states,initial_res_actions,{})
         self.multi_graph.compute_dom_states_by_node()
         self.multi_graph.compute_actions_ub()
@@ -75,17 +65,9 @@ class GraphMaster:
         incombentLP = -np.inf
         while iteration < max_iterations:
             primal_sol,dual_exog,cur_lp = self.pgm_solver.call_PGM()
-            # print("Solving the pricing problem!")
             if cur_lp < incombentLP-1:
                 self.pgm_solver.apply_compression_operator()
-            # Corrected print statement
             shortest_path, shortest_path_length, ordered_path_rows = self.multi_graph.construct_specific_pricing_pgm(dual_exog)
-            #for s1 in states:
-                # print(
-                #     f"  From state: Node={s1.node}, Resources={s1.resources}")
-            # dict_actions = self.convert_actions_to_dict(actions)
-            # print(f"actions_in_path = {dict_actions}")
-            # print(f"states= {states}")
             if shortest_path_length >= -1e-6:
                 return {
                     'status': 'optimal',
