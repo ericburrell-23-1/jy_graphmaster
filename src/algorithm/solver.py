@@ -62,7 +62,7 @@ class GraphMaster:
             raise ValueError("Must add initial paths before solving")
 
         iteration = 1
-        incombentLP = -np.inf
+        incombentLP = np.inf
         while iteration < max_iterations:
             primal_sol,dual_exog,cur_lp = self.pgm_solver.call_PGM()
             if cur_lp < incombentLP-1:
