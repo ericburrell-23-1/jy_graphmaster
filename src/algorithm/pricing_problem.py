@@ -116,6 +116,8 @@ class PricingProblem:
 
         return list_of_nodes, list_of_actions, total_cost
 
+
+
     @staticmethod
     def _get_nodes_and_actions_from_path(path: list, graph: nx.DiGraph):
         """Returns `list_of_nodes` and `list_of_actions` found in `path`."""
@@ -135,18 +137,6 @@ class PricingProblem:
         list_of_nodes.append(-2)
 
         return list_of_nodes, list_of_actions
-
-
-
-
-
-
-
-
-
-
-
-
 
 class ResourceExtensionCallback(REFCallback):
     """This is what is used to define REF. I had a lot of trouble getting this to work as intended."""

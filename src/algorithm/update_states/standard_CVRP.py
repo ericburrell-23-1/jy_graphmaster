@@ -3,7 +3,7 @@ from typing import List
 from src.common.action import Action
 from src.common.state import State
 from src.algorithm.update_states.state_update_function import StateUpdateFunction
-
+from numpy import zeros, ones
 
 class CVRP_state_update_function(StateUpdateFunction):
     """This module is very important!!! It tells us how we will update `res_states` after pricing!!!
@@ -11,19 +11,21 @@ class CVRP_state_update_function(StateUpdateFunction):
     This is definitely not complete. Just has some code to give an idea of how it will look when it is done. Needs to be fixed. Might need additional inputs.
     
     Keep in mind this module looks different for every problem type. This is just for CVRP!"""
-    def __init__(self, coordinates, demands):
-        super().__init__()
+    def __init__(self, list_of_nodes, list_of_actions):
+        super().__init__(list_of_nodes,list_of_actions)
         pass
 
-    def get_new_states(list_of_actions):
-        return super().get_new_states()
-        
+    def get_new_states(self):
+        this_beta = self._generate_beta_term(self.list_of_nodes)
+        new_states, null_action = self._generate_state_based_on_beta(this_beta)
+        states_in_path = self.get_states_from_action_list(self.list_of_actions)
+        return new_states, null_action, states_in_path
     
     def _generate_beta_term(self, list_of_customer):
-        idx_of_customer = {u: -1 for u in self.nodes if u not in {-1,-2}}
+        idx_of_customer = {u: -1 for u in self.list_of_nodes if u not in {-1,-2}}
         for idx in range(len(list_of_customer)):
             idx_of_customer[list_of_customer[idx]] = idx
-        customer_not_in_route = list(set(self.nodes)-set(list_of_customer)-{-1,-2})
+        customer_not_in_route = list(set(self.list_of_nodes)-set(list_of_customer)-{-1,-2})
         for customer in customer_not_in_route:
             for customer2 in self.sorted_neighbors[customer]:
                 if customer2 in list_of_customer:
@@ -38,11 +40,13 @@ class CVRP_state_update_function(StateUpdateFunction):
         """This needs to be reviewed but basically this is the function that should be called in `get_new_states`."""
         myState = []
         dem_list = []
+        null_action = []
+        node_to_states = {node:[] for node in self.list_of_nodes}
         for idx in range(len(beta)):
             customer = beta[idx]
             myCanVisit = {
                 f'can_visit: {u}': 0 if beta.index(u) < beta.index(customer) else 1
-                for u in self.nodes if u not in {-1, -2}
+                for u in self.list_of_nodes if u not in {-1, -2}
             }
             if idx>0:
                 dem_list.append(self.problem_data['demands'][beta[idx-1]])
@@ -52,20 +56,45 @@ class CVRP_state_update_function(StateUpdateFunction):
             for d in poss_demand_used:
                 resource_vector = myCanVisit.copy()
                 resource_vector['cap_remain'] = self.problem_data['capacity']-d
-                this_state = State(customer, resource_vector, [], [])
+                this_state = State(customer,resource_vector,self.l_id,False,False)
                 myState.append(this_state)
-
+                node_to_states[customer].append(this_state)
         source_state_resource_vector = {
-            f'can_visit: {u}': 1 for u in self.nodes if u not in {-1, -2}}
+            f'can_visit: {u}': 1 for u in self.list_of_nodes if u not in {-1, -2}}
         source_state_resource_vector['cap_remain'] = self.problem_data['capacity']
-        source_state = State(-1, source_state_resource_vector, [], [])
+        source_state = State(-1, source_state_resource_vector, self.l_id,True,False)
         sink_state_resource_vector = {
-            f'can_visit: {u}': 0 for u in self.nodes if u not in {-1, -2}}
+            f'can_visit: {u}': 0 for u in self.list_of_nodes if u not in {-1, -2}}
         sink_state_resource_vector['cap_remain'] = 0
-        sink_state = State(-2, sink_state_resource_vector, [], [])
+        sink_state = State(-2, sink_state_resource_vector, self.l_id,False,True)
         myState.append(source_state)
         myState.append(sink_state)
-        return set(myState)
+
+        """calculate null actions"""
+        default_trans_min_input = {}
+        default_trans_term_add = {}
+        default_trans_term_min = {}
+        for u in self.nodes:
+            default_trans_min_input[f'can_visit: {u}'] = 0
+            default_trans_term_add[f'can_visit: {u}'] = 1
+            default_trans_term_min[f'can_visit: {u}'] = 0
+        
+        for node in node_to_states:
+            list_of_states = node_to_states[node]
+            for state1 in list_of_states:
+                for state2 in list_of_states:
+                    if state1 != state2 and state1.state_vec['cap_remain'] > state2.state_vec['cap_remain']:
+                        contribution_vector = zeros(len(self.nodes))
+                        contribution_vector[node]=1
+                        trans_min_input = default_trans_min_input
+                        trans_term_add = default_trans_term_add
+                        trans_term_min = default_trans_term_min
+                        node_tail = node
+                        node_head = node
+                        cost = 0
+                        this_null_action = Action(trans_min_input,trans_term_add,trans_term_min,node_tail,node_head,contribution_vector,cost)
+                        null_action.append(this_null_action)
+        return myState, null_action
 
     def get_states_from_action_list(self, action_list: List[Action]):
         """
@@ -88,4 +117,17 @@ class CVRP_state_update_function(StateUpdateFunction):
             current_resources = new_resource_vector.copy()
             pred_state = new_state
         return states_list
-    
+    def get_unique_value_from_list(self,cus_lst, m):
+        possible_sums = {0}  # Start with an empty subset sum
+        dem_list = []
+        
+        for num in cus_lst:
+            new_sums = set()
+            for current_sum in possible_sums:
+                new_sum = current_sum + num
+                if new_sum <= m:
+                    new_sums.add(new_sum)
+            possible_sums.update(new_sums)
+        
+        possible_sums.discard(0)  # Remove the initial empty sum if not needed
+        return sorted(possible_sums)  # Return sorted results if needed

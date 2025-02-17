@@ -1,16 +1,49 @@
 from collections import defaultdict
 import networkx as nx
 from itertools import permutations
+from helper import Helper
+import numpy as np
+from common.action import Action
+class Full_Multi_Graph_Object_given_l:
 
-class Full_Multi_Graph_Object_given_l:    
-    def __init__(self,l_id,resStates_by_node,all_actions,dom_actions_pairs):
-        self.l_id=l_id#provides the id for hte l\in Omega_R generating this.  All nodes shoudl have the same id (even if we treate all nodes as being part of the same graph we can use this )
-        self.resStates_by_node=resStates_by_node #dictionary that taks in the node and returns all states assocaited with that node in ResStates
-        self.all_actions=all_actions #set that holds all actions that are possible.  Includes the Null action
-        self.dom_actions_pairs=dom_actions_pairs #dictionary that for each action has the dominating actions#set that contains  a pair of actions a_1,a_2 if a1 dominates a2
+    #Computed once multi-graph which is generated once 
+    def __init__(self, l_id, res_states, all_actions, dom_actions_pairs, size_rhs, size_res_vec):
+        """Initializes the object with states, actions, and null action setup."""
+        self.l_id = l_id  # ID for the l ∈ Ω_R generating this
+        self.res_states = res_states  # Dictionary of all states
+        self.all_actions = all_actions  # Set of all possible actions (excluding null action)
+        self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
+ 
+        self.nullAction = self.make_null_action(size_rhs, size_res_vec)  # Create and assign null action
+ 
+        # Initialize dictionary grouping states by node
+        self.resStates_by_node = defaultdict(list)
+        for s in res_states:
+            self.resStates_by_node[s.node].append(s)  # Append the actual state object
+ 
+        # Optimized check for source and sink nodes
+        node_states = self.resStates_by_node  # Store dictionary lookup once
+        source_count = len(node_states.get('sourceNode', []))
+        sink_count = len(node_states.get('sinkNode', []))
+ 
+        if source_count != 1 or sink_count != 1:
+            raise ValueError(
+                f"Graph {l_id} must have exactly one source and one sink, "
+                f"but found {source_count} source(s) and {sink_count} sink(s)."
+            )
+        
     
-    def initialize_system(self):
+    def make_state_id_to_state(self):
+        """Creates a mapping from state ID to state object."""
+        
+        self.state_id_to_state = {
+            my_state.id: my_state
+            for node in self.resStates_by_node
+            for my_state in self.resStates_by_node[node]
+        }
 
+    def initialize_system(self):
+        self.make_state_id_to_state()
         self.compute_actions_ub()
         self.compute_dom_states_by_node()
         self.PGM_sub_compute_min_dominating_states_by_node()
@@ -40,7 +73,7 @@ class Full_Multi_Graph_Object_given_l:
                 head_ideal = a1.get_head_state(self, state_tail)
                 
                 for state_head in self.resStates_by_node[node_head]:
-                    if head_ideal.this_state_dominates_input_state(state_head):
+                    if head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
                         key = (state_tail, state_head)
 
                         # Store results efficiently
@@ -72,7 +105,7 @@ class Full_Multi_Graph_Object_given_l:
             #MENAING  s1>s2 adn s2>s
         self.state_min_dom_dict=dict() #Create a dictionary
         for s in self.state_2_is_dom_states_dict: #itterate over all states
-            do_remove={**self.state_2_is_dom_states_dict,**self.state_2_is_dom_states_dict[s]}
+            do_remove=Helper.union_of_sets(self.state_2_is_dom_states_dict,self.state_2_is_dom_states_dict[s]) #compute states to remove
             self.state_min_dom_dict[s]=self.state_2_is_dom_states_dict[s]-do_remove#create object to store states
 
     def PGM_sub_compute_maximum_dominated_states_by_node(self):
@@ -85,11 +118,14 @@ class Full_Multi_Graph_Object_given_l:
         self.state_max_dom_dict=dict()#Crate place to store maximally dominated stats 
         
         for s in self.state_2_dom_states_dict: #iterate over all states s
-            do_remove={**self.state_2_dom_states_dict,**self.state_2_dom_states_dict[s]}
+            do_remove=Helper.union_of_sets(self.state_2_dom_states_dict,self.state_2_dom_states_dict[s]) #compute states to remove
             self.state_max_dom_dict[s]=self.state_2_dom_states_dict[s]-do_remove#create object to store states
 
     
     def PGM_clean_states_EZ(self):
+        #go through all of the states and make srue that only symetrically non-dominated actions are included
+        #see the rmp version for details
+        
         self.actions_s1_s2_non_dom=defaultdict(set([]))
 
         for a1 in self.all_actions: 
@@ -97,28 +133,30 @@ class Full_Multi_Graph_Object_given_l:
             all_candid_tail_given_head=defaultdict(set([]))
             for s_tail in self.action_ub_tail_head[a1]:
                 all_heads=self.action_ub_tail_head[a1][s_tail]
-                do_remove={**self.state_max_dom_dict,**all_heads}
+                do_remove=Helper.union_of_sets(self.state_max_dom_dict,all_heads)
                 all_candid_head_given_tail[s_tail]=all_heads-do_remove
             for s_head in self.action_ub_head_tail[a1]:
                 all_tails=self.action_ub_head_tail[a1][s_head]
-                do_remove={**self.state_min_dom_dict,**all_tails}
+                do_remove=Helper.union_of_sets(self.state_min_dom_dict,all_tails)
                 all_candid_tail_given_head[s_head]=all_tails-do_remove
-                tails_to_connect=self.subset_where_z_in_Y(s_head,all_candid_tail_given_head[s_head],all_candid_head_given_tail)
+                tails_to_connect=Helper.subset_where_z_in_Y(s_head,all_candid_tail_given_head[s_head],all_candid_head_given_tail)
                 for s_tail in tails_to_connect:
                     self.actions_s1_s2_non_dom[(s_tail, s_head)].add(a1)
 
     
     def PGM_compute_remove_redundant_actions(self):
         #remove any dominated actions  from each s1,s2
+        #see teh rmp vesion for detailss
         self.actions_s1_s2_clean=defaultdict(set([]))
         for [s1,s2] in self.actions_s1_s2: #iterate over non-full s1,s2
             my_tup=tuple([s1,s2])
             my_actions=self.actions_s1_s2_non_dom[my_tup] #grab the actions 
-            do_remove={**self.dom_actions_pairs,**my_actions}
+            do_remove=Helper.union_of_sets(self.dom_actions_pairs,my_actions)
             self.actions_s1_s2_clean=my_actions-do_remove
 
     def PGM_make_null_actions(self):  
         #makes null action terms.  This is for dropping resources 
+        #see the RMP version for this
         for s1 in self.state_max_dom_dict:
             for s2 in self.state_max_dom_dict[s1]:
                 self.actions_s1_s2_clean[tuple([s1,s2])].add(self.NullAction)
@@ -126,6 +164,7 @@ class Full_Multi_Graph_Object_given_l:
 
     def PGM_make_equiv_classes(self):
         #make all equivelence classes
+        #see the RMP version for details
         self.equiv_class_2_s1_s2_pairs=dict() #this will map a number to the s1,s2 pairs that have common action sets 
         self.equiv_class_2_actions=dict() #this will map a number to the s1,s2 pairs that have common action sets 
         for [s1,s2] in self.actions_s1_s2_clean: #iterate over s1,s2
@@ -146,9 +185,9 @@ class Full_Multi_Graph_Object_given_l:
         # Find the action with the lowest reduced cost per equivalence class
         self.equiv_class_2_low_red_action = {}
 
-        for my_eq_class in self.equiv_class_2_actions:
-            min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: self.action_2_red_cost[a1])
-            self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, self.action_2_red_cost[min_a1])
+        for my_eq_class in self.equiv_class_2_actions:#iterate overs all equivelnce classes
+            min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: self.action_2_red_cost[a1])#copute loewst reduced cost action
+            self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, self.action_2_red_cost[min_a1])# compute the lowest reduced cost action and store the reduced cost
 
     def construct_pricing_pgm_graph(self):
         """Constructs the PGM graph with (state_id_tail, state_id_head, equiv_class_id) tuples."""
@@ -193,3 +232,15 @@ class Full_Multi_Graph_Object_given_l:
         ]
 
         return shortest_path, shortest_path_length, ordered_path_rows
+    def make_null_action(self, size_rhs, size_res_vec):
+        """Creates a NullAction with zero transitions and no exogenous contribution."""
+        trans_min_input = np.zeros(size_res_vec)  # Minimum input term
+        trans_term_add = np.zeros(size_res_vec)  # Addition term
+        trans_term_min = np.full(size_res_vec, np.inf)  # Minimum transition term
+        node_tail, node_head = None, None  # No tail or head for null action
+        action_id = "NullAction"  # Unique identifier for the null action
+        Exog_vec = np.zeros(size_rhs)  # Exogenous contribution vector
+        cost = 0  # Null action has no cost
+        non_zero_indices_exog = []  # Empty since Exog_vec is all zeros
+ 
+        return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, action_id, Exog_vec, cost)

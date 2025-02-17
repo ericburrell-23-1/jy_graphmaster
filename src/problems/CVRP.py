@@ -153,7 +153,7 @@ class CVRP(OptimizationProblem):
                 max_resource_dict = ChainMap(partial_max_resource_dict, self.default_max_resource_dict)
                 resource_consumption_dict = ChainMap(partial_resource_consumption_dict, self.default_resource_consumption_dict)
                 action = Action(origin_node, destination_node, cost, contribution_vector, min_resource_dict, resource_consumption_dict, max_resource_dict)
-
+                action = Action(min_resource_dict,resource_consumption_dict,max_resource_dict,destination_node,origin_node,contribution_vector,cost)
                 self.actions[origin_node, destination_node] = [action]
                 #start delete
                 
@@ -217,17 +217,19 @@ class CVRP(OptimizationProblem):
                 full_resource_dict[node] = 1
                 empty_resource_dict[node] = 0
         #one for the source
-        source_state = State(-1, full_resource_dict, [], None, 0)
+        source_state = State(-1,full_resource_dict,0,True,False)
         self.initial_res_states.add(source_state)
 
         #one for the sink
-        sink_state = State(-2, empty_resource_dict, None, [], 0)
+        sink_state = State(-2,empty_resource_dict,0,False,True)
+
         self.initial_res_states.add(sink_state)
 
         #one for each node with capacity remaining at maximum
         for node in self.nodes:
             if node > 0:
                 node_state = State(node, full_resource_dict, [sink_state], [source_state], 0)
+                node_state = State(node,full_resource_dict,0,False,False)
                 self.initial_res_states.add(node_state)
                 source_state.successor_states.append(node_state)
                 sink_state.predecessor_states.append(node_state)
