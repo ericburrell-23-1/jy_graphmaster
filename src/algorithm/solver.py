@@ -9,7 +9,7 @@ from src.algorithm.update_states.state_update_function import StateUpdateFunctio
 from src.common.full_multi_graph_object_given_l import Full_Multi_Graph_Object_given_l
 from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
-from update_states.standard_CVRP import CVRP_state_update_function
+from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 
 class GraphMaster:
     """
@@ -45,29 +45,34 @@ class GraphMaster:
                  initial_res_actions: Set[Action],
                  state_update_module: StateUpdateFunction,
                  initial_dominate_actions:Set[Action],
-                 node_to_list
+                 resource_name_to_index: Dict[str, int],
+                 number_of_resources: int
+                 #node_to_list
                  ):
         self.nodes = nodes
-        self.actions = actions
+        self.actions = set().union(*actions.values())
         self.rhs_exog_vec = rhs_exog_vec
         self.initial_resource_state = initial_resource_state
         self.initial_res_states = initial_res_states
         self.initial_res_actions = initial_res_actions
         self.state_update_function = state_update_module
         self.dominate_actions = initial_dominate_actions
-        self.node_to_list = node_to_list
+        self.resource_name_to_index = resource_name_to_index
+        self.number_of_resources = number_of_resources
+        #self.node_to_list = node_to_list
         self.index_to_multi_graph = {}
         self.list_of_graph =[]
         self.res_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
         self.pricing_problem = PricingProblem(initial_res_actions,initial_res_states,nodes)
         
-    def call_alg_2(self,init_res_states,init_res_actions,res_states_for_init_l, all_actions, dom_actions_pairs,size_rhs, size_res_vec):
+    def solve(self):
         l_id = 0
+        size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
-        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, res_states_for_init_l,all_actions, all_actions, dom_actions_pairs, size_rhs, size_res_vec)
-        self.res_states_minus=init_res_states
-        self.res_actions=init_res_actions
+        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,size_rhs, self.resource_name_to_index,self.number_of_resources)
+        self.res_states_minus=self.initial_res_states
+        self.res_actions=self.initial_res_actions
         #l_id = 0
         #multi_graph = Full_Multi_Graph_Object_given_l(l_id,self.initial_res_states,self.initial_res_actions,self.dominate_actions)
         my_init_graph.initialize_system()
@@ -84,9 +89,10 @@ class GraphMaster:
             
             [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(dual_exog)
             #please remember every graph has its own source and sink
-            state_update = CVRP_state_update_function(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id,self.nodes)
             l_id += 1
-            [new_states_describing_new_graph,set_non_null_actions_used_in_col,states_used_in_this_col]=state_update.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col)
+            #all action used in specific column 
+            [new_states_describing_new_graph,states_used_in_this_col]=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+            
             if reduced_cost >= -1e-6:
                 return {
                     'status': 'optimal',
@@ -95,12 +101,12 @@ class GraphMaster:
                     'graph': self.multi_graph
                 }
             
-            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,all_actions,dom_actions_pairs,size_rhs,size_res_vec)
+            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,size_rhs, self.resource_name_to_index,self.number_of_resources)
             new_multi_graph.initialize_system()
             self.index_to_multi_graph[l_id] = new_multi_graph
             self.list_of_graph.append(new_multi_graph)
-            self.res_actions_minus = self.res_actions_minus + states_used_in_this_col
-            self.res_actions_minus = self.res_actions_minus + set_non_null_actions_used_in_col
+            self.res_states_minus = self.res_actions_minus + states_used_in_this_col
+            self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
             iteration += 1
             self.restricted_master_problem = 0
         return {'status': 'max_iterations', 'iterations': iteration}      

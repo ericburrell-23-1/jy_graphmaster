@@ -1,20 +1,23 @@
 from collections import defaultdict
 import networkx as nx
 from itertools import permutations
-from helper import Helper
+from src.common.helper import Helper
 import numpy as np
-from common.action import Action
+from src.common.action import Action
+from src.common.state import State
+from src.common.helper import Helper
 class Full_Multi_Graph_Object_given_l:
 
     #Computed once multi-graph which is generated once 
-    def __init__(self, l_id, res_states, all_actions, dom_actions_pairs, size_rhs, size_res_vec):
+    def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs, size_rhs, resource_name_to_index,number_of_resources):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
-        self.res_states = res_states  # Dictionary of all states
+        self.res_states = res_states  # set of all states
         self.all_actions = all_actions  # Set of all possible actions (excluding null action)
         self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
- 
-        self.nullAction = self.make_null_action(size_rhs, size_res_vec)  # Create and assign null action
+        self.resource_name_to_index = resource_name_to_index
+        self.number_of_resources = number_of_resources
+        self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
  
         # Initialize dictionary grouping states by node
         self.resStates_by_node = defaultdict(list)
@@ -23,8 +26,8 @@ class Full_Multi_Graph_Object_given_l:
  
         # Optimized check for source and sink nodes
         node_states = self.resStates_by_node  # Store dictionary lookup once
-        source_count = len(node_states.get('sourceNode', []))
-        sink_count = len(node_states.get('sinkNode', []))
+        source_count = len(node_states.get(-1, []))
+        sink_count = len(node_states.get(-2, []))
  
         if source_count != 1 or sink_count != 1:
             raise ValueError(
@@ -37,7 +40,7 @@ class Full_Multi_Graph_Object_given_l:
         """Creates a mapping from state ID to state object."""
         
         self.state_id_to_state = {
-            my_state.id: my_state
+            my_state.state_id: my_state
             for node in self.resStates_by_node
             for my_state in self.resStates_by_node[node]
         }
@@ -50,7 +53,7 @@ class Full_Multi_Graph_Object_given_l:
         self.PGM_sub_compute_maximum_dominated_states_by_node()
 
         self.PGM_make_null_actions()
-        self.PGM.PGM_compute_remove_redundant_actions()
+        self.PGM_compute_remove_redundant_actions()
         self.PGM_make_equiv_classes()
         self.construct_pricing_pgm_graph()
 
@@ -67,10 +70,9 @@ class Full_Multi_Graph_Object_given_l:
         # Iterate over all actions
         for a1 in self.all_actions:
             node_tail, node_head = a1.node_tail, a1.node_head
-
             # Process state pairs
             for state_tail in self.resStates_by_node[node_tail]:
-                head_ideal = a1.get_head_state(self, state_tail)
+                head_ideal = a1.get_head_state(state_tail,self.l_id)
                 
                 for state_head in self.resStates_by_node[node_head]:
                     if head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
@@ -147,8 +149,8 @@ class Full_Multi_Graph_Object_given_l:
     def PGM_compute_remove_redundant_actions(self):
         #remove any dominated actions  from each s1,s2
         #see teh rmp vesion for detailss
-        self.actions_s1_s2_clean=defaultdict(set([]))
-        for [s1,s2] in self.actions_s1_s2: #iterate over non-full s1,s2
+        self.actions_s1_s2_clean=defaultdict(set)
+        for [s1,s2] in self.actions_s1_s2_non_dom: #iterate over non-full s1,s2
             my_tup=tuple([s1,s2])
             my_actions=self.actions_s1_s2_non_dom[my_tup] #grab the actions 
             do_remove=Helper.union_of_sets(self.dom_actions_pairs,my_actions)
@@ -159,7 +161,7 @@ class Full_Multi_Graph_Object_given_l:
         #see the RMP version for this
         for s1 in self.state_max_dom_dict:
             for s2 in self.state_max_dom_dict[s1]:
-                self.actions_s1_s2_clean[tuple([s1,s2])].add(self.NullAction)
+                self.actions_s1_s2_clean[tuple([s1,s2])].add(self.nullAction)
     
 
     def PGM_make_equiv_classes(self):
@@ -242,5 +244,9 @@ class Full_Multi_Graph_Object_given_l:
         Exog_vec = np.zeros(size_rhs)  # Exogenous contribution vector
         cost = 0  # Null action has no cost
         non_zero_indices_exog = []  # Empty since Exog_vec is all zeros
- 
-        return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, action_id, Exog_vec, cost)
+        min_resource_vec = np.zeros(size_res_vec) 
+        resource_consumption_vec = np.zeros(size_res_vec)
+        indices_non_zero_max = []    
+        max_resource_vec = np.full(size_res_vec, np.inf) 
+        indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
+        return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )

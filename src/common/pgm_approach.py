@@ -29,8 +29,8 @@ class PGM_appraoch:
 
         # Check that each l_id has exactly one source and one sink
         for l_id in self.rezStates_minus_by_graph:
-            source_count = len(self.rezStates_minus_by_graph[l_id].get('sourceNode', []))
-            sink_count = len(self.rezStates_minus_by_graph[l_id].get('sinkNode', []))
+            source_count = len(self.rezStates_minus_by_graph[l_id].get(-1, []))
+            sink_count = len(self.rezStates_minus_by_graph[l_id].get(-2, []))
 
             if source_count != 1 or sink_count != 1:
                 raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")

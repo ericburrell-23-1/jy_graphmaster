@@ -23,7 +23,7 @@ class PricingProblem:
         self.initial_resource_state = initial_resource_state
         self.nodes = nodes
 
-        self._compute_resource_limits()
+        #self._compute_resource_limits()
         
         # self.resource_extension_function = ResourceExtensionCallback(
         #     self.max_resource_state, self.min_resource_state)

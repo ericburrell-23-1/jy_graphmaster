@@ -11,15 +11,18 @@ class CVRP_state_update_function(StateUpdateFunction):
     This is definitely not complete. Just has some code to give an idea of how it will look when it is done. Needs to be fixed. Might need additional inputs.
     
     Keep in mind this module looks different for every problem type. This is just for CVRP!"""
-    def __init__(self, list_of_nodes, list_of_actions):
-        super().__init__(list_of_nodes,list_of_actions)
-        pass
+    def __init__(self, capacity, demands, neighbors, initial_resource_vector):
+        self.capacity = capacity
+        self.demands = demands
+        self.neighbors = neighbors
+        self.initial_resource_vector = initial_resource_vector
+        
 
-    def get_new_states(self):
+    def get_new_states(self, list_of_nodes, list_of_actions,l_id):
         this_beta = self._generate_beta_term(self.list_of_nodes)
-        new_states, null_action = self._generate_state_based_on_beta(this_beta)
-        states_in_path = self.get_states_from_action_list(self.list_of_actions)
-        return new_states, null_action, states_in_path
+        new_states, _ = self._generate_state_based_on_beta(this_beta,l_id)
+        states_in_path = self.get_states_from_action_list(self.list_of_actions,l_id)
+        return new_states, states_in_path
     
     def _generate_beta_term(self, list_of_customer):
         idx_of_customer = {u: -1 for u in self.list_of_nodes if u not in {-1,-2}}
@@ -36,7 +39,7 @@ class CVRP_state_update_function(StateUpdateFunction):
 
         return beta
 
-    def _generate_state_based_on_beta(self, beta):
+    def _generate_state_based_on_beta(self, beta: list,l_id):
         """This needs to be reviewed but basically this is the function that should be called in `get_new_states`."""
         myState = []
         dem_list = []
@@ -49,24 +52,24 @@ class CVRP_state_update_function(StateUpdateFunction):
                 for u in self.list_of_nodes if u not in {-1, -2}
             }
             if idx>0:
-                dem_list.append(self.problem_data['demands'][beta[idx-1]])
-            minimum_dem_remain = self.problem_data['capacity'] - self.problem_data['demands'][customer]
+                dem_list.append(self.demands[beta[idx-1]])
+            minimum_dem_remain = self.capacity - self.demands[customer]
             poss_demand_used = self.get_unique_value_from_list(dem_list,minimum_dem_remain)
             poss_demand_used.append(0)
             for d in poss_demand_used:
                 resource_vector = myCanVisit.copy()
-                resource_vector['cap_remain'] = self.problem_data['capacity']-d
-                this_state = State(customer,resource_vector,self.l_id,False,False)
+                resource_vector['cap_remain'] = self.capacity-d
+                this_state = State(customer,resource_vector,l_id,False,False)
                 myState.append(this_state)
                 node_to_states[customer].append(this_state)
         source_state_resource_vector = {
             f'can_visit: {u}': 1 for u in self.list_of_nodes if u not in {-1, -2}}
-        source_state_resource_vector['cap_remain'] = self.problem_data['capacity']
-        source_state = State(-1, source_state_resource_vector, self.l_id,True,False)
+        source_state_resource_vector['cap_remain'] = self.capacity
+        source_state = State(-1, source_state_resource_vector, l_id,True,False)
         sink_state_resource_vector = {
             f'can_visit: {u}': 0 for u in self.list_of_nodes if u not in {-1, -2}}
         sink_state_resource_vector['cap_remain'] = 0
-        sink_state = State(-2, sink_state_resource_vector, self.l_id,False,True)
+        sink_state = State(-2, sink_state_resource_vector, l_id,False,True)
         myState.append(source_state)
         myState.append(sink_state)
 
@@ -96,27 +99,28 @@ class CVRP_state_update_function(StateUpdateFunction):
                         null_action.append(this_null_action)
         return myState, null_action
 
-    def get_states_from_action_list(self, action_list: List[Action]):
+    def get_states_from_action_list(self, action_list: List[Action],l_id):
         """
         Returns a list of states given an action_list.
         """
         if not action_list:
             return []
         states_list = []
-        current_resources = self.initial_resource_state.copy()
-        pred_state = State(action_list[0].origin_node, current_resources, [], [])
+        current_resources = self.initial_resource_vector.copy()
+        pred_state = State(action_list[0].node_head,current_resources,l_id,action_list[0].node_head == -1,action_list[0].node_head == -2)
         states_list.append(pred_state)
         for action in action_list:
-            new_resource_vector = action.compute_output_resource_vector(current_resources)
+            new_resource_vector = action.get_tail_state(current_resources)
             if new_resource_vector is None:
-                print(f"Invalid resource transition from {action.origin_node} to {action.destination_node}")
+                print(f"Invalid resource transition from {action.node_head} to {action.node_tail}")
                 break
-            new_state = State(action.destination_node, new_resource_vector, [], [pred_state])
-            pred_state.successor_states.append(new_state)
+            new_state = State(action.node_head,current_resources,l_id,action.node_head == -1,action.node_head == -2)
+            
             states_list.append(new_state)
             current_resources = new_resource_vector.copy()
-            pred_state = new_state
+            
         return states_list
+    
     def get_unique_value_from_list(self,cus_lst, m):
         possible_sums = {0}  # Start with an empty subset sum
         dem_list = []
@@ -131,3 +135,4 @@ class CVRP_state_update_function(StateUpdateFunction):
         
         possible_sums.discard(0)  # Remove the initial empty sum if not needed
         return sorted(possible_sums)  # Return sorted results if needed
+    

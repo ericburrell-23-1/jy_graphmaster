@@ -2,9 +2,12 @@ from random import randint
 from typing import List
 import numpy as np
 import uuid
+from collections import ChainMap
+from src.common.helper import Helper
+import operator
 class State:
     def __init__(self, node:int, state_vec, l_id,is_source,is_sink):
-        self.state_id = randint(10**3,10**9)
+        #self.state_id = randint(10**3,10**9)
         self.node = node
         self.state_vec=state_vec #states written out as a vector
         # Please justify why these next two properties exist
@@ -31,18 +34,21 @@ class State:
         We hash by the node and the contents of res_vec.
         """
         # Convert res_vec into a frozenset of (key, value) pairs for a hashable representation.
-        return hash((self.node, frozenset(self.res_vec.items())))
+        #return hash((self.node, frozenset(self.res_vec.items())))
+        return hash(self.state_id)
 
     def this_state_dominates_input_state(self,other_state):
         #determined if this state dominates the input other_state
         #also determines if a tie occurs
         does_dom=False #defines default value for domination
         #code for checkign domination between two states
-        if other_state.node==self.node and np.min(self.state_vec-self.other_state.state_vec)>=0 and np.sum(self.state_vec-self.other_state.state_vec)>0:
+        res_vec_diff = Helper.operate_on_chainmaps(self.state_vec,other_state.state_vec,operator.sub).values()
+        if other_state.node==self.node and min(res_vec_diff)>=0 and sum(res_vec_diff)>0:
+        #if other_state.node==self.node and np.min(self.state_vec-other_state.state_vec)>=0 and np.sum(self.state_vec-other_state.state_vec)>0:
             does_dom=True #set domination to true
         #code for checkign equality  between two statews
         does_equal=False  #defines default value for equality
-        if other_state.node==self.node and np.sum(np.abs(self.state_vec-self.other_state.state_vec))==0: #check for equality
+        if other_state.node==self.node and sum(list(map(abs, res_vec_diff)))==0: #check for equality
             does_equal=True #set domination to false
         return [does_dom,does_equal] #returns the condition
     def process(self):

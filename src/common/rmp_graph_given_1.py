@@ -1,5 +1,5 @@
 from collections import defaultdict
-from helper import Helper
+from src.common.helper import Helper
 
 class RMP_graph_given_l:
 
