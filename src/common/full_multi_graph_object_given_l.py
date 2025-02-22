@@ -9,15 +9,16 @@ from src.common.helper import Helper
 class Full_Multi_Graph_Object_given_l:
 
     #Computed once multi-graph which is generated once 
-    def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs, size_rhs, resource_name_to_index,number_of_resources):
+    def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs, null_action_info):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.res_states = res_states  # set of all states
         self.all_actions = all_actions  # Set of all possible actions (excluding null action)
         self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
-        self.resource_name_to_index = resource_name_to_index
-        self.number_of_resources = number_of_resources
-        self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
+        self.null_action_info = null_action_info
+        #self.resource_name_to_index = resource_name_to_index
+        #self.number_of_resources = number_of_resources
+        #self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
  
         # Initialize dictionary grouping states by node
         self.resStates_by_node = defaultdict(list)
@@ -52,6 +53,7 @@ class Full_Multi_Graph_Object_given_l:
         self.PGM_sub_compute_min_dominating_states_by_node()
         self.PGM_sub_compute_maximum_dominated_states_by_node()
 
+        self.PGM_clean_states_EZ()
         self.PGM_make_null_actions()
         self.PGM_compute_remove_redundant_actions()
         self.PGM_make_equiv_classes()
@@ -128,11 +130,11 @@ class Full_Multi_Graph_Object_given_l:
         #go through all of the states and make srue that only symetrically non-dominated actions are included
         #see the rmp version for details
         
-        self.actions_s1_s2_non_dom=defaultdict(set([]))
+        self.actions_s1_s2_non_dom=defaultdict(set)
 
         for a1 in self.all_actions: 
-            all_candid_head_given_tail=defaultdict(set([]))
-            all_candid_tail_given_head=defaultdict(set([]))
+            all_candid_head_given_tail=defaultdict(set)
+            all_candid_tail_given_head=defaultdict(set)
             for s_tail in self.action_ub_tail_head[a1]:
                 all_heads=self.action_ub_tail_head[a1][s_tail]
                 do_remove=Helper.union_of_sets(self.state_max_dom_dict,all_heads)
@@ -151,33 +153,39 @@ class Full_Multi_Graph_Object_given_l:
         #see teh rmp vesion for detailss
         self.actions_s1_s2_clean=defaultdict(set)
         for [s1,s2] in self.actions_s1_s2_non_dom: #iterate over non-full s1,s2
-            my_tup=tuple([s1,s2])
+            my_tup=(s1,s2)
             my_actions=self.actions_s1_s2_non_dom[my_tup] #grab the actions 
             do_remove=Helper.union_of_sets(self.dom_actions_pairs,my_actions)
-            self.actions_s1_s2_clean=my_actions-do_remove
+            self.actions_s1_s2_clean[my_tup]=my_actions-do_remove
 
     def PGM_make_null_actions(self):  
         #makes null action terms.  This is for dropping resources 
         #see the RMP version for this
         for s1 in self.state_max_dom_dict:
             for s2 in self.state_max_dom_dict[s1]:
-                self.actions_s1_s2_clean[tuple([s1,s2])].add(self.nullAction)
+                this_null_action = Action(self.null_action_info['trans_min_input'],
+                                          self.null_action_info['trans_term_add'],self.null_action_info['trans_term_min'],
+                                          s2,s1,self.null_action_info['contribution_vector'],self.null_action_info['cost'],
+                                          self.null_action_info['min_resource_vec'],self.null_action_info['resource_consumption_vec'],
+                                          self.null_action_info['indices_non_zero_max'],self.null_action_info['max_resource_vec'])
+                self.actions_s1_s2_clean[(s1,s2)].add(this_null_action)
     
 
     def PGM_make_equiv_classes(self):
         #make all equivelence classes
         #see the RMP version for details
-        self.equiv_class_2_s1_s2_pairs=dict() #this will map a number to the s1,s2 pairs that have common action sets 
-        self.equiv_class_2_actions=dict() #this will map a number to the s1,s2 pairs that have common action sets 
+        self.equiv_class_2_s1_s2_pairs=defaultdict(set) #this will map a number to the s1,s2 pairs that have common action sets 
+        self.equiv_class_2_actions=defaultdict(set) #this will map a number to the s1,s2 pairs that have common action sets 
         for [s1,s2] in self.actions_s1_s2_clean: #iterate over s1,s2
-            my_list=[s1.node,s2.node] #create object to store action ids 
-            for a in self.actions_s1_s2_clean[tuple([s1,s2])]: #store all action ids
+            #my_list=[s1.node,s2.node] #create object to store action ids 
+            my_list = []
+            for a in self.actions_s1_s2_clean[(s1,s2)]: #store all action ids
                 my_list.append(a.action_id)
             my_list=sorted(my_list) #sort the actions ids
             my_list=str(my_list) #convert the action ids to a string
-            self.equiv_class_2_s1_s2_pairs[my_list].add(tuple([s1,s2])) #add the new edge to the equivlenece clas
+            self.equiv_class_2_s1_s2_pairs[my_list].add((s1,s2)) #add the new edge to the equivlenece clas
             if my_list not in self.equiv_class_2_actions:
-                self.equiv_class_2_actions[my_list]=self.actions_s1_s2_clean[tuple([s1,s2])]
+                self.equiv_class_2_actions[my_list]=self.actions_s1_s2_clean[(s1,s2)]
     def PGM_equiv_class_dual_2_low(self, dual_exog_vec):
         """Computes the lowest reduced cost action per equivalence class."""
         
@@ -234,19 +242,19 @@ class Full_Multi_Graph_Object_given_l:
         ]
 
         return shortest_path, shortest_path_length, ordered_path_rows
-    def make_null_action(self, size_rhs, size_res_vec):
-        """Creates a NullAction with zero transitions and no exogenous contribution."""
-        trans_min_input = np.zeros(size_res_vec)  # Minimum input term
-        trans_term_add = np.zeros(size_res_vec)  # Addition term
-        trans_term_min = np.full(size_res_vec, np.inf)  # Minimum transition term
-        node_tail, node_head = None, None  # No tail or head for null action
-        action_id = "NullAction"  # Unique identifier for the null action
-        Exog_vec = np.zeros(size_rhs)  # Exogenous contribution vector
-        cost = 0  # Null action has no cost
-        non_zero_indices_exog = []  # Empty since Exog_vec is all zeros
-        min_resource_vec = np.zeros(size_res_vec) 
-        resource_consumption_vec = np.zeros(size_res_vec)
-        indices_non_zero_max = []    
-        max_resource_vec = np.full(size_res_vec, np.inf) 
-        indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
-        return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )
+    # def make_null_action(self, size_rhs, size_res_vec):
+    #     """Creates a NullAction with zero transitions and no exogenous contribution."""
+    #     trans_min_input = np.zeros(size_res_vec)  # Minimum input term
+    #     trans_term_add = np.zeros(size_res_vec)  # Addition term
+    #     trans_term_min = np.full(size_res_vec, np.inf)  # Minimum transition term
+    #     node_tail, node_head = None, None  # No tail or head for null action
+    #     action_id = "NullAction"  # Unique identifier for the null action
+    #     Exog_vec = np.zeros(size_rhs)  # Exogenous contribution vector
+    #     cost = 0  # Null action has no cost
+    #     non_zero_indices_exog = []  # Empty since Exog_vec is all zeros
+    #     min_resource_vec = np.zeros(size_res_vec) 
+    #     resource_consumption_vec = np.zeros(size_res_vec)
+    #     indices_non_zero_max = []    
+    #     max_resource_vec = np.full(size_res_vec, np.inf) 
+    #     #indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
+    #     return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )

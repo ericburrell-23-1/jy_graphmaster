@@ -5,11 +5,15 @@ import uuid
 from collections import ChainMap
 from src.common.helper import Helper
 import operator
+from scipy.sparse import csr_matrix
 class State:
-    def __init__(self, node:int, state_vec, l_id,is_source,is_sink):
+    def __init__(self, node:int, state_vec:csr_matrix, l_id,is_source,is_sink):
         #self.state_id = randint(10**3,10**9)
         self.node = node
-        self.state_vec=state_vec #states written out as a vector
+        if not isinstance(state_vec, csr_matrix):
+            raise TypeError("state_vec must be a csr_matrix")
+        super().__setattr__('_state_vec', state_vec)
+        #self.state_vec=state_vec #states written out as a vector
         # Please justify why these next two properties exist
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
@@ -37,19 +41,41 @@ class State:
         #return hash((self.node, frozenset(self.res_vec.items())))
         return hash(self.state_id)
 
-    def this_state_dominates_input_state(self,other_state):
-        #determined if this state dominates the input other_state
-        #also determines if a tie occurs
-        does_dom=False #defines default value for domination
-        #code for checkign domination between two states
-        res_vec_diff = Helper.operate_on_chainmaps(self.state_vec,other_state.state_vec,operator.sub).values()
-        if other_state.node==self.node and min(res_vec_diff)>=0 and sum(res_vec_diff)>0:
-        #if other_state.node==self.node and np.min(self.state_vec-other_state.state_vec)>=0 and np.sum(self.state_vec-other_state.state_vec)>0:
-            does_dom=True #set domination to true
-        #code for checkign equality  between two statews
-        does_equal=False  #defines default value for equality
-        if other_state.node==self.node and sum(list(map(abs, res_vec_diff)))==0: #check for equality
-            does_equal=True #set domination to false
-        return [does_dom,does_equal] #returns the condition
+    def this_state_dominates_input_state(self, other_state):
+        """
+        Determines if this state dominates the input `other_state`.
+        Also determines if a tie occurs.
+        """
+        does_dom = False  # Default value for domination
+
+        # Compute difference as a sparse matrix
+        res_vec_diff = self.state_vec - other_state.state_vec  # Works for CSR matrices
+
+        # Efficient min and sum operations for sparse matrices
+        min_value = res_vec_diff.data.min() if res_vec_diff.nnz > 0 else 0  # Avoids errors if empty
+        sum_value = res_vec_diff.sum()  # Works directly on sparse matrices
+
+        # Domination condition
+        if other_state.node == self.node and min_value >= 0 and sum_value > 0:
+            does_dom = True  # This state dominates
+
+        # Equality check
+        does_equal = False  # Default value for equality
+
+        # Correct way to check for zero difference in sparse matrix
+        if other_state.node == self.node and res_vec_diff.nnz == 0:  
+            does_equal = True  # States are equal
+
+        return [does_dom, does_equal]
     def process(self):
         print(f"Processing state: {self.node}")
+
+    @property
+    def state_vec(self):
+        return self.__dict__['_state_vec']
+    
+    def __setattr__(self, name, value):
+        # Prevent reassignment of state_vec after initialization.
+        if name == 'state_vec' and self.__dict__.get('_initialized', False):
+            raise AttributeError("state_vec cannot be changed once set.")
+        super().__setattr__(name, value)

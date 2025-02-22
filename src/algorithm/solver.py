@@ -46,7 +46,8 @@ class GraphMaster:
                  state_update_module: StateUpdateFunction,
                  initial_dominate_actions:Set[Action],
                  resource_name_to_index: Dict[str, int],
-                 number_of_resources: int
+                 number_of_resources: int,
+                 null_action_info: Action
                  #node_to_list
                  ):
         self.nodes = nodes
@@ -59,6 +60,7 @@ class GraphMaster:
         self.dominate_actions = initial_dominate_actions
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
+        self.null_action_info = null_action_info
         #self.node_to_list = node_to_list
         self.index_to_multi_graph = {}
         self.list_of_graph =[]
@@ -70,7 +72,7 @@ class GraphMaster:
         l_id = 0
         size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
-        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,size_rhs, self.resource_name_to_index,self.number_of_resources)
+        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.null_action_info)
         self.res_states_minus=self.initial_res_states
         self.res_actions=self.initial_res_actions
         #l_id = 0
@@ -81,7 +83,7 @@ class GraphMaster:
         iteration = 1
         incombentLP = np.inf
         while iteration < max_iterations:
-            pgm_solver = PGM_appraoch(self.list_of_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP)
+            pgm_solver = PGM_appraoch(self.list_of_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.null_action_info)
             primal_sol,dual_exog,cur_lp = pgm_solver.call_PGM()
             self.res_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
             incombentLP = cur_lp
@@ -101,7 +103,7 @@ class GraphMaster:
                     'graph': self.multi_graph
                 }
             
-            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,size_rhs, self.resource_name_to_index,self.number_of_resources)
+            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.null_action_info)
             new_multi_graph.initialize_system()
             self.index_to_multi_graph[l_id] = new_multi_graph
             self.list_of_graph.append(new_multi_graph)

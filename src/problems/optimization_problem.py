@@ -25,7 +25,7 @@ class OptimizationProblem(ABC):
         self.actions: Dict[Tuple[int, int], List[Action]] = {}
         self.initial_res_states: Set[State] = set()
         self.initial_res_actions: Set[Action] = set()
-        self.initial_null_actions: Set[Action] = set()
+        self.initial_null_actions = {}
         self.state_update_module: StateUpdateFunction = None
                 
         self._load_data_from_file()   
@@ -49,7 +49,8 @@ class OptimizationProblem(ABC):
             self.state_update_module,
             self.dominated_action_pairs,
             self.resource_name_to_index,
-            self.number_of_resources
+            self.number_of_resources,
+            self.initial_null_actions
             #node_to_list
         )
         self.solver.solve()

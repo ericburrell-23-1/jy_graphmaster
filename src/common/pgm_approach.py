@@ -8,7 +8,7 @@ class PGM_appraoch:
 
     #This will do the enitre RMP. 
 
-    def __init__(self,my_PGM_graph_list,prob_RHS,rez_states_minus,rez_actions_minus,incumbant_lp):
+    def __init__(self,my_PGM_graph_list,prob_RHS,rez_states_minus,rez_actions_minus,incumbant_lp,null_action_info):
 
         self.my_PGM_graph_list=my_PGM_graph_list #list of all of the PGM graphs
         self.prob_RHS=prob_RHS #RHS
@@ -16,21 +16,24 @@ class PGM_appraoch:
         self.make_res_states_minus_by_node()
         self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
         self.incumbant_lp=incumbant_lp# has incumbent LP objective
-        self.init_jy_options() #has teh options
+        self.null_action_info = null_action_info
+        #TODO: this function never defined
+        #self.init_jy_options() #has teh options
         
     def make_res_states_minus_by_node(self):
         """Groups states by (l_id, node) into a dictionary of lists with structure {l_id: {node: [states]}}."""
-        
-        self.rezStates_minus_by_graph = defaultdict(lambda: defaultdict(list))  # Nested defaultdict for automatic list initialization
+        #TODO: change rezStates_minus_by_graph to rezStates_minus_by_node
+        self.rezStates_minus_by_node = defaultdict(lambda: defaultdict(list))  # Nested defaultdict for automatic list initialization
 
         # Group states by l_id and node
-        for state in self.resStates:
-            self.rezStates_minus_by_graph[state.l_id][state.node].append(state)
+        # TODO: change self.res_states to self.rez_states_minus
+        for state in self.rez_states_minus:
+            self.rezStates_minus_by_node[state.l_id][state.node].append(state)
 
         # Check that each l_id has exactly one source and one sink
-        for l_id in self.rezStates_minus_by_graph:
-            source_count = len(self.rezStates_minus_by_graph[l_id].get(-1, []))
-            sink_count = len(self.rezStates_minus_by_graph[l_id].get(-2, []))
+        for l_id in self.rezStates_minus_by_node:
+            source_count = len(self.rezStates_minus_by_node[l_id].get(-1, []))
+            sink_count = len(self.rezStates_minus_by_node[l_id].get(-2, []))
 
             if source_count != 1 or sink_count != 1:
                 raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")
@@ -44,11 +47,11 @@ class PGM_appraoch:
 
 
 
-    #def OLD_init(self,my_PGM_graph_list,prob_RHS,rezStates_minus_by_graph,rez_actions_minus,incumbant_lp,jy_options):
+    #def OLD_init(self,my_PGM_graph_list,prob_RHS,rezStates_minus_by_node,rez_actions_minus,incumbant_lp,jy_options):
 
        # self.my_PGM_graph_list=my_PGM_graph_list #list of all of the PGM graphs
        # self.prob_RHS=prob_RHS #RHS
-       # self.rezStates_minus_by_graph=rezStates_minus_by_graph #has all of the states in rez states minus by graph . So if I put in a grpah id then i get out the rez states minus to initialize
+       # self.rezStates_minus_by_node=rezStates_minus_by_node #has all of the states in rez states minus by graph . So if I put in a grpah id then i get out the rez states minus to initialize
        # self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
        # self.incumbant_lp=incumbant_lp# has incumbent LP objective
        # self.jy_options=jy_options #has teh options
@@ -158,7 +161,7 @@ class PGM_appraoch:
         self.pgm_graph_2_rmp_graph = {}  # Dictionary to store RMP graphs
         for g in self.my_PGM_graph_list:
             my_states_g_by_node = self.rezStates_minus_by_node[g]
-            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus)
+            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.null_action_info)
             self.pgm_graph_2_rmp_graph[g].initialize_system()  # Initialize RMP graph
 
         # Step 2: Initialize variables and constraints
