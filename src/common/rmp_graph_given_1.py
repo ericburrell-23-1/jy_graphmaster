@@ -12,6 +12,10 @@ class RMP_graph_given_l:
         self.nullAction_info=nullAction_info # null action
     def initialize_system(self):
         #initialize teh RMP graph
+        if len(self.nodes) == 0:
+            raise ValueError("nodes is empty. ")
+        if len(self.res_actions) == 0:
+            raise ValueError("res actions is empty. ")
         for u in self.nodes:#self.my_Multi_Graph_Object.resStates_minus_by_node:
             self.update_domination(u) #grab domination list and dominated list for each u
             self.RMP_update_sub_compute_min_dominating_states_by_node(u)#update minimum domination dictionary
