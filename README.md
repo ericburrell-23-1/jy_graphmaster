@@ -42,5 +42,11 @@ This is where problem-specific modules (our "puzzle pieces") are defined. We hav
 
 This is where test files will be written. I have written one to test CVRP. I will also add some test files in an `assests` directory here.
 
+## Rules
 
+1) If Julian wants to make this repo a mess, he has free reign to do so
+
+2) That said, if you work on something with Julian here, do your best to keep it clean. Edit doc strings, rename functions, etc.
+
+3) Try not to create new folders or files when it is unnecessary. Please do your best to work within the existing architecture.
 
