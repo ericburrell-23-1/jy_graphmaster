@@ -2,6 +2,7 @@ from random import randint
 from typing import List
 import numpy as np
 import uuid
+from uuid import UUID
 from collections import ChainMap
 from src.common.helper import Helper
 import operator
@@ -18,7 +19,7 @@ class State:
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
-        self.state_id = uuid.uuid4()
+        self.state_id= uuid.uuid4().hex
         #self.state_id = state_id
 
     def __eq__(self, other: 'State') -> bool:

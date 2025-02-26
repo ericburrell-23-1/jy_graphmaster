@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any, Dict, Tuple, Set, DefaultDict, List
 import networkx as nx
 from itertools import permutations
 from src.common.helper import Helper
@@ -13,17 +14,20 @@ class Full_Multi_Graph_Object_given_l:
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.res_states = res_states  # set of all states
+        for state in self.res_states:
+            print(state.node, state.state_vec.toarray())
         self.all_actions = all_actions  # Set of all possible actions (excluding null action)
         self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
         self.null_action_info = null_action_info
+        self.null_action = set()
         #self.resource_name_to_index = resource_name_to_index
         #self.number_of_resources = number_of_resources
         #self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
  
         # Initialize dictionary grouping states by node
-        self.resStates_by_node = defaultdict(list)
+        self.resStates_by_node:DefaultDict[int,Set[State]] = defaultdict(set)
         for s in res_states:
-            self.resStates_by_node[s.node].append(s)  # Append the actual state object
+            self.resStates_by_node[s.node].add(s)  # Append the actual state object
  
         # Optimized check for source and sink nodes
         node_states = self.resStates_by_node  # Store dictionary lookup once
@@ -151,7 +155,7 @@ class Full_Multi_Graph_Object_given_l:
     def PGM_compute_remove_redundant_actions(self):
         #remove any dominated actions  from each s1,s2
         #see teh rmp vesion for detailss
-        self.actions_s1_s2_clean=defaultdict(set)
+        self.actions_s1_s2_clean:Dict[Tuple[State,State],Set[Action]] = defaultdict(set) 
         for [s1,s2] in self.actions_s1_s2_non_dom: #iterate over non-full s1,s2
             my_tup=(s1,s2)
             my_actions=self.actions_s1_s2_non_dom[my_tup] #grab the actions 
@@ -169,23 +173,25 @@ class Full_Multi_Graph_Object_given_l:
                                           self.null_action_info['min_resource_vec'],self.null_action_info['resource_consumption_vec'],
                                           self.null_action_info['indices_non_zero_max'],self.null_action_info['max_resource_vec'])
                 self.actions_s1_s2_clean[(s1,s2)].add(this_null_action)
-    
+                self.null_action.add(this_null_action)
 
     def PGM_make_equiv_classes(self):
         #make all equivelence classes
         #see the RMP version for details
-        self.equiv_class_2_s1_s2_pairs=defaultdict(set) #this will map a number to the s1,s2 pairs that have common action sets 
-        self.equiv_class_2_actions=defaultdict(set) #this will map a number to the s1,s2 pairs that have common action sets 
+        self.equiv_class_2_s1_s2_pairs: DefaultDict[str, set[Tuple[State, State]]] = defaultdict(set) #this will map a number to the s1,s2 pairs that have common action sets
+        self.equiv_class_2_actions:DefaultDict[str,Set[Action]]=defaultdict(set) #this will map a number to the s1,s2 pairs that have common action sets
         for [s1,s2] in self.actions_s1_s2_clean: #iterate over s1,s2
-            #my_list=[s1.node,s2.node] #create object to store action ids 
-            my_list = []
+            #my_list=[s1.node,s2.node] #create object to store action ids
+            my_name_id=[s1.node,s2.node] #create object to store action ids
+            my_action_list = []
             for a in self.actions_s1_s2_clean[(s1,s2)]: #store all action ids
-                my_list.append(a.action_id)
-            my_list=sorted(my_list) #sort the actions ids
-            my_list=str(my_list) #convert the action ids to a string
-            self.equiv_class_2_s1_s2_pairs[my_list].add((s1,s2)) #add the new edge to the equivlenece clas
-            if my_list not in self.equiv_class_2_actions:
-                self.equiv_class_2_actions[my_list]=self.actions_s1_s2_clean[(s1,s2)]
+                my_action_list.append(a.action_id)
+            my_action_list=sorted(my_action_list) #sort the actions ids
+            my_name_id.extend(my_action_list)
+            my_name_id=str(my_name_id) #convert the action ids to a string
+            self.equiv_class_2_s1_s2_pairs[my_name_id].add((s1,s2)) #add the new edge to the equivlenece clas
+            if my_name_id not in self.equiv_class_2_actions:
+                self.equiv_class_2_actions[my_name_id]=self.actions_s1_s2_clean[(s1,s2)]
     def PGM_equiv_class_dual_2_low(self, dual_exog_vec):
         """Computes the lowest reduced cost action per equivalence class."""
         
@@ -209,7 +215,7 @@ class Full_Multi_Graph_Object_given_l:
         ]
 
 
-    def construct_specific_pricing_pgm(self, dual_exog_vec):
+    def construct_specific_pricing_pgm(self, dual_exog_vec,rezStates_minus_by_node):
         """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
         
         # Step 1: Compute reduced costs and construct the pricing graph rows
@@ -224,23 +230,29 @@ class Full_Multi_Graph_Object_given_l:
 
         # Step 2: Create directed graph
         self.pgm_graph = nx.DiGraph()
-
+        #TODO:
         # Step 3: Add edges (tail -> head) with weights (4th index = action_red_cost)
         for tail, head, _, action_red_cost, action in self.rows_pgm_spec_pricing:
-            self.pgm_graph.add_edge(tail, head, weight=action_red_cost, action=action)
-
+            self.pgm_graph.add_edge(head,tail,  weight=action_red_cost, action=action)
+            # print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
+            print(f'node_head:{action.node_head},node_tail:{action.node_tail},weight:{action_red_cost}')
+        print('check here')
         # Step 4: Compute the shortest path from source to sink
-        shortest_path = nx.shortest_path(self.pgm_graph, source="source", target="sink", weight="weight", method="dijkstra")
+        # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
 
-        # Compute the shortest path cost
-        shortest_path_length = nx.shortest_path_length(self.pgm_graph, source="source", target="sink", weight="weight", method="dijkstra")
-
+        # # Compute the shortest path cost
+        # shortest_path_length = nx.shortest_path_length(self.pgm_graph, source=-1, target=-2, weight="weight", method="dijkstra")
+        shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
+                                                          source=rezStates_minus_by_node[self.l_id][-1][0].state_id, 
+                                                            target=rezStates_minus_by_node[self.l_id][-2][0].state_id, 
+                                                            weight="weight"
+                                                        )
         # Step 5: Extract the ordered list of states and actions along the shortest path
         ordered_path_rows = [
             (tail, head, self.pgm_graph[tail][head]["action"])
             for tail, head in zip(shortest_path[:-1], shortest_path[1:])
         ]
-
+        
         return shortest_path, shortest_path_length, ordered_path_rows
     # def make_null_action(self, size_rhs, size_res_vec):
     #     """Creates a NullAction with zero transitions and no exogenous contribution."""

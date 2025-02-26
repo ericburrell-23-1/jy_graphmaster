@@ -33,11 +33,9 @@ class Action:
         self.resource_consumption_vec = resource_consumption_vec
         self.indices_non_zero_max = indices_non_zero_max
         self.max_resource_vec = max_resource_vec
-        self.non_zero_indices_exog=self.construct_non_zero_indices
-        self.action_id = uuid.uuid4()
+        self.non_zero_indices_exog=np.nonzero(self.Exog_vec)[0]
+        self.action_id = uuid.uuid4().hex
 
-    def construct_non_zero_indices(self):
-        self.non_zero_indices_exog=np.nonzero(self.Exog_vec)
 
     def comp_red_cost(self,dual_vec):
         #Computes the reduced cost by mulitplying the dual vector times teh exogenous.  
@@ -48,6 +46,7 @@ class Action:
         Optimized version of get_head_state that works with NumPy matrix objects
         and avoids unnecessary computations.
         """
+        
         # Early return if resource requirements aren't met - using NumPy comparison
         diff_matrix = state_tail.state_vec - self.min_resource_vec
         if np.min(diff_matrix) < 0:

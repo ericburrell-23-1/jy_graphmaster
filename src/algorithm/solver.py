@@ -39,7 +39,7 @@ class GraphMaster:
     def __init__(self,
                  nodes: List[int],
                  actions: Dict[Tuple[int, int], Action],
-                 rhs_exog_vec: Dict[int, float],
+                 rhs_exog_vec: np.ndarray,
                  initial_resource_state: Dict[str, int],
                  initial_res_states: Set[State],
                  initial_res_actions: Set[Action],
@@ -63,6 +63,7 @@ class GraphMaster:
         self.null_action_info = null_action_info
         #self.node_to_list = node_to_list
         self.index_to_multi_graph = {}
+        self.graph_to_index = {}
         self.list_of_graph =[]
         self.res_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
@@ -73,7 +74,7 @@ class GraphMaster:
         size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
         my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.null_action_info)
-        self.res_states_minus=self.initial_res_states
+        self.res_states_minus:Set[State]=self.initial_res_states
         self.res_actions=self.initial_res_actions
         #l_id = 0
         #multi_graph = Full_Multi_Graph_Object_given_l(l_id,self.initial_res_states,self.initial_res_actions,self.dominate_actions)
@@ -83,7 +84,7 @@ class GraphMaster:
         iteration = 1
         incombentLP = np.inf
         while iteration < max_iterations:
-            pgm_solver = PGM_appraoch(self.list_of_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.null_action_info)
+            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.null_action_info)
             primal_sol,dual_exog,cur_lp = pgm_solver.call_PGM()
             self.res_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
             incombentLP = cur_lp
@@ -107,7 +108,7 @@ class GraphMaster:
             new_multi_graph.initialize_system()
             self.index_to_multi_graph[l_id] = new_multi_graph
             self.list_of_graph.append(new_multi_graph)
-            self.res_states_minus = self.res_actions_minus + states_used_in_this_col
+            self.res_states_minus = self.res_states_minus + states_used_in_this_col
             self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
             iteration += 1
             self.restricted_master_problem = 0

@@ -140,7 +140,7 @@ class CVRP(OptimizationProblem):
                 # DEFINE COVERAGE CONSTRAINT RHS
                 self.constraint_name_to_index[str(("Cover", origin_node))] = idx
                 self.rhs_constraint_name_to_index[str(("Cover", origin_node))] = idx
-                self.rhs_index_to_constraint_name[idx]=str(("Cover", origin_node))
+                self.rhs_index_to_constraint_name[idx] = str(("Cover", origin_node))
                 idx += 1
 
             for destination_node in self.nodes:
@@ -178,6 +178,11 @@ class CVRP(OptimizationProblem):
                 action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec)
                 self.actions[origin_node, destination_node] = [action]
                 #start delete
+                print(f'origin:{origin_node},destination:{destination_node}')
+                print(f'trans_min_input:{trans_min_input},trans_term_min:{trans_term_min},trans_term_add:{trans_term_add}')
+                print(f'trans_term_min:{min_resource_vec.toarray()},trans_term_vec{resource_consumption_vec.toarray()},indices_non_zero_max{indices_non_zero_max},max_resource_vec{max_resource_vec.toarray()}')
+                print('checkhere')
+        print('checkhere')
                 
 
     def _create_null_action_info(self):
@@ -216,17 +221,11 @@ class CVRP(OptimizationProblem):
 
     def _create_initial_res_states(self):
         """Note to Julian: No code exists for this yet."""
-        full_resource_dict = np.zeros(self.number_of_resources)
+        full_resource_dict = np.ones(self.number_of_resources)
         full_resource_dict[0] = self.capacity
         full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
         empty_resource_dict = np.zeros(self.number_of_resources)
         empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
-        # full_resource_dict = {"cap_remain": self.capacity}
-        # empty_resource_dict = {"cap_remain": 0}
-        
-        # for node in self.nodes:
-        #     full_resource_dict[f'can_visit: {node}'] = 1
-        #     empty_resource_dict[f'can_visit: {node}'] = 0
 
         #one for the source
         source_state = State(-1,full_resource_vec,0,True,False)
@@ -240,9 +239,13 @@ class CVRP(OptimizationProblem):
         #one for each node with capacity remaining at maximum
         for node in self.nodes:
             if node > 0:
-                node_state = State(node,full_resource_vec,0,False,False)
+                this_res = np.zeros(self.number_of_resources)
+                this_res[node] =1
+                this_res[0]=self.capacity
+                node_state = State(node,csr_matrix(this_res.reshape(1,-1)),0,False,False)
                 self.initial_res_states.add(node_state)
-
+        print('check here')
+        
     def _sorted_nearest_node(self):
         #self.cost_matrix =  {(u,v): self.distance(u,v) for u in self.nodes for v in self.nodes }
         self.neighbors_by_distance = {
