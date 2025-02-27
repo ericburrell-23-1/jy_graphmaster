@@ -76,20 +76,53 @@ class Full_Multi_Graph_Object_given_l:
         # Iterate over all actions
         for a1 in self.all_actions:
             node_tail, node_head = a1.node_tail, a1.node_head
+            #print('a1')
+            #print(a1.action_id)
+            #print('node_tail, node_head')
+            #print([node_tail, node_head])
             # Process state pairs
+            #print('resStates_by_node[node_tail]')
+            #print(self.resStates_by_node[node_tail])
             for state_tail in self.resStates_by_node[node_tail]:
                 head_ideal = a1.get_head_state(state_tail,self.l_id)
+                #if node_head==-2:
+                #    print('head_ideal')
+                #    print(head_ideal)
+                #    input('hi')
+                #print('hi')
                 if head_ideal== None:
                     continue
                 for state_head in self.resStates_by_node[node_head]:
-                    if head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
+                    
+                    does_dom,does_equal=head_ideal.this_state_dominates_input_state(state_head)
+                    #if node_head==-2:
+                        #print('does_dom')
+                        #print(does_dom)
+                        #print('does_equal')
+                        #print(does_equal)
+                        #input('im here this is good')
+                    if does_dom or does_equal: #head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
                         key = (state_tail, state_head)
  
                         # Store results efficiently
                         self.actions_ub_given_s1s2_2[key].add(a1)
                         self.action_ub_tail_head[a1][state_tail].add(state_head)
                         self.action_ub_head_tail[a1][state_head].add(state_tail)
- 
+         #               if node_head==-2:
+         #                   print('im here this is what I wanted')
+         #                   print('node_head')
+         #                   print(node_head)
+         #                   print('node_tail')
+         #                   print(node_tail)
+         #                   input('hold')
+        #    if node_head==-2:
+        #        print('node_head')
+        #        print(node_head)
+        #        print('node_tail')
+        #        print(node_tail)
+        #        print('input hi')
+        #print('dojne making actions ub')
+        #input('----')
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
         #state_2_dom_states_dict is a dictionary that when s is put in provdies all states taht s dominates
@@ -197,6 +230,7 @@ class Full_Multi_Graph_Object_given_l:
         """Computes the lowest reduced cost action per equivalence class."""
         
         # Compute reduced costs for all actions
+
         self.action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
  
         # Find the action with the lowest reduced cost per equivalence class
@@ -234,9 +268,9 @@ class Full_Multi_Graph_Object_given_l:
         #TODO:
         # Step 3: Add edges (tail -> head) with weights (4th index = action_red_cost)
         for tail, head, _, action_red_cost, action in self.rows_pgm_spec_pricing:
-            self.pgm_graph.add_edge(head,tail,  weight=action_red_cost, action=action)
+            self.pgm_graph.add_edge(tail,head,  weight=action_red_cost, action=action)
             # print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
-            print(f'node_head:{action.node_head},node_tail:{action.node_tail},weight:{action_red_cost}')
+            print(f'node_head:{action.node_tail},node_tail:{action.node_head},weight:{action_red_cost}')
         print('check here')
         # Step 4: Compute the shortest path from source to sink
         # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")

@@ -41,6 +41,7 @@ class GraphMaster:
                  actions: Dict[Tuple[int, int], Action],
                  rhs_exog_vec: np.ndarray,
                  initial_resource_state: Dict[str, int],
+                 initial_resource_vector:np.ndarray,
                  initial_res_states: Set[State],
                  initial_res_actions: Set[Action],
                  state_update_module: StateUpdateFunction,
@@ -54,6 +55,7 @@ class GraphMaster:
         self.actions = set().union(*actions.values())
         self.rhs_exog_vec = rhs_exog_vec
         self.initial_resource_state = initial_resource_state
+        self.initial_resource_vector = initial_resource_vector
         self.initial_res_states = initial_res_states
         self.initial_res_actions = initial_res_actions
         self.state_update_function = state_update_module
@@ -64,10 +66,9 @@ class GraphMaster:
         #self.node_to_list = node_to_list
         self.index_to_multi_graph = {}
         self.graph_to_index = {}
-        self.list_of_graph =[]
         self.res_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
-        self.pricing_problem = PricingProblem(initial_res_actions,initial_res_states,nodes)
+        self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
         
     def solve(self):
         l_id = 0
@@ -80,17 +81,16 @@ class GraphMaster:
         #multi_graph = Full_Multi_Graph_Object_given_l(l_id,self.initial_res_states,self.initial_res_actions,self.dominate_actions)
         my_init_graph.initialize_system()
         self.index_to_multi_graph[l_id] = my_init_graph
-        self.list_of_graph.append(my_init_graph)
         iteration = 1
         incombentLP = np.inf
         while iteration < max_iterations:
             pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.null_action_info)
-            primal_sol,dual_exog,cur_lp = pgm_solver.call_PGM()
+            pgm_solver.call_PGM()
             self.res_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
-            incombentLP = cur_lp
+            incombentLP = pgm_solver.cur_lp
             #please remember every graph has its own source and sink
             
-            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(dual_exog)
+            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
             #please remember every graph has its own source and sink
             l_id += 1
             #all action used in specific column 
@@ -99,15 +99,14 @@ class GraphMaster:
             if reduced_cost >= -1e-6:
                 return {
                     'status': 'optimal',
-                    'x': primal_sol,
+                    'x': pgm_solver.primal_sol,
                     'iterations': iteration,
-                    'graph': self.multi_graph
+                    'graph': self.index_to_multi_graph.values()
                 }
             
             new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.null_action_info)
             new_multi_graph.initialize_system()
             self.index_to_multi_graph[l_id] = new_multi_graph
-            self.list_of_graph.append(new_multi_graph)
             self.res_states_minus = self.res_states_minus + states_used_in_this_col
             self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
             iteration += 1

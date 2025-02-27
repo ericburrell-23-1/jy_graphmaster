@@ -6,6 +6,7 @@ from cspy import BiDirectional, REFCallback
 from typing import List, Dict, Tuple
 from src.common.action import Action
 from src.common.state import State
+from src.common.helper import Helper
 EPSILON = 0.000001
 
 class PricingProblem:
@@ -18,11 +19,14 @@ class PricingProblem:
         find_lowest_reduced_cost_path: Solves the pricing subproblem.
     """
 
-    def __init__(self, actions: Dict[Tuple[int, int], List[Action]], initial_resource_state: Dict[str, int], nodes: List[int]):
+    def __init__(self, actions: Dict[Tuple[int, int], List[Action]], initial_resource_state: Dict[str, int], nodes: List[int], resource_name_to_index: Dict[str, int],initial_resource_vector:np.ndarray):
         self.actions = actions
         self.initial_resource_state = initial_resource_state
         self.nodes = nodes
-
+        self.number_of_resources = len(initial_resource_state)
+        self.min_resource_state = np.zeros(self.number_of_resources)
+        self.resource_name_to_index = resource_name_to_index
+        self.initial_resource_vector = initial_resource_vector
         #self._compute_resource_limits()
         
         # self.resource_extension_function = ResourceExtensionCallback(
@@ -63,7 +67,8 @@ class PricingProblem:
         Note: this function sucks. It's here so that we just have SOME way to solve pricing, especially for small problems.
         """
         ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION = float(1)
-        graph = nx.DiGraph(directed=True, n_res=self.number_of_resources, elementary=False)
+        ARBITRARY_RESOURCE_MAX = float(10000)
+        graph = nx.DiGraph(directed=True, n_res=self.number_of_resources + 1, elementary=False)
 
         for (origin_node, destination_node), action_list in self.actions.items():
             for action in action_list:
@@ -73,10 +78,10 @@ class PricingProblem:
                 if destination_node == -2:
                     destination_node = "Sink"
 
-                action_node = f"action_{action.origin_node}_{action.destination_node}_{action.action_id}"
+                action_node = f"action_{action.node_tail}_{action.node_head}_{action.action_id}"
 
-                exog_duals = dual_vector[:len(action.contribution_vector)]
-                dual_contribution = np.dot(action.contribution_vector, exog_duals)
+                exog_duals = dual_vector[:len(action.Exog_vec)]
+                dual_contribution = np.dot(action.Exog_vec, exog_duals)
                 edge_weight = action.cost - dual_contribution
 
                 # Create edge from `origin_node` to `action_node`
@@ -84,8 +89,8 @@ class PricingProblem:
                     origin_node,
                     action_node,
 
-                    res_cost=np.array([ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION] + [-float(action.trans_term_vec[resource])
-                                      for resource in self.resource_name_list]),
+                    res_cost=np.array([ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION] + [-float(action.trans_term_add[resource])
+                                      for resource in self.initial_resource_state]),
                     weight=edge_weight,
 
                     action=action  # Store the action object for traceability
@@ -96,17 +101,18 @@ class PricingProblem:
                     action_node,
                     destination_node,
                     res_cost=np.concatenate(
-                        [[ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION], np.zeros(self.number_of_resources - 1)]),
+                        [[ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION], np.zeros(self.number_of_resources)]),
                     weight=0,
                     action=None
                 )
-
-        max_res = self.max_resource_state
-        min_res = self.min_resource_state
+        max_res = [ARBITRARY_RESOURCE_MAX] + list(self.initial_resource_vector.toarray()[0])
+        #max_res = self.max_resource_state
+        min_res = [0]+ list(self.min_resource_state)
+        #min_res = self.min_resource_state
 
         # Solve the RCSPP
         problem = BiDirectional(
-            graph, max_res=max_res, min_res=min_res, direction="both", elementary=False)
+            graph, max_res=max_res, min_res=min_res, direction="both", elementary=True)
         problem.run()
 
         path = problem.path

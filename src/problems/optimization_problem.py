@@ -43,6 +43,7 @@ class OptimizationProblem(ABC):
             self.nodes,
             self.actions,
             self.rhs_vector,
+            self.initial_resource_dict,
             self.initial_resource_vector,
             self.initial_res_states,
             self.initial_res_actions,
@@ -50,7 +51,8 @@ class OptimizationProblem(ABC):
             self.dominated_action_pairs,
             self.resource_name_to_index,
             self.number_of_resources,
-            self.initial_null_actions
+            self.initial_null_actions,
+            
             #node_to_list
         )
         self.solver.solve()

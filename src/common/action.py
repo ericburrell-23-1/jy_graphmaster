@@ -20,7 +20,7 @@ class Action:
 
     """
 
-    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_tail:State,node_head:State,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix):
+    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:State,node_tail:State,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix):
         self.trans_min_input=trans_min_input #min input term assocatied with an action
         self.trans_term_add=trans_term_add #addition term assocaited with an action
         self.trans_term_min=trans_term_min  #minimum transition term associated with an action 
@@ -39,6 +39,9 @@ class Action:
 
     def comp_red_cost(self,dual_vec):
         #Computes the reduced cost by mulitplying the dual vector times teh exogenous.  
+        
+       
+        
         return self.cost-np.sum(self.Exog_vec*dual_vec)
     
     def get_head_state(self, state_tail: State, l_id):

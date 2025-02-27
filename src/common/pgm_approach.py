@@ -19,6 +19,7 @@ class PGM_appraoch:
         self.index_to_graph:DefaultDict[int,Full_Multi_Graph_Object_given_l] = index_to_graph
         self.my_PGM_graph_list:List[Full_Multi_Graph_Object_given_l]=list(self.index_to_graph.values()) #list of all of the PGM graphs
         self.prob_RHS:np.ndarray=prob_RHS #RHS
+
         self.rez_states_minus:Set[State]=rez_states_minus #has all of the states in rez states minus by graph . So if I put in a grpah id then i get out the rez states minus to initialize
         self.make_res_states_minus_by_node()
         self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
@@ -26,6 +27,7 @@ class PGM_appraoch:
         self.null_action_info = null_action_info
         self.dominated_actions = dominated_action
         self.init_defualt_jy_options()
+        self.primal_solution, self.dual_solution, self.optimal_value = None, None, None
 
         
     def make_res_states_minus_by_node(self):
@@ -73,6 +75,10 @@ class PGM_appraoch:
             did_find_neg_red_cost=False #indicate if we found a negative reduced cost 
             for my_graph in self.my_PGM_graph_list: #Iterate over all graphs and find the shortest path
                 shortest_path, shortest_path_length, ordered_path_rows=my_graph.construct_specific_pricing_pgm(self.dual_exog,self.rezStates_minus_by_node) #construct and call pricing problem
+                print('shortest_path')
+                print(shortest_path)
+                print('shortest_path_length')
+                print(shortest_path_length)
                 if shortest_path_length<-self.jy_options['epsilon']: #if we have a negative reduced cost column we will apply expansion
                     self.apply_expansion_operator(shortest_path, shortest_path_length, ordered_path_rows,my_graph)# do teh expasnion operator
                     did_find_neg_red_cost=True #did find negative reduced cost is set to true
@@ -106,17 +112,16 @@ class PGM_appraoch:
             self.rezStates_minus_by_node[my_graph.l_id][node].add(state)
 
         # Step 5: Extract used actions from ordered path rows
-        if not hasattr(self, "res_actions"):  # Ensure `res_actions` exists
-            self.res_actions = set()
+        #if not hasattr(self, "rez_actions"):  # Ensure `res_actions` exists
+        #    self.rez_actions = set()
 
         for _, _, action in ordered_path_rows:
             if action:  # Ensure the action is not None
-                self.res_actions.add(action)
+                self.rez_actions_minus.add(action)
 
         # Step 6: Update `res_states_minus` as the union of all `res_states_minus_by_graph`
         self.res_states_minus = set().union(*self.res_states_minus_by_graph.values())
 
-        print(f"Expansion applied: {len(path_states)} states and {len(self.res_actions)} actions added to graph {my_graph.l_id}.")
 
 
     def apply_compression_operator(self):
@@ -128,20 +133,20 @@ class PGM_appraoch:
         active_vars = {var_name for var_name, value in self.primal_sol.items() if value > 1e-6}
 
         # Step 2: Separate actions and edges
-        self.rez_actions = set()  # Set of selected actions
+        self.rez_actions_minus = set()  # Set of selected actions
         active_edges = set()  # Set of selected edges (g, s1, s2)
 
         for var_name in active_vars:
             if var_name[0] == "eq_act_var":  # Action variable format: ('eq_act_var', g, eq_class, action)
                 _, g, eq_class, action = var_name  # Extract components
-                self.rez_actions.add(action)  # Store the action
+                self.rez_actions_minus.add(action)  # Store the action
 
             elif var_name[0] == "edge":  # Edge variable format: ('edge', g, s1, s2)
                 _, g, s1, s2 = var_name  # Extract graph and states
                 active_edges.add((g, s1, s2))
         #Remove null action really this is just executed once so hecne the break
         for g in self.my_PGM_graph_list:
-            self.rez_actions=self.rez_actions-g.null_action
+            self.rez_actions_minus=self.rez_actions_minus-g.null_action
             break
         # Step 3: Ensure `rezStates_minus_by_node[g]` exists as a defaultdict(set)
         self.rezStates_minus_by_node = {g: defaultdict(set) for g in self.pgm_graph_2_rmp_graph}  
@@ -158,7 +163,7 @@ class PGM_appraoch:
         self.res_states_minus= set().union(*self.res_states_minus_by_graph.values())
 
     def return_rez_states_minus_and_res_actions(self):
-        return self.res_states_minus,self.res_actions
+        return self.rez_states_minus,self.rez_actions_minus
 
     def call_PGM_RMP_solver_from_scratch(self):
         """Constructs and initializes the RMP solver from scratch."""
@@ -189,6 +194,8 @@ class PGM_appraoch:
         for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
             for my_eq in rmp_graph.equiv_class_2_s1_s2_pairs:
                 non_exog_name = ('eq_con', my_eq, g.l_id)
+                self.all_con_names.add(non_exog_name)
+
                 self.ubCon[non_exog_name] = 0
                 self.lbCon[non_exog_name] = 0
 
@@ -198,13 +205,19 @@ class PGM_appraoch:
                 for my_state in rmp_graph.resStates_minus_by_node[my_node]:
                     if not my_state.is_source and not my_state.is_sink:
                         non_exog_name = ('flow_con', my_state.state_id, g.l_id)
+                        self.all_con_names.add(non_exog_name)
+
                         self.ubCon[non_exog_name] = 0
                         self.lbCon[non_exog_name] = 0
-
         # Step 6: Create variables and associated actions
         for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
+            #input('1  i should make it here lots of times')
+
             for my_eq in rmp_graph.equiv_class_2_s1_s2_pairs:
+                #input('2 i should make it here lots of times')
+
                 for my_act in rmp_graph.equiv_class_2_actions[my_eq]:
+                    #input('3  i should make it here lots of times')
                     my_cost = my_act.cost  # Get cost
                     my_exog = my_act.Exog_vec  # Get exogenous vector
                     my_contrib_dict = defaultdict()  # Dictionary for contributions
@@ -217,7 +230,7 @@ class PGM_appraoch:
                     # Create constraint for the equivalence class
                     non_exog_name = ('eq_con', my_eq, g.l_id)
                     my_contrib_dict[non_exog_name] = -1
-
+                    
                     # Define variable name and store it
                     my_name = ('eq_act_var', g.l_id, my_eq, my_act.action_id)
                     #TODO: remove my_exog here
@@ -233,25 +246,140 @@ class PGM_appraoch:
 
                     non_exog_name = ('eq_con', my_eq, g.l_id)
                     my_contrib_dict[non_exog_name] = 1
-
+                    
                     # Flow conservation constraints
+                    
                     if not s1.is_source:
                         flow_in_name_exog_name = ('flow_con', s1.state_id, g.l_id)
                         my_contrib_dict[flow_in_name_exog_name] = 1
+                        
                     if not s2.is_sink:
                         flow_out_name_exog_name = ('flow_con', s2.state_id, g.l_id)
                         my_contrib_dict[flow_out_name_exog_name] = -1
+                        
 
                     # Define variable name and store it
                     my_name = ('edge', g.l_id, s1.state_id, s2.state_id)
                     #TODO: remove my_exog here
                     new_var = jy_var(my_cost, my_contrib_dict, my_name)
                     self.all_vars.append(new_var)
+                    #print('new_var')
+                    #print(new_var)
+                    #input('----')
+        
+
 
         primal_solution, dual_solution, optimal_value = self.solve_with_pulp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
-        return  primal_solution, dual_solution, optimal_value
+        
+        dual_exog=np.zeros(self.prob_RHS.size)
+        for exog_num in range(self.prob_RHS.size):
+            exog_name = ('exog', exog_num)
+            exog_name_aug="LowerBound_"+str(exog_name)
+            #print('exog_name')
+            #print(exog_name)
+            #print('exog_name_aug')
+            #print(exog_name_aug)
+            #print('exog_name_aug in dual_solution')
+            #print(exog_name_aug in dual_solution)
+            dual_exog[exog_num]=dual_solution[exog_name_aug]
+        
+        return primal_solution, dual_exog, optimal_value
 
+    def solve_with_pulp(self, jy_vars, all_con_names, lbCon, ubCon):
+        # Step 1: Create a PuLP minimization problem
+        prob = pl.LpProblem(name="OptimizationProblem", sense=pl.LpMinimize)
+        
+        # Step 2: Create PuLP variables
+        pulp_vars = {}
+        for var in jy_vars:
+            var_name = var.my_name
+            pulp_vars[var_name] = pl.LpVariable(name=str(var_name), lowBound=0, cat='Continuous')
+        
+        # Step 3: Define the Objective Function (Minimize Cost)
+        objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
+        prob += objective
+        
+        # Step 4: Add Constraints
+        constraint_dict = {}  # Store constraint objects for dual values
+        constraint_mapping = {}  # Map from original constraint name to the actual PuLP constraint name
+        
+        for con_name in all_con_names:
+            # Compute constraint sum from contributions
+            constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
+            
+            # Apply lower and upper bounds if they exist
+            if con_name in lbCon:
+                constraint = constraint_expr >= lbCon[con_name]
+                # Create a much simpler constraint name using a counter
+                constraint_name = f"LB_{len(constraint_dict)}"
+                prob += (constraint, constraint_name)
+                constraint_dict[constraint_name] = constraint
+                constraint_mapping[f"LowerBound_{con_name}"] = constraint_name
+                
+            if con_name in ubCon:
+                constraint = constraint_expr <= ubCon[con_name]
+                # Create a much simpler constraint name using a counter
+                constraint_name = f"UB_{len(constraint_dict)}"
+                prob += (constraint, constraint_name)
+                constraint_dict[constraint_name] = constraint
+                constraint_mapping[f"UpperBound_{con_name}"] = constraint_name
+        
+        # Step 4.5: Print the model formulation
+        self.print_pulp_formulation(prob)
+        
+        # Step 5: Solve the problem
+        prob.solve()
+        
+        # Step 6: Extract solutions
+        primal_solution = {}
+        for var_name, pulp_var in pulp_vars.items():
+            primal_solution[var_name] = pulp_var.value()
+        
+        # Extract dual values
+        dual_solution = {}
+        
+        if prob.status == 1:  # If the problem was solved optimally
+            # Print all constraint names that PuLP knows about
+            print("Available constraints in PuLP:", list(prob.constraints.keys()))
+            
+            # First, get all the duals using the simplified names we created
+            temp_duals = {}
+            for simplified_name in constraint_dict.keys():
+                try:
+                    if simplified_name in prob.constraints:
+                        temp_duals[simplified_name] = prob.constraints[simplified_name].pi
+                    else:
+                        # Try a direct lookup in constraints dictionary
+                        found = False
+                        for name in prob.constraints:
+                            if simplified_name in name:  # Check if our simplified name is part of the actual name
+                                temp_duals[simplified_name] = prob.constraints[name].pi
+                                found = True
+                                print(f"Found constraint {simplified_name} as {name}")
+                                break
+                        
+                        if not found:
+                            print(f"Warning: Could not find constraint: {simplified_name}")
+                            temp_duals[simplified_name] = 0
+                except Exception as e:
+                    print(f"Error getting dual for {simplified_name}: {e}")
+                    temp_duals[simplified_name] = 0
+            
+            # Now map back to the original constraint names format
+            for original_name, simplified_name in constraint_mapping.items():
+                dual_solution[original_name] = temp_duals.get(simplified_name, 0)
+        else:
+            # If the problem wasn't solved optimally, set all duals to 0
+            for original_name in constraint_mapping.keys():
+                dual_solution[original_name] = 0
+        
+        dual_sol = np.array(list(dual_solution.values()))
+        
+        # Get optimal objective value
+        optimal_value = pl.value(prob.objective)
 
+        
+        return primal_solution, dual_solution, optimal_value
 
     def construct_and_solve_lp(self, jy_vars, all_con_names, lbCon, ubCon):
         """
@@ -291,7 +419,7 @@ class PGM_appraoch:
                 prob.addConstraint(constraint)
                 constraint_dict[f"UpperBound_{con_name}"] = constraint
 
-
+        
 
 
         prob.solve()
@@ -319,11 +447,7 @@ class PGM_appraoch:
 
         return primal_solution, dual_sol, optimal_value
 
-
-
-
-
-    def solve_with_pulp(self,jy_vars, all_con_names, lbCon, ubCon):
+    def solve_with_pulp_not_use(self,jy_vars, all_con_names, lbCon, ubCon):
         # Step 1: Create a PuLP minimization problem
         prob = pl.LpProblem(name="OptimizationProblem", sense=pl.LpMinimize)
         
@@ -395,9 +519,169 @@ class PGM_appraoch:
             for original_name in constraint_mapping.keys():
                 dual_solution[original_name] = 0
         
-        dual_sol = np.array(list(dual_solution.values()))
+        #dual_sol = np.array(list(dual_solution.values()))
         
         # Get optimal objective value
         optimal_value = pl.value(prob.objective)
         
-        return primal_solution, dual_sol, optimal_value
+        #self.print_pulp_formulation(prob)
+
+        return primal_solution, dual_solution, optimal_value
+
+ 
+    def print_pulp_formulation(self,prob):
+
+        """
+
+        Print the formulation of a PuLP model with variable names, coefficients, and RHS values.
+
+        Args:
+
+            prob: A PuLP problem object
+
+        """
+
+        print("=" * 80)
+
+        print("MODEL FORMULATION")
+
+        print("=" * 80)
+
+        # Print objective function
+
+        print("\nOBJECTIVE FUNCTION:")
+
+        if prob.sense == 1:  # Minimize
+
+            print("Minimize:")
+
+        else:
+
+            print("Maximize:")
+
+        obj_terms = []
+
+        for var, coeff in prob.objective.items():
+
+            if coeff != 0:  # Only include non-zero coefficients
+
+                if abs(coeff) == 1:
+
+                    sign = "-" if coeff < 0 else "+"
+
+                    obj_terms.append(f"{sign} {var.name}")
+
+                else:
+
+                    sign = "-" if coeff < 0 else "+"
+
+                    obj_terms.append(f"{sign} {abs(coeff)} {var.name}")
+
+        # Format the objective function nicely
+
+        obj_str = " ".join(obj_terms)
+
+        # Replace leading "+" with empty string if it exists
+
+        obj_str = obj_str[2:] if obj_str.startswith("+ ") else obj_str
+
+        print(f"    {obj_str}")
+
+        # Print constraints
+
+        print("\nCONSTRAINTS:")
+
+        for name, constraint in prob.constraints.items():
+
+            con_terms = []
+
+            # Get the left-hand side terms
+
+            for var, coeff in constraint.items():
+
+                if coeff != 0:  # Only include non-zero coefficients
+
+                    if abs(coeff) == 1:
+
+                        sign = "-" if coeff < 0 else "+"
+
+                        con_terms.append(f"{sign} {var.name}")
+
+                    else:
+
+                        sign = "-" if coeff < 0 else "+"
+
+                        con_terms.append(f"{sign} {abs(coeff)} {var.name}")
+
+            # Format the constraint left-hand side
+
+            con_str = " ".join(con_terms)
+
+            # Replace leading "+" with empty string if it exists
+
+            con_str = con_str[2:] if con_str.startswith("+ ") else con_str
+
+            # Determine constraint sense and right-hand side
+
+            sense = ""
+
+            rhs = 0
+
+            if constraint.sense == 1:  # ≤
+
+                sense = "<="
+
+                rhs = constraint.constant * -1
+
+            elif constraint.sense == -1:  # ≥
+
+                sense = ">="
+
+                rhs = constraint.constant * -1
+
+            else:  # ==
+
+                sense = "="
+
+                rhs = constraint.constant * -1
+
+            print(f"[{name}]: {con_str} {sense} {rhs}")
+
+        # Print variable bounds
+
+        print("\nVARIABLE BOUNDS:")
+
+        for var in prob.variables():
+
+            lb = var.lowBound if var.lowBound is not None else "-inf"
+
+            ub = var.upBound if var.upBound is not None else "+inf"
+
+            if lb == ub:
+
+                print(f"{var.name} = {lb}")
+
+            else:
+
+                print(f"{lb} <= {var.name} <= {ub}")
+
+        # Print variable types
+
+        print("\nVARIABLE TYPES:")
+
+        for var in prob.variables():
+
+            var_type = "Continuous"
+
+            if var.cat == pl.LpInteger:
+
+                var_type = "Integer"
+
+            elif var.cat == pl.LpBinary:
+
+                var_type = "Binary"
+
+            print(f"{var.name}: {var_type}")
+
+        print("=" * 80)
+    

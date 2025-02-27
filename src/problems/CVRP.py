@@ -91,17 +91,20 @@ class CVRP(OptimizationProblem):
  
     def _build_problem_model(self):
         num_customers = len(self.demands) - 2
- 
-        self.nodes = []
-        self.initial_resource_state = {"cap_remain": self.capacity}
+
+        self.nodes = [-1]
+        self.initial_resource_dict = {"cap_remain": self.capacity}
         self.rhs_vector = ones(num_customers)
         self.actions = {}
         
         idx = 0
         self.constraint_name_to_index = {}
         for node in self.demands.keys():
-            self.nodes.append(node)
-            self.initial_resource_state[f'can_visit: {node}'] = 1
+            if node not in {-1,-2}:
+                self.nodes.append(node)
+                self.initial_resource_dict[f'can_visit: {node}'] = 1
+        
+        self.nodes.append(-2)
  
  
         #Make default dictionary for actions
@@ -249,6 +252,7 @@ class CVRP(OptimizationProblem):
         full_resource_dict = np.ones(self.number_of_resources)
         full_resource_dict[0] = self.capacity
         full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
+        self.initial_resource_vector = full_resource_vec
         empty_resource_dict = np.zeros(self.number_of_resources)
         empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
  
