@@ -6,6 +6,8 @@ from collections import defaultdict
 from src.common.jy_var import jy_var
 from typing import Dict, DefaultDict, Set, List
 import numpy as np
+import pulp as pl
+
 import xpress as xp
 
 class PGM_appraoch:
@@ -246,7 +248,7 @@ class PGM_appraoch:
                     new_var = jy_var(my_cost, my_contrib_dict, my_name)
                     self.all_vars.append(new_var)
 
-        primal_solution, dual_solution, optimal_value = self.construct_and_solve_lp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
+        primal_solution, dual_solution, optimal_value = self.solve_with_pulp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
         return  primal_solution, dual_solution, optimal_value
 
 
@@ -318,8 +320,84 @@ class PGM_appraoch:
         return primal_solution, dual_sol, optimal_value
 
 
-#given the following i want a function making and LP using Pulp.  I have jy_var defined below.    
-# a list of jy_vars called jy_vars (each wiht a lower bound of zero and upper bound of inntinite)
-#all_con_names is a set of names of constraints
-#lbCon:  maps a constraint name to a lower bound for the contraint RHS
-#ubCon:  maps a constraint name to a upper bound for the contraint RHS
+
+
+
+    def solve_with_pulp(self,jy_vars, all_con_names, lbCon, ubCon):
+        # Step 1: Create a PuLP minimization problem
+        prob = pl.LpProblem(name="OptimizationProblem", sense=pl.LpMinimize)
+        
+        # Step 2: Create PuLP variables
+        pulp_vars = {}
+        for var in jy_vars:
+            var_name = var.my_name
+            pulp_vars[var_name] = pl.LpVariable(name=str(var_name), lowBound=0, cat='Continuous')
+        
+        # Step 3: Define the Objective Function (Minimize Cost)
+        objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
+        prob += objective
+        
+        # Step 4: Add Constraints
+        constraint_dict = {}  # Store constraint objects for dual values
+        constraint_mapping = {}  # Map from constraint name to the actual PuLP constraint name
+        
+        for con_name in all_con_names:
+            # Compute constraint sum from contributions
+            constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
+            
+            # Apply lower and upper bounds if they exist
+            if con_name in lbCon:
+                constraint = constraint_expr >= lbCon[con_name]
+                # Use a simple string for the constraint name to avoid tuple formatting issues
+                constraint_name = f"LB_{str(con_name).replace('(', '').replace(')', '').replace(',', '_').replace(' ', '')}"
+                prob += (constraint, constraint_name)
+                constraint_dict[constraint_name] = constraint
+                constraint_mapping[f"LowerBound_{con_name}"] = constraint_name
+                
+            if con_name in ubCon:
+                constraint = constraint_expr <= ubCon[con_name]
+                # Use a simple string for the constraint name to avoid tuple formatting issues
+                constraint_name = f"UB_{str(con_name).replace('(', '').replace(')', '').replace(',', '_').replace(' ', '')}"
+                prob += (constraint, constraint_name)
+                constraint_dict[constraint_name] = constraint
+                constraint_mapping[f"UpperBound_{con_name}"] = constraint_name
+        
+        # Step 5: Solve the problem
+        prob.solve()
+        
+        # Step 6: Extract solutions
+        primal_solution = {}
+        for var_name, pulp_var in pulp_vars.items():
+            primal_solution[var_name] = pulp_var.value()
+        
+        # Extract dual values
+        dual_solution = {}
+        
+        if prob.status == 1:  # If the problem was solved optimally
+            # First, get all the duals using the simplified names we created
+            temp_duals = {}
+            for simplified_name in constraint_dict.keys():
+                try:
+                    if simplified_name in prob.constraints:
+                        temp_duals[simplified_name] = prob.constraints[simplified_name].pi
+                    else:
+                        print(f"Warning: Could not find constraint: {simplified_name}")
+                        temp_duals[simplified_name] = 0
+                except Exception as e:
+                    print(f"Error getting dual for {simplified_name}: {e}")
+                    temp_duals[simplified_name] = 0
+            
+            # Now map back to the original constraint names format
+            for original_name, simplified_name in constraint_mapping.items():
+                dual_solution[original_name] = temp_duals.get(simplified_name, 0)
+        else:
+            # If the problem wasn't solved optimally, set all duals to 0
+            for original_name in constraint_mapping.keys():
+                dual_solution[original_name] = 0
+        
+        dual_sol = np.array(list(dual_solution.values()))
+        
+        # Get optimal objective value
+        optimal_value = pl.value(prob.objective)
+        
+        return primal_solution, dual_sol, optimal_value
