@@ -10,6 +10,6 @@ class StateUpdateFunction(ABC):
         self.nodes = nodes
         self.actions = actions
     @abstractmethod
-    def get_new_states(list_of_actions: List[Action]) -> Set[State]:
+    def get_new_states(list_of_actions: List[Action]):
         """Generates a set of states to add to `res_states`. Computes this from the `list_of_actions` found in pricing."""
         pass

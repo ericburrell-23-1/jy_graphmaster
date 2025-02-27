@@ -90,12 +90,37 @@ class GraphMaster:
             incombentLP = pgm_solver.cur_lp
             #please remember every graph has its own source and sink
             
-            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
+            #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
             #please remember every graph has its own source and sink
             l_id += 1
             #all action used in specific column 
-            [new_states_describing_new_graph,states_used_in_this_col]=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+            if 1>0:
+                beta_term, new_states_describing_new_graph = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
+                reduced_cost = -np.inf
+            #beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+            # print('route')
+            # print(list_of_nodes_in_shortest_path)
+            print('beta term')
+            print(beta_term)
+
+            print('possible state in beta')
+            for node_value in beta_term:
+                for state in new_states_describing_new_graph:
+                    if node_value == state.node:
+                        print(f'node: {state.node}')
+                        print(f'state_vec: {state.state_vec.toarray()[0]}')
             
+            #print('state in path')
+
+            # for node_value in beta_term:
+            #     for state in states_used_in_this_col:
+            #         if node_value == state.node:
+            #             state = node_to_state[node_value]
+            #             print(f'node: {state.node}')
+            #             print(f'state_vec: {state.state_vec.toarray()[0]}')
+
+            print('stop here')
+                
             if reduced_cost >= -1e-6:
                 return {
                     'status': 'optimal',

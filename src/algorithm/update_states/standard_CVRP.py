@@ -5,6 +5,8 @@ from src.common.state import State
 from src.algorithm.update_states.state_update_function import StateUpdateFunction
 from numpy import zeros, ones
 from src.common.helper import Helper
+from scipy.sparse import csr_matrix
+import random
 
 class CVRP_state_update_function(StateUpdateFunction):
     """This module is very important!!! It tells us how we will update `res_states` after pricing!!!
@@ -22,11 +24,17 @@ class CVRP_state_update_function(StateUpdateFunction):
         self.number_of_resources = number_of_resources
         
 
+    def get_states_from_random_beta(self, customer_list,l_id):
+        this_beta = customer_list[1:-1]
+        random.shuffle(this_beta)
+        new_states:List[State] = self._generate_state_based_on_beta(this_beta,l_id)
+        return [-1]+this_beta+[-2],new_states
+
     def get_new_states(self, list_of_customer, list_of_actions,l_id):
-        this_beta = self._generate_beta_term(list_of_customer)
-        new_states = self._generate_state_based_on_beta(this_beta,l_id)
-        states_in_path = self.get_states_from_action_list(list_of_actions,l_id)
-        return new_states,  states_in_path
+        this_beta = self._generate_beta_term(list_of_customer[1:-1]) #attached customer not in path into nearest customer in path
+        new_states:List[State] = self._generate_state_based_on_beta(this_beta,l_id) # generate possible states with given beta
+        states_in_path:List[State] = self.get_states_from_action_list(list_of_actions,l_id) # generate states in path
+        return [-1]+this_beta+[-2], new_states,  states_in_path
     
     def _generate_beta_term(self, list_of_customer):
         idx_of_customer = {u: -1 for u in self.nodes if u not in {-1,-2}}
@@ -63,19 +71,20 @@ class CVRP_state_update_function(StateUpdateFunction):
             for d in poss_demand_used:
                 resource_vector = myCanVisit.copy()
                 resource_vector['cap_remain'] = self.capacity-d
-                res_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,resource_vector)
+                _, res_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,resource_vector)
+
                 this_state = State(customer,res_vec,l_id,False,False)
                 myState.append(this_state)
                 node_to_states[customer].append(this_state)
         source_state_resource_vector = {
             f'can_visit: {u}': 1 for u in self.nodes if u not in {-1, -2}}
         source_state_resource_vector['cap_remain'] = self.capacity
-        source_state_res_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,source_state_resource_vector)
+        _,source_state_res_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,source_state_resource_vector)
         source_state = State(-1, source_state_res_vec, l_id,True,False)
         sink_state_resource_vector = {
             f'can_visit: {u}': 0 for u in self.nodes if u not in {-1, -2}}
         sink_state_resource_vector['cap_remain'] = 0
-        sink_state_res_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,sink_state_resource_vector)
+        _,sink_state_res_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,sink_state_resource_vector)
         sink_state = State(-2, sink_state_res_vec, l_id,False,True)
         myState.append(source_state)
         myState.append(sink_state)
@@ -114,18 +123,18 @@ class CVRP_state_update_function(StateUpdateFunction):
             return []
         states_list = []
         current_resources = self.initial_resource_vector.copy()
-        current_resources = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,current_resources)
-        pred_state = State(action_list[0].node_head,current_resources,l_id,action_list[0].node_head == -1,action_list[0].node_head == -2)
+        #_,current_resources = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,current_resources)
+        pred_state = State(action_list[0].node_tail,current_resources,l_id,action_list[0].node_tail == -1,action_list[0].node_head == -2)
         states_list.append(pred_state)
         for action in action_list:
-            new_resource_vector = action.get_tail_state(current_resources)
-            if new_resource_vector is None:
-                print(f"Invalid resource transition from {action.node_head} to {action.node_tail}")
-                break
-            new_state = State(action.node_head,current_resources,l_id,action.node_head == -1,action.node_head == -2)
+            new_state = action.get_head_state(pred_state,l_id)
+            # if new_resource_vector is None:
+            #     print(f"Invalid resource transition from {action.node_head} to {action.node_tail}")
+            #     break
+            # new_state = State(action.node_head,current_resources,l_id,action.node_head == -1,action.node_head == -2)
             
             states_list.append(new_state)
-            current_resources = new_resource_vector.copy()
+            pred_state = new_state
             
         return states_list
     

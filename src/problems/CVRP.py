@@ -86,7 +86,7 @@ class CVRP(OptimizationProblem):
         self.capacity = capacity
         self.demands = demands
         self.coordinates = coordinates
- 
+        print('check here')
     
  
     def _build_problem_model(self):
@@ -275,6 +275,8 @@ class CVRP(OptimizationProblem):
                 self.initial_res_states.add(node_state)
         print('check here')
         
+
+
     def _sorted_nearest_node(self):
         #self.cost_matrix =  {(u,v): self.distance(u,v) for u in self.nodes for v in self.nodes }
         self.neighbors_by_distance = {

@@ -66,8 +66,8 @@ class Action:
             head_state_vec[0, idx] = min(curr_val, max_val)
         
         # Create new state object
-        if self.node_head == -1:
-            head_state = State(self.node_head, head_state_vec, l_id, True, False)
+        if self.node_head == -2:
+            head_state = State(self.node_head, head_state_vec, l_id, False, True)
         else:
             head_state = State(self.node_head, head_state_vec, l_id, False, False)
         
@@ -88,8 +88,8 @@ class Action:
             tail_state_vec[0, idx] = max(curr_val, max_val)
         
         # Create the appropriate State object
-        if self.node_tail == -2:
-            tail_state = State(self.node_tail, tail_state_vec, l_id, False, True)
+        if self.node_tail == -1:
+            tail_state = State(self.node_tail, tail_state_vec, l_id, True, False)
         else:
             tail_state = State(self.node_tail, tail_state_vec, l_id, False, False)
         
