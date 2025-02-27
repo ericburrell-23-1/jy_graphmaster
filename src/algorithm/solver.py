@@ -90,6 +90,8 @@ class GraphMaster:
             incombentLP = pgm_solver.cur_lp
             #please remember every graph has its own source and sink
             
+            
+            
             #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
             #please remember every graph has its own source and sink
             l_id += 1
