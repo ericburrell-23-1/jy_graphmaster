@@ -14,8 +14,8 @@ class Full_Multi_Graph_Object_given_l:
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.res_states = res_states  # set of all states
-        for state in self.res_states:
-            print(state.node, state.state_vec.toarray())
+        #for state in self.res_states:
+        #    print(state.node, state.state_vec.toarray())
         self.all_actions = all_actions  # Set of all possible actions (excluding null action)
         self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
        # self.null_action_info = null_action_info
@@ -39,8 +39,13 @@ class Full_Multi_Graph_Object_given_l:
                 f"Graph {l_id} must have exactly one source and one sink, "
                 f"but found {source_count} source(s) and {sink_count} sink(s)."
             )
-        
-    
+        self.source_state=list(self.resStates_by_node[-1])[0]
+        self.sink_state=list(self.resStates_by_node[-2])[0]
+        #print('self.source_state')
+        #print(self.source_state)
+        #print('self.sink_state')
+        #print(self.sink_state)
+        #input('----')
     def make_state_id_to_state(self):
         """Creates a mapping from state ID to state object."""
         
@@ -294,12 +299,13 @@ class Full_Multi_Graph_Object_given_l:
         # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
  
         # # Compute the shortest path cost
-        # shortest_path_length = nx.shortest_path_length(self.pgm_graph, source=-1, target=-2, weight="weight", method="dijkstra")
-        shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
-                                                          source=rezStates_minus_by_node[self.l_id][-1][0].state_id,
-                                                            target=rezStates_minus_by_node[self.l_id][-2][0].state_id,
-                                                            weight="weight"
-                                                        )
+        shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
+        shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
+       # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
+       #                                                   source=self.source_state.state_id ,
+       #                                                     target=self.sink_state.state_id ,
+       #                                                     weight="weight"
+       #                                                 )
         # Step 5: Extract the ordered list of states and actions along the shortest path
         ordered_path_rows = [
             (tail, head, self.pgm_graph[tail][head]["action"])

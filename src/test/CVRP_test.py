@@ -6,6 +6,7 @@ import time
 from unittest import TestCase, main
 from src.problems.CVRP import CVRP
 import traceback
+import random
 
 class CVRPTest(TestCase):
     def setUp(self):
@@ -32,4 +33,5 @@ class CVRPTest(TestCase):
 
 
 if __name__ == "__main__":
+    random.seed(0)
     main()

@@ -15,11 +15,11 @@ class PGM_appraoch:
 
     #This will do the enitre RMP. 
 
-    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,the_null_action):
+    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,the_null_action,action_id_2_actions):
         self.index_to_graph:DefaultDict[int,Full_Multi_Graph_Object_given_l] = index_to_graph
         self.my_PGM_graph_list:List[Full_Multi_Graph_Object_given_l]=list(self.index_to_graph.values()) #list of all of the PGM graphs
         self.prob_RHS:np.ndarray=prob_RHS #RHS
-
+        self.action_id_2_actions=action_id_2_actions
         self.rez_states_minus:Set[State]=rez_states_minus #has all of the states in rez states minus by graph . So if I put in a grpah id then i get out the rez states minus to initialize
         self.make_res_states_minus_by_node()
         self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
@@ -36,9 +36,9 @@ class PGM_appraoch:
 
         self.rezStates_minus_by_node = defaultdict(lambda: defaultdict(list))  # Nested defaultdict for automatic list initialization
         self.res_states_minus_by_graph: Dict[int, Set[State]] = defaultdict(set)
-        for state in self.rez_states_minus:
-            self.rezStates_minus_by_node[state.l_id][state.node].append(state)
-            self.res_states_minus_by_graph[state.l_id].add(state)
+        for my_state in self.rez_states_minus:
+            self.rezStates_minus_by_node[my_state.l_id][my_state.node].append(my_state)
+            self.res_states_minus_by_graph[my_state.l_id].add(my_state)
         # Check that each l_id has exactly one source and one sink
         for l_id in self.rezStates_minus_by_node:
             source_count = len(self.rezStates_minus_by_node[l_id].get(-1, []))
@@ -47,6 +47,10 @@ class PGM_appraoch:
             if source_count != 1 or sink_count != 1:
                 raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")
 
+        #print('hello moose')
+        #print('hello moose2')
+        #print(self.rezStates_minus_by_node.keys())
+        #input('moo')
     def init_defualt_jy_options(self):
 
         self.jy_options=dict()
@@ -68,31 +72,64 @@ class PGM_appraoch:
     def call_PGM(self):
 
         #call the PGM
+        #input('call to pgm')
+        #print('in here')
+        #print('self.rezStates_minus_by_node.keys()')
+        #print(self.rezStates_minus_by_node.keys())
+        #input('---')
         while(True): #
 
             [self.primal_sol,self.dual_exog,self.cur_lp]=self.call_PGM_RMP_solver_from_scratch()#we can do better a different time. lets not make it too hard on the first try
-            if self.cur_lp>self.incumbant_lp-self.jy_options['tolerance_compress']: #if we improve the objective then we will do a compression operator
+            if self.cur_lp<self.incumbant_lp-self.jy_options['tolerance_compress']: #if we improve the objective then we will do a compression operator
                 self.apply_compression_operator() #apply compression
+                self.incumbant_lp=self.cur_lp
+            else:
+                print('skipping incumbant')
             did_find_neg_red_cost=False #indicate if we found a negative reduced cost 
+            tot_shortest_path_len=0
             for my_graph in self.my_PGM_graph_list: #Iterate over all graphs and find the shortest path
                 shortest_path, shortest_path_length, ordered_path_rows=my_graph.construct_specific_pricing_pgm(self.dual_exog,self.rezStates_minus_by_node) #construct and call pricing problem
-                #print('shortest_path')
-                #print(shortest_path)
-                #print('shortest_path_length')
-                #print(shortest_path_length)
+                tot_shortest_path_len=tot_shortest_path_len+min([0,shortest_path_length])
+                print('my_graph.l_id')
+                print(my_graph.l_id)
+                print('shortest_path')
+                print(shortest_path)
+                print('shortest_path_length')
+                print(shortest_path_length)
+
+                print('my_state')
+
+                for my_state_id  in shortest_path:
+                    my_state=self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
+                    print([my_state.node,my_state.state_vec.toarray()[0][0]])
+                    #print(my_state.state_vec)
+                #input('---')
                 if shortest_path_length<-self.jy_options['epsilon']: #if we have a negative reduced cost column we will apply expansion
                     self.apply_expansion_operator(shortest_path, shortest_path_length, ordered_path_rows,my_graph)# do teh expasnion operator
                     did_find_neg_red_cost=True #did find negative reduced cost is set to true
 
             if did_find_neg_red_cost==False: #if we did not find a negative reduced  then we break and we are done 
                 break
+            print('did_find_neg_red_cost')
+            print(did_find_neg_red_cost)
+            print('tot_shortest_path_len')
+            print(tot_shortest_path_len)
+            print('self.cur_lp')
+            print(self.cur_lp)
+            print('incumbant_lp')
+            print(self.incumbant_lp)
+            input('done an iteration of PGM')
+        #input('done call to pgm')
 
 
     def apply_expansion_operator(self, shortest_path, shortest_path_length, ordered_path_rows, my_graph: Full_Multi_Graph_Object_given_l):
         """Expands the solution by adding new states and actions from the shortest path."""
 
-        print(f"Applying expansion operator for graph {my_graph}...")
-
+        #print(f"Applying expansion operator for graph {my_graph}...")
+        #print('in apply expansion')
+        #print('self.rezStates_minus_by_node.keys()')
+        #print(self.rezStates_minus_by_node.keys())
+        #print('-----')
         # Step 1: Extract state IDs from the shortest path
         path_state_ids = set(shortest_path)  # Get all visited state IDs
 
@@ -104,25 +141,46 @@ class PGM_appraoch:
         }
 
         # Step 3: Ensure `rezStates_minus_by_node[my_graph]` exists and is structured as a defaultdict(set)
-        if my_graph.l_id not in self.rezStates_minus_by_node:
-            self.rezStates_minus_by_node[my_graph.l_id] = defaultdict(set)
+        #if my_graph.l_id not in self.rezStates_minus_by_node:
+        #    self.rezStates_minus_by_node[my_graph.l_id] = defaultdict(set)
 
         # Step 4: Group states by their associated node
-        for state in path_states.values():
-            node = state.node  # Assuming each state object has a `node` attribute
-            self.rezStates_minus_by_node[my_graph.l_id][node].add(state)
+        did_find_new_state=False
+        for my_state in path_states.values():
+            my_node = my_state.node  # Assuming each state object has a `node` attribute
+            
+            if my_state not in self.rezStates_minus_by_node[my_graph.l_id][my_node]:
+                did_find_new_state=True
+            
+            self.rezStates_minus_by_node[my_graph.l_id][my_node].append(my_state)
+            self.res_states_minus_by_graph[my_graph.l_id].add(my_state)
 
         # Step 5: Extract used actions from ordered path rows
         #if not hasattr(self, "rez_actions"):  # Ensure `res_actions` exists
         #    self.rez_actions = set()
+        did_find_new_action=False
+        for _, _, my_action in ordered_path_rows:
+            if my_action:  # Ensure the action is not None
+                #my_action=self.action_id_2_actions[my_action_id]
+                if type(my_action)!=Action:
+                    print('my_action')
+                    print(my_action)
+                    input('this needs to be an action')
+                if my_action not in self.rez_actions_minus:
+                    did_find_new_action=True
+                self.rez_actions_minus.add(my_action)
 
-        for _, _, action in ordered_path_rows:
-            if action:  # Ensure the action is not None
-                self.rez_actions_minus.add(action)
+        if did_find_new_action==False and did_find_new_state==False:
 
+            input('error nothing added ')
+        
         # Step 6: Update `res_states_minus` as the union of all `res_states_minus_by_graph`
-        self.res_states_minus = set().union(*self.res_states_minus_by_graph.values())
-
+        self.res_states_minus_by_graph[my_graph.l_id] = set().union(*self.rezStates_minus_by_node[my_graph.l_id].values())
+        #print('at end of thies')
+        #print('self.rezStates_minus_by_node.keys()')
+        #print(self.rezStates_minus_by_node.keys())
+        #print('-----')
+        #input('----')
 
 
     def apply_compression_operator(self):
@@ -139,8 +197,13 @@ class PGM_appraoch:
 
         for var_name in active_vars:
             if var_name[0] == "eq_act_var":  # Action variable format: ('eq_act_var', g, eq_class, action)
-                _, g, eq_class, action = var_name  # Extract components
-                self.rez_actions_minus.add(action)  # Store the action
+                _, g, eq_class, action_id = var_name  # Extract components
+                my_action=self.action_id_2_actions[action_id]
+                if type(my_action)!=Action:
+                    print('type(action)')
+                    print(type(action))
+                    input('error here')
+                self.rez_actions_minus.add(my_action)  # Store the action
 
             elif var_name[0] == "edge":  # Edge variable format: ('edge', g, s1, s2)
                 _, g, s1, s2 = var_name  # Extract graph and states
@@ -149,24 +212,37 @@ class PGM_appraoch:
         if self.the_null_action in self.rez_actions_minus:
             self.rez_actions_minus=self.rez_actions_minus.remove(g.null_action)
         # Step 3: Ensure `rezStates_minus_by_node[g]` exists as a defaultdict(set)
-        self.rezStates_minus_by_node = {g: defaultdict(set) for g in self.pgm_graph_2_rmp_graph}  
+        self.rezStates_minus_by_node = defaultdict(lambda: defaultdict(list))  # Nested defaultdict for automatic list initialization
+        # {g: defaultdict(set) for g in self.pgm_graph_2_rmp_graph}  
 
         # Step 4: Update `rezStates_minus_by_node[g][node]` to include states from active edges
-        for g, s1_id, s2_id in active_edges:
+        for g_id, s1_id, s2_id in active_edges:
             
-            print('g, s1_id, s2_id')
-            print('s1_id')
-            print(s1_id)
-            print('s2_id')
-            print(s2_id)
-            print('g')
-            print(g)
+            
+            g=self.index_to_graph[g_id]
+            #print('s1_id')
+            #print(s1_id)
+            #print('g_id')
+            #print(g_id)
+            if s1_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
+                print('error here')
+                for g2_id in self.index_to_graph:
+                    g2=self.index_to_graph[g2_id]
+                    if s1_id in self.pgm_graph_2_rmp_graph[g2].state_id_to_state:
+                        print('found here')
+                        print(g2_id)
+                        input('---')
+                    else:
+                        print('not in here')
+                        print(g2_id)
+
+                #input('here')
             state1 = self.pgm_graph_2_rmp_graph[g].state_id_to_state[s1_id]  # Retrieve state object
             state2 = self.pgm_graph_2_rmp_graph[g].state_id_to_state[s2_id]  # Retrieve state object
 
             if state1.node!=state2.node:
-                self.rezStates_minus_by_node[g][state1.node].add(state1)
-                self.rezStates_minus_by_node[g][state2.node].add(state2)
+                self.rezStates_minus_by_node[g_id][state1.node].append(state1)
+                self.rezStates_minus_by_node[g_id][state2.node].append(state2)
         #compute_res_states,
         self.res_states_minus= set().union(*self.res_states_minus_by_graph.values())
 
@@ -177,11 +253,13 @@ class PGM_appraoch:
         """Constructs and initializes the RMP solver from scratch."""
         # Step 1: Initialize the RMP graphs
         self.pgm_graph_2_rmp_graph:DefaultDict[Full_Multi_Graph_Object_given_l,RMP_graph_given_l] = defaultdict()  # Dictionary to store RMP graphs
-
-        for l_id, g in self.index_to_graph.items():
-            
+        #print('self.rezStates_minus_by_node.keys()')
+        #print(self.rezStates_minus_by_node.keys())
+        #input('---')
+        for l_id in self.index_to_graph:#.items():
+            g=self.index_to_graph[l_id]
             my_states_g_by_node = self.rezStates_minus_by_node[l_id]
-            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.dominated_actions,self.the_null_action)
+            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.dominated_actions,self.the_null_action,self.action_id_2_actions)
             self.pgm_graph_2_rmp_graph[g].initialize_system()  # Initialize RMP graph
 
         # Step 2: Initialize variables and constraints
@@ -269,6 +347,26 @@ class PGM_appraoch:
                     my_name = ('edge', g.l_id, s1.state_id, s2.state_id)
                     #TODO: remove my_exog here
                     new_var = jy_var(my_cost, my_contrib_dict, my_name)
+                    if s1.state_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
+                        print('s1.state_id')
+                        print(s1.state_id)
+                        print('s1.l_id')
+                        print(s1.l_id)
+                        print('s1.node')
+                        print(s1.node)
+                        print('self.pgm_graph_2_rmp_graph[g].l_id')
+                        print(self.pgm_graph_2_rmp_graph[g].l_id)
+                        input('errror here1 ')
+                    if s2.state_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
+                        print('s2.state_id')
+                        print(s2.state_id)
+                        print('s2.node')
+                        print(s2.node)
+                        print('s1.l_id')
+                        print(s1.l_id)
+                        print('self.pgm_graph_2_rmp_graph[g].l_id')
+                        print(self.pgm_graph_2_rmp_graph[g].l_id)
+                        input('errror here2 ')
                     self.all_vars.append(new_var)
                     #print('new_var')
                     #print(new_var)

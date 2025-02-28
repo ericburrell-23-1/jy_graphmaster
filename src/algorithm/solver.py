@@ -10,7 +10,7 @@ from src.common.full_multi_graph_object_given_l import Full_Multi_Graph_Object_g
 from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
-
+import random
 class GraphMaster:
     """
     Entry point to the GraphMaster solver. Takes problem model and initial feasible solution from problem-specific module, and creates the general GraphMaster problem.
@@ -35,6 +35,9 @@ class GraphMaster:
     - Repeats until optimal
     - Then solve as ILP
     """
+
+
+
     def __init__(self,
                  nodes: List[int],
                  actions: Dict[Tuple[int, int], Action],
@@ -50,6 +53,7 @@ class GraphMaster:
                  the_single_null_action: Action
                  #node_to_list
                  ):
+        
         self.nodes = nodes
         self.actions = set().union(*actions.values())
         self.rhs_exog_vec = rhs_exog_vec
@@ -71,10 +75,11 @@ class GraphMaster:
         
     def solve(self):
         l_id = 0
+        random.seed(0)
         size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
-        print('self.initial_res_states')
-        print(self.initial_res_states)
+        #print('self.initial_res_states')
+        #print(self.initial_res_states)
         #for s in self.initial_res_states:
         #    print('****')
         #    print(s)
@@ -95,14 +100,16 @@ class GraphMaster:
         self.index_to_multi_graph[l_id] = my_init_graph
         iteration = 1
         incombentLP = np.inf
-        do_pricing=False
+        do_pricing=True
         #print('self.the_single_null_action')
         #print(self.the_single_null_action)
         #input('self.the_single_null_action')
+        self.action_id_2_actions={my_action.action_id: my_action for my_action in self.actions}
         while iteration < max_iterations:
-            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action)
+            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions)
             pgm_solver.call_PGM()
             self.res_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
+
             incombentLP = pgm_solver.cur_lp
             #please remember every graph has its own source and sink
             
@@ -116,14 +123,17 @@ class GraphMaster:
             beta_term=[]
             new_states_describing_new_graph=[]
             if do_pricing==False:
+                print('in pricing')
                 beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
                 reduced_cost = -np.inf
             else:
+                print('in not  pricing')
+
                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                 beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
-            
-            # print('route')
-            # print(list_of_nodes_in_shortest_path)
+
+            print('route')
+            print(list_of_nodes_in_shortest_path)
             #print('beta term')
             #print(beta_term)
 
@@ -143,7 +153,6 @@ class GraphMaster:
             #             print(f'node: {state.node}')
             #             print(f'state_vec: {state.state_vec.toarray()[0]}')
 
-            print('stop here')
                 
             if reduced_cost >= -1e-6:
                 return {
@@ -152,15 +161,17 @@ class GraphMaster:
                     'iterations': iteration,
                     'graph': self.index_to_multi_graph.values()
                 }
-            
             new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.the_single_null_action)
+
             new_multi_graph.initialize_system()
+
             self.index_to_multi_graph[l_id] = new_multi_graph
             self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
             if do_pricing==True:
                 self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
             iteration += 1
             self.restricted_master_problem = 0
+
         return {'status': 'max_iterations', 'iterations': iteration}      
         
     

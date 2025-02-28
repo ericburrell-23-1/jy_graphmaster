@@ -7,14 +7,16 @@ from src.common.full_multi_graph_object_given_l import Full_Multi_Graph_Object_g
 from uuid import UUID
 class RMP_graph_given_l:
 
-    def __init__(self,my_Multi_Graph_Object,resStates_minus_by_node:Dict[int,Set[State]],res_actions,dominated_action,nullAction_info):
+    def __init__(self,my_Multi_Graph_Object,resStates_minus_by_node:Dict[int,Set[State]],res_actions,dominated_action,the_null_action,action_id_2_actions):
         self.my_Multi_Graph_Object: Full_Multi_Graph_Object_given_l =my_Multi_Graph_Object#provides the multigrpah object for the l\in Omega_R generating this. 
         self.resStates_minus_by_node=resStates_minus_by_node #dictionary that taks in the node and returns all states assocaited with that node in ResStates minus
         self.res_actions=res_actions #set that holds all actions that are possible.  DOES NOT Includes the Null action
         self.nodes=self.resStates_minus_by_node.keys()#grabs all nodes by grabbing the keys
-        self.nullAction_info=nullAction_info # null action
+        self.nullAction_info=the_null_action # null action
         self.dom_actions_pairs = dominated_action
         self.state_id_to_state:DefaultDict[str,State] = defaultdict()
+        self.l_id=self.my_Multi_Graph_Object.l_id
+        self.action_id_2_actions=action_id_2_actions
     def initialize_system(self):
         #initialize teh RMP graph
         if len(self.nodes) == 0:
@@ -22,14 +24,25 @@ class RMP_graph_given_l:
         if len(self.res_actions) == 0:
             raise ValueError("res actions is empty. ")
         for node, states in self.resStates_minus_by_node.items():
-            for state in states:
-                self.state_id_to_state[state.state_id] = state
+            for my_state in states:
+                self.state_id_to_state[my_state.state_id] = my_state
+                if my_state.l_id!=self.l_id:
+                    print('my_state.l_id')
+                    print(my_state.l_id)
+                    print('self.l_id')
+                    print(self.l_id)
+                    input('errror here')
         for u in self.nodes:#self.my_Multi_Graph_Object.resStates_minus_by_node:
             self.update_domination(u) #grab domination list and dominated list for each u
             self.RMP_update_sub_compute_min_dominating_states_by_node(u)#update minimum domination dictionary
             self.RMP_update_sub_compute_maximum_dominated_states_by_node(u)#update maximum dominated dictionary
         self.actions_s1_s2_non_dom = defaultdict(set) #create an object called actions dominated 
         for a1 in self.res_actions:# iterate over actions and comptue the a set that is actions NOT actions ub; except that we may have dominated actions which will be removed next
+           #a1=self.action_id_2_actions[a1_id]
+           if type(a1)!= Action:
+               print('a1')
+               print(a1)
+               input('error this needs to be an action')
            self.RMP_clean_states_EZ(a1)
         self.RMP_make_null_actions()
         self.RMP_compute_remove_redundant_actions()
@@ -87,12 +100,8 @@ class RMP_graph_given_l:
         #makes null action terms.  This is for dropping resources 
         for s1 in self.state_max_dom_dict:
             for s2 in self.state_max_dom_dict[s1]:
-                this_null_action = Action(self.nullAction_info['trans_min_input'],
-                                          self.nullAction_info['trans_term_add'],self.nullAction_info['trans_term_min'],
-                                          s2.node,s1.node,self.nullAction_info['contribution_vector'],self.nullAction_info['cost'],
-                                          self.nullAction_info['min_resource_vec'],self.nullAction_info['resource_consumption_vec'],
-                                          self.nullAction_info['indices_non_zero_max'],self.nullAction_info['max_resource_vec'])
-                self.actions_s1_s2_clean[(s1,s2)].add(this_null_action)
+                
+                self.actions_s1_s2_clean[(s1,s2)].add(self.my_Multi_Graph_Object.null_action)
     
     
     def RMP_clean_states_EZ(self,a1:Action):
@@ -100,14 +109,17 @@ class RMP_graph_given_l:
         # Initialize defaultdicts once per action
         all_candid_head_given_tail = defaultdict(set) #given teh action and tail these are candidate heads but not not be maximal and hence not included
         all_candid_tail_given_head = defaultdict(set)#given teh action and head these are candidate tails but not not be minmal and hence not included
-
+        print('a1')
+        print(a1)
+        print('type(a1)')
+        print(type(a1))
         my_head, my_tail = a1.node_head, a1.node_tail # grab the head adn the tail
         #grab teh states corresponding to the head and the tail
         head_in_prob, tail_in_prob = self.resStates_minus_by_node[my_head], self.resStates_minus_by_node[my_tail]
 
         # Process tail states
         action_ub_tail_head = self.my_Multi_Graph_Object.action_ub_tail_head[a1] #get all tail to head for this action
-        for s_tail in  action_ub_tail_head: #iterate over all tails  that can start the action and in the poblem 
+        for s_tail in  action_ub_tail_head and tail_in_prob : #iterate over all tails  that can start the action and in the poblem 
             if s_tail in tail_in_prob:
                 all_heads = action_ub_tail_head[s_tail].union(head_in_prob) #anyhing in the ptoblem and i  can go to in the orignial multigrpah
                 do_remove = Helper.union_of_sets(self.state_max_dom_dict, all_heads) #comptue the heads to remove: which is  any candidate heads taht are dominated by another candidate head 
@@ -115,16 +127,25 @@ class RMP_graph_given_l:
 
         # Process head states
         action_ub_head_tail = self.my_Multi_Graph_Object.action_ub_head_tail[a1] #get all head to tail for this action
-        for s_head in action_ub_head_tail: #get all heads in the problem and can be the product of the action
-            if s_head in head_in_prob:
-                all_tails = action_ub_head_tail[s_head].union(tail_in_prob) #all tails that can be produced
-                do_remove = Helper.union_of_sets(self.state_min_dom_dict, all_tails) #removes the dominated ones 
-                all_candid_tail_given_head[s_head] = all_tails - do_remove #do remove operation 
+        for s_head in action_ub_head_tail and head_in_prob: #get all heads in the problem and can be the product of the action
+            all_tails = action_ub_head_tail[s_head].union(tail_in_prob) #all tails that can be produced
+            do_remove = Helper.union_of_sets(self.state_min_dom_dict, all_tails) #removes the dominated ones 
+            all_candid_tail_given_head[s_head] = all_tails - do_remove #do remove operation 
 
-                # Compute tails to connect.  not doinated either way
-                tails_to_connect = Helper.subset_where_z_in_Y(s_head, all_candid_tail_given_head[s_head], all_candid_head_given_tail)
-                for s_tail in tails_to_connect:
-                    self.actions_s1_s2_non_dom[(s_tail, s_head)].add(a1)
+            # Compute tails to connect.  not doinated either way
+            tails_to_connect = Helper.subset_where_z_in_Y(s_head, all_candid_tail_given_head[s_head], all_candid_head_given_tail)
+            for s_tail in tails_to_connect:
+                if s_tail.state_id not in self.state_id_to_state or s_head.state_id not in self.state_id_to_state :
+                    print('s_tail.state_id')
+                    print(s_tail.state_id)
+                    print('s_tail.state_id not in self.state_id_to_state ')
+                    print(s_tail.state_id not in self.state_id_to_state )
+                    print('s_head.state_id not in self.state_id_to_state')
+                    print(s_head.state_id not in self.state_id_to_state)
+                    print('s_head.state_id')
+                    print(s_head.state_id)
+                    input('error here check')
+                self.actions_s1_s2_non_dom[(s_tail, s_head)].add(a1)
 
     def RMP_make_equiv_classes(self):
         #make all equivelence classes
