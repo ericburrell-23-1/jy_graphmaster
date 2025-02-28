@@ -124,7 +124,7 @@ class RMP_graph_given_l:
                 all_heads = action_ub_tail_head[s_tail].union(head_in_prob) #anyhing in the ptoblem and i  can go to in the orignial multigrpah
                 do_remove = Helper.union_of_sets(self.state_max_dom_dict, all_heads) #comptue the heads to remove: which is  any candidate heads taht are dominated by another candidate head 
                 all_candid_head_given_tail[s_tail] = all_heads - do_remove# remove  those heads
-
+                
         # Process head states
         action_ub_head_tail = self.my_Multi_Graph_Object.action_ub_head_tail[a1] #get all head to tail for this action
         for s_head in action_ub_head_tail and head_in_prob: #get all heads in the problem and can be the product of the action

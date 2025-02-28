@@ -7,7 +7,7 @@ from typing import List, Dict, Tuple
 from src.common.action import Action
 from src.common.state import State
 from src.common.helper import Helper
-from gwo_pricing_solver import GWOPricingSolver
+from src.algorithm.gwo_pricing_solver import GWOPricingSolver
 EPSILON = 0.000001
 
 class PricingProblem:
@@ -49,83 +49,6 @@ class PricingProblem:
 
         self.max_resource_state = np.array(max_resource_state_list)
 
-    def gwo_pricing(self,dual_vector:np.np.ndarray):
-        """Modified version of generalized_absolute_pricing using GWO instead of BiDirectional"""
-        # Original graph construction code remains the same until solver creation
-        index_to_resource = list(self.initial_resource_state.keys())
-        graph = nx.DiGraph(directed=True, n_res=len(index_to_resource) + 1, elementary=False)
-        
-        # Build graph (same as original)
-        for (origin_node, destination_node), action_list in self.actions.items():
-            for action in action_list:
-                if origin_node == -1:
-                    origin_node = "Source"
-                if destination_node == -2:
-                    destination_node = "Sink"
-                    
-                action_node = f"action_{action.origin_node}_{action.destination_node}_{action.action_id}"
-                
-                exog_duals = dual_vector[:len(action.contribution_vector)]
-                dual_contribution = np.dot(action.contribution_vector, exog_duals)
-                edge_weight = action.cost - dual_contribution
-                
-                arbitrary_monotone_resource_consumption = float(1)
-                
-                graph.add_edge(
-                    origin_node,
-                    action_node,
-                    res_cost=np.array([arbitrary_monotone_resource_consumption] + 
-                                    [-float(action.trans_term_vec[resource])
-                                    for resource in index_to_resource]),
-                    weight=edge_weight,
-                    action=action
-                )
-                
-                graph.add_edge(
-                    action_node,
-                    destination_node,
-                    res_cost=np.concatenate([[arbitrary_monotone_resource_consumption], 
-                                        np.zeros(len(index_to_resource))]),
-                    weight=0,
-                    action=None
-                )
-        
-        max_arbitrary_monotone_resource = float(1000000)
-        min_arbitrary_monotone_resource = float(0)
-        max_res = [max_arbitrary_monotone_resource] + [float(self.initial_resource_state[res])
-                                                    for res in index_to_resource]
-        min_res = [min_arbitrary_monotone_resource] + [0.0] * (len(index_to_resource))
-        
-        # Use GWO instead of BiDirectional
-        solver = GWOPricingSolver(graph, max_res=max_res, min_res=min_res)
-        solver.run()
-        
-        path = solver.path
-        total_cost = solver.total_cost
-        resources_used = solver.consumed_resources
-        actions_in_path = []
-        states = []
-        
-        # Process results (same as original)
-        #print(path)
-        if path and total_cost < -1e-6:
-            for i in range(len(path) - 1):
-                edge_data = graph[path[i]][path[i + 1]]
-                action = edge_data.get("action")
-                if action is not None:
-                    actions_in_path.append(action)
-            
-            #path[0] = -1
-            #path[-1] = -2
-            #print(f"this is the weird path {path}")
-        # states = pricer.get_states_from_action_list_new(actions_in_path)
-        # print(states)
-        #print(path)
-
-        list_of_customer = self._get_nodes_and_actions_from_path(graph,path)
-
-
-        return list_of_customer, actions_in_path, total_cost
 
     def generalized_absolute_pricing(self, dual_vector: np.ndarray):
         """

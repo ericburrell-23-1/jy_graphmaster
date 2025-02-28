@@ -1,33 +1,28 @@
 import numpy as np
 from typing import List, Dict, Tuple, Any
 import networkx as nx
+from networkx import DiGraph
 import random
 
 class GWOPricingSolver:
-    def __init__(self, graph: nx.DiGraph, max_res: List[float], min_res: List[float], 
-                 pop_size: int = 10, max_iter: int = 30):
-        self.graph = graph
-        self.max_res = np.array(max_res)
-        self.min_res = np.array(min_res)
-        self.pop_size = pop_size
-        self.max_iter = max_iter
+    def __init__(self, actions,initial_resource_state,nodes, resource_name_to_index,initial_resource_vector):
+        self.actions = actions
+        self.initial_resource_state = initial_resource_state
+        self.nodes = nodes
+        self.resource_name_to_index = resource_name_to_index
+        self.initial_resource_vector = initial_resource_vector
         self.path = None
         self.total_cost = float('inf')
         self.consumed_resources = None
-        
+        self.number_of_resources = len(initial_resource_state)
+        self.min_resource_state = np.zeros(self.number_of_resources)
+        self.initial_resource_vector = initial_resource_vector
         # Precompute graph data
-        self.action_nodes = [n for n in self.graph.nodes() if str(n).startswith('action_')]
-        self.normal_nodes = [n for n in self.graph.nodes() if not str(n).startswith('action_')]
         self.edge_weights = {}
         self.edge_resources = {}
         self.node_actions = {}  # Maps nodes to their associated action objects
-        
-        # Cache graph data
-        for u, v, data in self.graph.edges(data=True):
-            self.edge_weights[(u, v)] = data['weight']
-            self.edge_resources[(u, v)] = data['res_cost']
-            if 'action' in data and data['action'] is not None:
-                self.node_actions[v] = data['action']
+        self.pop_size: int = 10 
+        self.max_iter: int = 30
     def check_path_feasibility(self, path: List[str]) -> Tuple[bool, List[str]]:
         """
         Check path feasibility including elementarity constraint
@@ -300,84 +295,112 @@ class GWOPricingSolver:
     
 
 
-def modify_generalized_absolute_pricing(pricer, dual_vector: np.ndarray):
-    """Modified version of generalized_absolute_pricing using GWO instead of BiDirectional"""
-    # Original graph construction code remains the same until solver creation
-    index_to_resource = list(pricer.initial_resource_state.keys())
-    graph = nx.DiGraph(directed=True, n_res=len(index_to_resource) + 1, elementary=False)
-    
-    # Build graph (same as original)
-    for (origin_node, destination_node), action_list in pricer.actions.items():
-        for action in action_list:
-            if origin_node == -1:
-                origin_node = "Source"
-            if destination_node == -2:
-                destination_node = "Sink"
+    def construct_graph(self,dual_vector: np.ndarray):
+        """Modified version of generalized_absolute_pricing using GWO instead of BiDirectional"""
+        # Original graph construction code remains the same until solver creation
+        index_to_resource = list(self.initial_resource_state.keys())
+        graph = nx.DiGraph(directed=True, n_res=len(index_to_resource) + 1, elementary=False)
+        ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION = float(1)
+        ARBITRARY_RESOURCE_MAX = float(10000)
+        # Build graph (same as original)
+        for (origin_node, destination_node), action_list in self.actions.items():
+            for action in action_list:
+                if origin_node == -1:
+                    origin_node = "Source"
+                if destination_node == -2:
+                    destination_node = "Sink"
+                    
+                action_node = f"action_{action.node_tail}_{action.node_head}_{action.action_id}"
                 
-            action_node = f"action_{action.origin_node}_{action.destination_node}_{action.action_id}"
-            
-            exog_duals = dual_vector[:len(action.contribution_vector)]
-            dual_contribution = np.dot(action.contribution_vector, exog_duals)
-            edge_weight = action.cost - dual_contribution
-            
-            arbitrary_monotone_resource_consumption = float(1)
-            
-            graph.add_edge(
-                origin_node,
-                action_node,
-                res_cost=np.array([arbitrary_monotone_resource_consumption] + 
-                                [-float(action.trans_term_vec[resource])
-                                 for resource in index_to_resource]),
-                weight=edge_weight,
-                action=action
-            )
-            
-            graph.add_edge(
-                action_node,
-                destination_node,
-                res_cost=np.concatenate([[arbitrary_monotone_resource_consumption], 
-                                       np.zeros(len(index_to_resource))]),
-                weight=0,
-                action=None
-            )
-    
-    max_arbitrary_monotone_resource = float(1000000)
-    min_arbitrary_monotone_resource = float(0)
-    max_res = [max_arbitrary_monotone_resource] + [float(pricer.initial_resource_state[res])
-                                                  for res in index_to_resource]
-    min_res = [min_arbitrary_monotone_resource] + [0.0] * (len(index_to_resource))
-    
-    # Use GWO instead of BiDirectional
-    solver = GWOPricingSolver(graph, max_res=max_res, min_res=min_res)
-    solver.run()
-    
-    path = solver.path
-    total_cost = solver.total_cost
-    resources_used = solver.consumed_resources
-    actions_in_path = []
-    states = []
-    
-    # Process results (same as original)
-    #print(path)
-    if path and total_cost < -1e-6:
-        for i in range(len(path) - 1):
-            edge_data = graph[path[i]][path[i + 1]]
-            action = edge_data.get("action")
-            if action is not None:
-                actions_in_path.append(action)
+                exog_duals = dual_vector[:len(action.Exog_vec)]
+                dual_contribution = np.dot(action.Exog_vec, exog_duals)
+                edge_weight = action.cost - dual_contribution
+                
+                arbitrary_monotone_resource_consumption = float(1)
+                
+                first_array = np.array(ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION).reshape(-1)
+                second_array = action.resource_consumption_vec.toarray()[0] * -1
+                this_res_cost = np.concatenate([first_array,second_array])
+                third_array = np.array(ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION).reshape(-1)
+                this_res_cost_2 = np.concatenate([third_array, np.zeros(self.number_of_resources)])
+                print(origin_node,destination_node,this_res_cost)
+                graph.add_edge(
+                    origin_node,
+                    action_node,
+                    res_cost = this_res_cost,
+                    # res_cost=np.array([ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION] + [-float(action.trans_term_add[resource])
+                    #                   for resource in self.initial_resource_state]),
+                    weight=edge_weight,
+
+                    action=action  # Store the action object for traceability
+                )
+
+                # Create edge from `action_node` to `destination_node`
+                graph.add_edge(
+                    action_node,
+                    destination_node,
+                    res_cost=this_res_cost_2,
+                    weight=0,
+                    action=None
+                )
         
-        #path[0] = -1
-        #path[-1] = -2
-        #print(f"this is the weird path {path}")
-    # states = pricer.get_states_from_action_list_new(actions_in_path)
-    # print(states)
-    #print(path)
-
-    list_of_customer = pricer.get_customer_from_path(path)
-    #print(list_of_customer)
-    beta_term = pricer.generate_beta_term(list_of_customer[1:-1])
-
-    state_set = pricer.generate_state_based_on_beta(beta_term)
+        self.max_res = [ARBITRARY_RESOURCE_MAX] + list(self.initial_resource_vector.toarray()[0])
+        self.min_res = [0]+ list(self.min_resource_state)
+        return graph
+    def call_gwo_pricing(self,dual):
+        self.graph:DiGraph = self.construct_graph(dual)
+        self.action_nodes = [n for n in self.graph.nodes() if str(n).startswith('action_')]
+        self.normal_nodes = [n for n in self.graph.nodes() if not str(n).startswith('action_')]
+        # Cache graph data
+        for u, v, data in self.graph.edges(data=True):
+            self.edge_weights[(u, v)] = data['weight']
+            self.edge_resources[(u, v)] = data['res_cost']
+            if 'action' in data and data['action'] is not None:
+                self.node_actions[v] = data['action']
     
+        # Use GWO instead of BiDirectional
+        self.run()
+        
+        path = self.path
+        total_cost = self.total_cost
+        resources_used = self.consumed_resources
+        actions_in_path = []
+        states = []
+        
+        # Process results (same as original)
+        #print(path)
+        if path and total_cost < -1e-6:
+            for i in range(len(path) - 1):
+                edge_data = self.graph[path[i]][path[i + 1]]
+                action = edge_data.get("action")
+                if action is not None:
+                    actions_in_path.append(action)
+            
+            #path[0] = -1
+            #path[-1] = -2
+            #print(f"this is the weird path {path}")
+        # states = pricer.get_states_from_action_list_new(actions_in_path)
+        # print(states)
+        #print(path)
+        list_of_nodes, list_of_actions = self._get_nodes_and_actions_from_path(path, self.graph)
+        
 
-    return state_set, actions_in_path, total_cost
+        return list_of_nodes, list_of_actions, total_cost
+    def _get_nodes_and_actions_from_path(self,path: list, graph: nx.DiGraph):
+            """Returns `list_of_nodes` and `list_of_actions` found in `path`."""
+            list_of_nodes = []
+            list_of_actions = []
+            if path:
+                for i in range(len(path) - 1):
+                    origin_node = path[i]
+                    destination_node = path[i + 1]
+                    edge_data = graph[origin_node][destination_node]
+                    action = edge_data.get("action")
+                    if action is not None:
+                        list_of_actions.append(action)
+                        list_of_nodes.append(origin_node)
+            
+            list_of_nodes[0] = -1
+            list_of_nodes.append(-2)
+
+            return list_of_nodes, list_of_actions

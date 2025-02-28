@@ -10,6 +10,7 @@ from src.common.full_multi_graph_object_given_l import Full_Multi_Graph_Object_g
 from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
+from src.algorithm.gwo_pricing_solver import GWOPricingSolver
 import random
 class GraphMaster:
     """
@@ -71,8 +72,8 @@ class GraphMaster:
         self.graph_to_index = {}
         self.res_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
-        self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
-        
+        #self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
+        self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
     def solve(self):
         l_id = 0
         random.seed(0)
@@ -128,8 +129,9 @@ class GraphMaster:
                 reduced_cost = -np.inf
             else:
                 print('in not  pricing')
+                #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
+                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
 
-                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                 beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
 
             print('route')
