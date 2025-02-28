@@ -10,7 +10,7 @@ from src.common.helper import Helper
 class Full_Multi_Graph_Object_given_l:
  
     #Computed once multi-graph which is generated once
-    def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs, null_action_info):
+    def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs,the_null_action):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.res_states = res_states  # set of all states
@@ -18,8 +18,8 @@ class Full_Multi_Graph_Object_given_l:
             print(state.node, state.state_vec.toarray())
         self.all_actions = all_actions  # Set of all possible actions (excluding null action)
         self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
-        self.null_action_info = null_action_info
-        self.null_action = set()
+       # self.null_action_info = null_action_info
+        self.null_action = the_null_action
         #self.resource_name_to_index = resource_name_to_index
         #self.number_of_resources = number_of_resources
         #self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
@@ -58,7 +58,7 @@ class Full_Multi_Graph_Object_given_l:
         self.PGM_sub_compute_maximum_dominated_states_by_node()
  
         self.PGM_clean_states_EZ()
-        self.PGM_make_null_actions()
+        #self.PGM_make_null_actions()
         self.PGM_compute_remove_redundant_actions()
         self.PGM_make_equiv_classes()
         self.construct_pricing_pgm_graph()
@@ -85,9 +85,15 @@ class Full_Multi_Graph_Object_given_l:
             #print(self.resStates_by_node[node_tail])
             for state_tail in self.resStates_by_node[node_tail]:
                 head_ideal = a1.get_head_state(state_tail,self.l_id)
-                #if node_head==-2:
+                #if node_tail==-1:
                 #    print('head_ideal')
                 #    print(head_ideal)
+                #    print('node_head')
+                #    print(node_head)
+                #    print('head_ideal==None')
+                #    print(head_ideal==None)
+                #    print('self.resStates_by_node[node_head]')
+                #    print(self.resStates_by_node[node_head])
                 #    input('hi')
                 #print('hi')
                 if head_ideal== None:
@@ -95,12 +101,22 @@ class Full_Multi_Graph_Object_given_l:
                 for state_head in self.resStates_by_node[node_head]:
                     
                     does_dom,does_equal=head_ideal.this_state_dominates_input_state(state_head)
-                    #if node_head==-2:
-                        #print('does_dom')
-                        #print(does_dom)
-                        #print('does_equal')
-                        #print(does_equal)
-                        #input('im here this is good')
+                    #if node_tail==-1:
+                    #    print('a1.resource_consumption_vec')
+                    #    print(a1.resource_consumption_vec)
+                    #    print('head_ideal.state_vec')
+                    #    print(head_ideal.state_vec)
+                    #    print('state_head.state_vec')
+                    #    print(state_head.state_vec)
+                    #    print('does_dom')
+                    #    print(does_dom)
+                    #    print('does_equal')
+                    #    print(does_equal)
+                    #    print('node_tail')
+                    #    print(node_tail)
+                    #    print('node_head')
+                    #    print(node_head)
+                    #    input('im here this is good')
                     if does_dom or does_equal: #head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
                         key = (state_tail, state_head)
  
@@ -108,19 +124,19 @@ class Full_Multi_Graph_Object_given_l:
                         self.actions_ub_given_s1s2_2[key].add(a1)
                         self.action_ub_tail_head[a1][state_tail].add(state_head)
                         self.action_ub_head_tail[a1][state_head].add(state_tail)
-         #               if node_head==-2:
-         #                   print('im here this is what I wanted')
-         #                   print('node_head')
-         #                   print(node_head)
-         #                   print('node_tail')
-         #                   print(node_tail)
-         #                   input('hold')
-        #    if node_head==-2:
-        #        print('node_head')
-        #        print(node_head)
-        #        print('node_tail')
-        #        print(node_tail)
-        #        print('input hi')
+                        #if node_tail==-1:
+                        #    print('im here this is what I wanted')
+                        #    print('node_head')
+                        #    print(node_head)
+                        #    print('node_tail')
+                        #    print(node_tail)
+                        #    input('hold')
+            #if node_tail==-1:
+            #    print('node_head')
+            #    print(node_head)
+            #    print('node_tail')
+            #    print(node_tail)
+            #    print('input hi')
         #print('dojne making actions ub')
         #input('----')
     def compute_dom_states_by_node(self):
@@ -196,18 +212,18 @@ class Full_Multi_Graph_Object_given_l:
             do_remove=Helper.union_of_sets(self.dom_actions_pairs,my_actions)
             self.actions_s1_s2_clean[my_tup]=my_actions-do_remove
  
-    def PGM_make_null_actions(self):  
+    #def PGM_make_null_actions(self):  
         #makes null action terms.  This is for dropping resources
         #see the RMP version for this
-        for s1 in self.state_max_dom_dict:
-            for s2 in self.state_max_dom_dict[s1]:
-                this_null_action = Action(self.null_action_info['trans_min_input'],
-                                          self.null_action_info['trans_term_add'],self.null_action_info['trans_term_min'],
-                                          s2,s1,self.null_action_info['contribution_vector'],self.null_action_info['cost'],
-                                          self.null_action_info['min_resource_vec'],self.null_action_info['resource_consumption_vec'],
-                                          self.null_action_info['indices_non_zero_max'],self.null_action_info['max_resource_vec'])
-                self.actions_s1_s2_clean[(s1,s2)].add(this_null_action)
-                self.null_action.add(this_null_action)
+     #   for s1 in self.state_max_dom_dict:
+     #       for s2 in self.state_max_dom_dict[s1]:
+     #           this_null_action = Action(self.null_action_info['trans_min_input'],
+     #                                     self.null_action_info['trans_term_add'],self.null_action_info['trans_term_min'],
+     #                                     s2,s1,self.null_action_info['contribution_vector'],self.null_action_info['cost'],
+     #                                     self.null_action_info['min_resource_vec'],self.null_action_info['resource_consumption_vec'],
+     #                                     self.null_action_info['indices_non_zero_max'],self.null_action_info['max_resource_vec'])
+     #           self.actions_s1_s2_clean[(s1,s2)].add(this_null_action)
+     #           self.null_action.add(this_null_action)
  
     def PGM_make_equiv_classes(self):
         #make all equivelence classes
@@ -267,11 +283,13 @@ class Full_Multi_Graph_Object_given_l:
         self.pgm_graph = nx.DiGraph()
         #TODO:
         # Step 3: Add edges (tail -> head) with weights (4th index = action_red_cost)
+        #print('making graph')
         for tail, head, _, action_red_cost, action in self.rows_pgm_spec_pricing:
             self.pgm_graph.add_edge(tail,head,  weight=action_red_cost, action=action)
-            # print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
-            print(f'node_head:{action.node_tail},node_tail:{action.node_head},weight:{action_red_cost}')
-        print('check here')
+        #    print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
+        #    print(f'node_head:{action.node_tail},node_tail:{action.node_head},weight:{action_red_cost}')
+        #print('check here')
+        #input('----')
         # Step 4: Compute the shortest path from source to sink
         # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
  

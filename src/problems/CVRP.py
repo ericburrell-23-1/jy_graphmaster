@@ -15,7 +15,9 @@ class CVRP(OptimizationProblem):
         """Defines all aspects of a CVRP problem needed before calling the `solve` method."""
         self.neighbors_by_distance = {}
         super().__init__(problem_instance_file_name, file_type)
+        
         self._generate_neighbors()
+        self._create_null_action_info()
  
     def solve(self):
         super().solve()
@@ -178,9 +180,9 @@ class CVRP(OptimizationProblem):
                 #print('partial_min_resource_dict')
                 #print(partial_min_resource_dict)
                 #input('----')
-                trans_min_input = ChainMap({**partial_min_resource_dict, **self.default_min_resource_dict})
-                trans_term_min = ChainMap({**partial_max_resource_dict, **self.default_max_resource_dict})
-                trans_term_add = ChainMap({**partial_resource_consumption_dict, **self.default_resource_consumption_dict})
+                trans_min_input = ChainMap(partial_min_resource_dict, self.default_min_resource_dict)
+                trans_term_min = ChainMap(partial_max_resource_dict, self.default_max_resource_dict)
+                trans_term_add = ChainMap(partial_resource_consumption_dict, self.default_resource_consumption_dict)
                 #action = Action(origin_node, destination_node, cost, contribution_vector, min_resource_dict, resource_consumption_dict, max_resource_dict)
                 
  
@@ -188,16 +190,16 @@ class CVRP(OptimizationProblem):
                 _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_resource_consumption_dict)     
                 _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_max_resource_dict)     
                 indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_max_resource_dict)
-                
+                #if origin_node==-1:
                 ##print('trans_min_input')
                 #print(trans_min_input)
                 #print('min_resource_vec')
                 #print(min_resource_vec)
-                #print('resource_consumption_vec')
-                #print(resource_consumption_vec)
+                #    print('resource_consumption_vec')
+                #    print(resource_consumption_vec)
                 #print('max_resource_vec')
                 #print(max_resource_vec)
-                #input('')
+                #    input('')
                 
                 #remember when applying the max_resource_vec we only apply it over indices_non_zero_max
  
@@ -225,18 +227,21 @@ class CVRP(OptimizationProblem):
         cost = 0
         min_resource_vec = np.zeros(self.number_of_resources)
         resource_consumption_vec = np.zeros(self.number_of_resources)
-        indices_non_zero_max = []    
+        indices_apply_min_to = []    
         max_resource_vec = np.full(self.number_of_resources, np.inf)
-        self.initial_null_actions['trans_min_input'] = trans_min_input
-        self.initial_null_actions['trans_term_add'] = trans_term_add
-        self.initial_null_actions['trans_term_min'] = trans_term_min
-        self.initial_null_actions['contribution_vector'] = contribution_vector
-        self.initial_null_actions['cost'] = cost
-        self.initial_null_actions['min_resource_vec'] = min_resource_vec
-        self.initial_null_actions['resource_consumption_vec'] = resource_consumption_vec
-        self.initial_null_actions['indices_non_zero_max'] = indices_non_zero_max
-        self.initial_null_actions['max_resource_vec'] = max_resource_vec
- 
+       # self.initial_null_actions['trans_min_input'] = trans_min_input
+       # self.initial_null_actions['trans_term_add'] = trans_term_add
+       # self.initial_null_actions['trans_term_min'] = trans_term_min
+       # self.initial_null_actions['contribution_vector'] = contribution_vector
+       # self.initial_null_actions['cost'] = cost
+       # self.initial_null_actions['min_resource_vec'] = min_resource_vec
+       # self.initial_null_actions['resource_consumption_vec'] = resource_consumption_vec
+       # self.initial_null_actions['indices_non_zero_max'] = indices_non_zero_max
+       # self.initial_null_actions['max_resource_vec'] = max_resource_vec
+
+        self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec)
+
+
     def _create_initial_res_actions(self):
         """Note to Julian: No code exists for this yet."""
  
@@ -276,23 +281,18 @@ class CVRP(OptimizationProblem):
         print('check here')
         
 
-
-    def _sorted_nearest_node(self):
-        #self.cost_matrix =  {(u,v): self.distance(u,v) for u in self.nodes for v in self.nodes }
-        self.neighbors_by_distance = {
-            u: sorted(
-                [v for v in self.nodes if v != u],
-                key=lambda v: self.distance(u, v)
-            )
-            for u in self.nodes
-        }
-    
     def _define_state_update_module(self):
         """This is where we define how res_states is updated after pricing. We are using the `standard_CVRP` module for this definition."""
         self.state_update_module = CVRP_state_update_function(self.nodes, self.actions,self.capacity, self.demands, self.neighbors_by_distance, self.initial_resource_vector,self.resource_name_to_index,self.number_of_resources)
     
     def _generate_neighbors(self):
-        pass
+        self.neighbors_by_distance = {
+            u: sorted(
+                [v for v in self.nodes if v != u],
+                key=lambda v: self._distance(u, v)
+            )
+            for u in self.nodes
+        }
  
     def _distance(self, origin, destination):
         """Helper function to get costs of actions easily."""

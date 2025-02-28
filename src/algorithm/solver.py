@@ -35,7 +35,6 @@ class GraphMaster:
     - Repeats until optimal
     - Then solve as ILP
     """
-
     def __init__(self,
                  nodes: List[int],
                  actions: Dict[Tuple[int, int], Action],
@@ -48,7 +47,7 @@ class GraphMaster:
                  initial_dominate_actions:Set[Action],
                  resource_name_to_index: Dict[str, int],
                  number_of_resources: int,
-                 null_action_info: Action
+                 the_single_null_action: Action
                  #node_to_list
                  ):
         self.nodes = nodes
@@ -62,7 +61,7 @@ class GraphMaster:
         self.dominate_actions = initial_dominate_actions
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
-        self.null_action_info = null_action_info
+        self.the_single_null_action=the_single_null_action
         #self.node_to_list = node_to_list
         self.index_to_multi_graph = {}
         self.graph_to_index = {}
@@ -74,7 +73,20 @@ class GraphMaster:
         l_id = 0
         size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
-        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.null_action_info)
+        print('self.initial_res_states')
+        print(self.initial_res_states)
+        #for s in self.initial_res_states:
+        #    print('****')
+        #    print(s)
+        #    print(s.node)
+        ##    print(s.state_vec)
+        #    print('---')
+        #print('about to call here')
+        #print('self.the_single_null_action')
+        #print(self.the_single_null_action)
+        #input('self.the_single_null_action')
+        #input('---')
+        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.the_single_null_action)
         self.res_states_minus:Set[State]=self.initial_res_states
         self.res_actions=self.initial_res_actions
         #l_id = 0
@@ -83,8 +95,12 @@ class GraphMaster:
         self.index_to_multi_graph[l_id] = my_init_graph
         iteration = 1
         incombentLP = np.inf
+        do_pricing=False
+        #print('self.the_single_null_action')
+        #print(self.the_single_null_action)
+        #input('self.the_single_null_action')
         while iteration < max_iterations:
-            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.null_action_info)
+            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action)
             pgm_solver.call_PGM()
             self.res_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
             incombentLP = pgm_solver.cur_lp
@@ -96,21 +112,27 @@ class GraphMaster:
             #please remember every graph has its own source and sink
             l_id += 1
             #all action used in specific column 
-            if 1>0:
-                beta_term, new_states_describing_new_graph = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
+            states_used_in_this_col=set([])
+            beta_term=[]
+            new_states_describing_new_graph=[]
+            if do_pricing==False:
+                beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
                 reduced_cost = -np.inf
-            #beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+            else:
+                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
+                beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+            
             # print('route')
             # print(list_of_nodes_in_shortest_path)
-            print('beta term')
-            print(beta_term)
+            #print('beta term')
+            #print(beta_term)
 
-            print('possible state in beta')
-            for node_value in beta_term:
-                for state in new_states_describing_new_graph:
-                    if node_value == state.node:
-                        print(f'node: {state.node}')
-                        print(f'state_vec: {state.state_vec.toarray()[0]}')
+            #print('possible state in beta')
+            #for node_value in beta_term:
+            #    for state in new_states_describing_new_graph:
+            #        if node_value == state.node:
+            #            print(f'node: {state.node}')
+            #            print(f'state_vec: {state.state_vec.toarray()[0]}')
             
             #print('state in path')
 
@@ -131,11 +153,12 @@ class GraphMaster:
                     'graph': self.index_to_multi_graph.values()
                 }
             
-            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.null_action_info)
+            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.the_single_null_action)
             new_multi_graph.initialize_system()
             self.index_to_multi_graph[l_id] = new_multi_graph
-            self.res_states_minus = self.res_states_minus + states_used_in_this_col
-            self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
+            self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
+            if do_pricing==True:
+                self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
             iteration += 1
             self.restricted_master_problem = 0
         return {'status': 'max_iterations', 'iterations': iteration}      

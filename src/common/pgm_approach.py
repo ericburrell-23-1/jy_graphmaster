@@ -15,7 +15,7 @@ class PGM_appraoch:
 
     #This will do the enitre RMP. 
 
-    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,null_action_info):
+    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,the_null_action):
         self.index_to_graph:DefaultDict[int,Full_Multi_Graph_Object_given_l] = index_to_graph
         self.my_PGM_graph_list:List[Full_Multi_Graph_Object_given_l]=list(self.index_to_graph.values()) #list of all of the PGM graphs
         self.prob_RHS:np.ndarray=prob_RHS #RHS
@@ -24,9 +24,10 @@ class PGM_appraoch:
         self.make_res_states_minus_by_node()
         self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
         self.incumbant_lp=incumbant_lp# has incumbent LP objective
-        self.null_action_info = null_action_info
+        self.the_null_action = the_null_action
         self.dominated_actions = dominated_action
         self.init_defualt_jy_options()
+
         self.primal_solution, self.dual_solution, self.optimal_value = None, None, None
 
         
@@ -75,10 +76,10 @@ class PGM_appraoch:
             did_find_neg_red_cost=False #indicate if we found a negative reduced cost 
             for my_graph in self.my_PGM_graph_list: #Iterate over all graphs and find the shortest path
                 shortest_path, shortest_path_length, ordered_path_rows=my_graph.construct_specific_pricing_pgm(self.dual_exog,self.rezStates_minus_by_node) #construct and call pricing problem
-                print('shortest_path')
-                print(shortest_path)
-                print('shortest_path_length')
-                print(shortest_path_length)
+                #print('shortest_path')
+                #print(shortest_path)
+                #print('shortest_path_length')
+                #print(shortest_path_length)
                 if shortest_path_length<-self.jy_options['epsilon']: #if we have a negative reduced cost column we will apply expansion
                     self.apply_expansion_operator(shortest_path, shortest_path_length, ordered_path_rows,my_graph)# do teh expasnion operator
                     did_find_neg_red_cost=True #did find negative reduced cost is set to true
@@ -144,15 +145,22 @@ class PGM_appraoch:
             elif var_name[0] == "edge":  # Edge variable format: ('edge', g, s1, s2)
                 _, g, s1, s2 = var_name  # Extract graph and states
                 active_edges.add((g, s1, s2))
-        #Remove null action really this is just executed once so hecne the break
-        for g in self.my_PGM_graph_list:
-            self.rez_actions_minus=self.rez_actions_minus-g.null_action
-            break
+        
+        if self.the_null_action in self.rez_actions_minus:
+            self.rez_actions_minus=self.rez_actions_minus.remove(g.null_action)
         # Step 3: Ensure `rezStates_minus_by_node[g]` exists as a defaultdict(set)
         self.rezStates_minus_by_node = {g: defaultdict(set) for g in self.pgm_graph_2_rmp_graph}  
 
         # Step 4: Update `rezStates_minus_by_node[g][node]` to include states from active edges
         for g, s1_id, s2_id in active_edges:
+            
+            print('g, s1_id, s2_id')
+            print('s1_id')
+            print(s1_id)
+            print('s2_id')
+            print(s2_id)
+            print('g')
+            print(g)
             state1 = self.pgm_graph_2_rmp_graph[g].state_id_to_state[s1_id]  # Retrieve state object
             state2 = self.pgm_graph_2_rmp_graph[g].state_id_to_state[s2_id]  # Retrieve state object
 
@@ -167,14 +175,13 @@ class PGM_appraoch:
 
     def call_PGM_RMP_solver_from_scratch(self):
         """Constructs and initializes the RMP solver from scratch."""
-        
         # Step 1: Initialize the RMP graphs
         self.pgm_graph_2_rmp_graph:DefaultDict[Full_Multi_Graph_Object_given_l,RMP_graph_given_l] = defaultdict()  # Dictionary to store RMP graphs
 
         for l_id, g in self.index_to_graph.items():
             
             my_states_g_by_node = self.rezStates_minus_by_node[l_id]
-            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.dominated_actions,self.null_action_info)
+            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.dominated_actions,self.the_null_action)
             self.pgm_graph_2_rmp_graph[g].initialize_system()  # Initialize RMP graph
 
         # Step 2: Initialize variables and constraints
@@ -325,7 +332,7 @@ class PGM_appraoch:
                 constraint_mapping[f"UpperBound_{con_name}"] = constraint_name
         
         # Step 4.5: Print the model formulation
-        self.print_pulp_formulation(prob)
+        #self.print_pulp_formulation(prob)
         
         # Step 5: Solve the problem
         prob.solve()
@@ -340,7 +347,7 @@ class PGM_appraoch:
         
         if prob.status == 1:  # If the problem was solved optimally
             # Print all constraint names that PuLP knows about
-            print("Available constraints in PuLP:", list(prob.constraints.keys()))
+            #print("Available constraints in PuLP:", list(prob.constraints.keys()))
             
             # First, get all the duals using the simplified names we created
             temp_duals = {}

@@ -25,7 +25,7 @@ class OptimizationProblem(ABC):
         self.actions: Dict[Tuple[int, int], List[Action]] = {}
         self.initial_res_states: Set[State] = set()
         self.initial_res_actions: Set[Action] = set()
-        self.initial_null_actions = {}
+        self.the_single_null_action: Action = None
         self.state_update_module: StateUpdateFunction = None
                 
         self._load_data_from_file()   
@@ -33,6 +33,7 @@ class OptimizationProblem(ABC):
         self._create_dom_action_object()
         self._create_initial_res_states()
         self._create_initial_res_actions()
+        self._generate_neighbors()
         self._define_state_update_module()
 
     @abstractmethod
@@ -51,7 +52,7 @@ class OptimizationProblem(ABC):
             self.dominated_action_pairs,
             self.resource_name_to_index,
             self.number_of_resources,
-            self.initial_null_actions,
+            self.the_single_null_action,
             
             #node_to_list
         )
@@ -74,7 +75,12 @@ class OptimizationProblem(ABC):
         """Build initial `res_states`, which forms the initial feasible solution for the solver."""
         pass
 
-
+    
+    @abstractmethod
+    def _generate_neighbors(self):
+        """generate neighbors"""
+        pass
+    
     @abstractmethod
     def _create_initial_res_actions(self):
         """Build initial `res_actions`, which forms the initial feasible solution for the solver when using PGM."""

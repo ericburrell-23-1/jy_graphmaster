@@ -31,7 +31,7 @@ class State:
         if not isinstance(other, State):
             return False
             
-        return (self.node == other.node) and (self.state_vec == other.state_vec) and (self.l_id == other.l_id)
+        return (self.node == other.node) and np.sum(np.abs(self.state_vec- other.state_vec))>.0001 and (self.l_id == other.l_id)
 
     def __hash__(self) -> int:
         """

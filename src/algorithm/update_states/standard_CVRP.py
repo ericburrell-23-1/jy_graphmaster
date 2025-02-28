@@ -28,7 +28,7 @@ class CVRP_state_update_function(StateUpdateFunction):
         this_beta = customer_list[1:-1]
         random.shuffle(this_beta)
         new_states:List[State] = self._generate_state_based_on_beta(this_beta,l_id)
-        return [-1]+this_beta+[-2],new_states
+        return [-1]+this_beta+[-2],new_states,self.states_used_in_this_col
 
     def get_new_states(self, list_of_customer, list_of_actions,l_id):
         this_beta = self._generate_beta_term(list_of_customer[1:-1]) #attached customer not in path into nearest customer in path
@@ -55,8 +55,9 @@ class CVRP_state_update_function(StateUpdateFunction):
         """This needs to be reviewed but basically this is the function that should be called in `get_new_states`."""
         myState = []
         dem_list = []
-        null_action = []
+        #null_action = []
         node_to_states = {node:[State] for node in self.nodes}
+        self.states_used_in_this_col=[]
         for idx in range(len(beta)):
             customer = beta[idx]
             myCanVisit = {
@@ -75,6 +76,8 @@ class CVRP_state_update_function(StateUpdateFunction):
 
                 this_state = State(customer,res_vec,l_id,False,False)
                 myState.append(this_state)
+                if (d==0):
+                    self.states_used_in_this_col.append(this_state)
                 node_to_states[customer].append(this_state)
         source_state_resource_vector = {
             f'can_visit: {u}': 1 for u in self.nodes if u not in {-1, -2}}
@@ -88,6 +91,8 @@ class CVRP_state_update_function(StateUpdateFunction):
         sink_state = State(-2, sink_state_res_vec, l_id,False,True)
         myState.append(source_state)
         myState.append(sink_state)
+        self.states_used_in_this_col.append(source_state)
+        self.states_used_in_this_col.append(sink_state)
 
         """calculate null actions"""
         # default_trans_min_input = {}
