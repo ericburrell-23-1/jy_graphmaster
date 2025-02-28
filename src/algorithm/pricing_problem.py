@@ -85,12 +85,18 @@ class PricingProblem:
                 edge_weight = action.cost - dual_contribution
 
                 # Create edge from `origin_node` to `action_node`
+                first_array = np.array(ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION).reshape(-1)
+                second_array = action.resource_consumption_vec.toarray()[0] * -1
+                this_res_cost = np.concatenate([first_array,second_array])
+                third_array = np.array(ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION).reshape(-1)
+                this_res_cost_2 = np.concatenate([third_array, np.zeros(self.number_of_resources)])
+                print(origin_node,destination_node,this_res_cost)
                 graph.add_edge(
                     origin_node,
                     action_node,
-
-                    res_cost=np.array([ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION] + [-float(action.trans_term_add[resource])
-                                      for resource in self.initial_resource_state]),
+                    res_cost = this_res_cost,
+                    # res_cost=np.array([ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION] + [-float(action.trans_term_add[resource])
+                    #                   for resource in self.initial_resource_state]),
                     weight=edge_weight,
 
                     action=action  # Store the action object for traceability
@@ -100,8 +106,7 @@ class PricingProblem:
                 graph.add_edge(
                     action_node,
                     destination_node,
-                    res_cost=np.concatenate(
-                        [[ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION], np.zeros(self.number_of_resources)]),
+                    res_cost=this_res_cost_2,
                     weight=0,
                     action=None
                 )

@@ -90,14 +90,14 @@ class PGM_appraoch:
             for my_graph in self.my_PGM_graph_list: #Iterate over all graphs and find the shortest path
                 shortest_path, shortest_path_length, ordered_path_rows=my_graph.construct_specific_pricing_pgm(self.dual_exog,self.rezStates_minus_by_node) #construct and call pricing problem
                 tot_shortest_path_len=tot_shortest_path_len+min([0,shortest_path_length])
-                print('my_graph.l_id')
-                print(my_graph.l_id)
-                print('shortest_path')
-                print(shortest_path)
-                print('shortest_path_length')
-                print(shortest_path_length)
+                # print('my_graph.l_id')
+                # print(my_graph.l_id)
+                # print('shortest_path')
+                # print(shortest_path)
+                # print('shortest_path_length')
+                # print(shortest_path_length)
 
-                print('my_state')
+                # print('my_state')
 
                 for my_state_id  in shortest_path:
                     my_state=self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
