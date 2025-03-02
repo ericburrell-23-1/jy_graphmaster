@@ -13,7 +13,7 @@ class Full_Multi_Graph_Object_given_l:
     def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs,the_null_action):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
-        self.res_states = res_states  # set of all states
+        self.rez_states = res_states  # set of all states
         #for state in self.res_states:
         #    print(state.node, state.state_vec.toarray())
         self.all_actions = all_actions  # Set of all possible actions (excluding null action)
@@ -39,6 +39,13 @@ class Full_Multi_Graph_Object_given_l:
                 f"Graph {l_id} must have exactly one source and one sink, "
                 f"but found {source_count} source(s) and {sink_count} sink(s)."
             )
+        self.source_state=list(self.resStates_by_node[-1])[0]
+        self.sink_state=list(self.resStates_by_node[-2])[0]
+        #print('self.source_state')
+        #print(self.source_state)
+        #print('self.sink_state')
+        #print(self.sink_state)
+        #input('----')
         self.source_state=list(self.resStates_by_node[-1])[0]
         self.sink_state=list(self.resStates_by_node[-2])[0]
         #print('self.source_state')
@@ -81,47 +88,15 @@ class Full_Multi_Graph_Object_given_l:
         # Iterate over all actions
         for a1 in self.all_actions:
             node_tail, node_head = a1.node_tail, a1.node_head
-            #print('a1')
-            #print(a1.action_id)
-            #print('node_tail, node_head')
-            #print([node_tail, node_head])
-            # Process state pairs
-            #print('resStates_by_node[node_tail]')
-            #print(self.resStates_by_node[node_tail])
+            
             for state_tail in self.resStates_by_node[node_tail]:
                 head_ideal = a1.get_head_state(state_tail,self.l_id)
-                #if node_tail==-1:
-                #    print('head_ideal')
-                #    print(head_ideal)
-                #    print('node_head')
-                #    print(node_head)
-                #    print('head_ideal==None')
-                #    print(head_ideal==None)
-                #    print('self.resStates_by_node[node_head]')
-                #    print(self.resStates_by_node[node_head])
-                #    input('hi')
-                #print('hi')
                 if head_ideal== None:
                     continue
                 for state_head in self.resStates_by_node[node_head]:
                     
                     does_dom,does_equal=head_ideal.this_state_dominates_input_state(state_head)
-                    #if node_tail==-1:
-                    #    print('a1.resource_consumption_vec')
-                    #    print(a1.resource_consumption_vec)
-                    #    print('head_ideal.state_vec')
-                    #    print(head_ideal.state_vec)
-                    #    print('state_head.state_vec')
-                    #    print(state_head.state_vec)
-                    #    print('does_dom')
-                    #    print(does_dom)
-                    #    print('does_equal')
-                    #    print(does_equal)
-                    #    print('node_tail')
-                    #    print(node_tail)
-                    #    print('node_head')
-                    #    print(node_head)
-                    #    input('im here this is good')
+                    
                     if does_dom or does_equal: #head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
                         key = (state_tail, state_head)
  
@@ -129,21 +104,23 @@ class Full_Multi_Graph_Object_given_l:
                         self.actions_ub_given_s1s2_2[key].add(a1)
                         self.action_ub_tail_head[a1][state_tail].add(state_head)
                         self.action_ub_head_tail[a1][state_head].add(state_tail)
-                        #if node_tail==-1:
-                        #    print('im here this is what I wanted')
-                        #    print('node_head')
-                        #    print(node_head)
-                        #    print('node_tail')
-                        #    print(node_tail)
-                        #    input('hold')
-            #if node_tail==-1:
-            #    print('node_head')
-            #    print(node_head)
-            #    print('node_tail')
-            #    print(node_tail)
-            #    print('input hi')
-        #print('dojne making actions ub')
-        #input('----')
+                        a1.check_valid(state_tail, state_head)
+                        #if state_tail.node>0 and state_head.node>0 and state_tail.state_vec.toarray()[0][0]==state_head.state_vec.toarray()[0][0]:
+                        #    print('issue is here too pgm clean')
+                        #    input('error here in compute ub')
+                        #if state_head.node>0 and state_tail.node>0:
+                        #    print('adding')
+                        #    print('state_head.node,state_tail.node')
+                        #    print([state_head.node,state_tail.node])
+                        #    print('state_head.state_vec.toarray()')
+                        #    print(state_head.state_vec.toarray())
+                        #    print('state_tail.state_vec.toarray()')
+                        #    print(state_tail.state_vec.toarray())
+                        #    print('head_ideal.state_vec.toarray()')
+                        ##    print(head_ideal.state_vec.toarray())
+                        #    print('a1.trans_term_add[cap_remain]')
+                        ##    print(a1.trans_term_add['cap_remain'])
+                        #    input('----')
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
         #state_2_dom_states_dict is a dictionary that when s is put in provdies all states taht s dominates
@@ -204,8 +181,13 @@ class Full_Multi_Graph_Object_given_l:
                 all_candid_tail_given_head[s_head]=all_tails-do_remove
                 tails_to_connect=Helper.subset_where_z_in_Y(s_head,all_candid_tail_given_head[s_head],all_candid_head_given_tail)
                 for s_tail in tails_to_connect:
+                    if a1 in self.actions_s1_s2_non_dom[(s_tail, s_head)]:
+                        input('error here already found')
                     self.actions_s1_s2_non_dom[(s_tail, s_head)].add(a1)
- 
+                    a1.check_valid(s_tail, s_head)
+                    #if s_tail.node>0 and s_head.node>0 and s_tail.state_vec.toarray()[0][0]==s_head.state_vec.toarray()[0][0]:
+                    ##    print('issue is here too pgm clean')
+                    #    input('error here')
     
     def PGM_compute_remove_redundant_actions(self):
         #remove any dominated actions  from each s1,s2
@@ -216,7 +198,10 @@ class Full_Multi_Graph_Object_given_l:
             my_actions=self.actions_s1_s2_non_dom[my_tup] #grab the actions
             do_remove=Helper.union_of_sets(self.dom_actions_pairs,my_actions)
             self.actions_s1_s2_clean[my_tup]=my_actions-do_remove
- 
+
+            if s1.node>0 and s2.node>0 and s1.state_vec.toarray()[0][0]==s2.state_vec.toarray()[0][0]:
+                print('issue is here too')
+                input('error here')
     #def PGM_make_null_actions(self):  
         #makes null action terms.  This is for dropping resources
         #see the RMP version for this
@@ -299,6 +284,13 @@ class Full_Multi_Graph_Object_given_l:
         # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
  
         # # Compute the shortest path cost
+        shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
+        shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
+       # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
+       #                                                   source=self.source_state.state_id ,
+       #                                                     target=self.sink_state.state_id ,
+       #                                                     weight="weight"
+       #                                                 )
         shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
         shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
        # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,

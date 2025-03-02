@@ -72,6 +72,7 @@ class CVRP(OptimizationProblem):
                         coordinates[customer_id - 1] = (x, y)
                 else:
                     print("Error parsing coordinates")
+                    input('----')
  
             elif demand_section:
                 columns = line.split()
@@ -84,10 +85,12 @@ class CVRP(OptimizationProblem):
                         demands[customer_id - 1] = demand
                 else:
                     print("Error parsing demand")
- 
+                    input('----')
         self.capacity = capacity
         self.demands = demands
         self.coordinates = coordinates
+        print('self.demands')
+        print(self.demands)
         print('check here')
     
  
@@ -142,6 +145,8 @@ class CVRP(OptimizationProblem):
              self.default_exog_name_to_coeff_dict[("Cover", node)] = 0
  
         idx = 0
+        #print('origin_node,destination_node,cost')
+
         for origin_node in self.nodes:
             if origin_node > 0:
                 # DEFINE COVERAGE CONSTRAINT RHS
@@ -149,13 +154,14 @@ class CVRP(OptimizationProblem):
                 self.rhs_constraint_name_to_index[str(("Cover", origin_node))] = idx
                 self.rhs_index_to_constraint_name[idx] = str(("Cover", origin_node))
                 idx += 1
- 
+
             for destination_node in self.nodes:
                 if origin_node == destination_node or origin_node==-2 or destination_node == -1:
                     continue
                 if origin_node == -1 and destination_node == -2:
                     continue
                 cost = self._distance(origin_node, destination_node)
+                #print(origin_node,destination_node,cost)
                 contribution_vector = zeros(num_customers)
                 if origin_node > 0:
                     contribution_vector[self.constraint_name_to_index[str(("Cover", origin_node))]] = 1
@@ -208,12 +214,12 @@ class CVRP(OptimizationProblem):
                 action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec)
                 self.actions[origin_node, destination_node] = [action]
                 #start delete
-                print(f'origin:{origin_node},destination:{destination_node}')
-                print(f'trans_min_input:{trans_min_input},trans_term_min:{trans_term_min},trans_term_add:{trans_term_add}')
-                print(f'trans_term_min:{min_resource_vec.toarray()},trans_term_vec{resource_consumption_vec.toarray()},indices_apply_min_to{indices_apply_min_to},max_resource_vec{max_resource_vec.toarray()}')
-                print('checkhere')
-        print('checkhere')
-                
+               # print(f'origin:{origin_node},destination:{destination_node}')
+               # print(f'trans_min_input:{trans_min_input},trans_term_min:{trans_term_min},trans_term_add:{trans_term_add}')
+               # print(f'trans_term_min:{min_resource_vec.toarray()},trans_term_vec{resource_consumption_vec.toarray()},indices_apply_min_to{indices_apply_min_to},max_resource_vec{max_resource_vec.toarray()}')
+               #print('checkhere')
+        #print('checkhere')
+        #input('donez')
  
     def _create_null_action_info(self):
         trans_min_input = {}

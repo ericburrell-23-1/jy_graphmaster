@@ -35,6 +35,18 @@ class Action:
         self.max_resource_vec = max_resource_vec
         self.non_zero_indices_exog=np.nonzero(self.Exog_vec)[0]
         self.action_id = uuid.uuid4().hex
+        self.mark_of_null_action=False
+        if self.node_tail==None:
+            self.mark_of_null_action=True
+
+        #print('node_tail')
+        #print(node_tail)
+        #print('node_head')
+        #print(node_head)
+        #print('resource_consumption_vec')
+        #print(resource_consumption_vec.toarray())
+        #print('----')
+        #input('----')
 
 
     def comp_red_cost(self,dual_vec):
@@ -121,28 +133,50 @@ class Action:
                 all(v == 0 for v in self.contribution_vector))
     
 
-    def __eq__(self, other: "Action") -> bool:
-        """
-        Checks for equality based on the following fields:
-          trans_min_input, trans_term_add, trans_term_min, node_tail,
-          node_head, Exog_vec, cost
-        """
-        if not isinstance(other, Action):
-            return False
+    #def __eq__(self, other: "Action") -> bool:
+    #    """
+    #    Checks for equality based on the following fields:
+    #      trans_min_input, trans_term_add, trans_term_min, node_tail,
+    #      node_head, Exog_vec, cost
+    #    """
+     #   if not isinstance(other, Action):
+     #       return False
 
-        return (
-            self.trans_min_input == other.trans_min_input and
-            self.trans_term_add  == other.trans_term_add  and
-            self.trans_term_min  == other.trans_term_min  and
-            self.node_tail       == other.node_tail       and
-            self.node_head       == other.node_head       and
-            self.Exog_vec        == other.Exog_vec        and
-            self.cost            == other.cost
-        )
+     #   return (
+     #       self.trans_min_input == other.trans_min_input and
+      #      self.trans_term_add  == other.trans_term_add  and
+       #     self.trans_term_min  == other.trans_term_min  and
+        ##    self.node_head       == other.node_head       and
+          #  self.Exog_vec        == other.Exog_vec        and
+        #    self.cost            == other.cost
+        #)
 
-    def __hash__(self):
-        """
-        Creates a hash based on the fields used in __eq__.
-        - Dictionaries are not hashable, so we convert them to frozensets of items.
-        """
-        return hash(self.action_id)
+    #def __hash__(self):
+     #   """
+     #   Creates a hash based on the fields used in __eq__.
+      #  - Dictionaries are not hashable, so we convert them to frozensets of items.
+     #   """
+     #   return hash(self.action_id)
+    
+    def pretty_print_action(self):
+        print('action is ')
+        print("self.action_id:  "+str(self.action_id))
+        print("self.node_tail:  "+str(self.node_tail))
+        print("self.node_head:  "+str(self.node_head))
+        print("self.exog_vec:  "+str(self.Exog_vec))
+
+    def check_valid(self,state_tail,state_head):
+        is_valid=True
+
+        if self.mark_of_null_action==True and (state_tail.node!=state_head.node):
+            
+            input('not valid due null action for different')
+        if self.mark_of_null_action==False and (state_tail.node!=self.node_tail or state_head.node!=self.node_head):
+            
+            input('not valid due to node not agree')
+        ideal_head=self.get_head_state(state_tail,state_tail.l_id)
+        [is_dom,is_equal]=ideal_head.this_state_dominates_input_state(state_head)
+        if is_equal==False and is_dom==False:
+            state_head.pretty_print_state()
+            state_tail.pretty_print_state()
+            input('not valid reason 2')

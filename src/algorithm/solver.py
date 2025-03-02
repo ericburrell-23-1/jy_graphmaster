@@ -36,9 +36,6 @@ class GraphMaster:
     - Repeats until optimal
     - Then solve as ILP
     """
-
-
-
     def __init__(self,
                  nodes: List[int],
                  actions: Dict[Tuple[int, int], Action],
@@ -70,7 +67,7 @@ class GraphMaster:
         #self.node_to_list = node_to_list
         self.index_to_multi_graph = {}
         self.graph_to_index = {}
-        self.res_states_minus = initial_res_states
+        self.rez_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
         #self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
         self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
@@ -93,7 +90,7 @@ class GraphMaster:
         #input('self.the_single_null_action')
         #input('---')
         my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.the_single_null_action)
-        self.res_states_minus:Set[State]=self.initial_res_states
+        self.rez_states_minus:Set[State]=self.initial_res_states
         self.res_actions=self.initial_res_actions
         #l_id = 0
         #multi_graph = Full_Multi_Graph_Object_given_l(l_id,self.initial_res_states,self.initial_res_actions,self.dominate_actions)
@@ -106,56 +103,95 @@ class GraphMaster:
         #print(self.the_single_null_action)
         #input('self.the_single_null_action')
         self.action_id_2_actions={my_action.action_id: my_action for my_action in self.actions}
+        debug_init_all_states=False
+        debug_init_all_actions=True
+        self.lp_before_operations=np.inf
+        debug_on=True
+        self.complete_routes=[]
         while iteration < max_iterations:
-            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.res_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions)
+            print('self.lp_before_operations')
+            print(self.lp_before_operations)
+            input('-prior -')
+            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
             pgm_solver.call_PGM()
-            self.res_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
+            #if debug_on==True:
+            #    input('done first call')
+            #    pgm_solver.make_res_states_minus_from_by_nodes()
+            #    pgm_solver.call_PGM()
+#
+            #    input('done second call')
 
+            #input('done middle call')
+            #pgm_solver.call_GM_NO_PGM()
+            #input('done last call')
+
+
+            self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
+            self.complete_routes=pgm_solver.complete_routes
+            #debug_check_1=pgm_solver.is_state_set_subset(self.rez_states_minus,self.rez_states_minus)
+            #debug_check_15=pgm_solver.is_state_set_subset(pgm_solver.rez_states_minus,pgm_solver.rez_states_minus)
+            #debug_check_2=pgm_solver.is_state_set_subset(self.rez_states_minus,pgm_solver.rez_states_minus)
+            #print('debug_check_1')
+            #print(debug_check_1)
+            #print(debug_check_15)
+            #print('debug_check_2')
+            #print(debug_check_2)
+            #input('--')
+            
+            #if debug_on==True:
+            #    input('starting call after remaking ')
+            #    #pgm_solver.res_states_minus=self.res_states_minus
+                #pgm_solver.res_actions=self.res_actions
+                #pgm_solver.make_res_states_minus_from_by_nodes()
+                
+            #    pgm_solver_new = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
+                #my_output_2=pgm_solver.is_state_set_subset(pgm_solver_new.rez_states_minus,pgm_solver.rez_states_minus)
+            #    my_output=pgm_solver_new.compare_rez_states(pgm_solver_new.rez_states_minus_by_node,pgm_solver.rez_states_minus_by_node)
+                #pgm_solver.make_rez_states_minus_by_node()
+                #my_output_3=pgm_solver.is_state_set_subset(pgm_solver_new.rez_states_minus,pgm_solver.rez_states_minus)
+                #print('my_output_3')
+                #print(my_output_3)
+                #print('my_output_2')
+                #print(my_output_2)
+            #    print('my_output flag')
+            #    print(my_output)
+            #    if my_output==False:
+            #        print('testMeHere')
+            #        input('testMeHere')
+            #    input('---')
+
+            #    pgm_solver_new.call_PGM()
+            #    input('done remaking call')
+            
+
+
+            #if debug_on==True:
+            #    input('starting third call')
+            #    pgm_solver.res_states_minus=self.res_states_minus
+            #    pgm_solver.res_actions=self.res_actions
+            #    pgm_solver.make_res_states_minus_from_by_nodes()
+            #    pgm_solver.call_PGM()
+#
+#                input('done third call')
+            
             incombentLP = pgm_solver.cur_lp
-            #please remember every graph has its own source and sink
-            
-            
-            
-            #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
-            #please remember every graph has its own source and sink
+            self.lp_before_operations=pgm_solver.cur_lp
+
             l_id += 1
             #all action used in specific column 
             states_used_in_this_col=set([])
             beta_term=[]
             new_states_describing_new_graph=[]
+            list_of_actions_used_in_col=set()
             if do_pricing==False:
-                print('in pricing')
+                #print('in pricing')
                 beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
                 reduced_cost = -np.inf
             else:
                 print('in not  pricing')
-                #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
-                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
 
+                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                 beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
-
-            print('route')
-            print(list_of_nodes_in_shortest_path)
-            #print('beta term')
-            #print(beta_term)
-
-            #print('possible state in beta')
-            #for node_value in beta_term:
-            #    for state in new_states_describing_new_graph:
-            #        if node_value == state.node:
-            #            print(f'node: {state.node}')
-            #            print(f'state_vec: {state.state_vec.toarray()[0]}')
-            
-            #print('state in path')
-
-            # for node_value in beta_term:
-            #     for state in states_used_in_this_col:
-            #         if node_value == state.node:
-            #             state = node_to_state[node_value]
-            #             print(f'node: {state.node}')
-            #             print(f'state_vec: {state.state_vec.toarray()[0]}')
-
-                
             if reduced_cost >= -1e-6:
                 return {
                     'status': 'optimal',
@@ -165,14 +201,38 @@ class GraphMaster:
                 }
             new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.the_single_null_action)
 
+
             new_multi_graph.initialize_system()
 
+
             self.index_to_multi_graph[l_id] = new_multi_graph
-            self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
-            if do_pricing==True:
-                self.res_actions_minus = self.res_actions_minus + list_of_actions_used_in_col
+            
+            #if do_pricing==True:
+            if debug_init_all_actions==False:
+                #self.res_actions_minus = self.res_actions_minus.union(list_of_actions_used_in_col)
+                for my_action in   list_of_actions_used_in_col:
+                    self.res_actions_minus.add(my_action)# = self.res_actions_minus.union(list_of_actions_used_in_col)
+            else:
+                self.res_actions_minus=set()
+                for my_action in self.actions:
+                    self.res_actions_minus.add(my_action)
+            #if debug_on==True:
+            #    input('starting fourth call')
+            #    pgm_solver.res_states_minus=self.res_states_minus
+            #    pgm_solver.res_actions=self.res_actions
+            #    pgm_solver.make_res_states_minus_from_by_nodes()
+            #    pgm_solver.call_PGM()
+            #    input('done fourth call')
+            if debug_init_all_states==True:
+                self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
+            else:
+                #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
+                for s in states_used_in_this_col:
+                    self.rez_states_minus.add(s)
+
             iteration += 1
             self.restricted_master_problem = 0
+            input(' DONE A COMPLETE GM step')
 
         return {'status': 'max_iterations', 'iterations': iteration}      
         

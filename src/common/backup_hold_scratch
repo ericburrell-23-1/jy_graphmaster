@@ -1,0 +1,98 @@
+
+    
+    def DEBUG_RMP_clean_states_EZ(self,a1:Action):
+        """Cleans and updates non-dominated actions for each action in the problem."""
+        # Initialize defaultdicts once per action
+        my_head_node= a1.node_head
+        my_tail_node = a1.node_tail # grab the head adn the tail
+        #grab teh states corresponding to the head and the tail
+        print('----------')
+        print('----------')
+        print('----------')
+        print('----------')
+        print('at the very beginning ')
+        print('self.resStates_minus_by_node[my_head]')
+        print(self.resStates_minus_by_node[my_head_node])
+        print('at the very beginning ')
+        print('self.resStates_minus_by_node[my_tail]')
+        print(self.resStates_minus_by_node[my_tail_node])
+        head_in_prob=self.resStates_minus_by_node[my_head_node]
+        tail_in_prob = self.resStates_minus_by_node[my_tail_node]
+        print('head_in_prob')
+        print(head_in_prob)
+        print('head_in_prob')
+        print('next step  0 ')
+        print('self.resStates_minus_by_node[my_head]')
+        print(self.resStates_minus_by_node[my_head_node])
+        print('at the very beginning ')
+        print('self.resStates_minus_by_node[my_tail]')
+        print(self.resStates_minus_by_node[my_tail_node])
+        print('****')
+        print('****')
+        print('all head states')
+        for my_head_state in head_in_prob:
+            if my_head_state.state_id not in self.state_id_to_state:
+                input('PRECHECK error here must be head 00')
+            print(my_head_state.state_id)
+            my_head_state.pretty_print_state()
+        print('****')
+        print('****')
+
+        print('all tail states')
+        print('tail_in_prob')
+        print(tail_in_prob)
+        print('tail_in_prob')
+        for my_tail_state in tail_in_prob:
+            if my_tail_state.state_id not in self.state_id_to_state:
+                input('PRECHECK error here must be tail 00')
+            print(my_tail_state.state_id)
+            my_tail_state.pretty_print_state()
+        #loop set one is here 
+
+
+        print('next step  ')
+        print('self.resStates_minus_by_node[my_head]')
+        print(self.resStates_minus_by_node[my_head_node])
+        print('at the very beginning ')
+        print('self.resStates_minus_by_node[my_tail]')
+        print(self.resStates_minus_by_node[my_tail_node])
+
+        action_ub_tail_head = self.my_Multi_Graph_Object.action_ub_tail_head[a1] #get all tail to head for this action
+
+        # Process tail states
+
+        for s_tail in  action_ub_tail_head: #iterate over all tails  that can start the action and in the poblem 
+            if s_tail in tail_in_prob:
+                if s_tail.state_id not in self.state_id_to_state:
+                    print('s_tail in self.resStates_minus_by_node[my_tail]')
+                    print(s_tail in self.resStates_minus_by_node[my_tail_node])
+                    print('s_tail in tail_in_prob')
+                    print(s_tail in tail_in_prob)
+                    print('s_tail.state_id')
+                    print(s_tail.state_id)
+                    s_tail.pretty_print_state()
+                    input('error here must be tail 00')
+
+            #for s_head in action_ub_tail_head[s_tail] and head_in_prob: #get all heads in the problem and can be the product of the action
+                for s_head in  action_ub_tail_head[s_tail]:
+                    if s_head in head_in_prob:
+                        a1.check_valid(s_tail, s_head)
+
+                        if s_tail.state_id not in self.state_id_to_state:
+                            print('s_tail in self.resStates_minus_by_node[my_tail]')
+                            print(s_tail in self.resStates_minus_by_node[my_tail_node])
+                            print('s_tail.state_id')
+                            print(s_tail.state_id)
+                            s_tail.pretty_print_state()
+                            input('error here must be tail')
+                        if s_head.state_id not in self.state_id_to_state:
+                            print('s_head in self.resStates_minus_by_node[my_head]')
+                            print(s_head in self.resStates_minus_by_node[my_head_node])
+                            print('s_head in head_in_prob')
+                            print(s_head in head_in_prob)
+                            print('s_head.state_id')
+                            print(s_head.state_id)
+                            s_head.pretty_print_state()
+                            input('error here must be head')
+                        self.actions_s1_s2_non_dom[(s_tail, s_head)].add(a1)
+        
