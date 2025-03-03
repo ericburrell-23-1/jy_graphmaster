@@ -15,9 +15,100 @@ import networkx as nx
 
 class route:
     def __init__(self,state_action_alt_repeat,weight):
-        self.state_action_alt_repeat=state_action_alt_repeat
-        self.weight=weight
 
+        #for i in range(0,len(state_action_alt_repeat)):
+         #   tmp=state_action_alt_repeat[i]
+         #   if type(tmp)==State:
+         #       print('-----')
+         #       print('State BELOW:  '+str(i))
+         #       print('-----')
+         #       tmp.pretty_print_state()
+         ##       print('******')
+
+         #   else:
+         #       print('-----')
+         #       print('ACTION BELOW:   '+str(i))
+         #       print('-----')
+         #       tmp.pretty_print_action()
+        ##        print('******')
+        #input('---')
+        self.state_action_alt_repeat=state_action_alt_repeat #input is states and actions alternating
+        self.weight=weight #what is the corresponding amounf of this in the solution
+        self.generate_states_nodes_actions_ordered()
+
+       # print('state_action_alt_repeat')
+       # print('self.just_actions_ordered')
+       # print(self.just_actions_ordered)
+       # print('state_action_alt_repeat')
+       # print(state_action_alt_repeat)
+       # print('self.just_nodes_ordered')
+       #3 print(self.just_nodes_ordered)
+       # print('self.just_states_ordered')
+       # print(self.just_states_ordered)
+        #print('---')
+        self.generate_all_node_pairs_ordered()
+        self.generate_cost_exog_vector()
+        self.verify_feasibility()
+
+    def generate_cost_exog_vector(self):
+        
+        
+        self.cost=0
+        self.Exog_vec=self.just_actions_ordered[0].Exog_vec*0
+
+        for i  in range(0,len(self.just_actions_ordered)):
+            my_act=self.just_actions_ordered[i]
+            self.cost=self.cost+my_act.cost
+            self.Exog_vec=self.Exog_vec+self.just_actions_ordered[i].Exog_vec
+
+    def generate_states_nodes_actions_ordered(self):
+        #generate all states and actions in order
+        self.just_states_ordered=[]
+        self.just_nodes_ordered=[]
+        for i in range(0,len(self.state_action_alt_repeat),2):
+            self.just_states_ordered.append(self.state_action_alt_repeat[i])
+            self.just_nodes_ordered.append(self.state_action_alt_repeat[i].node)
+        self.just_actions_ordered=[]
+        
+        for i in range(1,len(self.state_action_alt_repeat),2):
+            self.just_actions_ordered.append(self.state_action_alt_repeat[i])
+
+        #print('len(self.just_states_ordered)')
+        #print(len(self.just_states_ordered))
+        #print('len(self.just_actions_ordered)')
+        #print(len(self.just_actions_ordered))
+        #input('---')
+        #generate all node pairs
+        
+    def generate_all_node_pairs_ordered(self):
+        self.all_node_pairs_ordered=set([])
+        for i in range(0,len(self.just_states_ordered)):
+            s1=self.just_states_ordered[i]
+            self.all_node_pairs_ordered.add((s1.node,s1.node))
+            for j in range(i+1,len(self.just_states_ordered)):
+                s2=self.just_states_ordered[j]
+                self.all_node_pairs_ordered.add((s1.node,s2.node))
+    def verify_feasibility(self):
+
+        #verify that hte route is feasible
+
+        #check that first state is source
+        flag=True
+        if self.just_states_ordered[0].is_source==False:
+            flag=False
+            input('error here')
+        if self.just_states_ordered[-1].is_sink==False:
+            flag=False
+            input('error here 2')
+        
+        for i in range(0,len(self.just_states_ordered)-1):
+            s1=self.just_states_ordered[i]
+            s2=self.just_states_ordered[i+1]
+            my_act=self.just_actions_ordered[i]
+            my_act.check_valid(s1,s2)
+        
+        if flag==False:
+            input('error here ')
 class PGM_appraoch:
     #This will do the enitre RMP. 
 
@@ -28,7 +119,6 @@ class PGM_appraoch:
         self.index_to_graph:DefaultDict[int,Full_Multi_Graph_Object_given_l] = index_to_graph
         self.my_PGM_graph_list:List[Full_Multi_Graph_Object_given_l]=list(self.index_to_graph.values()) #list of all of the PGM graphs
         self.prob_RHS:np.ndarray=prob_RHS #RHS
-        self.action_id_2_actions=action_id_2_actions
         self.action_id_2_actions=action_id_2_actions
         self.rez_states_minus:Set[State]=rez_states_minus #has all of the states in rez states minus by graph . So if I put in a grpah id then i get out the rez states minus to initialize
         self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
@@ -45,6 +135,63 @@ class PGM_appraoch:
 
     #i want to take in two lists of states.  I want to determine if one list is a subset of the other list
     
+    def get_all_state_pairs_extra_actions(self):
+
+        all_node_pairs=set([])
+        for r in self.complete_routes:
+            for (n1,n2) in r.all_node_pairs_ordered:
+                all_node_pairs.add((n1,n2))
+        for my_action_id in self.action_id_2_actions:
+            my_action =self.action_id_2_actions[my_action_id]
+            if (my_action.node_tail,my_action.node_head) in all_node_pairs:
+                self.rez_actions_minus.add(my_action)
+
+    def verify_routes_solution_feasibility(self,opt_ilp_obj,is_binary,my_routes):
+        epsilon=.0001
+        #check that binary holds if needed and otherwise non-negative
+        for r in my_routes:
+            if is_binary:
+
+                if np.abs(1-r.weight)>epsilon and np.abs(r.weight)>epsilon:
+                    print('r.weight')
+                    print(r.weight)
+                    input('erroro here  not binary')
+            else:
+                if r.weight<-epsilon:
+                    input('wrong cant be negative')
+                if r.weight>1+epsilon:
+                    input('in principal this is not wrong but I dont have any problems that meet this')
+        #check that cost lines up
+        tot_cost=0
+        for r in my_routes:
+            tot_cost=tot_cost+r.weight*r.cost
+
+        if np.abs(tot_cost-opt_ilp_obj)>epsilon:
+            input('cost dont line up')
+        
+        #check that exogenous feasible
+        exog_vec=0*self.prob_RHS
+        for r in my_routes:
+            exog_vec=exog_vec+(r.weight*r.Exog_vec)
+        if np.sum(self.prob_RHS-exog_vec)>epsilon:
+            input('error rhs and exog dont lien up')
+    def ilp_solve(self):
+        
+        self.get_all_state_pairs_extra_actions()
+        [primal_sol,junk,opt_ilp_obj]=self.call_PGM_RMP_solver_from_scratch(use_ilp=True)
+        self.primal_sol_ilp=primal_sol
+        self.opt_ilp_obj=opt_ilp_obj
+        self.decode_sol_2_paths(primal_sol)
+        is_binary=True
+        self.verify_routes_solution_feasibility(opt_ilp_obj,is_binary,self.complete_routes)
+
+        #debug_on=True
+        
+
+        #print('opt_ilp_obj')
+        #print(opt_ilp_obj)
+        #print('opt_ilp_obj')
+        #input('--')
 
     def debug_check_elem_res_nodes(self):
         for g_id in self.rez_states_minus_by_node:
@@ -108,10 +255,11 @@ class PGM_appraoch:
                     if len(self.decoder_gid_2_fill[g_id][eqiv_class])>1:
                         print('self.decoder_gid_2_fill[g_id][eqiv_class][action_id]')
                         print(self.decoder_gid_2_fill[g_id][eqiv_class][action_id])
-                        input('in principle this is ok but not in the CVRP stuf that I am doing ')              
+                        input('in principle this is ok but not in the CVRP stuf that I am doing ')
+                    
     def decoder_make_graphs(self,primal_solution):
         epsilon=.00001
-        print('----')
+        #print('----')
         self.decoder_gid_2_edges=dict()
 
         for g_id in self.index_to_graph:
@@ -130,7 +278,9 @@ class PGM_appraoch:
                     my_equiv_class=gr.s1_s2_pair_2_equiv[(s1,s2)]
                     x_val=primal_solution[my_var]#.copy()
                     
-                    self.decoder_gid_2_edges[g_id][(s1_id,s2_id)]=x_val#primal_solution[my_var].copy()#,s1_id,s2_id])  
+                    self.decoder_gid_2_edges[g_id][(s1_id,s2_id)]=x_val#primal_solution[my_var].copy()#,s1_id,s2_id])
+
+        
     def decoder_iter_make_paths(self,my_edges_orig,source_state_id,sink_state_id):
         
         epsilon=.00001
@@ -154,6 +304,8 @@ class PGM_appraoch:
             new_path=[]
             for i in range(0,len(shortest_path)):
                 new_path.append(shortest_path[i])
+                if i!=len(shortest_path)-1 and shortest_path[i]==sink_state_id:
+                    input('error here sink extra')
 
             amount_subtract=np.inf
             for i in range(0,len(shortest_path)-1):
@@ -174,6 +326,11 @@ class PGM_appraoch:
                     
                     input('error here')
             my_paths.append(new_path) 
+        #print('new_path')
+        #print(new_path)
+        #print('sink_state_id')
+        #print(sink_state_id)
+        #input('---')
         return my_paths
     def decode_sol_2_paths(self,primal_sol):
         self.decoder_make_graphs(primal_sol)
@@ -197,12 +354,17 @@ class PGM_appraoch:
                     #for my_new_route in some_new_routes:
                         #my_new_route=self.decoder_create_actual_route_from_data(g_id,my_new_route_info)
                    #     self.complete_routes.add(my_new_route)
+
     def decoder_create_route_info(self,g_id,p_info):
         epsilon=.000001
         tot_weight_rem=p_info[-1]
         state_id_on_route=p_info[0:-1]
-        state_first_on_route=self.index_to_graph[g_id].source_state.state_id#state_id_on_route[0]
+        sink_state_id=self.index_to_graph[g_id].sink_state.state_id#state_id_on_route[0]
+
+        state_id_first_on_route=self.index_to_graph[g_id].source_state.state_id#state_id_on_route[0]
         g=self.index_to_graph[g_id]
+        state_first_on_route=self.pgm_graph_2_rmp_graph[g].state_id_to_state[state_id_first_on_route]
+
         s1s2_2_equiv=self.pgm_graph_2_rmp_graph[g].s1_s2_pair_2_equiv
         path_length=len(state_id_on_route)
         s1_id_s2_id_2_equiv=dict()
@@ -213,13 +375,17 @@ class PGM_appraoch:
             s2=self.pgm_graph_2_rmp_graph[g].state_id_to_state[s2_id]
             my_equiv=s1s2_2_equiv[(s1,s2)]
             s1_id_s2_id_2_equiv[(s1_id,s2_id)]=my_equiv
-        while tot_weight_rem>0:
+        while tot_weight_rem>epsilon:
             this_path_s1_act_s2_repeat=[state_first_on_route]
             min_val_in_path=tot_weight_rem
             s1_id_s2_id_2_act_id_on_path=dict()
             for i in range(0,path_length-1):
                 s1_id=state_id_on_route[i]
                 s2_id=state_id_on_route[i+1]
+                s1=self.pgm_graph_2_rmp_graph[g].state_id_to_state[s1_id]
+                s2=self.pgm_graph_2_rmp_graph[g].state_id_to_state[s2_id]
+                if s2_id==sink_state_id and i!=path_length-2:
+                    input('error here')
                 my_equiv=s1_id_s2_id_2_equiv[(s1_id,s2_id)]
                 did_find=False
                 for my_act_id in self.decoder_gid_2_fill[g_id][my_equiv]:
@@ -235,6 +401,8 @@ class PGM_appraoch:
                 if did_find==False:
                     print('self.decoder_gid_2_fill[g_id][my_equiv]')
                     print(self.decoder_gid_2_fill[g_id][my_equiv])
+                    print('epsilon')
+                    print(epsilon)
                     input('error here not able to fill')
             for i in range(0,path_length-1):
                 s1_id=state_id_on_route[i]
@@ -247,7 +415,10 @@ class PGM_appraoch:
             tot_weight_rem=tot_weight_rem-min_val_in_path
             my_new_route=route(this_path_s1_act_s2_repeat,min_val_in_path)
             self.complete_routes.append(my_new_route)
-        print('create route info done')
+        #print('create route info done')
+    
+
+
     def debug_check_primal_exog_feas(self,primal_solution):
         contrib_RHS_tot=self.prob_RHS*0
         for my_var in primal_solution:
@@ -256,11 +427,12 @@ class PGM_appraoch:
                     my_action_id=my_var[3]
                     my_action=self.action_id_2_actions[my_action_id]
                     contrib_RHS_tot+=primal_solution[my_var]*my_action.Exog_vec
-        if np.sum(np.abs(contrib_RHS_tot-self.prob_RHS))>.0001:
+        if np.max(contrib_RHS_tot-self.prob_RHS)<-.0001:
             print('contrib_RHS_tot')
             print(contrib_RHS_tot)
             print('self.prob_RHS')
             print(self.prob_RHS)
+            print('contrib_RHS_tot')
             input('error in sum')
     def  debug_check_primal_solution_match(self,primal_solution):
 
@@ -307,9 +479,9 @@ class PGM_appraoch:
                         equiv_class_2_edge_count[g_id][my_equiv_class]=0
                     equiv_class_2_edge_count[g_id][my_equiv_class]+=primal_solution[my_var]
                     tot_val_edge+=primal_solution[my_var]
-                    print('var')
-                    print('value = '+str(primal_solution[my_var]))
-                    self.help_print_var(my_var)
+                    #print('var')
+                    #print('value = '+str(primal_solution[my_var]))
+                    #self.help_print_var(my_var)
 
         for g_id in self.index_to_graph:
             for my_equiv_class in equiv_class_2_edge_count[g_id]:
@@ -330,10 +502,7 @@ class PGM_appraoch:
                     print(my_equiv_class)
                     input('error here 1')
         
-        print('-----')
-        print('-----')
-        print('-----')
-        print('-----')
+        
         
         for g_id in self.index_to_graph:
             for my_equiv_class in equiv_class_2_fill_count[g_id]:
@@ -355,45 +524,38 @@ class PGM_appraoch:
                     print(my_equiv_class)
                     input('error here 2')
         
-        #print('equiv_class_2_fill_count')
-        #print(equiv_class_2_fill_count)
-        #print('equiv_class_2_edge_count')
-        #print(equiv_class_2_edge_count)
-        
-        #print('tot_val_edge')
-        #print(tot_val_edge)
-        #print('tot_val_fill')
-        #print(tot_val_fill)
-        #input('paused here')
     def help_print_var(self,my_jy_var_name):
 
         #                    my_name = ('edge', g.l_id, s1.state_id, s2.state_id)
         #my_name = ('eq_act_var', g.l_id, my_eq, my_act.action_id)
-        print('----')
+        #print('----')
 
         if my_jy_var_name[0]=='edge':
-            print('edge')
+            #print('edge')
             l_id=my_jy_var_name[1]
             s1_id=my_jy_var_name[2]
             s2_id=my_jy_var_name[3]
 
-            print('g.l_id: '+str(l_id))
+            #print('g.l_id: '+str(l_id))
             s1=self.my_PGM_graph_list[l_id].state_id_to_state[s1_id]
             s2=self.my_PGM_graph_list[l_id].state_id_to_state[s2_id]
             s1.pretty_print_state()
             s2.pretty_print_state()
 
         else:
-            print('eq_act_var')
+            #print('eq_act_var')
             l_id=my_jy_var_name[1]
             my_eq=my_jy_var_name[2]
             my_action_id=my_jy_var_name[3]
             my_action=self.action_id_2_actions[my_action_id]
-            print('g.l_id: '+str(l_id))
-            print('my_eq: '+str(my_eq))
+            #print('g.l_id: '+str(l_id))
+            #print('my_eq: '+str(my_eq))
             my_action.pretty_print_action()
 
-        print('*******')
+        #print('*******')
+
+            
+
     def make_rez_states_minus_by_node(self):
         """Groups states by (l_id, node) into a dictionary of lists with structure {l_id: {node: [states]}}."""
 
@@ -420,6 +582,8 @@ class PGM_appraoch:
         self.jy_options['epsilon']=.00001
         self.jy_options['tolerance_compress']=.00001
         self.jy_options['allow_compression']=True
+
+
     def put_all_nodes_actions_in_consideration_set(self):
         
         self.rez_actions_minus=set()
@@ -437,6 +601,7 @@ class PGM_appraoch:
 
         self.put_all_nodes_actions_in_consideration_set()
         [self.primal_sol,self.dual_exog,self.cur_lp]=self.call_PGM_RMP_solver_from_scratch()#we can do better a different time. lets not make it too hard on the first try
+
 
     def call_PGM(self):
 
@@ -457,8 +622,8 @@ class PGM_appraoch:
                     self.apply_compression_operator() #apply compression
                     self.incumbant_lp=self.cur_lp
                     continue
-                else:
-                    print('skipping incumbant')
+                #else:
+                    #print('skipping incumbant')
             else:
                 self.incumbant_lp=self.cur_lp
             self.debug_check_elem_res_nodes()
@@ -469,15 +634,7 @@ class PGM_appraoch:
             for my_graph in self.my_PGM_graph_list: #Iterate over all graphs and find the shortest path
                 shortest_path, shortest_path_length, ordered_path_rows=my_graph.construct_specific_pricing_pgm(self.dual_exog,self.rez_states_minus_by_node) #construct and call pricing problem
                 tot_shortest_path_len=tot_shortest_path_len+min([0,shortest_path_length])
-                print('my_graph.l_id')
-                print(my_graph.l_id)
-                print('shortest_path')
-                print(shortest_path)
-                print('shortest_path_length')
-                print(shortest_path_length)
-                print('self.dual_exog')
-                print(self.dual_exog)
-                print('my_state')
+                
 
                 my_states_in_path=[]
                 
@@ -488,7 +645,7 @@ class PGM_appraoch:
                     #print(my_state.state_vec)
                 #input('---')
                 if shortest_path_length<-self.jy_options['epsilon']: #if we have a negative reduced cost column we will apply expansion
-                    print('abotu to apply expansion shortest_path')
+                    #print('abotu to apply expansion shortest_path')
                     
                     #for my_state_id  in shortest_path:
                     #    my_state=self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
@@ -558,7 +715,7 @@ class PGM_appraoch:
                 self.rez_states_minus_by_graph[my_graph.l_id].add(my_state)
                 #print('adding state ')
                 #input('---')
-                my_state.pretty_print_state()
+                #my_state.pretty_print_state()
         # Step 5: Extract used actions from ordered path rows
         #if not hasattr(self, "rez_actions"):  # Ensure `res_actions` exists
         #    self.rez_actions = set()
@@ -612,14 +769,7 @@ class PGM_appraoch:
                 my_action=self.action_id_2_actions[action_id]
                 if type(my_action)!=Action:
                     print('type(action)')
-                    print(type(my_action))
-                    input('error here')
-                self.rez_actions_minus.add(my_action)  # Store the action
-                _, g, eq_class, action_id = var_name  # Extract components
-                my_action=self.action_id_2_actions[action_id]
-                if type(my_action)!=Action:
-                    print('type(action)')
-                    print(type(my_action))
+                    print(type(action))
                     input('error here')
                 self.rez_actions_minus.add(my_action)  # Store the action
 
@@ -664,40 +814,7 @@ class PGM_appraoch:
         #compute_res_states,
         #self.res_states_minus= set().union(*self.res_states_minus_by_graph.values())
 
-    def debug_exper(self,B1,B2):
-
-        #consider 2 sets  B1 and B2
-        # i will do the following tests and not the inconsistency
-        #first i show the types
-        print('type(B1)')
-        print(type(B1))
-        print('type(B2)') 
-        print(type(B2)) 
-        #now I show that all elements of B1 are in B2
-        for s1 in B1:
-            if s1 not in B2:
-                input('error here')
-        #now i count the number of times that statevec's first element is two for each
-        count_b1=0
-        for s1 in B1:
-            if  s1.state_vec.toarray()[0][0]==2:
-                count_b1+=1
-        count_b2=0
-        for s2 in B2:
-            if  s2.state_vec.toarray()[0][0]==2:
-                count_b2+=1  
-        #now lets compare them
-        if count_b2!=count_b1:
-            print('count_b1')
-            print(count_b1)
-            print('count_b2')
-            print(count_b2)
-            input('this is clearly wrong ')
-        print('count_b2')
-        print(count_b2)
-        print('count_b1')
-        print(count_b1)
-        input('done test')
+    
 
     def make_rez_states_minus_from_by_nodes(self):
         self.rez_states_minus=set()
@@ -706,12 +823,7 @@ class PGM_appraoch:
                 for s in self.rez_states_minus_by_node[g_id][n]:
                     self.rez_states_minus.add(s)
 
-    def DEBUG_count_by_cap_rem_2(self):
-        count_b2=0
-        for  s in self.rez_states_minus:
-            if  s.state_vec.toarray()[0][0]==2:
-                count_b2+=1  
-        return count_b2
+    
     def return_rez_states_minus_and_res_actions(self):
     # I am trying to fgigure out hwy throught the code I am having trouble with comparison operators. 
         #  Things like saying that a given state is present in a set of states.  
@@ -736,7 +848,7 @@ class PGM_appraoch:
         #    self.res_states_minus.add(s)
         return self.rez_states_minus,self.rez_actions_minus
 
-    def call_PGM_RMP_solver_from_scratch(self):
+    def call_PGM_RMP_solver_from_scratch(self,use_ilp=False):
         """Constructs and initializes the RMP solver from scratch."""
         # Step 1: Initialize the RMP graphs
         self.pgm_graph_2_rmp_graph:DefaultDict[Full_Multi_Graph_Object_given_l,RMP_graph_given_l] = defaultdict()  # Dictionary to store RMP graphs
@@ -744,6 +856,8 @@ class PGM_appraoch:
         #print(self.rezStates_minus_by_node.keys())
         #input('---')
         self.l_id_2_active_graph=dict()
+        print('initializing graphs ')
+
         for l_id in self.index_to_graph:#.items():
             g=self.index_to_graph[l_id]
             my_states_g_by_node = self.rez_states_minus_by_node[l_id]
@@ -753,6 +867,8 @@ class PGM_appraoch:
                 self.l_id_2_active_graph[l_id]=True
             else:
                 self.l_id_2_active_graph[l_id]=False
+        print('initializing graphs ')
+
         # Step 2: Initialize variables and constraints
         self.all_vars = []  # List to store all variables
         self.all_con_names = set()  # Set of all constraint names
@@ -878,26 +994,69 @@ class PGM_appraoch:
                     #print(new_var)
                     #input('----')
         
+        dual_exog=[]
+        if use_ilp==False:
+            primal_solution, dual_solution, optimal_value = self.solve_with_pulp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
+            dual_exog=np.zeros(self.prob_RHS.size)
+            for exog_num in range(self.prob_RHS.size):
+                exog_name = ('exog', exog_num)
+                exog_name_aug="LowerBound_"+str(exog_name)
+                dual_exog[exog_num]=dual_solution[exog_name_aug]
+        else:
+            primal_solution, optimal_value = self.solve_with_pulp_ilp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
 
-
-        primal_solution, dual_solution, optimal_value = self.solve_with_pulp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
         self.debug_check_primal_solution_match(primal_solution)
         self.debug_check_primal_exog_feas(primal_solution)
         self.decode_sol_2_paths(primal_solution)
+        self.verify_routes_solution_feasibility(optimal_value,use_ilp,self.complete_routes)
 
-        dual_exog=np.zeros(self.prob_RHS.size)
-        for exog_num in range(self.prob_RHS.size):
-            exog_name = ('exog', exog_num)
-            exog_name_aug="LowerBound_"+str(exog_name)
-            #print('exog_name')
-            #print(exog_name)
-            #print('exog_name_aug')
-            #print(exog_name_aug)
-            #print('exog_name_aug in dual_solution')
-            #print(exog_name_aug in dual_solution)
-            dual_exog[exog_num]=dual_solution[exog_name_aug]
-        
+
         return primal_solution, dual_exog, optimal_value
+
+    
+
+    def solve_with_pulp_ilp(self, jy_vars, all_con_names, lbCon, ubCon):
+        """Solves the problem as an Integer Linear Program (ILP) with binary decision variables."""
+        
+        # Step 1: Create a PuLP minimization problem
+        prob = pl.LpProblem(name="OptimizationProblem_ILP", sense=pl.LpMinimize)
+
+        # Step 2: Create PuLP variables (BINARY)
+        pulp_vars = {var.my_name: pl.LpVariable(name=str(var.my_name), cat='Binary') for var in jy_vars}
+
+        # Step 3: Define the Objective Function (Minimize Cost)
+        objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
+        prob += objective
+
+        # Step 4: Add Constraints
+        for con_name in all_con_names:
+            constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
+            
+            if con_name in lbCon:
+                prob += (constraint_expr >= lbCon[con_name], f"LB_{con_name}")
+                
+            if con_name in ubCon:
+                prob += (constraint_expr <= ubCon[con_name], f"UB_{con_name}")
+
+        # Step 5: Solve the ILP
+        print('Starting ILP call')
+        prob.solve(pl.PULP_CBC_CMD(msg=False))  # Using CBC solver for ILPs
+        print('Done ILP call')
+
+        # Step 6: Extract primal solution (decision variables)
+        primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
+
+        # Get optimal objective value
+        optimal_value = pl.value(prob.objective)
+
+        # Validate that objective did not increase unexpectedly
+        #if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
+        #    input('Error: Objective function increased unexpectedly.')
+        #else:
+        #    self.lp_before_operations = optimal_value
+
+        return primal_solution,optimal_value
+
 
     def solve_with_pulp(self, jy_vars, all_con_names, lbCon, ubCon):
         # Step 1: Create a PuLP minimization problem
@@ -998,19 +1157,6 @@ class PGM_appraoch:
             input('error here objective went up')
         else:
             self.lp_before_operations=optimal_value
-        #self.print_pulp_formulation(prob)
-        #input('---')
-        #
-        #print('starting outputting solution ')
-        #for var_name in primal_solution:
-        #    # Get the solution value for each variable
-        #    if np.abs(primal_solution[var_name])>.0001:
-        #        print(var_name)
-        #        print(primal_solution[var_name])
-        #        self.help_print_var(var_name)
-#
- #       input('outputting solution')
- 
 
         return primal_solution, dual_solution, optimal_value
 

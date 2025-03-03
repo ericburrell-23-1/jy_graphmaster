@@ -37,6 +37,8 @@ class GraphMaster:
     - Repeats until optimal
     - Then solve as ILP
     """
+
+
     def __init__(self,
                  nodes: List[int],
                  actions: Dict[Tuple[int, int], Action],
@@ -77,19 +79,7 @@ class GraphMaster:
         random.seed(0)
         size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
-        #print('self.initial_res_states')
-        #print(self.initial_res_states)
-        #for s in self.initial_res_states:
-        #    print('****')
-        #    print(s)
-        #    print(s.node)
-        ##    print(s.state_vec)
-        #    print('---')
-        #print('about to call here')
-        #print('self.the_single_null_action')
-        #print(self.the_single_null_action)
-        #input('self.the_single_null_action')
-        #input('---')
+        
         my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.the_single_null_action)
         self.rez_states_minus:Set[State]=self.initial_res_states
         self.res_actions=self.initial_res_actions
@@ -109,73 +99,18 @@ class GraphMaster:
         self.lp_before_operations=np.inf
         debug_on=True
         self.complete_routes=[]
+        print('starting Graph Master System')
         while iteration < max_iterations:
-            print('self.lp_before_operations')
-            print(self.lp_before_operations)
-            #input('-prior -')
+            
             pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
             pgm_solver.call_PGM()
             this_visulizer = Visulizer(pgm_solver)
             this_visulizer.plot_graph()
-            #if debug_on==True:
-            #    input('done first call')
-            #    pgm_solver.make_res_states_minus_from_by_nodes()
-            #    pgm_solver.call_PGM()
-#
-            #    input('done second call')
-
-            #input('done middle call')
-            #pgm_solver.call_GM_NO_PGM()
-            #input('done last call')
-
-
+            print('starting ilp')
+            pgm_solver.ilp_solve()
+            print('done ilp call')
             self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
             self.complete_routes=pgm_solver.complete_routes
-            #debug_check_1=pgm_solver.is_state_set_subset(self.rez_states_minus,self.rez_states_minus)
-            #debug_check_15=pgm_solver.is_state_set_subset(pgm_solver.rez_states_minus,pgm_solver.rez_states_minus)
-            #debug_check_2=pgm_solver.is_state_set_subset(self.rez_states_minus,pgm_solver.rez_states_minus)
-            #print('debug_check_1')
-            #print(debug_check_1)
-            #print(debug_check_15)
-            #print('debug_check_2')
-            #print(debug_check_2)
-            #input('--')
-            
-            #if debug_on==True:
-            #    input('starting call after remaking ')
-            #    #pgm_solver.res_states_minus=self.res_states_minus
-                #pgm_solver.res_actions=self.res_actions
-                #pgm_solver.make_res_states_minus_from_by_nodes()
-                
-            #    pgm_solver_new = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
-                #my_output_2=pgm_solver.is_state_set_subset(pgm_solver_new.rez_states_minus,pgm_solver.rez_states_minus)
-            #    my_output=pgm_solver_new.compare_rez_states(pgm_solver_new.rez_states_minus_by_node,pgm_solver.rez_states_minus_by_node)
-                #pgm_solver.make_rez_states_minus_by_node()
-                #my_output_3=pgm_solver.is_state_set_subset(pgm_solver_new.rez_states_minus,pgm_solver.rez_states_minus)
-                #print('my_output_3')
-                #print(my_output_3)
-                #print('my_output_2')
-                #print(my_output_2)
-            #    print('my_output flag')
-            #    print(my_output)
-            #    if my_output==False:
-            #        print('testMeHere')
-            #        input('testMeHere')
-            #    input('---')
-
-            #    pgm_solver_new.call_PGM()
-            #    input('done remaking call')
-            
-
-
-            #if debug_on==True:
-            #    input('starting third call')
-            #    pgm_solver.res_states_minus=self.res_states_minus
-            #    pgm_solver.res_actions=self.res_actions
-            #    pgm_solver.make_res_states_minus_from_by_nodes()
-            #    pgm_solver.call_PGM()
-#
-#                input('done third call')
             
             incombentLP = pgm_solver.cur_lp
             self.lp_before_operations=pgm_solver.cur_lp
@@ -186,8 +121,10 @@ class GraphMaster:
             beta_term=[]
             new_states_describing_new_graph=[]
             list_of_actions_used_in_col=set()
+            list_of_actions_used_in_col=set()
             if do_pricing==False:
                 #print('in pricing')
+                print('in pricing')
                 beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
                 reduced_cost = -np.inf
             else:
@@ -207,12 +144,12 @@ class GraphMaster:
                     'iterations': iteration,
                     'graph': self.index_to_multi_graph.values()
                 }
+            print('creating new graph object')
             new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.the_single_null_action)
-
+            print('initalizing new graph object')
 
             new_multi_graph.initialize_system()
-
-
+            print('done initalizing new graph object')
             self.index_to_multi_graph[l_id] = new_multi_graph
             
             #if do_pricing==True:
@@ -224,13 +161,7 @@ class GraphMaster:
                 self.res_actions_minus=set()
                 for my_action in self.actions:
                     self.res_actions_minus.add(my_action)
-            #if debug_on==True:
-            #    input('starting fourth call')
-            #    pgm_solver.res_states_minus=self.res_states_minus
-            #    pgm_solver.res_actions=self.res_actions
-            #    pgm_solver.make_res_states_minus_from_by_nodes()
-            #    pgm_solver.call_PGM()
-            #    input('done fourth call')
+            
             if debug_init_all_states==True:
                 self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
             else:

@@ -47,6 +47,18 @@ class Action:
         #print(resource_consumption_vec.toarray())
         #print('----')
         #input('----')
+        self.mark_of_null_action=False
+        if self.node_tail==None:
+            self.mark_of_null_action=True
+
+        #print('node_tail')
+        #print(node_tail)
+        #print('node_head')
+        #print(node_head)
+        #print('resource_consumption_vec')
+        #print(resource_consumption_vec.toarray())
+        #print('----')
+        #input('----')
 
 
     def comp_red_cost(self,dual_vec):
@@ -172,7 +184,9 @@ class Action:
             
             input('not valid due null action for different')
         if self.mark_of_null_action==False and (state_tail.node!=self.node_tail or state_head.node!=self.node_head):
-            
+            self.pretty_print_action()
+            state_head.pretty_print_state()
+            state_tail.pretty_print_state()
             input('not valid due to node not agree')
         ideal_head=self.get_head_state(state_tail,state_tail.l_id)
         [is_dom,is_equal]=ideal_head.this_state_dominates_input_state(state_head)

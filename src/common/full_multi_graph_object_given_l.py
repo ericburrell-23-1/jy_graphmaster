@@ -46,13 +46,6 @@ class Full_Multi_Graph_Object_given_l:
         #print('self.sink_state')
         #print(self.sink_state)
         #input('----')
-        self.source_state=list(self.resStates_by_node[-1])[0]
-        self.sink_state=list(self.resStates_by_node[-2])[0]
-        #print('self.source_state')
-        #print(self.source_state)
-        #print('self.sink_state')
-        #print(self.sink_state)
-        #input('----')
     def make_state_id_to_state(self):
         """Creates a mapping from state ID to state object."""
         
@@ -284,13 +277,6 @@ class Full_Multi_Graph_Object_given_l:
         # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
  
         # # Compute the shortest path cost
-        shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
-        shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
-       # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
-       #                                                   source=self.source_state.state_id ,
-       #                                                     target=self.sink_state.state_id ,
-       #                                                     weight="weight"
-       #                                                 )
         shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
         shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
        # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
