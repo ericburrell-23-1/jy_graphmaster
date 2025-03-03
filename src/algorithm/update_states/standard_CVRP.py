@@ -62,9 +62,9 @@ class CVRP_state_update_function(StateUpdateFunction):
             beta_dict[customer] = idx
         beta_dict[-1] = -np.inf
         beta_dict[-2] = np.inf
-        return beta_dict
+        return beta_dict, 
 
-    def _generate_state_based_on_beta_2(self, beta:list,l_id):
+    def _generate_state_based_on_beta_2(self, beta:list,l_id,my_multi_graph):
         this_beta = beta
         full_resource_dict = np.ones(self.number_of_resources)
         full_resource_dict[0] = self.capacity
@@ -73,15 +73,73 @@ class CVRP_state_update_function(StateUpdateFunction):
         empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
  
         #one for the source
-        source_state = State(-1,full_resource_vec,l_id,True,False)
- 
+        #source_state = State(-1,full_resource_vec,l_id,True,False)
+        source_state=my_multi_graph.source_state
         #one for the sink
-        sink_state = State(-2,empty_resource_vec,l_id,False,True)
+        #sink_state = State(-2,empty_resource_vec,l_id,False,True)
+        sink_state=my_multi_graph.sink_state 
+
         all_state = []
         all_state.append(source_state)
         all_state.append(sink_state)
 
         my_state = {source_state, sink_state}
+        num_cust=len(beta)-2
+        dem_list=dict()
+        dem_list[-1]=self.capacity
+        for i in range(1,num_cust+1):
+            u=beta[i]
+            dem_list[u]=set([])
+            for j in range(0,i):
+                w=beta[j]
+                for d_w in self.dem_list[w]:
+                    if d_w>=self.demands[w]+self.demands[u]:
+                        dem_list[u].add(d_w-self.demands[w])
+            my_res_dict=dict()
+            for j in in range(1,num_cust+1):
+                v=beta[j]
+                my_res_dict[canVisit(v)]=int(j=i)
+            for d in dem_list[u]:
+                my_res_dict_this=my_res_dict.copy()
+                my_res_dict_this[capRem]=d
+                my_state=state(my_lid,my_res_dict)
+                all_states.append(my_state)
+
+
+    def helper_get_state_slow(desired_state,states_of_multi_graph):
+        state_2_return=None
+        if desired_state.is_source==True:
+            for s in states_of_multi_graph:
+                if s.is_source==True:
+                    state_2_return=s
+                    break
+            if  state_2_return==None:
+                input('error here no source foudn')
+        if desired_state.is_sink==True:
+            for s in states_of_multi_graph:
+                if s.is_sink==True:
+                    state_2_return=s
+                    break
+            if  state_2_return==None:
+                input('error here no sink found')
+        if state_2_return==None:
+            for s in states_of_multi_graph:
+                    
+                if desired_state.equals_minus_id(s):
+                    state_2_return=s
+                    break
+            if  state_2_return==None:
+                input('error here no sink found')
+        return state_2_return
+
+    def convert_states_in_path_2_graph_states(self,states_in_path,my_multi_graph):
+        states_to_add=[]
+        for s in states_in_path:
+            state_out=helper_get_state_slow(s,my_multi_graph.rez_states)
+            states_to_add.append(state_out)
+        return states_to_add
+    def Old_stuff
+        my_order=
         for u in self.nodes:
             dem_Threh = set()
             for w in self.nodes:

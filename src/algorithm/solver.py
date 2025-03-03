@@ -145,6 +145,11 @@ class GraphMaster:
                 #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
                 beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+                #debug
+                for s1 in states_used_in_this_col:
+                    if s1 not in new_states_describing_new_graph:
+                        input('error here this is not correct')
+                
                 print('path')
                 print(list_of_nodes_in_shortest_path)
                 print('reduce cost')
@@ -178,9 +183,16 @@ class GraphMaster:
                 self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
             else:
                 #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
+                input('julian predicts that these states will be the ones foudn to incduce errors')
+                print('new states are ')
+
                 for s in states_used_in_this_col:
                     self.rez_states_minus.add(s)
+                    s.pretty_print_state()
+                    if s not in new_multi_graph.rez_states:
+                        input('look this new state is not in the multigraph justadded ')
                 #debug here 
+                input('-----')
                 self.debug_check_duplicates(self.rez_states_minus)
             iteration += 1
             self.restricted_master_problem = 0

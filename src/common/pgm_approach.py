@@ -853,6 +853,7 @@ class PGM_appraoch:
         
                     #ids_in_state_res_minus.add(s.state_id)
         self.make_rez_states_minus_from_by_nodes()
+        self.debug_check_all_states_of_id_in_parent()
         #self.debug_exper(self.states_used_sol,self.res_states_minus)
         #for s in self.states_used_sol:
         #    self.res_states_minus.add(s)
