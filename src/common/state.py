@@ -1,48 +1,48 @@
 from random import randint
-#from typing import List
+import hashlib
 import numpy as np
 import uuid
 from uuid import UUID
 from collections import ChainMap
 from src.common.helper import Helper
-#import operator
 from scipy.sparse import csr_matrix
 class State:
     def __init__(self, node:int, state_vec:csr_matrix, l_id,is_source,is_sink):
-        #self.state_id = randint(10**3,10**9)
         self.node = node
-        #if not isinstance(state_vec, csr_matrix):
-        #    raise TypeError("state_vec must be a csr_matrix")
-        #super().__setattr__('_state_vec', state_vec)
-        self.state_vec=state_vec #states written out as a vector
-        # Please justify why these next two properties exist
+        self.state_vec=state_vec 
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
         self.state_id= uuid.uuid4().hex
-        #self.state_id = state_id
+
 
     def __eq__(self, other: 'State') -> bool:
         return self.equals_minus_id(other)
-   # def __eq__(self, other: 'State') -> bool:
-     #   """
-     #   Two states are equal if they have:
-     #   1. Same node
-     #   2. Same state_vec
-     #   """
-    #   if not isinstance(other, State):
-    #        return False
-            
-    #    return (self.node == other.node) and np.sum(np.abs(self.state_vec- other.state_vec))>.0001 and (self.l_id == other.l_id)
+    
+    def csr_matrix_hash(self) -> str:
+        """
+        Compute a deterministic hash for a scipy csr_matrix by hashing:
+        - The shape (as two 64-bit ints).
+        - The data array (as bytes).
+        - The indices array (as bytes).
+        - The indptr array (as bytes).
+        """
+        # Convert shape to a numpy array of consistent dtype, then to bytes
+        shape_bytes = np.array(self.state_vec.shape, dtype=np.int64).tobytes()
+        data_bytes = self.state_vec.data.tobytes()
+        indices_bytes = self.state_vec.indices.tobytes()
+        indptr_bytes = self.state_vec.indptr.tobytes()
+        combined = shape_bytes + data_bytes + indices_bytes + indptr_bytes
+        
+        # Create an MD5 hash (you can switch to sha256 or other algorithms if desired)
+        return hashlib.sha512(combined).hexdigest()
 
-    #def __hash__(self) -> int:
-    #    """
-    #    Provides a hash so that State objects can be used in sets or as dictionary keys.
-    #    We hash by the node and the contents of res_vec.
-    #    """
-    #    # Convert res_vec into a frozenset of (key, value) pairs for a hashable representation.
-    #    #return hash((self.node, frozenset(self.res_vec.items())))
-    #    return hash(self.state_id)
+    def __hash__(self) -> int:
+       """
+       Provides a hash so that State objects can be used in sets or as dictionary keys.
+       We hash by the node and the contents of res_vec.
+       """
+       return hash((self.node,self.is_sink,self.is_source,self.l_id,self.csr_matrix_hash()))
 
     def this_state_dominates_input_state(self, other_state):
         """
