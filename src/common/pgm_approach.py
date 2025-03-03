@@ -8,7 +8,8 @@ from src.common.jy_var import jy_var
 from typing import Dict, DefaultDict, Set, List
 import numpy as np
 import pulp as pl
-
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import xpress as xp
 import networkx as nx
 
@@ -107,8 +108,7 @@ class PGM_appraoch:
                     if len(self.decoder_gid_2_fill[g_id][eqiv_class])>1:
                         print('self.decoder_gid_2_fill[g_id][eqiv_class][action_id]')
                         print(self.decoder_gid_2_fill[g_id][eqiv_class][action_id])
-                        input('in principle this is ok but not in the CVRP stuf that I am doing ')
-                    
+                        input('in principle this is ok but not in the CVRP stuf that I am doing ')              
     def decoder_make_graphs(self,primal_solution):
         epsilon=.00001
         print('----')
@@ -130,9 +130,7 @@ class PGM_appraoch:
                     my_equiv_class=gr.s1_s2_pair_2_equiv[(s1,s2)]
                     x_val=primal_solution[my_var]#.copy()
                     
-                    self.decoder_gid_2_edges[g_id][(s1_id,s2_id)]=x_val#primal_solution[my_var].copy()#,s1_id,s2_id])
-
-        
+                    self.decoder_gid_2_edges[g_id][(s1_id,s2_id)]=x_val#primal_solution[my_var].copy()#,s1_id,s2_id])  
     def decoder_iter_make_paths(self,my_edges_orig,source_state_id,sink_state_id):
         
         epsilon=.00001
@@ -199,7 +197,6 @@ class PGM_appraoch:
                     #for my_new_route in some_new_routes:
                         #my_new_route=self.decoder_create_actual_route_from_data(g_id,my_new_route_info)
                    #     self.complete_routes.add(my_new_route)
-
     def decoder_create_route_info(self,g_id,p_info):
         epsilon=.000001
         tot_weight_rem=p_info[-1]
@@ -251,9 +248,6 @@ class PGM_appraoch:
             my_new_route=route(this_path_s1_act_s2_repeat,min_val_in_path)
             self.complete_routes.append(my_new_route)
         print('create route info done')
-    
-
-
     def debug_check_primal_exog_feas(self,primal_solution):
         contrib_RHS_tot=self.prob_RHS*0
         for my_var in primal_solution:
@@ -400,9 +394,6 @@ class PGM_appraoch:
             my_action.pretty_print_action()
 
         print('*******')
-
-            
-
     def make_rez_states_minus_by_node(self):
         """Groups states by (l_id, node) into a dictionary of lists with structure {l_id: {node: [states]}}."""
 
@@ -429,8 +420,6 @@ class PGM_appraoch:
         self.jy_options['epsilon']=.00001
         self.jy_options['tolerance_compress']=.00001
         self.jy_options['allow_compression']=True
-
-
     def put_all_nodes_actions_in_consideration_set(self):
         
         self.rez_actions_minus=set()
@@ -448,7 +437,6 @@ class PGM_appraoch:
 
         self.put_all_nodes_actions_in_consideration_set()
         [self.primal_sol,self.dual_exog,self.cur_lp]=self.call_PGM_RMP_solver_from_scratch()#we can do better a different time. lets not make it too hard on the first try
-
 
     def call_PGM(self):
 
@@ -519,8 +507,13 @@ class PGM_appraoch:
             print(self.cur_lp)
             print('incumbant_lp')
             print(self.incumbant_lp)
-            input('done an iteration of PGM')
+            #input('done an iteration of PGM')
             if did_find_neg_red_cost==False: #if we did not find a negative reduced  then we break and we are done 
+                # for g_id in self.index_to_graph:
+                #     fig = self.visualize_state_action_graph(graph_id=g_id)
+                #     plt.show()
+                #     fig.savefig(f'state_action_graph_{g_id}.svg', format='svg')
+                #     print(f'save graph: {g_id}')
                 break
         #input('done call to pgm')
 
@@ -619,14 +612,14 @@ class PGM_appraoch:
                 my_action=self.action_id_2_actions[action_id]
                 if type(my_action)!=Action:
                     print('type(action)')
-                    print(type(action))
+                    print(type(my_action))
                     input('error here')
                 self.rez_actions_minus.add(my_action)  # Store the action
                 _, g, eq_class, action_id = var_name  # Extract components
                 my_action=self.action_id_2_actions[action_id]
                 if type(my_action)!=Action:
                     print('type(action)')
-                    print(type(action))
+                    print(type(my_action))
                     input('error here')
                 self.rez_actions_minus.add(my_action)  # Store the action
 
@@ -1243,4 +1236,156 @@ class PGM_appraoch:
             print(f"{var.name}: {var_type}")
 
         print("=" * 80)
+
+    def visualize_state_action_graph(self, figsize=(20, 10), title="State-Action Graph", graph_id=None):
+        """
+        Visualize a state-action graph with states arranged horizontally by node values (left to right).
+        Multiple states with the same node value are arranged vertically.
+        States are labeled with the value of state.state_vec.toarray()[0,0].
+        
+        Args:
+            figsize (tuple): Figure size (width, height)
+            title (str): Title for the visualization
+            graph_id (int, optional): If provided, only visualize states from this graph
+            
+        Returns:
+            matplotlib figure
+        """
+        
+        # Create a directed graph
+        G = nx.DiGraph()
+        
+        # Filter states by graph_id if specified
+        if graph_id is not None:
+            states_to_use = [s for s in self.rez_states_minus if s.l_id == graph_id]
+        else:
+            states_to_use = list(self.rez_states_minus)
+        
+        # Dictionary to store the original state objects by state_id for later reference
+        state_objects = {}
+        
+        # Add states as nodes with their attributes
+        for state in states_to_use:
+            # Extract the state vector value for labeling
+            state_vec_value = state.state_vec.toarray()[0, 0]
+            
+            G.add_node(state.state_id, 
+                    node=state.node,
+                    l_id=state.l_id,
+                    state_vec_value=state_vec_value)
+            
+            # Store original state object for edge creation
+            state_objects[state.state_id] = state
+        
+        # Add action connections from flow constraints
+        # Collect all potential state pairs that could form an edge
+        edges_to_add = []
+        
+        # For each graph in the model
+        for g_id in self.index_to_graph:
+            # Skip if we're only visualizing a specific graph and this isn't it
+            if graph_id is not None and g_id != graph_id:
+                continue
+                
+            g = self.index_to_graph[g_id]
+            
+            # Skip if this graph has no RMP representation
+            if not hasattr(self, 'pgm_graph_2_rmp_graph') or g not in self.pgm_graph_2_rmp_graph:
+                continue
+            
+            rmp_graph = self.pgm_graph_2_rmp_graph[g]
+            
+            # For each equivalence class in the RMP graph
+            for eq_class in rmp_graph.equiv_class_2_s1_s2_pairs:
+                # For each state pair in this equivalence class
+                for s1, s2 in rmp_graph.equiv_class_2_s1_s2_pairs[eq_class]:
+                    # Add an edge from s1 to s2 if their state_ids are in our graph
+                    if s1.state_id in G.nodes and s2.state_id in G.nodes:
+                        edges_to_add.append((s1.state_id, s2.state_id, eq_class))
+        
+        # Add all collected edges to the graph
+        for s1_id, s2_id, eq_class in edges_to_add:
+            G.add_edge(s1_id, s2_id, eq_class=eq_class)
+        
+        # Create figure and axes
+        fig, ax = plt.subplots(figsize=figsize)
+        
+        # Position nodes in a horizontal layout based on their node values
+        # Group states by node value
+        nodes_by_level = defaultdict(list)
+        for node_id, node_data in G.nodes(data=True):
+            node_value = node_data['node']
+            nodes_by_level[node_value].append(node_id)
+        
+        # Position nodes horizontally by their node value, with multiple states per level stacked vertically
+        pos = {}
+        
+        # Custom sorting for node values to place source (-1) at far left and sink (-2) at far right
+        sorted_levels = []
+        
+        # First add source node (-1) if it exists
+        if -1 in nodes_by_level:
+            sorted_levels.append(-1)
+        
+        # Then add all other nodes except sink in ascending order
+        for level in sorted([l for l in nodes_by_level.keys() if l not in [-1, -2]]):
+            sorted_levels.append(level)
+        
+        # Finally add sink node (-2) if it exists
+        if -2 in nodes_by_level:
+            sorted_levels.append(-2)
+        
+        for i, level in enumerate(sorted_levels):
+            nodes = nodes_by_level[level]
+            # Sort nodes at this level by their state_id for consistent positioning
+            nodes.sort()
+            
+            # Position each node at this level
+            for j, node_id in enumerate(nodes):
+                # Horizontal position determined by node value
+                x = i
+                # Vertical position spaces nodes at the same level
+                # Center nodes vertically
+                y = j - (len(nodes) - 1) / 2
+                pos[node_id] = (x, y)
+        
+        # Draw nodes (states)
+        nx.draw_networkx_nodes(G, pos, 
+                            node_size=2000, 
+                            node_color='lightblue',
+                            alpha=0.8,
+                            edgecolors='black',
+                            ax=ax)
+        
+        # Draw edges (actions)
+        nx.draw_networkx_edges(G, pos,
+                            width=1.5,
+                            alpha=0.7,
+                            edge_color='gray',
+                            arrowsize=20,
+                            connectionstyle='arc3,rad=0.1',  # Curved edges for better visibility
+                            ax=ax)
+        
+        # Add state labels with only node number and state_vec value (no state ID)
+        labels = {node: f"node:{data['node']}\ncap:{int(data['state_vec_value'])}" 
+                for node, data in G.nodes(data=True)}
+        nx.draw_networkx_labels(G, pos, labels=labels, font_size=9, ax=ax)
+        
+        # Remove axis
+        ax.set_axis_off()
+        
+        # Add title
+        graph_title = title
+        if graph_id is not None:
+            graph_title += f" (Graph {graph_id})"
+        plt.title(graph_title, fontsize=15)
+        
+        # Add legend
+        state_patch = mpatches.Patch(color='lightblue', label='States')
+        action_patch = mpatches.Patch(color='gray', label='Actions')
+        plt.legend(handles=[state_patch, action_patch], loc='upper right')
+        
+        plt.tight_layout()
+        return fig
+
     

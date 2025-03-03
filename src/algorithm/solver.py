@@ -11,6 +11,7 @@ from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
+from src.common.visulizer import Visulizer
 import random
 class GraphMaster:
     """
@@ -111,9 +112,11 @@ class GraphMaster:
         while iteration < max_iterations:
             print('self.lp_before_operations')
             print(self.lp_before_operations)
-            input('-prior -')
+            #input('-prior -')
             pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
             pgm_solver.call_PGM()
+            this_visulizer = Visulizer(pgm_solver)
+            this_visulizer.plot_graph()
             #if debug_on==True:
             #    input('done first call')
             #    pgm_solver.make_res_states_minus_from_by_nodes()
@@ -190,8 +193,13 @@ class GraphMaster:
             else:
                 print('in not  pricing')
 
-                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
+                #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
+                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
                 beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+                print('path')
+                print(list_of_nodes_in_shortest_path)
+                print('reduce cost')
+                print(reduced_cost)
             if reduced_cost >= -1e-6:
                 return {
                     'status': 'optimal',
@@ -232,7 +240,7 @@ class GraphMaster:
 
             iteration += 1
             self.restricted_master_problem = 0
-            input(' DONE A COMPLETE GM step')
+            #input(' DONE A COMPLETE GM step')
 
         return {'status': 'max_iterations', 'iterations': iteration}      
         

@@ -13,3 +13,7 @@ class StateUpdateFunction(ABC):
     def get_new_states(list_of_actions: List[Action]):
         """Generates a set of states to add to `res_states`. Computes this from the `list_of_actions` found in pricing."""
         pass
+    @abstractmethod
+    def get_states_from_random_beta(self, customer_list,l_id):
+        """generate states from random beta term"""
+        pass
