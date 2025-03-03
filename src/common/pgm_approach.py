@@ -603,8 +603,8 @@ class PGM_appraoch:
         [self.primal_sol,self.dual_exog,self.cur_lp]=self.call_PGM_RMP_solver_from_scratch()#we can do better a different time. lets not make it too hard on the first try
 
 
-    def call_PGM(self):
-
+    def call_PGM(self):   
+        #junk
 
         #call the PGM
         #input('call to pgm')
