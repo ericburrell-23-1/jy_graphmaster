@@ -13,11 +13,13 @@ class State:
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
-        self.state_id= uuid.uuid4().hex
+        self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,self.csr_matrix_hash()))
 
 
     def __eq__(self, other: 'State') -> bool:
-        return self.equals_minus_id(other)
+        if other is None:
+            return False
+        return self.state_id == other.state_id
     
     def csr_matrix_hash(self) -> str:
         """
@@ -42,7 +44,7 @@ class State:
        Provides a hash so that State objects can be used in sets or as dictionary keys.
        We hash by the node and the contents of res_vec.
        """
-       return hash((self.node,self.is_sink,self.is_source,self.l_id,self.csr_matrix_hash()))
+       return self.state_id
 
     def this_state_dominates_input_state(self, other_state):
         """
