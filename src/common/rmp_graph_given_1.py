@@ -8,6 +8,7 @@ from uuid import UUID
 class RMP_graph_given_l:
 
     
+
     def __init__(self,my_Multi_Graph_Object,resStates_minus_by_node:Dict[int,Set[State]],res_actions,dominated_action,the_null_action,action_id_2_actions):
         self.my_Multi_Graph_Object: Full_Multi_Graph_Object_given_l =my_Multi_Graph_Object#provides the multigrpah object for the l\in Omega_R generating this. 
         self.resStates_minus_by_node=resStates_minus_by_node #dictionary that taks in the node and returns all states assocaited with that node in ResStates minus
@@ -17,7 +18,19 @@ class RMP_graph_given_l:
         self.dom_actions_pairs = dominated_action
         self.l_id=self.my_Multi_Graph_Object.l_id
         self.action_id_2_actions=action_id_2_actions
-    
+        self.debug_check_single_source_sink()
+    def debug_check_single_source_sink(self):
+
+        node_states = self.resStates_minus_by_node  # Store dictionary lookup once
+        source_count = len(node_states.get(-1, []))
+        sink_count = len(node_states.get(-2, []))
+ 
+        if source_count != 1 or sink_count != 1:
+            raise ValueError(
+                f"RMP Graph {self.l_id} must have exactly one source and one sink, "
+                f"but found {source_count} source(s) and {sink_count} sink(s)."
+            ) 
+
     def make_state_id_2_state(self):
         self.state_id_to_state=dict()
 

@@ -22,6 +22,8 @@ class State:
         self.state_id= uuid.uuid4().hex
         #self.state_id = state_id
 
+    def __eq__(self, other: 'State') -> bool:
+        return self.equals_minus_id(other)
    # def __eq__(self, other: 'State') -> bool:
      #   """
      #   Two states are equal if they have:
@@ -116,6 +118,14 @@ class State:
         flag = flag and (self.state_id == secondary_action.state_id)
         return flag
 
+    def equals_minus_id(self,secondary_action):
+        flag = True
+        flag = flag and (self.node == secondary_action.node)
+        flag = flag and self.csr_matrices_equal_exact(self.state_vec,secondary_action.state_vec)
+        flag = flag and (self.l_id == secondary_action.l_id)
+        flag = flag and (self.is_source == secondary_action.is_source)
+        flag = flag and (self.is_sink == secondary_action.is_sink)
+        return flag
  
 
     

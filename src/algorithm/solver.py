@@ -74,6 +74,19 @@ class GraphMaster:
         self.res_actions_minus = initial_res_actions
         #self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
         self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
+    
+    def debug_check_duplicates(self,res_states):
+        res_states_list=list(res_states)
+        for i in range(0,len(res_states_list)):
+            for j in range(0,len(res_states_list)):
+                if i!=j:
+                    if res_states_list[i].equals(res_states_list[j]):
+                        print('[i,j]')
+                        print([i,j])
+                        res_states[i].pretty_print_state()
+                        res_states[j].pretty_print_state()
+                        input('error here')
+    
     def solve(self):
         l_id = 0
         random.seed(0)
@@ -104,8 +117,8 @@ class GraphMaster:
             
             pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
             pgm_solver.call_PGM()
-            this_visulizer = Visulizer(pgm_solver)
-            this_visulizer.plot_graph()
+            #this_visulizer = Visulizer(pgm_solver)
+            #this_visulizer.plot_graph()
             print('starting ilp')
             pgm_solver.ilp_solve()
             print('done ilp call')
@@ -167,7 +180,8 @@ class GraphMaster:
                 #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
                 for s in states_used_in_this_col:
                     self.rez_states_minus.add(s)
-
+                #debug here 
+                self.debug_check_duplicates(self.rez_states_minus)
             iteration += 1
             self.restricted_master_problem = 0
             #input(' DONE A COMPLETE GM step')
