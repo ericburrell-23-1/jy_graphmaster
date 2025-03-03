@@ -9,7 +9,9 @@ from scipy.sparse import csr_matrix
 class State:
     def __init__(self, node:int, state_vec:csr_matrix, l_id,is_source,is_sink):
         self.node = node
-        self.state_vec=state_vec 
+        self.state_vec = state_vec.astype(int) 
+
+
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink

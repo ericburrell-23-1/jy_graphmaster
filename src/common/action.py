@@ -85,12 +85,13 @@ class Action:
         # Apply maximum constraints one element at a time to avoid array boolean issues
         for idx in self.indices_non_zero_max:
             # Extract as Python float to avoid array truth value ambiguity
-            curr_val = float(head_state_vec[0, idx])
-            max_val = float(self.max_resource_vec[0, idx])
+            curr_val = int(head_state_vec[0, idx])
+            max_val = int(self.max_resource_vec[0, idx])
             head_state_vec[0, idx] = min(curr_val, max_val)
         
         # Create new state object
         if self.node_head == -2:
+            head_state_vec = csr_matrix(np.zeros(head_state_vec.shape[1]))
             head_state = State(self.node_head, head_state_vec, l_id, False, True)
         else:
             head_state = State(self.node_head, head_state_vec, l_id, False, False)
@@ -107,12 +108,13 @@ class Action:
         # Apply maximum constraints one element at a time to avoid array boolean issues
         for idx in self.indices_non_zero_max:
             # Extract as Python float to avoid array truth value ambiguity
-            curr_val = float(tail_state_vec[0, idx])
-            max_val = float(self.max_resource_vec[0, idx])
+            curr_val = int(tail_state_vec[0, idx])
+            max_val = int(self.max_resource_vec[0, idx])
             tail_state_vec[0, idx] = max(curr_val, max_val)
         
         # Create the appropriate State object
         if self.node_tail == -1:
+
             tail_state = State(self.node_tail, tail_state_vec, l_id, True, False)
         else:
             tail_state = State(self.node_tail, tail_state_vec, l_id, False, False)
@@ -145,30 +147,30 @@ class Action:
                 all(v == 0 for v in self.contribution_vector))
     
 
-    #def __eq__(self, other: "Action") -> bool:
-    #    """
-    #    Checks for equality based on the following fields:
-    #      trans_min_input, trans_term_add, trans_term_min, node_tail,
-    #      node_head, Exog_vec, cost
-    #    """
-     #   if not isinstance(other, Action):
-     #       return False
+    def __eq__(self, other: "Action") -> bool:
+       """
+       Checks for equality based on the following fields:
+         trans_min_input, trans_term_add, trans_term_min, node_tail,
+         node_head, Exog_vec, cost
+       """
+       if not isinstance(other, Action):
+           return False
 
-     #   return (
-     #       self.trans_min_input == other.trans_min_input and
-      #      self.trans_term_add  == other.trans_term_add  and
-       #     self.trans_term_min  == other.trans_term_min  and
-        ##    self.node_head       == other.node_head       and
-          #  self.Exog_vec        == other.Exog_vec        and
-        #    self.cost            == other.cost
-        #)
+       return (
+           self.trans_min_input == other.trans_min_input and
+           self.trans_term_add  == other.trans_term_add  and
+           self.trans_term_min  == other.trans_term_min  and
+        #    self.node_head       == other.node_head       and
+           self.Exog_vec        == other.Exog_vec        and
+           self.cost            == other.cost
+        )
 
-    #def __hash__(self):
-     #   """
-     #   Creates a hash based on the fields used in __eq__.
-      #  - Dictionaries are not hashable, so we convert them to frozensets of items.
-     #   """
-     #   return hash(self.action_id)
+    def __hash__(self):
+       """
+       Creates a hash based on the fields used in __eq__.
+       - Dictionaries are not hashable, so we convert them to frozensets of items.
+       """
+       return hash(self.action_id)
     
     def pretty_print_action(self):
         print('action is ')
