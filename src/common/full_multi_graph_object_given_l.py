@@ -41,11 +41,7 @@ class Full_Multi_Graph_Object_given_l:
             )
         self.source_state=list(self.resStates_by_node[-1])[0]
         self.sink_state=list(self.resStates_by_node[-2])[0]
-        #print('self.source_state')
-        #print(self.source_state)
-        #print('self.sink_state')
-        #print(self.sink_state)
-        #input('----')
+
     def make_state_id_to_state(self):
         """Creates a mapping from state ID to state object."""
         

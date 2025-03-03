@@ -554,14 +554,24 @@ class PGM_appraoch:
 
         #print('*******')
 
-            
+
+    def debug_check_all_states_of_id_in_parent(self):
+
+        for my_state in self.rez_states_minus:
+            l_id=my_state.l_id
+            g=self.index_to_graph[my_state.l_id]
+            if my_state not in g.rez_states:
+                my_state.pretty_print_state()
+                input('error here not found')
 
     def make_rez_states_minus_by_node(self):
         """Groups states by (l_id, node) into a dictionary of lists with structure {l_id: {node: [states]}}."""
 
         self.rez_states_minus_by_node = defaultdict(lambda: defaultdict(set))  # Nested defaultdict for automatic list initialization
         self.rez_states_minus_by_graph: Dict[int, Set[State]] = defaultdict(set)
+        self.debug_check_all_states_of_id_in_parent()
         for my_state in self.rez_states_minus:
+            
             self.rez_states_minus_by_node[my_state.l_id][my_state.node].add(my_state)
             self.rez_states_minus_by_graph[my_state.l_id].add(my_state)
         # Check that each l_id has exactly one source and one sink

@@ -18,8 +18,59 @@ class RMP_graph_given_l:
         self.dom_actions_pairs = dominated_action
         self.l_id=self.my_Multi_Graph_Object.l_id
         self.action_id_2_actions=action_id_2_actions
+        self.debug_check_all_states_unique_minus_id()
+        self.debug_check_all_states_in_parent()
         self.debug_check_single_source_sink()
+    
+    def debug_check_all_states_unique_minus_id(self):
+        my_states_all=[]
+        for n in self.resStates_minus_by_node:
+            for s in self.resStates_minus_by_node[n]:
+                my_states_all.append(s)
+        for i in range(0,len(my_states_all)):
+            for j in range(0,len(my_states_all)):
+                if i!=j:
+                    s1=my_states_all[i]
+                    s2=my_states_all[j]
+                    if s1.equals_minus_id(s2):
+                        print('---')
+                        s1.pretty_print_state()
+                        s2.pretty_print_state()
+                        input('error here s1=s2')
+    def  debug_check_all_states_in_parent(self):
+        for n in self.resStates_minus_by_node:
+            for s in self.resStates_minus_by_node[n]:
+                if s not in self.my_Multi_Graph_Object.rez_states:
+                    print('error here not in paretn')
+                    print('l_id')
+                    print(self.l_id)
+                    print('---')
+                    s.pretty_print_state()
+                    print('---')
+                    print('self.my_Multi_Graph_Object.source_state.state_id')
+                    print(self.my_Multi_Graph_Object.source_state.state_id)
+                    print('self.my_Multi_Graph_Object.sink_state.state_id')
+                    print(self.my_Multi_Graph_Object.sink_state.state_id)
+                    input('----')
+       
     def debug_check_single_source_sink(self):
+
+        if len(self.resStates_minus_by_node[-1])!=1 or len(self.resStates_minus_by_node[-2])!=1:
+
+            print('type(resStates_minus_by_node)')
+            print(type(self.resStates_minus_by_node))
+            print('self.resStates_minus_by_node[-1]')
+            print(self.resStates_minus_by_node[-1])
+            print('self.resStates_minus_by_node[-2]')
+            print(self.resStates_minus_by_node[-2])
+            print('we got two here')
+            input('---')
+            for s2 in self.resStates_minus_by_node[-2]:
+                s2.pretty_print_state()
+            for s1 in self.resStates_minus_by_node[-1]:
+                s1.pretty_print_state()
+            input('---')
+        
 
         node_states = self.resStates_minus_by_node  # Store dictionary lookup once
         source_count = len(node_states.get(-1, []))
