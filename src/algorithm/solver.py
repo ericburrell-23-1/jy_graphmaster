@@ -121,7 +121,6 @@ class GraphMaster:
             beta_term=[]
             new_states_describing_new_graph=[]
             list_of_actions_used_in_col=set()
-            list_of_actions_used_in_col=set()
             if do_pricing==False:
                 #print('in pricing')
                 print('in pricing')
