@@ -146,16 +146,17 @@ class CVRP_state_update_function(StateUpdateFunction):
             #my_res_vec_base=dict()
             #my_res_vec = np.array([1 if beta_dict[beta_list[j]]>=beta_dict[beta_list[i]] else 0 for j in range(1,num_cust+1)])
             my_res_vec=np.zeros((1,self.number_of_resources))
-            for ik in range(1,self.number_of_resources):
-                if beta_list[ik]<0:
-                    print('error here')
-                customer = beta_list[ik]
-                if beta_dict[customer]>=beta_dict[u]:
-                    my_res_vec[0,beta_dict[customer]]=1
-            print('my_res_vec')
-            print(my_res_vec)
-            print('beta_list')
-            print(beta_list)
+            # for ik in range(1,self.number_of_resources):
+            #     customer = beta_list[ik]
+            #     if beta_dict[customer]>=beta_dict[u]:
+            #         my_res_vec[0,beta_dict[customer]]=1
+            # print('my_res_vec')
+            # print(my_res_vec)
+            # print('beta_list')
+            # print(beta_list)
+            for cust_num in range(1,self.number_of_resources):
+                if beta_dict[u]<=beta_dict[cust_num]:
+                    my_res_vec[0,cust_num]=1
             #input('-- HOLD HERE--')
             #base_rez_vec = csr_matrix(my_res_vec.reshape(1, -1))
             # for j in range(1,num_cust+1):
