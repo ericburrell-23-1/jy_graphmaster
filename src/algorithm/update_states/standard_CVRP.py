@@ -39,7 +39,7 @@ class CVRP_state_update_function(StateUpdateFunction):
         
         #new_states:List[State] = self._generate_state_based_on_beta_2_and_states_path(beta_list,beta_dict,l_id) # generate possible states with given beta
         states_in_path:List[State] = self.get_states_from_action_list(list_of_actions,l_id) # generate states in path
-        beta_list,states_for_new_graph,states_in_path_to_return = self._generate_state_based_on_beta_2_and_states_path(beta_list,beta_dict,l_id,states_in_path,list_of_actions)
+        beta_list,states_for_new_graph,states_in_path_to_return = self._generate_state_based_on_beta_2_and_ndoes_path(beta_list,beta_dict,l_id,states_in_path,list_of_actions)
         for state in states_in_path_to_return:
             if state not in states_for_new_graph:
                 state.pretty_print_state()
@@ -65,6 +65,140 @@ class CVRP_state_update_function(StateUpdateFunction):
         beta_dict[-1] = -np.inf
         beta_dict[-2] = np.inf
         return beta_dict, beta
+
+    def _generate_state_based_on_beta_2_and_ndoes_path(self, beta_list:list,beta_dict,l_id,states_from_path,ordered_actions):
+        print('beta_dict')
+        print(beta_dict)
+        print('beta list')
+        print(beta_list)
+        for si in range(0,len(states_from_path)):
+            s=states_from_path[si]
+            u=s.node
+            if u>-0.5:
+                print('self.number_of_resources')
+                print(self.number_of_resources)
+                input('---')
+                for w in range(1,self.number_of_resources):
+                    #print('w')
+                    #print(w)
+                    #print('u')
+                    ##print('beta_dict[w]')
+                    #print(beta_dict[w])
+                    #print('beta_dict[u]')
+                    #print(beta_dict[u])
+                    #print('s.state_vec')
+                    ##print(s.state_vec)
+                    
+                    if beta_dict[w]>=beta_dict[u]:
+                        if s.state_vec[0,w]==0:
+                            input('error here in the initial route being inconsistent')
+                        s.state_vec[0,w]=1
+                    else:
+                        s.state_vec[0,w]=0
+            if u==-2:
+                s.state_vec=s.state_vec*0
+            s.pretty_print_state()
+            print('beta_list')
+            print(beta_list)
+            input('--')
+        input('test there')
+       #nodes that describe the path
+        source_state=states_from_path[0]
+        sink_state=states_from_path[-1]
+        states_for_new_graph=[]
+        states_for_new_graph.append(source_state)
+        states_for_new_graph.append(sink_state)
+
+        #my_state = {source_state, sink_state}
+        num_cust=len(beta_list)-2
+        dem_list=defaultdict(set)
+        dem_list[-1].add(self.capacity)
+
+        #check
+        #debug cehcks 
+        if beta_list[0]!=-1:
+            input('error here source wrong position')
+        if beta_list[-1]!=-2: 
+            input('error here sink wrong position')
+        for i in range(0,len(beta_list)-1):
+            u=beta_list[i]
+            v=beta_list[i+1]
+            if beta_dict[u]>=beta_dict[v]:
+                input('error ehre')
+        
+        for i in range(1,num_cust+1):
+            u=beta_list[i]
+            dem_list[u]=set([])
+            for j in range(0,i):
+                w=beta_list[j]
+                for d_w in dem_list[w]:
+                    if d_w>=self.demands[w]+self.demands[u]:
+                        dem_list[u].add(d_w-self.demands[w])
+            #my_res_vec_base=dict()
+            #my_res_vec = np.array([1 if beta_dict[beta_list[j]]>=beta_dict[beta_list[i]] else 0 for j in range(1,num_cust+1)])
+            my_res_vec=np.zeros((1,self.number_of_resources))
+            for ik in range(1,self.number_of_resources):
+                if beta_dict[beta_list[ik]]>=beta_dict[u]:
+                    my_res_vec[0,beta_list[ik]]=1
+                if u==9:
+                    print('beta_dict[ik]')
+                    print(beta_dict[ik])
+                    print('ik')
+                    print(ik)
+                    input('-----')
+            print('my_res_vec')
+            print(my_res_vec)
+            print('beta_list')
+            print(beta_list)
+            input('-- HOLD HERE--')
+            #base_rez_vec = csr_matrix(my_res_vec.reshape(1, -1))
+            # for j in range(1,num_cust+1):
+            #     u=beta_list[i]
+            #     v=beta_list[j]
+            
+            #     my_res_vec[j]=int(beta_dict[v]>=beta_dict[u])
+            # base_rez_vec = csr_matrix(my_res_vec_base.reshape(1, -1))
+
+            for d in dem_list[u]:
+                this_vec = my_res_vec.copy()
+                #this_vec = np.insert(this_vec, 0, d)
+                # my_res_vec=base_rez_vec.copy()
+                my_res_vec[0,0]=d
+                print('u')
+                print(u)
+                print('d')
+                print(d)
+                print('my_res_vec')
+                print(my_res_vec)
+                print('this_vec')
+                print(this_vec)
+                print('beta_list')
+                print(beta_list)
+                input('--look here-')
+                vec_added =  csr_matrix(this_vec.reshape(1, -1))
+                my_node=u
+                is_source=False
+                is_sink=False
+                my_state=State(my_node, vec_added, l_id,is_source,is_sink)
+                states_for_new_graph.append(my_state)
+
+        states_in_path_to_return=[]
+        for s in states_from_path:
+            state_out=self.helper_get_state_slow(s,states_for_new_graph)
+            states_in_path_to_return.append(state_out)
+
+        #debug
+        for i in range(0,len(ordered_actions)):
+            s1=states_in_path_to_return[i]
+            s2=states_in_path_to_return[i+1]
+            my_act=ordered_actions[i]
+            my_act.check_valid(s1,s2)
+
+
+        return [beta_list,states_for_new_graph,states_in_path_to_return]
+
+
+
 
     def _generate_state_based_on_beta_2_and_states_path(self, beta_list:list,beta_dict,l_id,states_from_path,ordered_actions):
         
@@ -106,6 +240,7 @@ class CVRP_state_update_function(StateUpdateFunction):
                         dem_list[u].add(d_w-self.demands[w])
             #my_res_vec_base=dict()
             my_res_vec = np.array([1 if beta_dict[beta_list[j]]>=beta_dict[beta_list[i]] else 0 for j in range(1,num_cust+1)])
+            
             #base_rez_vec = csr_matrix(my_res_vec.reshape(1, -1))
             # for j in range(1,num_cust+1):
             #     u=beta_list[i]
@@ -163,7 +298,11 @@ class CVRP_state_update_function(StateUpdateFunction):
                     state_2_return=s
                     break
             if  state_2_return==None:
+                desired_state.pretty_print_state()
+
+                print('----')
                 input('error here no state found')
+
         return state_2_return
 
         
