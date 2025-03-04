@@ -77,7 +77,6 @@ class CVRP_state_update_function(StateUpdateFunction):
             if u>-0.5:
                 print('self.number_of_resources')
                 print(self.number_of_resources)
-                input('---')
                 for w in range(1,self.number_of_resources):
                     #print('w')
                     #print(w)
@@ -100,8 +99,8 @@ class CVRP_state_update_function(StateUpdateFunction):
             s.pretty_print_state()
             print('beta_list')
             print(beta_list)
-            input('--')
-        input('test there')
+            #input('--')
+        #input('test there')
        #nodes that describe the path
         source_state=states_from_path[0]
         sink_state=states_from_path[-1]
@@ -138,19 +137,16 @@ class CVRP_state_update_function(StateUpdateFunction):
             #my_res_vec = np.array([1 if beta_dict[beta_list[j]]>=beta_dict[beta_list[i]] else 0 for j in range(1,num_cust+1)])
             my_res_vec=np.zeros((1,self.number_of_resources))
             for ik in range(1,self.number_of_resources):
-                if beta_dict[beta_list[ik]]>=beta_dict[u]:
-                    my_res_vec[0,beta_list[ik]]=1
-                if u==9:
-                    print('beta_dict[ik]')
-                    print(beta_dict[ik])
-                    print('ik')
-                    print(ik)
-                    input('-----')
+                if beta_list[ik]<0:
+                    print('error here')
+                customer = beta_list[ik]
+                if beta_dict[customer]>=beta_dict[u]:
+                    my_res_vec[0,beta_dict[customer]]=1
             print('my_res_vec')
             print(my_res_vec)
             print('beta_list')
             print(beta_list)
-            input('-- HOLD HERE--')
+            #input('-- HOLD HERE--')
             #base_rez_vec = csr_matrix(my_res_vec.reshape(1, -1))
             # for j in range(1,num_cust+1):
             #     u=beta_list[i]
@@ -163,7 +159,7 @@ class CVRP_state_update_function(StateUpdateFunction):
                 this_vec = my_res_vec.copy()
                 #this_vec = np.insert(this_vec, 0, d)
                 # my_res_vec=base_rez_vec.copy()
-                my_res_vec[0,0]=d
+                this_vec[0,0]=d
                 print('u')
                 print(u)
                 print('d')
@@ -174,7 +170,7 @@ class CVRP_state_update_function(StateUpdateFunction):
                 print(this_vec)
                 print('beta_list')
                 print(beta_list)
-                input('--look here-')
+                #input('--look here-')
                 vec_added =  csr_matrix(this_vec.reshape(1, -1))
                 my_node=u
                 is_source=False
