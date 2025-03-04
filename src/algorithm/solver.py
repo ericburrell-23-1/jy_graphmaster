@@ -148,6 +148,7 @@ class GraphMaster:
                 #debug
                 for s1 in states_used_in_this_col:
                     if s1 not in new_states_describing_new_graph:
+                        s1.pretty_print_state()
                         input('error here this is not correct')
                 
                 print('path')

@@ -125,10 +125,28 @@ class State:
     def equals_minus_id(self,secondary_action):
         flag = True
         flag = flag and (self.node == secondary_action.node)
-        flag = flag and self.csr_matrices_equal_exact(self.state_vec,secondary_action.state_vec)
+        flag = flag and np.sum(np.abs(self.state_vec-secondary_action.state_vec))<.0001
+        #self.csr_matrices_equal_exact(self.state_vec,secondary_action.state_vec)
         flag = flag and (self.l_id == secondary_action.l_id)
         flag = flag and (self.is_source == secondary_action.is_source)
         flag = flag and (self.is_sink == secondary_action.is_sink)
+
+
+        #print('(self.node == secondary_action.node)')
+        #print((self.node == secondary_action.node))
+        #print('self.csr_matrices_equal_exact(self.state_vec,secondary_action.state_vec)')
+        #print(self.csr_matrices_equal_exact(self.state_vec,secondary_action.state_vec))
+        #print('(self.l_id == secondary_action.l_id)')
+        #print((self.l_id == secondary_action.l_id))
+       # print('(self.is_source == secondary_action.is_source)')
+        #print((self.is_source == secondary_action.is_source))
+        #print('(self.is_sink == secondary_action.is_sink)')
+        #print((self.is_sink == secondary_action.is_sink))
+        #print('np.sum(np.abs(self.state_vec+secondary_action.state_vec))')
+        #print(np.sum(np.abs(self.state_vec+secondary_action.state_vec)))
+        #print('np.sum(np.abs(self.state_vec-secondary_action.state_vec))')
+        #print(np.sum(np.abs(self.state_vec-secondary_action.state_vec)))
+        
         return flag
     def is_source(self):
         return self.node == -1
