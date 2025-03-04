@@ -130,6 +130,8 @@ class State:
         flag = flag and (self.is_source == secondary_action.is_source)
         flag = flag and (self.is_sink == secondary_action.is_sink)
         return flag
- 
-
+    def is_source(self):
+        return self.node == -1
+    def is_sink(self):
+        return self.node == -2
     

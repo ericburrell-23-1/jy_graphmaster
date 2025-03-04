@@ -35,14 +35,16 @@ class CVRP_state_update_function(StateUpdateFunction):
 
     def get_new_states(self, list_of_customer, list_of_actions,l_id):
 
-        this_beta = self._generate_beta_term(list_of_customer[1:-1]) #attached customer not in path into nearest customer in path
+        beta_dict, beta_list = self._generate_beta_term(list_of_customer[1:-1]) #attached customer not in path into nearest customer in path
         
-        new_states:List[State] = self._generate_state_based_on_beta_2(this_beta,l_id) # generate possible states with given beta
+        #new_states:List[State] = self._generate_state_based_on_beta_2_and_states_path(beta_list,beta_dict,l_id) # generate possible states with given beta
         states_in_path:List[State] = self.get_states_from_action_list(list_of_actions,l_id) # generate states in path
-        for state in states_in_path:
-            if state not in new_states:
+        beta_list,states_for_new_graph,states_in_path_to_return = self._generate_state_based_on_beta_2_and_states_path(beta_list,beta_dict,l_id,states_in_path,list_of_actions)
+        for state in states_in_path_to_return:
+            if state not in states_for_new_graph:
                 state.pretty_print_state()
-        return [-1]+this_beta+[-2], new_states,  states_in_path
+
+        return beta_list, states_for_new_graph,  states_in_path
     
     def _generate_beta_term(self, list_of_customer):
         idx_of_customer = {u: -1 for u in self.nodes if u not in {-1,-2}}
@@ -56,16 +58,16 @@ class CVRP_state_update_function(StateUpdateFunction):
                         round(random.random(), 5)*0.01
                     break
         beta = sorted(idx_of_customer, key=lambda k: idx_of_customer[k])
-        
+        beta = [-1] + beta + [-2]
         beta_dict = defaultdict()
         for idx, customer in enumerate(beta):
             beta_dict[customer] = idx
         beta_dict[-1] = -np.inf
         beta_dict[-2] = np.inf
-        return beta_dict, 
+        return beta_dict, beta
 
     def _generate_state_based_on_beta_2_and_states_path(self, beta_list:list,beta_dict,l_id,states_from_path,ordered_actions):
-        this_beta = beta
+        
        #full_resource_dict = np.ones(self.number_of_resources)
        # full_resource_dict[0] = self.capacity
        # full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
@@ -79,8 +81,8 @@ class CVRP_state_update_function(StateUpdateFunction):
 
         #my_state = {source_state, sink_state}
         num_cust=len(beta_list)-2
-        dem_list=dict()
-        dem_list[-1]=self.capacity
+        dem_list=defaultdict(set)
+        dem_list[-1].add(self.capacity)
 
         #check
         #debug cehcks 
@@ -98,26 +100,32 @@ class CVRP_state_update_function(StateUpdateFunction):
             u=beta_list[i]
             dem_list[u]=set([])
             for j in range(0,i):
-                w=self.beta[j]
-                for d_w in self.dem_list[w]:
+                w=beta_list[j]
+                for d_w in dem_list[w]:
                     if d_w>=self.demands[w]+self.demands[u]:
                         dem_list[u].add(d_w-self.demands[w])
-            my_res_vec_base=dict()
-            for j in range(1,num_cust+1):
-                u=beta[i]
-                v=beta[j]
-                my_res_vec[j]=int(beta_dict[v]>=beta_dict[u])
-            base_rez_vec = csr_matrix(my_res_vec_base.reshape(1, -1))
+            #my_res_vec_base=dict()
+            my_res_vec = np.array([1 if beta_dict[beta_list[j]]>=beta_dict[beta_list[i]] else 0 for j in range(1,num_cust+1)])
+            #base_rez_vec = csr_matrix(my_res_vec.reshape(1, -1))
+            # for j in range(1,num_cust+1):
+            #     u=beta_list[i]
+            #     v=beta_list[j]
+            
+            #     my_res_vec[j]=int(beta_dict[v]>=beta_dict[u])
+            # base_rez_vec = csr_matrix(my_res_vec_base.reshape(1, -1))
 
             for d in dem_list[u]:
-                my_res_vec=base_rez_vec.copy()
-                my_res_vec[0]=d
-                
+                this_vec = my_res_vec[:]
+                this_vec = np.insert(this_vec, 0, d)
+                # my_res_vec=base_rez_vec.copy()
+                # my_res_vec[0]=d
+                vec_added =  csr_matrix(this_vec.reshape(1, -1))
                 my_node=u
                 is_source=False
                 is_sink=False
-                my_state=state(my_node, my_res_vec, l_id,is_source,is_sink)
+                my_state=State(my_node, vec_added, l_id,is_source,is_sink)
                 states_for_new_graph.append(my_state)
+
         states_in_path_to_return=[]
         for s in states_from_path:
             state_out=self.helper_get_state_slow(s,states_for_new_graph)
@@ -133,30 +141,29 @@ class CVRP_state_update_function(StateUpdateFunction):
 
         return [beta_list,states_for_new_graph,states_in_path_to_return]
 
-    def helper_get_state_slow(desired_state,states_of_multi_graph):
+    def helper_get_state_slow(self,desired_state,states_from_beta):
         state_2_return=None
         if desired_state.is_source==True:
-            for s in states_of_multi_graph:
+            for s in states_from_beta:
                 if s.is_source==True:
                     state_2_return=s
                     break
             if  state_2_return==None:
                 input('error here no source foudn')
         if desired_state.is_sink==True:
-            for s in states_of_multi_graph:
+            for s in states_from_beta:
                 if s.is_sink==True:
                     state_2_return=s
                     break
             if  state_2_return==None:
                 input('error here no sink found')
         if state_2_return==None:
-            for s in states_of_multi_graph:
-                    
+            for s in states_from_beta:
                 if desired_state.equals_minus_id(s):
                     state_2_return=s
                     break
             if  state_2_return==None:
-                input('error here no sink found')
+                input('error here no state found')
         return state_2_return
 
         
