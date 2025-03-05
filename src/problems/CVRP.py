@@ -146,7 +146,10 @@ class CVRP(OptimizationProblem):
  
         idx = 0
         #print('origin_node,destination_node,cost')
-
+        partial_max_resource_dict = {"cap_remain":self.capacity}
+        for node in self.nodes:
+            if node not in {-1,-2}:
+                partial_max_resource_dict[f'can_visit: {node}'] =1
         for origin_node in self.nodes:
             if origin_node > 0:
                 # DEFINE COVERAGE CONSTRAINT RHS
@@ -166,7 +169,6 @@ class CVRP(OptimizationProblem):
                 if origin_node > 0:
                     contribution_vector[self.constraint_name_to_index[str(("Cover", origin_node))]] = 1
                 partial_min_resource_dict = {"cap_remain": self.demands[origin_node] + self.demands[destination_node]}
-                partial_max_resource_dict = {}
                 partial_resource_consumption_dict = {"cap_remain": -self.demands[origin_node]}
                 
                 if origin_node != -1:
@@ -174,7 +176,8 @@ class CVRP(OptimizationProblem):
                 if destination_node!=-2:
                     partial_min_resource_dict[f'can_visit: {destination_node}']= 1
                 #str("Cover", origin_node)
- 
+                if origin_node == -1 and destination_node == 1:
+                    print('check here')
                 #print('origin_node')
                 #print(origin_node)
                 #print('destination_node')

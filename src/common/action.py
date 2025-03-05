@@ -128,7 +128,9 @@ class Action:
             #please dont comment this out if ogyuant code to be fast
             input('I should not have been called here if you are looping over all actions pairs that is inefficient')
         term_1=self.cost<=otherAction.cost #find out if the cost is at least as good as input
-        term_2=0<=np.maximum(self.Exog_vec-otherAction.Exog_vec) #find out if this action has at least as good exog vector
+        max_diff = self.Exog_vec-otherAction.Exog_vec
+        term_2=0<=max_diff.max()
+        #term_2=0<=np.maximum(self.Exog_vec-otherAction.Exog_vec) #find out if this action has at least as good exog vector
         #
         term_1_strict=self.cost<otherAction.cost #find out if the cost is strictly better input
         term_2_strict=np.sum(self.Exog_vec-otherAction.Exog_vec)>0 #find out if the exogenous is srictly better at some point

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import xpress as xp
 import networkx as nx
-
+import time
 class route:
     def __init__(self,state_action_alt_repeat,weight):
 
@@ -176,7 +176,7 @@ class PGM_appraoch:
         if np.sum(self.prob_RHS-exog_vec)>epsilon:
             input('error rhs and exog dont lien up')
     def ilp_solve(self):
-        
+        start_time = time.time()
         self.get_all_state_pairs_extra_actions()
         [primal_sol,junk,opt_ilp_obj]=self.call_PGM_RMP_solver_from_scratch(use_ilp=True)
         self.primal_sol_ilp=primal_sol
@@ -184,7 +184,9 @@ class PGM_appraoch:
         self.decode_sol_2_paths(primal_sol)
         is_binary=True
         self.verify_routes_solution_feasibility(opt_ilp_obj,is_binary,self.complete_routes)
-
+        end_time = time.time()
+        print(f'ilp soving time:{end_time-start_time}')
+        input('printout ilp solving time')
         #debug_on=True
         
 
@@ -614,75 +616,107 @@ class PGM_appraoch:
 
 
     def call_PGM(self):   
-        #junk
-
-        #call the PGM
-        #input('call to pgm')
-        #print('in here')
-        #print('self.rezStates_minus_by_node.keys()')
-        #print(self.rezStates_minus_by_node.keys())
-        #input('---')
-        while(True): #
+        # Start tracking total time
+        total_start_time = time.time()
+        
+        # Initialize timing counters
+        total_rmp_time = 0
+        total_pricing_time = 0
+        total_expansion_time = 0
+        total_compression_time = 0
+        expansion_count = 0
+        compression_count = 0
+        iteration_count = 0
+        
+        # Main loop
+        while(True):
+            iteration_count += 1
             self.debug_check_elem_res_nodes()
-
-            [self.primal_sol,self.dual_exog,self.cur_lp]=self.call_PGM_RMP_solver_from_scratch()#we can do better a different time. lets not make it too hard on the first try
+            
+            # Time RMP solver
+            rmp_start = time.time()
+            [self.primal_sol, self.dual_exog, self.cur_lp] = self.call_PGM_RMP_solver_from_scratch()
+            rmp_time = time.time() - rmp_start
+            total_rmp_time += rmp_time
+            
             self.debug_check_elem_res_nodes()
-            if self.jy_options['allow_compression']==True:
-                if self.cur_lp<self.incumbant_lp-self.jy_options['tolerance_compress']: #if we improve the objective then we will do a compression operator
-                    self.apply_compression_operator() #apply compression
-                    self.incumbant_lp=self.cur_lp
+            
+            # Check for compression
+            if self.jy_options['allow_compression'] == True:
+                if self.cur_lp < self.incumbant_lp - self.jy_options['tolerance_compress']:
+                    compression_start = time.time()
+                    self.apply_compression_operator()
+                    compression_time = time.time() - compression_start
+                    total_compression_time += compression_time
+                    compression_count += 1
+                    self.incumbant_lp = self.cur_lp
                     continue
-                #else:
-                    #print('skipping incumbant')
             else:
-                self.incumbant_lp=self.cur_lp
+                self.incumbant_lp = self.cur_lp
+            
             self.debug_check_elem_res_nodes()
-            did_find_neg_red_cost=False #indicate if we found a negative reduced cost 
-            tot_shortest_path_len=0
-            self.did_find_new_action=False
-            self.did_find_new_state=False
-            for my_graph in self.my_PGM_graph_list: #Iterate over all graphs and find the shortest path
-                shortest_path, shortest_path_length, ordered_path_rows=my_graph.construct_specific_pricing_pgm(self.dual_exog,self.rez_states_minus_by_node) #construct and call pricing problem
-                tot_shortest_path_len=tot_shortest_path_len+min([0,shortest_path_length])
+            
+            did_find_neg_red_cost = False
+            tot_shortest_path_len = 0
+            self.did_find_new_action = False
+            self.did_find_new_state = False
+            
+            # Time pricing problem
+            pricing_start = time.time()
+            for my_graph in self.my_PGM_graph_list:
+                shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm(
+                    self.dual_exog, self.rez_states_minus_by_node
+                )
+                tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
                 
-
-                my_states_in_path=[]
-                
-                for my_state_id  in shortest_path:
-                    my_state=self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
-                    print([my_state.node,my_state.state_vec.toarray()[0][0]])
+                my_states_in_path = []
+                for my_state_id in shortest_path:
+                    my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
+                    print([my_state.node, my_state.state_vec.toarray()[0][0]])
                     my_states_in_path.append(my_state)
-                    #print(my_state.state_vec)
-                #input('---')
-                if shortest_path_length<-self.jy_options['epsilon']: #if we have a negative reduced cost column we will apply expansion
-                    #print('abotu to apply expansion shortest_path')
-                    
-                    #for my_state_id  in shortest_path:
-                    #    my_state=self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
-                    #    my_state.pretty_print_state()
-                    #input('calling expansion')
-
-                    self.apply_expansion_operator(my_states_in_path,shortest_path, shortest_path_length, ordered_path_rows,my_graph)# do teh expasnion operator
-                    did_find_neg_red_cost=True #did find negative reduced cost is set to true
-                    #print('done calling expansion')
+                
+                # Check for expansion
+                if shortest_path_length < -self.jy_options['epsilon']:
+                    expansion_start = time.time()
+                    self.apply_expansion_operator(my_states_in_path, shortest_path, shortest_path_length, ordered_path_rows, my_graph)
+                    expansion_time = time.time() - expansion_start
+                    total_expansion_time += expansion_time
+                    expansion_count += 1
+                    did_find_neg_red_cost = True
+            
+            pricing_time = time.time() - pricing_start
+            total_pricing_time += pricing_time
+            
             self.debug_check_elem_res_nodes()
-            print('did_find_neg_red_cost')
-            print(did_find_neg_red_cost)
-            print('tot_shortest_path_len')
-            print(tot_shortest_path_len)
-            print('self.cur_lp')
-            print(self.cur_lp)
-            print('incumbant_lp')
-            print(self.incumbant_lp)
-            #input('done an iteration of PGM')
-            if did_find_neg_red_cost==False: #if we did not find a negative reduced  then we break and we are done 
-                # for g_id in self.index_to_graph:
-                #     fig = self.visualize_state_action_graph(graph_id=g_id)
-                #     plt.show()
-                #     fig.savefig(f'state_action_graph_{g_id}.svg', format='svg')
-                #     print(f'save graph: {g_id}')
+            
+            print('did_find_neg_red_cost:', did_find_neg_red_cost)
+            print('tot_shortest_path_len:', tot_shortest_path_len)
+            print('self.cur_lp:', self.cur_lp)
+            print('incumbant_lp:', self.incumbant_lp)
+            
+            if did_find_neg_red_cost == False:
                 break
-        #input('done call to pgm')
+        
+        # Calculate total time and print summary
+        total_time = time.time() - total_start_time
+        
+        print("\n=== PGM TIMING SUMMARY ===")
+        print(f"Total PGM execution time: {total_time:.4f} seconds")
+        print(f"Iterations completed: {iteration_count}")
+        print(f"RMP solver total time: {total_rmp_time:.4f} seconds ({total_rmp_time/total_time*100:.1f}%)")
+        print(f"Pricing problem total time: {total_pricing_time:.4f} seconds ({total_pricing_time/total_time*100:.1f}%)")
+        
+        if expansion_count > 0:
+            print(f"Expansion operations: {expansion_count} (total: {total_expansion_time:.4f} seconds, {total_expansion_time/total_time*100:.1f}%)")
+        
+        if compression_count > 0:
+            print(f"Compression operations: {compression_count} (total: {total_compression_time:.4f} seconds, {total_compression_time/total_time*100:.1f}%)")
+        
+        other_time = total_time - (total_rmp_time + total_pricing_time + total_expansion_time + total_compression_time)
+        print(f"Other operations: {other_time:.4f} seconds ({other_time/total_time*100:.1f}%)")
+        
+        input('output call_pgm time here')
+        return total_time
 
 
     def apply_expansion_operator(self, my_states_in_path,shortest_path, shortest_path_length, ordered_path_rows, my_graph: Full_Multi_Graph_Object_given_l):
@@ -852,11 +886,15 @@ class PGM_appraoch:
 
         
                     #ids_in_state_res_minus.add(s.state_id)
+        start_time = time.time()
         self.make_rez_states_minus_from_by_nodes()
         self.debug_check_all_states_of_id_in_parent()
         #self.debug_exper(self.states_used_sol,self.res_states_minus)
         #for s in self.states_used_sol:
         #    self.res_states_minus.add(s)
+        end_time = time.time()
+        print(f'return state minus and action minus: {end_time-start_time}')
+        input('print return return state minus and action minus time')
         return self.rez_states_minus,self.rez_actions_minus
 
     def call_PGM_RMP_solver_from_scratch(self,use_ilp=False):

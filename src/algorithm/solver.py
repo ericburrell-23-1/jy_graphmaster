@@ -56,6 +56,7 @@ class GraphMaster:
                  ):
         
         self.nodes = nodes
+        self.action_dict = actions
         self.actions = set().union(*actions.values())
         self.rhs_exog_vec = rhs_exog_vec
         self.initial_resource_state = initial_resource_state
@@ -93,7 +94,7 @@ class GraphMaster:
         size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
         
-        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.dominate_actions,self.the_single_null_action)
+        my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action)
         self.rez_states_minus:Set[State]=self.initial_res_states
         self.res_actions=self.initial_res_actions
         #l_id = 0
@@ -120,6 +121,7 @@ class GraphMaster:
             #this_visulizer = Visulizer(pgm_solver)
             #this_visulizer.plot_graph()
             print('starting ilp')
+            
             pgm_solver.ilp_solve()
             print('done ilp call')
             self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
@@ -163,7 +165,7 @@ class GraphMaster:
                     'graph': self.index_to_multi_graph.values()
                 }
             print('creating new graph object')
-            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.dominate_actions,self.the_single_null_action)
+            new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action)
             print('initalizing new graph object')
 
             new_multi_graph.initialize_system()

@@ -7,10 +7,12 @@ import numpy as np
 from src.common.action import Action
 from src.common.state import State
 from src.common.helper import Helper
+from scipy import sparse
+import time
 class Full_Multi_Graph_Object_given_l:
  
     #Computed once multi-graph which is generated once
-    def __init__(self, l_id, res_states:set[State], all_actions: set[Action], dom_actions_pairs,the_null_action):
+    def __init__(self, l_id, res_states:set[State], all_actions: set[Action],action_dict, dom_actions_pairs,the_null_action):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.rez_states = res_states  # set of all states
@@ -20,6 +22,7 @@ class Full_Multi_Graph_Object_given_l:
         self.dom_actions_pairs = dom_actions_pairs  # Dominating action pairs dictionary
        # self.null_action_info = null_action_info
         self.null_action = the_null_action
+        self.action_dict = action_dict
         #self.resource_name_to_index = resource_name_to_index
         #self.number_of_resources = number_of_resources
         #self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
@@ -50,20 +53,249 @@ class Full_Multi_Graph_Object_given_l:
             for node in self.resStates_by_node
             for my_state in self.resStates_by_node[node]
         }
- 
+    def action_ub_check(self):
+        # remove dominated action for state pair
+        this_action_dict = defaultdict(list)
+        for key,action in self.action_dict.items():
+            this_action_dict[key].append(action)
+        
+        for key, action_list in this_action_dict.items():
+            remove_action_index = []
+            for a1_idx in range(1,len(action_list)):
+                for a2_idx in range(len(action_list)-1):
+                    if action_list[a1_idx].get_is_dominated(action_list[a2_idx]):
+                        remove_action_index.append(a2_idx)
+                    if  action_list[a2_idx].get_is_dominated(action_list[a1_idx]):
+                        remove_action_index.append(a1_idx)
+            this_action_dict[key] = [action_list[i] for i in range(len(action_list)) if i not in remove_action_index]
+        # remove dominated states
+        this_res_state = self.rez_states.copy()
+        # state_to_remove = set()
+        # for s1 in self.rez_states:
+        #     for s2 in self.rez_states:
+        #         if s1.node == s2.node:
+        #             does_dom, does_equal = s1.this_state_dominates_input_state(s2)
+        #             if does_dom==True and does_equal==False:
+        #                 print('s1 dominate s2')
+        #                 s1.pretty_print_state()
+        #                 s2.pretty_print_state()
+        #                 state_to_remove.add(s2)
+        # this_res_state.difference_update(state_to_remove)
+
+        # get action ub
+        action_ub = defaultdict(set)
+        for s1 in this_res_state:
+            for s2 in this_res_state:
+                if s2 != s1:
+                    if s1.node != s2.node:
+                        for action_list in this_action_dict[(s1.node,s2.node)]:
+                            for action in action_list:
+                                if self.is_elementwise_greater_equal(s1.state_vec,action.min_resource_vec) and \
+                                    self.is_elementwise_greater_equal(self.element_wise_minimum(s1.state_vec + action.resource_consumption_vec,action.max_resource_vec),s2.state_vec):
+                                    action_ub[(s1,s2)].add(action)
+                    else:
+                        if self.is_elementwise_strictly_greater(s1.state_vec,s2.state_vec):
+                            action_ub[(s1,s2)].add(self.null_action)
+
+        for (s1,s2) in action_ub.keys():
+            if s2 == s1:
+                input('key error here')
+        # action clean
+        for(s1,s2), action_list2 in action_ub.items():
+            remove_action = set()
+            for action in action_list2:
+                for (s31,s32), action_list3 in action_ub.items():
+                    if s1 == s31 and s2 != s32:
+                        is_dom, is_equal = s32.this_state_dominates_input_state(s2)
+                        if is_dom and action in action_list3:
+                            remove_action.add(action)
+                    if s1 != s31 and s2 == s32:
+                        is_dom, is_equal = s1.this_state_dominates_input_state(s31)
+                        if is_dom and action in action_list3:
+                            remove_action.add(action)
+                for action2 in action_list2:
+                    if action2.get_is_dominated(action) == True:
+                        remove_action.add(action)
+            action_list2.difference_update(remove_action)
+        print('check action ub here')
+        # for (s1,s2) ,action_list in action_ub.items():
+        #     if (s1,s2) not in self.actions_ub_given_s1s2_2.keys() and len(action_list)>0:
+        #         input('key not exsist ')
+        #     for action in action_list:
+        #         if action not in self.actions_ub_given_s1s2_2[(s1,s2)]:
+        #             input(f'action error')
+        # Check action_ub against self.actions_ub_given_s1s2_2
+        #self.actions_ub_given_s1s2_2
+        for (s1, s2), action_list in action_ub.items():
+            if len(action_list) > 0:
+                if (s1, s2) not in self.actions_s1_s2_clean:
+                    print(f"Key {(s1, s2)} exists in action_ub but not in self.actions_ub_given_s1s2_2")
+                else:
+                    missing_actions = [action for action in action_list if action not in self.actions_s1_s2_clean[(s1, s2)]]
+                    if missing_actions:
+                        print(f"Missing actions for key {(s1, s2)}: {missing_actions}")
+
+        # Check self.actions_ub_given_s1s2_2 against action_ub
+        for (s1, s2), action_list in self.actions_s1_s2_clean.items():
+            if len(action_list) > 0:
+                if (s1, s2) not in action_ub:
+                    print(f"Key {(s1, s2)} exists in self.actions_ub_given_s1s2_2 but not in action_ub")
+                else:
+                    missing_actions = [action for action in action_list if action not in action_ub[(s1, s2)]]
+                    if missing_actions:
+                        print(f"Missing actions for key {(s1, s2)}: {missing_actions}")
+        
+        print('check action ub end')
+    def is_elementwise_greater_equal(self,matrix1, matrix2):
+        # Convert to dense if matrices are small enough, or use the approach below for larger matrices
+        if matrix1.shape != matrix2.shape:
+            return False
+        
+        # Check if matrix1 - matrix2 has any negative elements
+        diff = matrix1 - matrix2
+        
+        # Get minimum value in the difference matrix
+        min_value = diff.data.min() if diff.nnz > 0 else 0
+        
+        # If minimum value is >= 0, then matrix1 is element-wise >= matrix2
+        return min_value >= 0
+    def element_wise_minimum(self,matrix1, matrix2):
+        if matrix1.shape != matrix2.shape:
+            raise ValueError("Matrices must have the same shape")
+        
+        # Convert to COO format for easier manipulation
+        A = matrix1.tocoo()
+        B = matrix2.tocoo()
+        
+        # Create dictionaries to store values from both matrices
+        values_A = {(i, j): v for i, j, v in zip(A.row, A.col, A.data)}
+        values_B = {(i, j): v for i, j, v in zip(B.row, B.col, B.data)}
+        
+        # Get all positions where either matrix has a non-zero value
+        all_positions = set(values_A.keys()) | set(values_B.keys())
+        
+        # Build the result matrix
+        rows, cols, data = [], [], []
+        for i, j in all_positions:
+            # Get values, defaulting to 0 if position not in matrix
+            val_A = values_A.get((i, j), 0)
+            val_B = values_B.get((i, j), 0)
+            
+            # Take the minimum value
+            min_val = min(val_A, val_B)
+            
+            # Only add non-zero values to keep sparsity
+            if min_val != 0:
+                rows.append(i)
+                cols.append(j)
+                data.append(min_val)
+        
+        # Create a new CSR matrix with the minimum values
+        result = sparse.csr_matrix((data, (rows, cols)), shape=matrix1.shape)
+        
+        return result
+    def is_elementwise_strictly_greater(self,matrix1, matrix2):
+        """
+        Check if matrix1 is element-wise strictly greater than matrix2.
+        Returns True if all elements in matrix1 > corresponding elements in matrix2.
+        
+        Parameters:
+        -----------
+        matrix1, matrix2 : scipy.sparse.csr_matrix
+            Sparse matrices to compare
+        
+        Returns:
+        --------
+        bool
+            True if matrix1 > matrix2 element-wise, False otherwise
+        """
+        if matrix1.shape != matrix2.shape:
+            return False
+        
+        # Convert matrices to COO format for easier element access
+        A = matrix1.tocoo()
+        B = matrix2.tocoo()
+        
+        # Create dictionaries of non-zero elements
+        values_A = {(i, j): v for i, j, v in zip(A.row, A.col, A.data)}
+        values_B = {(i, j): v for i, j, v in zip(B.row, B.col, B.data)}
+        
+        # Get all positions where either matrix has a value
+        all_positions = set(values_A.keys()) | set(values_B.keys())
+        
+        for i, j in all_positions:
+            # Get values, defaulting to 0 if position not in matrix
+            val_A = values_A.get((i, j), 0)
+            val_B = values_B.get((i, j), 0)
+            
+            # If any element in A is not strictly greater than in B, return False
+            if val_A <= val_B:
+                return False
+        
+        return True
     def initialize_system(self):
+        start_time = time.time()
+    
+        step_times = {}
+        
+        # Step 1
+        step_start = time.time()
         self.make_state_id_to_state()
+        step_times['make_state_id_to_state'] = time.time() - step_start
+        
+        # Step 2
+        step_start = time.time()
         self.compute_actions_ub()
+        step_times['compute_actions_ub'] = time.time() - step_start
+        
+        # Step 3
+        step_start = time.time()
         self.compute_dom_states_by_node()
+        step_times['compute_dom_states_by_node'] = time.time() - step_start
+        
+        # Step 4
+        step_start = time.time()
         self.PGM_sub_compute_min_dominating_states_by_node()
+        step_times['PGM_sub_compute_min_dominating_states_by_node'] = time.time() - step_start
+        
+        # Step 5
+        step_start = time.time()
         self.PGM_sub_compute_maximum_dominated_states_by_node()
- 
+        step_times['PGM_sub_compute_maximum_dominated_states_by_node'] = time.time() - step_start
+        
+        # Step 6
+        step_start = time.time()
         self.PGM_clean_states_EZ()
-        #self.PGM_make_null_actions()
+        step_times['PGM_clean_states_EZ'] = time.time() - step_start
+        
+        # Step 7
+        step_start = time.time()
         self.PGM_compute_remove_redundant_actions()
+        step_times['PGM_compute_remove_redundant_actions'] = time.time() - step_start
+        
+        # Step 8
+        step_start = time.time()
         self.PGM_make_equiv_classes()
+        step_times['PGM_make_equiv_classes'] = time.time() - step_start
+        
+        # Step 9
+        step_start = time.time()
         self.construct_pricing_pgm_graph()
- 
+        step_times['construct_pricing_pgm_graph'] = time.time() - step_start
+        
+        print("Initialization completed in {:.4f} seconds".format(time.time() - start_time))
+        print("\nExecution time breakdown:")
+        # Sort steps by execution time (descending)
+        for step, duration in sorted(step_times.items(), key=lambda x: x[1], reverse=True):
+            print(f"{step}: {duration:.4f} seconds ({duration/sum(step_times.values())*100:.1f}%)")
+        input('output multi graph initialization here')
+        # Step 10
+        # step_start = time.time()
+        # self.action_ub_check()
+        # action_ub_check_time = time.time() - step_start
+        # print(f"action_ub_check: {action_ub_check_time:.4f} seconds")
+        return step_times
+        
     def compute_actions_ub(self):
         """Computes upper bound actions for each (s1, s2) pair."""
         
@@ -110,6 +342,7 @@ class Full_Multi_Graph_Object_given_l:
                         #    print('a1.trans_term_add[cap_remain]')
                         ##    print(a1.trans_term_add['cap_remain'])
                         #    input('----')
+        print('check here')
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
         #state_2_dom_states_dict is a dictionary that when s is put in provdies all states taht s dominates

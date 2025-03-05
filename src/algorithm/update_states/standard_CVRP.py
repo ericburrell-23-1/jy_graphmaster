@@ -106,9 +106,9 @@ class CVRP_state_update_function(StateUpdateFunction):
        #nodes that describe the path
         source_state=states_from_path[0]
         sink_state=states_from_path[-1]
-        states_for_new_graph=[]
-        states_for_new_graph.append(source_state)
-        states_for_new_graph.append(sink_state)
+        states_for_new_graph=set()
+        states_for_new_graph.add(source_state)
+        states_for_new_graph.add(sink_state)
 
         #my_state = {source_state, sink_state}
         num_cust=len(beta_list)-2
@@ -187,7 +187,7 @@ class CVRP_state_update_function(StateUpdateFunction):
                 is_source=False
                 is_sink=False
                 my_state=State(my_node, vec_added, l_id,is_source,is_sink)
-                states_for_new_graph.append(my_state)
+                states_for_new_graph.add(my_state)
 
                 if u==3 and d==8:
                     s=states_from_path[2]
