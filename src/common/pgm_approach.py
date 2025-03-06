@@ -103,7 +103,7 @@ class route:
         
         for i in range(0,len(self.just_states_ordered)-1):
             s1=self.just_states_ordered[i]
-            s2=self.just_states_orderexd[i+1]
+            s2=self.just_states_ordered[i+1]
             my_act=self.just_actions_ordered[i]
             my_act.check_valid(s1,s2)
         
@@ -371,6 +371,7 @@ class PGM_appraoch:
         s1s2_2_equiv=self.pgm_graph_2_rmp_graph[g].s1_s2_pair_2_equiv
         path_length=len(state_id_on_route)
         s1_id_s2_id_2_equiv=dict()
+        my_act_id_null=self.the_null_action.action_id
         for i in range(0,path_length-1):
             s1_id=state_id_on_route[i]
             s2_id=state_id_on_route[i+1]
@@ -396,7 +397,9 @@ class PGM_appraoch:
                     if this_weight>epsilon:
                         min_val_in_path=min([this_weight,min_val_in_path])
                         did_find=True
-                        my_act=self.action_id_2_actions[my_act_id]
+                        my_act=self.the_null_action
+                        if my_act_id!=my_act_id_null:
+                            my_act=self.action_id_2_actions[my_act_id]
                         this_path_s1_act_s2_repeat.append(my_act)
                         this_path_s1_act_s2_repeat.append(s2)
                         s1_id_s2_id_2_act_id_on_path[(s1_id,s2_id)]=my_act_id

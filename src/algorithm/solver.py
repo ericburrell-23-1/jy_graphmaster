@@ -116,9 +116,9 @@ class GraphMaster:
         debug_on=True
         self.complete_routes=[]
         print('starting Graph Master System')
-        jy_options=dict()
+        jy_options_user_defined=dict()
         jy_options_user_defined['epsilon']=.00001
-        jy_options_user_defined['tolerance_compress']=.00001
+        jy_options_user_defined['tolerance_compress']=100
         jy_options_user_defined['allow_compression']=True
 
         while iteration < max_iterations:
