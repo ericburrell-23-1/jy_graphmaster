@@ -121,7 +121,11 @@ class GraphMaster:
             self.time_profile['pgm'] = defaultdict(int)
             self.time_profile['multigraph']= defaultdict(int)
             self.time_profile['solve'] = defaultdict(int)
-            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
+            #parameter for PGM
+            epsilon=.00001
+            tolerance_compress=.00001
+            allow_compression=True
+            pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, epsilon,tolerance_compress,allow_compression)
             pgm_solver.call_PGM()
             #this_visulizer = Visulizer(pgm_solver)
             #this_visulizer.plot_graph()
