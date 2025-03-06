@@ -23,6 +23,7 @@ class GWOPricingSolver:
         self.node_actions = {}  # Maps nodes to their associated action objects
         self.pop_size: int = 10 
         self.max_iter: int = 30
+        random.seed(1000)
     def check_path_feasibility(self, path: List[str]) -> Tuple[bool, List[str]]:
         """
         Check path feasibility including elementarity constraint

@@ -20,7 +20,7 @@ class Action:
 
     """
 
-    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:State,node_tail:State,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix):
+    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:int,node_tail:int,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix):
         self.trans_min_input=trans_min_input #min input term assocatied with an action
         self.trans_term_add=trans_term_add #addition term assocaited with an action
         self.trans_term_min=trans_term_min  #minimum transition term associated with an action 

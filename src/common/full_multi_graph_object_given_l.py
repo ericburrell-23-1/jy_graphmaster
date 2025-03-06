@@ -44,6 +44,7 @@ class Full_Multi_Graph_Object_given_l:
             )
         self.source_state=list(self.resStates_by_node[-1])[0]
         self.sink_state=list(self.resStates_by_node[-2])[0]
+        self.time_profile = defaultdict()
 
     def make_state_id_to_state(self):
         """Creates a mapping from state ID to state object."""
@@ -56,8 +57,8 @@ class Full_Multi_Graph_Object_given_l:
     def action_ub_check(self):
         # remove dominated action for state pair
         this_action_dict = defaultdict(list)
-        for key,action in self.action_dict.items():
-            this_action_dict[key].append(action)
+        for key,action_list in self.action_dict.items():
+            this_action_dict[key]= action_list
         
         for key, action_list in this_action_dict.items():
             remove_action_index = []
@@ -88,11 +89,10 @@ class Full_Multi_Graph_Object_given_l:
             for s2 in this_res_state:
                 if s2 != s1:
                     if s1.node != s2.node:
-                        for action_list in this_action_dict[(s1.node,s2.node)]:
-                            for action in action_list:
-                                if self.is_elementwise_greater_equal(s1.state_vec,action.min_resource_vec) and \
-                                    self.is_elementwise_greater_equal(self.element_wise_minimum(s1.state_vec + action.resource_consumption_vec,action.max_resource_vec),s2.state_vec):
-                                    action_ub[(s1,s2)].add(action)
+                        for action in this_action_dict[(s1.node,s2.node)]:
+                            if self.is_elementwise_greater_equal(s1.state_vec,action.min_resource_vec) and \
+                                self.is_elementwise_greater_equal(self.element_wise_minimum(s1.state_vec + action.resource_consumption_vec,action.max_resource_vec),s2.state_vec):
+                                action_ub[(s1,s2)].add(action)
                     else:
                         if self.is_elementwise_strictly_greater(s1.state_vec,s2.state_vec):
                             action_ub[(s1,s2)].add(self.null_action)
@@ -236,66 +236,67 @@ class Full_Multi_Graph_Object_given_l:
     def initialize_system(self):
         start_time = time.time()
     
-        step_times = {}
+        
         
         # Step 1
         step_start = time.time()
         self.make_state_id_to_state()
-        step_times['make_state_id_to_state'] = time.time() - step_start
+        self.time_profile['make_state_id_to_state'] = time.time() - step_start
         
         # Step 2
         step_start = time.time()
         self.compute_actions_ub()
-        step_times['compute_actions_ub'] = time.time() - step_start
+        self.time_profile['compute_actions_ub'] = time.time() - step_start
         
         # Step 3
         step_start = time.time()
         self.compute_dom_states_by_node()
-        step_times['compute_dom_states_by_node'] = time.time() - step_start
+        self.time_profile['compute_dom_states_by_node'] = time.time() - step_start
         
         # Step 4
         step_start = time.time()
         self.PGM_sub_compute_min_dominating_states_by_node()
-        step_times['PGM_sub_compute_min_dominating_states_by_node'] = time.time() - step_start
+        self.time_profile['PGM_sub_compute_min_dominating_states_by_node'] = time.time() - step_start
         
         # Step 5
         step_start = time.time()
         self.PGM_sub_compute_maximum_dominated_states_by_node()
-        step_times['PGM_sub_compute_maximum_dominated_states_by_node'] = time.time() - step_start
+        self.time_profile['PGM_sub_compute_maximum_dominated_states_by_node'] = time.time() - step_start
         
         # Step 6
         step_start = time.time()
         self.PGM_clean_states_EZ()
-        step_times['PGM_clean_states_EZ'] = time.time() - step_start
+        self.time_profile['PGM_clean_states_EZ'] = time.time() - step_start
         
         # Step 7
         step_start = time.time()
         self.PGM_compute_remove_redundant_actions()
-        step_times['PGM_compute_remove_redundant_actions'] = time.time() - step_start
+        self.time_profile['PGM_compute_remove_redundant_actions'] = time.time() - step_start
         
         # Step 8
         step_start = time.time()
         self.PGM_make_equiv_classes()
-        step_times['PGM_make_equiv_classes'] = time.time() - step_start
+        self.time_profile['PGM_make_equiv_classes'] = time.time() - step_start
         
         # Step 9
         step_start = time.time()
         self.construct_pricing_pgm_graph()
-        step_times['construct_pricing_pgm_graph'] = time.time() - step_start
+        self.time_profile['construct_pricing_pgm_graph'] = time.time() - step_start
         
-        print("Initialization completed in {:.4f} seconds".format(time.time() - start_time))
-        print("\nExecution time breakdown:")
+        #self.time_profile['multi_graph_initialization'] = time.time() - start_time
+        # print("Initialization completed in {:.4f} seconds".format(time.time() - start_time))
+        # print("\nExecution time breakdown:")
         # Sort steps by execution time (descending)
-        for step, duration in sorted(step_times.items(), key=lambda x: x[1], reverse=True):
-            print(f"{step}: {duration:.4f} seconds ({duration/sum(step_times.values())*100:.1f}%)")
-        input('output multi graph initialization here')
+        # for step, duration in sorted(self.step_times.items(), key=lambda x: x[1], reverse=True):
+        #     print(f"{step}: {duration:.4f} seconds ({duration/sum(self.step_times.values())*100:.1f}%)")
+        #input('output multi graph initialization here')
         # Step 10
         # step_start = time.time()
-        # self.action_ub_check()
+        self.action_ub_check()
         # action_ub_check_time = time.time() - step_start
         # print(f"action_ub_check: {action_ub_check_time:.4f} seconds")
-        return step_times
-        
+    
+    
     def compute_actions_ub(self):
         """Computes upper bound actions for each (s1, s2) pair."""
         
@@ -356,7 +357,8 @@ class Full_Multi_Graph_Object_given_l:
     # Iterate over all nodes and compute dominance
         for my_node, states in self.resStates_by_node.items():
             for s1, s2 in permutations(states, 2):  # Generate all ordered pairs (s1, s2)
-                if s1.this_state_dominates_input_state(s2):
+                [is_dom,is_equal] = s1.this_state_dominates_input_state(s2)
+                if is_dom:
                     self.state_2_dom_states_dict[s1].add(s2)
                     self.state_2_is_dom_states_dict[s2].add(s1)
     def PGM_sub_compute_min_dominating_states_by_node(self):
@@ -477,7 +479,7 @@ class Full_Multi_Graph_Object_given_l:
             for s1, s2 in pairs
         ]
  
- 
+    
     def construct_specific_pricing_pgm(self, dual_exog_vec,rezStates_minus_by_node):
         """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
         
@@ -536,3 +538,8 @@ class Full_Multi_Graph_Object_given_l:
     #     max_resource_vec = np.full(size_res_vec, np.inf)
     #     #indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
     #     return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )
+    def return_time_profile(self):
+        return self.time_profile
+    def output_profile_time(self):
+        for step, duration in sorted(self.time_profile.items(), key=lambda x: x[1], reverse=True):
+            print(f"{step}: {duration:.4f} seconds ({duration/sum(self.time_profile.values())*100:.1f}%)")

@@ -12,6 +12,8 @@ from src.common.pgm_approach import PGM_appraoch
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
 from src.common.visulizer import Visulizer
+from collections import defaultdict
+import time
 import random
 class GraphMaster:
     """
@@ -75,7 +77,7 @@ class GraphMaster:
         self.res_actions_minus = initial_res_actions
         #self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
         self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
-    
+        
     def debug_check_duplicates(self,res_states):
         res_states_list=list(res_states)
         for i in range(0,len(res_states_list)):
@@ -115,15 +117,21 @@ class GraphMaster:
         self.complete_routes=[]
         print('starting Graph Master System')
         while iteration < max_iterations:
-            
+            self.time_profile = defaultdict(lambda: defaultdict(int))
+            self.time_profile['pgm'] = defaultdict(int)
+            self.time_profile['multigraph']= defaultdict(int)
+            self.time_profile['solve'] = defaultdict(int)
             pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations)
             pgm_solver.call_PGM()
             #this_visulizer = Visulizer(pgm_solver)
             #this_visulizer.plot_graph()
-            print('starting ilp')
-            
+
             pgm_solver.ilp_solve()
-            print('done ilp call')
+
+            this_pgm_time = pgm_solver.time_profile
+            self.time_profile['pgm'] = this_pgm_time
+
+            
             self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
             self.complete_routes=pgm_solver.complete_routes
             
@@ -136,6 +144,7 @@ class GraphMaster:
             beta_term=[]
             new_states_describing_new_graph=[]
             list_of_actions_used_in_col=set()
+            pricing_start_time = time.time()
             if do_pricing==False:
                 #print('in pricing')
                 print('in pricing')
@@ -157,6 +166,10 @@ class GraphMaster:
                 print(list_of_nodes_in_shortest_path)
                 print('reduce cost')
                 print(reduced_cost)
+
+            pricing_time = time.time() - pricing_start_time
+            self.time_profile['solve']['pricing_time'] = pricing_time
+
             if reduced_cost >= -1e-6:
                 return {
                     'status': 'optimal',
@@ -169,9 +182,14 @@ class GraphMaster:
             print('initalizing new graph object')
 
             new_multi_graph.initialize_system()
+
+            this_multi_graph_time = new_multi_graph.time_profile
+            self.time_profile['multigraph']=this_multi_graph_time
+
             print('done initalizing new graph object')
             self.index_to_multi_graph[l_id] = new_multi_graph
             
+            debug_start_time = time.time()
             #if do_pricing==True:
             if debug_init_all_actions==False:
                 #self.res_actions_minus = self.res_actions_minus.union(list_of_actions_used_in_col)
@@ -182,11 +200,12 @@ class GraphMaster:
                 for my_action in self.actions:
                     self.res_actions_minus.add(my_action)
             
+
             if debug_init_all_states==True:
                 self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
             else:
                 #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
-                input('julian predicts that these states will be the ones foudn to incduce errors')
+                #input('julian predicts that these states will be the ones foudn to incduce errors')
                 print('new states are ')
 
                 for s in states_used_in_this_col:
@@ -195,18 +214,39 @@ class GraphMaster:
                     if s not in new_multi_graph.rez_states:
                         input('look this new state is not in the multigraph justadded ')
                 #debug here 
-                input('-----')
+                #input('-----')
                 self.debug_check_duplicates(self.rez_states_minus)
+            debug_end_time = time.time()
+            self.time_profile['solve']['debug_time'] = debug_end_time - debug_start_time
             iteration += 1
             self.restricted_master_problem = 0
             #input(' DONE A COMPLETE GM step')
-
+            self.output_time_profile()
+            
         return {'status': 'max_iterations', 'iterations': iteration}      
         
     
 
     
+    def output_time_profile(self):
+        time_sum = sum(sum(value.values()) for value in self.time_profile.values())
 
+        results = []
+        for outer_key, inner_dict in self.time_profile.items():
+            for inner_key, value in inner_dict.items():
+                percentage = (value / time_sum) * 100
+                results.append((outer_key, inner_key, value, percentage))
+        results.sort(key=lambda x: x[2], reverse=True)
+        this_percent = 0
+        for outer_key, inner_key, value, percentage in results:
+            print(f"{outer_key} : {inner_key} seconds {value:.4f} percent {percentage:.2f}%")
+            this_percent += percentage
+            if this_percent>99:
+                break
+        print('stop output')
+        # for key, value in self.time_profile.items():
+        #     for step, duration in sorted(value.items(), key=lambda x: x[1], reverse=True):
+        #         print(f"{step}: {duration:.4f} seconds ({duration/time_sum*100:.1f}%)")
     def _solve_pricing(self, dual_vector: Dict[int, float]) -> Tuple[List[State], float]:
         """
         Calls the `pricer` solve method using the provided dual vector, and returns the path found.

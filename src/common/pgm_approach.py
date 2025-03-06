@@ -128,7 +128,7 @@ class PGM_appraoch:
         self.init_defualt_jy_options()
         self.lp_before_operations=lp_before_operations
         self.make_rez_states_minus_by_node()
-
+        self.time_profile = defaultdict()
         self.primal_solution, self.dual_solution, self.optimal_value = None, None, None
 
     #put your stuff here start with marting debug
@@ -176,17 +176,19 @@ class PGM_appraoch:
         if np.sum(self.prob_RHS-exog_vec)>epsilon:
             input('error rhs and exog dont lien up')
     def ilp_solve(self):
-        start_time = time.time()
+        
         self.get_all_state_pairs_extra_actions()
+        ilp_start_time = time.time()
         [primal_sol,junk,opt_ilp_obj]=self.call_PGM_RMP_solver_from_scratch(use_ilp=True)
+        solve_ilp_time = time.time()- ilp_start_time
+        self.time_profile['ilp_solve_time'] = solve_ilp_time
         self.primal_sol_ilp=primal_sol
         self.opt_ilp_obj=opt_ilp_obj
         self.decode_sol_2_paths(primal_sol)
         is_binary=True
         self.verify_routes_solution_feasibility(opt_ilp_obj,is_binary,self.complete_routes)
-        end_time = time.time()
-        print(f'ilp soving time:{end_time-start_time}')
-        input('printout ilp solving time')
+
+        #input('printout ilp solving time')
         #debug_on=True
         
 
@@ -233,8 +235,7 @@ class PGM_appraoch:
                 flag =flag and self.is_state_set_subset(rez_states_by_node_1[l_id][node],rez_states_by_node_2[l_id][node])
 
         return flag
- 
-
+    
     #this has to work though and we have had issues with the comparison operator
  
     #second.  It would be useful if we could take in a res_states_by_node which is a dictionary of [graph_id][node_id] followed by a set and determine if res_states_by_node_1 is a subset of res_states_by_node_2 for each element 
@@ -436,7 +437,7 @@ class PGM_appraoch:
             print(self.prob_RHS)
             print('contrib_RHS_tot')
             input('error in sum')
-    def  debug_check_primal_solution_match(self,primal_solution):
+    def debug_check_primal_solution_match(self,primal_solution):
 
         equiv_class_2_edge_count=dict()
         equiv_class_2_fill_count=dict()
@@ -627,20 +628,26 @@ class PGM_appraoch:
         expansion_count = 0
         compression_count = 0
         iteration_count = 0
-        
+        debugging_time = 0
         # Main loop
         while(True):
             iteration_count += 1
+            debug_start = time.time()
             self.debug_check_elem_res_nodes()
             
             # Time RMP solver
             rmp_start = time.time()
+            debug_time = rmp_start- debug_start
+            debugging_time += debug_time
             [self.primal_sol, self.dual_exog, self.cur_lp] = self.call_PGM_RMP_solver_from_scratch()
             rmp_time = time.time() - rmp_start
             total_rmp_time += rmp_time
-            
+
+            debug_start = time.time()
             self.debug_check_elem_res_nodes()
-            
+            debug_end = time.time()
+            debug_time = debug_end- debug_start
+            debugging_time += debug_time
             # Check for compression
             if self.jy_options['allow_compression'] == True:
                 if self.cur_lp < self.incumbant_lp - self.jy_options['tolerance_compress']:
@@ -653,20 +660,27 @@ class PGM_appraoch:
                     continue
             else:
                 self.incumbant_lp = self.cur_lp
-            
+
+            debug_start = time.time()
             self.debug_check_elem_res_nodes()
-            
+            debug_end = time.time()
+            debug_time = debug_start- debug_end
+            debugging_time += debug_time
+
             did_find_neg_red_cost = False
             tot_shortest_path_len = 0
             self.did_find_new_action = False
             self.did_find_new_state = False
             
             # Time pricing problem
-            pricing_start = time.time()
+            
             for my_graph in self.my_PGM_graph_list:
+                pricing_start = time.time()
                 shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm(
                     self.dual_exog, self.rez_states_minus_by_node
                 )
+                pricing_time = time.time() - pricing_start
+                total_pricing_time += pricing_time
                 tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
                 
                 my_states_in_path = []
@@ -684,10 +698,12 @@ class PGM_appraoch:
                     expansion_count += 1
                     did_find_neg_red_cost = True
             
-            pricing_time = time.time() - pricing_start
-            total_pricing_time += pricing_time
             
+            debug_start = time.time()
             self.debug_check_elem_res_nodes()
+            debug_end = time.time()
+            debug_time = debug_start- debug_end
+            debugging_time += debug_time
             
             print('did_find_neg_red_cost:', did_find_neg_red_cost)
             print('tot_shortest_path_len:', tot_shortest_path_len)
@@ -699,24 +715,28 @@ class PGM_appraoch:
         
         # Calculate total time and print summary
         total_time = time.time() - total_start_time
+        self.time_profile['lp_time'] = total_rmp_time
+        self.time_profile['pricing_time'] = total_pricing_time
+        self.time_profile['compressiong_time'] = total_compression_time
+        self.time_profile['expansion_time'] = total_expansion_time
+        self.time_profile['debug_time'] = debugging_time
+        # print("\n=== PGM TIMING SUMMARY ===")
+        # print(f"Total PGM execution time: {total_time:.4f} seconds")
+        # print(f"Iterations completed: {iteration_count}")
+        # print(f"RMP solver total time: {total_rmp_time:.4f} seconds ({total_rmp_time/total_time*100:.1f}%)")
+        # print(f"Pricing problem total time: {total_pricing_time:.4f} seconds ({total_pricing_time/total_time*100:.1f}%)")
         
-        print("\n=== PGM TIMING SUMMARY ===")
-        print(f"Total PGM execution time: {total_time:.4f} seconds")
-        print(f"Iterations completed: {iteration_count}")
-        print(f"RMP solver total time: {total_rmp_time:.4f} seconds ({total_rmp_time/total_time*100:.1f}%)")
-        print(f"Pricing problem total time: {total_pricing_time:.4f} seconds ({total_pricing_time/total_time*100:.1f}%)")
+        # if expansion_count > 0:
+        #     print(f"Expansion operations: {expansion_count} (total: {total_expansion_time:.4f} seconds, {total_expansion_time/total_time*100:.1f}%)")
         
-        if expansion_count > 0:
-            print(f"Expansion operations: {expansion_count} (total: {total_expansion_time:.4f} seconds, {total_expansion_time/total_time*100:.1f}%)")
+        # if compression_count > 0:
+        #     print(f"Compression operations: {compression_count} (total: {total_compression_time:.4f} seconds, {total_compression_time/total_time*100:.1f}%)")
         
-        if compression_count > 0:
-            print(f"Compression operations: {compression_count} (total: {total_compression_time:.4f} seconds, {total_compression_time/total_time*100:.1f}%)")
+        # other_time = total_time - (total_rmp_time + total_pricing_time + total_expansion_time + total_compression_time)
+        # print(f"Other operations: {other_time:.4f} seconds ({other_time/total_time*100:.1f}%)")
         
-        other_time = total_time - (total_rmp_time + total_pricing_time + total_expansion_time + total_compression_time)
-        print(f"Other operations: {other_time:.4f} seconds ({other_time/total_time*100:.1f}%)")
-        
-        input('output call_pgm time here')
-        return total_time
+        # #input('output call_pgm time here')
+        # return total_time
 
 
     def apply_expansion_operator(self, my_states_in_path,shortest_path, shortest_path_length, ordered_path_rows, my_graph: Full_Multi_Graph_Object_given_l):
@@ -894,7 +914,7 @@ class PGM_appraoch:
         #    self.res_states_minus.add(s)
         end_time = time.time()
         print(f'return state minus and action minus: {end_time-start_time}')
-        input('print return return state minus and action minus time')
+        #input('print return return state minus and action minus time')
         return self.rez_states_minus,self.rez_actions_minus
 
     def call_PGM_RMP_solver_from_scratch(self,use_ilp=False):
@@ -1583,4 +1603,8 @@ class PGM_appraoch:
         plt.tight_layout()
         return fig
 
-    
+    def output_time_profile(self):
+        for step, duration in sorted(self.time_profile.items(), key=lambda x: x[1], reverse=True):
+            print(f"{step}: {duration:.4f} seconds ({duration/sum(self.time_profile.values())*100:.1f}%)")
+    def return_time_profile(self):
+        return self.time_profile
