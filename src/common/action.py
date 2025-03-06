@@ -20,7 +20,7 @@ class Action:
 
     """
 
-    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:int,node_tail:int,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix):
+    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:int,node_tail:int,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix, source_state,sink_state):
         self.trans_min_input=trans_min_input #min input term assocatied with an action
         self.trans_term_add=trans_term_add #addition term assocaited with an action
         self.trans_term_min=trans_term_min  #minimum transition term associated with an action 
@@ -36,6 +36,8 @@ class Action:
         self.non_zero_indices_exog=np.nonzero(self.Exog_vec)[0]
         self.action_id = uuid.uuid4().hex
         self.mark_of_null_action=False
+        self.source_state = source_state
+        self.sink_state = sink_state
         if self.node_tail==None:
             self.mark_of_null_action=True
 
@@ -91,8 +93,8 @@ class Action:
         
         # Create new state object
         if self.node_head == -2:
-            head_state_vec = csr_matrix(np.zeros(head_state_vec.shape[1]))
-            head_state = State(self.node_head, head_state_vec, l_id, False, True)
+            this_vec = self.sink_state.state_vec.copy()
+            head_state = State(self.node_head, this_vec, l_id, False, True)
         else:
             head_state = State(self.node_head, head_state_vec, l_id, False, False)
         
@@ -115,7 +117,8 @@ class Action:
         # Create the appropriate State object
         if self.node_tail == -1:
 
-            tail_state = State(self.node_tail, tail_state_vec, l_id, True, False)
+            this_vec = self.source_state.state_vec.copy()
+            head_state = State(self.node_head, this_vec, l_id, True, False)
         else:
             tail_state = State(self.node_tail, tail_state_vec, l_id, False, False)
         

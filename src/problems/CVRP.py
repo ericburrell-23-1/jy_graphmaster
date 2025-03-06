@@ -95,6 +95,9 @@ class CVRP(OptimizationProblem):
     
  
     def _build_problem_model(self):
+        
+ 
+
         num_customers = len(self.demands) - 2
 
         self.nodes = [-1]
@@ -114,6 +117,17 @@ class CVRP(OptimizationProblem):
  
         #Make default dictionary for actions
         self.number_of_resources = num_customers + 1 # number of customer + source + sink + capremain
+        full_resource_dict = np.ones(self.number_of_resources)
+        full_resource_dict[0] = self.capacity
+        full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
+        empty_resource_dict = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
+        
+        #one for the source
+        source_state = State(-1,full_resource_vec,0,True,False)
+ 
+        #one for the sink
+        sink_state = State(-2,empty_resource_vec,0,False,True)
         self.default_min_resource_vector=np.array([])
         self.default_max_resource_vector=np.array([])
         self.default_resource_consumption_vector=np.array([])
@@ -214,7 +228,7 @@ class CVRP(OptimizationProblem):
  
                 #action = Action(origin_node, destination_node, cost, contribution_vector, trans_min_input, trans_term_add, trans_term_min,min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec)
  
-                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec)
+                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,source_state,sink_state)
                 self.actions[origin_node, destination_node] = [action]
                 #start delete
                # print(f'origin:{origin_node},destination:{destination_node}')
@@ -225,6 +239,17 @@ class CVRP(OptimizationProblem):
         #input('donez')
  
     def _create_null_action_info(self):
+        full_resource_dict = np.ones(self.number_of_resources)
+        full_resource_dict[0] = self.capacity
+        full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
+        empty_resource_dict = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
+        
+        #one for the source
+        source_state = State(-1,full_resource_vec,0,True,False)
+ 
+        #one for the sink
+        sink_state = State(-2,empty_resource_vec,0,False,True)
         trans_min_input = {}
         trans_term_add = {}
         trans_term_min = {}
@@ -248,7 +273,7 @@ class CVRP(OptimizationProblem):
        # self.initial_null_actions['indices_non_zero_max'] = indices_non_zero_max
        # self.initial_null_actions['max_resource_vec'] = max_resource_vec
 
-        self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec)
+        self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,source_state,sink_state)
 
 
     def _create_initial_res_actions(self):
@@ -269,7 +294,7 @@ class CVRP(OptimizationProblem):
         self.initial_resource_vector = full_resource_vec
         empty_resource_dict = np.zeros(self.number_of_resources)
         empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
- 
+
         #one for the source
         source_state = State(-1,full_resource_vec,0,True,False)
         self.initial_res_states.add(source_state)
