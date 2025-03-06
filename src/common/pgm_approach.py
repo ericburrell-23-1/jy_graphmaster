@@ -103,7 +103,7 @@ class route:
         
         for i in range(0,len(self.just_states_ordered)-1):
             s1=self.just_states_ordered[i]
-            s2=self.just_states_ordered[i+1]
+            s2=self.just_states_orderexd[i+1]
             my_act=self.just_actions_ordered[i]
             my_act.check_valid(s1,s2)
         
@@ -115,7 +115,7 @@ class PGM_appraoch:
     #This will do the enitre RMP. 
 
 
-    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,the_null_action,action_id_2_actions,lp_before_operations,epsilon, tolerance_compress, allow_compression):
+    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,the_null_action,action_id_2_actions,lp_before_operations,jy_options_user_defined):
         self.index_to_graph:DefaultDict[int,Full_Multi_Graph_Object_given_l] = index_to_graph
         self.my_PGM_graph_list:List[Full_Multi_Graph_Object_given_l]=list(self.index_to_graph.values()) #list of all of the PGM graphs
         self.prob_RHS:np.ndarray=prob_RHS #RHS
@@ -125,7 +125,7 @@ class PGM_appraoch:
         self.incumbant_lp=incumbant_lp# has incumbent LP objective
         self.the_null_action = the_null_action
         self.dominated_actions = dominated_action
-        self.init_defualt_jy_options(epsilon, tolerance_compress, allow_compression)
+        self.set_jy_options_via_user_and_default(jy_options_user_defined)
         self.lp_before_operations=lp_before_operations
         self.make_rez_states_minus_by_node()
         self.time_profile = defaultdict()
@@ -594,16 +594,19 @@ class PGM_appraoch:
         #print('hello moose2')
         #print(self.rezStates_minus_by_node.keys())
         #input('moo')
-    def init_defualt_jy_options(self, epsilon, tolerance_compress, allow_compression):
+    def set_jy_options_via_user_and_default(self,jy_options_user_defined ):
 
         self.jy_options=dict()
-        self.jy_options['epsilon']=epsilon
-        self.jy_options['tolerance_compress']=tolerance_compress
-        self.jy_options['allow_compression']=allow_compression
-        # self.jy_options['epsilon']=.00001
-        # self.jy_options['tolerance_compress']=.00001
-        # self.jy_options['allow_compression']=True
-
+        #self.jy_options['epsilon']=epsilon
+        #self.jy_options['tolerance_compress']=tolerance_compress
+        #self.jy_options['allow_compression']=allow_compression
+        #set default Values
+        self.jy_options['epsilon']=.00001
+        self.jy_options['tolerance_compress']=.00001
+        self.jy_options['allow_compression']=True
+        #set the actual values
+        for my_opt in jy_options_user_defined:
+            self.jy_options[my_opt]=jy_options_user_defined[my_opt]
 
     def put_all_nodes_actions_in_consideration_set(self):
         
