@@ -424,12 +424,17 @@ class PGM_appraoch:
 
     def debug_check_primal_exog_feas(self,primal_solution):
         contrib_RHS_tot=self.prob_RHS*0
+        null_action_id= self.the_null_action.action_id
         for my_var in primal_solution:
             if primal_solution[my_var]>0:
                 if my_var[0]=='eq_act_var':
+                    print('my_var')
+                    print(my_var)
+                    self.the_null_action.pretty_print_action()
                     my_action_id=my_var[3]
-                    my_action=self.action_id_2_actions[my_action_id]
-                    contrib_RHS_tot+=primal_solution[my_var]*my_action.Exog_vec
+                    if my_action_id!=null_action_id:
+                        my_action=self.action_id_2_actions[my_action_id]
+                        contrib_RHS_tot+=primal_solution[my_var]*my_action.Exog_vec
         if np.max(contrib_RHS_tot-self.prob_RHS)<-.0001:
             print('contrib_RHS_tot')
             print(contrib_RHS_tot)

@@ -319,8 +319,8 @@ class RMP_graph_given_l:
 
         #for each state[s] we compute all states that dominate s and that s dominates by having the multigraph already computed which just grab the relavant terms
         for s in all_states:
-            self.all_included_states_dominating_s[s] = self.my_Multi_Graph_Object.state_2_is_dom_states_dict[s].union(all_states)
-            self.all_included_states_that_s_dominates[s] = self.my_Multi_Graph_Object.state_2_dom_states_dict[s].union(all_states)
+            self.all_included_states_dominating_s[s] = self.my_Multi_Graph_Object.state_2_is_dom_states_dict[s].intersection(all_states)
+            self.all_included_states_that_s_dominates[s] = self.my_Multi_Graph_Object.state_2_dom_states_dict[s].intersection(all_states)
 
 
     def RMP_update_sub_compute_maximum_dominated_states_by_node(self,my_node):
@@ -366,7 +366,7 @@ class RMP_graph_given_l:
         #makes null action terms.  This is for dropping resources 
         for s1 in self.state_max_dom_dict:
             for s2 in self.state_max_dom_dict[s1]:
-                self.actions_s1_s2_clean[(s1,s2)].add(self.my_Multi_Graph_Object.null_action)
+                self.actions_s1_s2_non_dom[(s1,s2)].add(self.my_Multi_Graph_Object.null_action)
     
     
     def debug_check_that_res_minus_states_agree(self):
