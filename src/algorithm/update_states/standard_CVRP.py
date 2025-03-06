@@ -24,11 +24,10 @@ class CVRP_state_update_function(StateUpdateFunction):
         self.initial_resource_vector = initial_resource_vector
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
-        
+        random.seed(1115)
 
     def get_states_from_random_beta(self, customer_list,l_id):
         this_beta = customer_list[1:-1]
-        random.seed(l_id*1000)
         random.shuffle(this_beta)
         new_states:List[State] = self._generate_state_based_on_beta(this_beta,l_id)
         return [-1]+this_beta+[-2],new_states,self.states_used_in_this_col
