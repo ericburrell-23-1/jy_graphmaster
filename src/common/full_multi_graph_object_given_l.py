@@ -54,7 +54,7 @@ class Full_Multi_Graph_Object_given_l:
             for node in self.resStates_by_node
             for my_state in self.resStates_by_node[node]
         }
-    def action_ub_check(self):
+    def debug_action_ub_check(self):
         # remove dominated action for state pair
         this_action_dict = defaultdict(list)
         for key,action_list in self.action_dict.items():
@@ -292,7 +292,7 @@ class Full_Multi_Graph_Object_given_l:
         #input('output multi graph initialization here')
         # Step 10
         # step_start = time.time()
-        self.action_ub_check()
+        #self.debug_action_ub_check()
         # action_ub_check_time = time.time() - step_start
         # print(f"action_ub_check: {action_ub_check_time:.4f} seconds")
     

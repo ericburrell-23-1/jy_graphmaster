@@ -306,8 +306,8 @@ class RMP_graph_given_l:
            #if a1 in self.deb
         self.RMP_make_null_actions()
         self.RMP_compute_remove_redundant_actions()
-        self.RMP_make_equiv_classes()
-        self.debug_action_ub()
+        self.RMP_make_equiv_classes()#
+        #self.debug_action_ub()
     def update_domination(self, my_node):
         """Updates domination relationships for all states of a given node."""
 
