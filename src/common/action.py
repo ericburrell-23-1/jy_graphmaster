@@ -6,6 +6,7 @@ import operator
 from src.common.helper import Helper
 from src.common.state import State
 from scipy.sparse import csr_matrix
+import scipy.sparse as sp
 class Action:
     """
     Represents an action in the graph.
@@ -75,21 +76,32 @@ class Action:
         Optimized version of get_head_state that works with NumPy matrix objects
         and avoids unnecessary computations.
         """
-        
+
+        if not sp.issparse(state_tail.state_vec):
+            state_tail.state_vec = sp.csr_matrix(state_tail.state_vec)
+        if not sp.issparse(self.resource_consumption_vec):
+            self.resource_consumption_vec = sp.csr_matrix(self.resource_consumption_vec)
+        if not sp.issparse(self.min_resource_vec):
+            self.min_resource_vec = sp.csr_matrix(self.min_resource_vec)
         # Early return if resource requirements aren't met - using NumPy comparison
         diff_matrix = state_tail.state_vec - self.min_resource_vec
         if np.min(diff_matrix) < 0:
             return None
-        
+        if diff_matrix.data.size > 0 and np.min(diff_matrix.data) < 0:
+            return None
         # Compute new state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption_vec
+        if not isinstance(head_state_vec, sp.csr_matrix):
+            head_state_vec = head_state_vec.tocsr()
         
         # Apply maximum constraints one element at a time to avoid array boolean issues
         for idx in self.indices_non_zero_max:
             # Extract as Python float to avoid array truth value ambiguity
             curr_val = int(head_state_vec[0, idx])
             max_val = int(self.max_resource_vec[0, idx])
-            head_state_vec[0, idx] = min(curr_val, max_val)
+            if curr_val > max_val:
+                head_state_vec[0, idx] = max_val
+            #head_state_vec[0, idx] = min(curr_val, max_val)
         
         # Create new state object
         if self.node_head == -2:
@@ -105,20 +117,30 @@ class Action:
         and corrects the implementation issues from the original function.
         """
         # Compute the tail state vector by subtracting the resource consumption
+        if not sp.issparse(state_head.state_vec):
+            state_head.state_vec = sp.csr_matrix(state_head.state_vec)
+        if not sp.issparse(self.resource_consumption_vec):
+            self.resource_consumption_vec = sp.csr_matrix(self.resource_consumption_vec)
+        if not sp.issparse(self.max_resource_vec):
+            self.max_resource_vec = sp.csr_matrix(self.max_resource_vec)
+
         tail_state_vec = state_head.state_vec - self.resource_consumption_vec
-        
+        if not isinstance(tail_state_vec, sp.csr_matrix):
+            tail_state_vec = tail_state_vec.tocsr()
         # Apply maximum constraints one element at a time to avoid array boolean issues
         for idx in self.indices_non_zero_max:
             # Extract as Python float to avoid array truth value ambiguity
             curr_val = int(tail_state_vec[0, idx])
             max_val = int(self.max_resource_vec[0, idx])
-            tail_state_vec[0, idx] = max(curr_val, max_val)
+            #tail_state_vec[0, idx] = max(curr_val, max_val)
+            if curr_val < max_val:  # Changed from max to min since we want to maximize
+                tail_state_vec[0, idx] = max_val
         
         # Create the appropriate State object
         if self.node_tail == -1:
 
             this_vec = self.source_state.state_vec.copy()
-            head_state = State(self.node_head, this_vec, l_id, True, False)
+            tail_state = State(self.node_head, this_vec, l_id, True, False)
         else:
             tail_state = State(self.node_tail, tail_state_vec, l_id, False, False)
         
@@ -126,6 +148,7 @@ class Action:
 
     def get_is_dominated(self,otherAction):
         #find out if this action dominates the input action 
+        
         this_dominates_input=False
         if self.node_head!=otherAction.node_head or  self.node_tail!=otherAction.node_tail:
             #please dont comment this out if ogyuant code to be fast
