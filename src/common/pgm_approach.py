@@ -33,6 +33,9 @@ class route:
         ##        print('******')
         #input('---')
         self.state_action_alt_repeat=state_action_alt_repeat #input is states and actions alternating
+        
+        self.clean_state_action_alt_repeat_by_removing_null()
+
         self.weight=weight #what is the corresponding amounf of this in the solution
         self.generate_states_nodes_actions_ordered()
 
@@ -50,6 +53,14 @@ class route:
         self.generate_cost_exog_vector()
         self.verify_feasibility()
 
+    def clean_state_action_alt_repeat_by_removing_null(self):
+        new_state_action_alt_repeat=[self.state_action_alt_repeat[0]]
+        for act_ind in range(1,len(self.state_action_alt_repeat),2):
+            my_action=self.state_action_alt_repeat[act_ind]
+            if my_action.mark_of_null_action==False:
+                new_state_action_alt_repeat.append(self.state_action_alt_repeat[act_ind])
+                new_state_action_alt_repeat.append(self.state_action_alt_repeat[act_ind+1])
+        self.state_action_alt_repeat=new_state_action_alt_repeat
     def generate_cost_exog_vector(self):
         
         

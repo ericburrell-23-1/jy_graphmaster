@@ -15,6 +15,17 @@ class State:
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
+        #print('making a state')
+        #print('self.node')
+        #print(self.node)
+        #print('self.is_sink')
+        #print(self.is_sink)
+        #print('self.is_source')
+        #print(self.is_source)
+        #print('self.state_vec')
+        #print(self.state_vec)
+        #print('type(self.state_vec)')
+        #print(type(self.state_vec))
         self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,self.csr_matrix_hash()))
 
 
