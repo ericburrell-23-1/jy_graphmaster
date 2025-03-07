@@ -89,9 +89,6 @@ class CVRP(OptimizationProblem):
         self.capacity = capacity
         self.demands = demands
         self.coordinates = coordinates
-        print('self.demands')
-        print(self.demands)
-        print('check here')
     
  
     def _build_problem_model(self):
@@ -123,11 +120,7 @@ class CVRP(OptimizationProblem):
         empty_resource_dict = np.zeros(self.number_of_resources)
         empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
         
-        #one for the source
-        source_state = State(-1,full_resource_vec,0,True,False)
- 
-        #one for the sink
-        sink_state = State(-2,empty_resource_vec,0,False,True)
+
         self.default_min_resource_vector=np.array([])
         self.default_max_resource_vector=np.array([])
         self.default_resource_consumption_vector=np.array([])
@@ -190,8 +183,6 @@ class CVRP(OptimizationProblem):
                 if destination_node!=-2:
                     partial_min_resource_dict[f'can_visit: {destination_node}']= 1
                 #str("Cover", origin_node)
-                if origin_node == -1 and destination_node == 1:
-                    print('check here')
                 #print('origin_node')
                 #print(origin_node)
                 #print('destination_node')
@@ -228,7 +219,7 @@ class CVRP(OptimizationProblem):
  
                 #action = Action(origin_node, destination_node, cost, contribution_vector, trans_min_input, trans_term_add, trans_term_min,min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec)
  
-                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,source_state,sink_state)
+                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_dict,empty_resource_vec)
                 self.actions[origin_node, destination_node] = [action]
                 #start delete
                # print(f'origin:{origin_node},destination:{destination_node}')
@@ -244,12 +235,6 @@ class CVRP(OptimizationProblem):
         full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
         empty_resource_dict = np.zeros(self.number_of_resources)
         empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
-        
-        #one for the source
-        source_state = State(-1,full_resource_vec,0,True,False)
- 
-        #one for the sink
-        sink_state = State(-2,empty_resource_vec,0,False,True)
         trans_min_input = {}
         trans_term_add = {}
         trans_term_min = {}
@@ -273,7 +258,7 @@ class CVRP(OptimizationProblem):
        # self.initial_null_actions['indices_non_zero_max'] = indices_non_zero_max
        # self.initial_null_actions['max_resource_vec'] = max_resource_vec
 
-        self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,source_state,sink_state)
+        self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_vec,empty_resource_vec)
 
 
     def _create_initial_res_actions(self):
@@ -312,7 +297,6 @@ class CVRP(OptimizationProblem):
                 this_res[0]=self.capacity
                 node_state = State(node,csr_matrix(this_res.reshape(1,-1)),0,False,False)
                 self.initial_res_states.add(node_state)
-        print('check here')
         
 
     def _define_state_update_module(self):

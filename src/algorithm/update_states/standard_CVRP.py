@@ -42,6 +42,7 @@ class CVRP_state_update_function(StateUpdateFunction):
         for state in states_in_path_to_return:
             if state not in states_for_new_graph:
                 state.pretty_print_state()
+                input('state in path not in state in beta')
 
         return beta_list, states_for_new_graph,  states_in_path_to_return
     
@@ -76,8 +77,6 @@ class CVRP_state_update_function(StateUpdateFunction):
             s=states_from_path[si]
             u=s.node
             if u>-0.5:
-                print('self.number_of_resources')
-                print(self.number_of_resources)
                 for w in range(1,self.number_of_resources):
                     #print('w')
                     #print(w)
@@ -97,9 +96,7 @@ class CVRP_state_update_function(StateUpdateFunction):
                         s.state_vec[0,w]=0
             if u==-2:
                 s.state_vec=s.state_vec*0
-            s.pretty_print_state()
-            print('beta_list')
-            print(beta_list)
+            #s.pretty_print_state()
             #input('--')
         #input('test there')
        #nodes that describe the path
@@ -170,16 +167,6 @@ class CVRP_state_update_function(StateUpdateFunction):
                 #this_vec = np.insert(this_vec, 0, d)
                 # my_res_vec=base_rez_vec.copy()
                 this_vec[0,0]=d
-                print('u')
-                print(u)
-                print('d')
-                print(d)
-                print('my_res_vec')
-                print(my_res_vec)
-                print('this_vec')
-                print(this_vec)
-                print('beta_list')
-                print(beta_list)
                 #input('--look here-')
                 vec_added =  csr_matrix(this_vec.reshape(1, -1))
                 my_node=u
@@ -188,11 +175,11 @@ class CVRP_state_update_function(StateUpdateFunction):
                 my_state=State(my_node, vec_added, l_id,is_source,is_sink)
                 states_for_new_graph.add(my_state)
 
-                if u==3 and d==8:
-                    s=states_from_path[2]
-                    s.pretty_print_state()
-                    my_state.pretty_print_state()
-                    tst=s.equals_minus_id(my_state)
+                # if u==3 and d==8:
+                #     s=states_from_path[2]
+                #     s.pretty_print_state()
+                #     my_state.pretty_print_state()
+                #     tst=s.equals_minus_id(my_state)
                     #print('tst')
                     #print(tst)
                     #input('hold look curucial')
@@ -207,20 +194,20 @@ class CVRP_state_update_function(StateUpdateFunction):
             if state_out not in states_for_new_graph:
                 input('error here')
         #debug
-        for i in range(0,len(ordered_actions)):
-            s1=states_in_path_to_return[i]
-            s2=states_in_path_to_return[i+1]
-            my_act=ordered_actions[i]
-            my_act.check_valid(s1,s2)
+        # for i in range(0,len(ordered_actions)):
+        #     s1=states_in_path_to_return[i]
+        #     s2=states_in_path_to_return[i+1]
+        #     my_act=ordered_actions[i]
+        #     my_act.check_valid(s1,s2)
 
-        #print('ok im doing clearance here')
-        for s in states_in_path_to_return:
-            if s not in states_for_new_graph:
-                input('error check here')
-            else:
-                print(' I found ')
-                s.pretty_print_state()
-        #print('DONE  im doing clearance here')
+        # #print('ok im doing clearance here')
+        # for s in states_in_path_to_return:
+        #     if s not in states_for_new_graph:
+        #         input('error check here')
+        #     else:
+        #         print(' I found ')
+        #         s.pretty_print_state()
+        # #print('DONE  im doing clearance here')
 
         return [beta_list,states_for_new_graph,states_in_path_to_return]
 

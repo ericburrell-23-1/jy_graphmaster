@@ -21,7 +21,7 @@ class Action:
 
     """
 
-    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:int,node_tail:int,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix, source_state,sink_state):
+    def __init__(self,trans_min_input:dict,trans_term_add:dict,trans_term_min:dict,node_head:int,node_tail:int,Exog_vec,cost,min_resource_vec:csr_matrix,resource_consumption_vec:csr_matrix,indices_non_zero_max:list,max_resource_vec:csr_matrix, full_resource_vec,empty_resource_vec):
         self.trans_min_input=trans_min_input #min input term assocatied with an action
         self.trans_term_add=trans_term_add #addition term assocaited with an action
         self.trans_term_min=trans_term_min  #minimum transition term associated with an action 
@@ -37,8 +37,8 @@ class Action:
         self.non_zero_indices_exog=np.nonzero(self.Exog_vec)[0]
         self.action_id = uuid.uuid4().hex
         self.mark_of_null_action=False
-        self.source_state = source_state
-        self.sink_state = sink_state
+        self.full_resource_vec = full_resource_vec
+        self.empty_resource_vec = empty_resource_vec
         if self.node_tail==None:
             self.mark_of_null_action=True
 
@@ -77,12 +77,12 @@ class Action:
         and avoids unnecessary computations.
         """
 
-        if not sp.issparse(state_tail.state_vec):
-            state_tail.state_vec = sp.csr_matrix(state_tail.state_vec)
-        if not sp.issparse(self.resource_consumption_vec):
-            self.resource_consumption_vec = sp.csr_matrix(self.resource_consumption_vec)
-        if not sp.issparse(self.min_resource_vec):
-            self.min_resource_vec = sp.csr_matrix(self.min_resource_vec)
+        # if not sp.issparse(state_tail.state_vec):
+        #     state_tail.state_vec = sp.csr_matrix(state_tail.state_vec)
+        # if not sp.issparse(self.resource_consumption_vec):
+        #     self.resource_consumption_vec = sp.csr_matrix(self.resource_consumption_vec)
+        # if not sp.issparse(self.min_resource_vec):
+        #     self.min_resource_vec = sp.csr_matrix(self.min_resource_vec)
         # Early return if resource requirements aren't met - using NumPy comparison
         diff_matrix = state_tail.state_vec - self.min_resource_vec
         if np.min(diff_matrix) < 0:
@@ -105,7 +105,7 @@ class Action:
         
         # Create new state object
         if self.node_head == -2:
-            this_vec = self.sink_state.state_vec.copy()
+            this_vec = self.empty_resource_vec
             head_state = State(self.node_head, this_vec, l_id, False, True)
         else:
             head_state = State(self.node_head, head_state_vec, l_id, False, False)
@@ -117,12 +117,12 @@ class Action:
         and corrects the implementation issues from the original function.
         """
         # Compute the tail state vector by subtracting the resource consumption
-        if not sp.issparse(state_head.state_vec):
-            state_head.state_vec = sp.csr_matrix(state_head.state_vec)
-        if not sp.issparse(self.resource_consumption_vec):
-            self.resource_consumption_vec = sp.csr_matrix(self.resource_consumption_vec)
-        if not sp.issparse(self.max_resource_vec):
-            self.max_resource_vec = sp.csr_matrix(self.max_resource_vec)
+        # if not sp.issparse(state_head.state_vec):
+        #     state_head.state_vec = sp.csr_matrix(state_head.state_vec)
+        # if not sp.issparse(self.resource_consumption_vec):
+        #     self.resource_consumption_vec = sp.csr_matrix(self.resource_consumption_vec)
+        # if not sp.issparse(self.max_resource_vec):
+        #     self.max_resource_vec = sp.csr_matrix(self.max_resource_vec)
 
         tail_state_vec = state_head.state_vec - self.resource_consumption_vec
         if not isinstance(tail_state_vec, sp.csr_matrix):
@@ -139,7 +139,7 @@ class Action:
         # Create the appropriate State object
         if self.node_tail == -1:
 
-            this_vec = self.source_state.state_vec.copy()
+            this_vec = self.full_resource_vec
             tail_state = State(self.node_head, this_vec, l_id, True, False)
         else:
             tail_state = State(self.node_tail, tail_state_vec, l_id, False, False)

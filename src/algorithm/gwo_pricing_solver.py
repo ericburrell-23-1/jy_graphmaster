@@ -222,7 +222,7 @@ class GWOPricingSolver:
                 self.total_cost = current_best
                 self.consumed_resources = population[0][1][1]
                 stagnation_counter = 0
-                print(f"At iteration {iteration} found new best reduced cost: {best_reduced_cost}")
+                #print(f"At iteration {iteration} found new best reduced cost: {best_reduced_cost}")
             else:
                 stagnation_counter += 1
                 
@@ -324,7 +324,7 @@ class GWOPricingSolver:
                 this_res_cost = np.concatenate([first_array,second_array])
                 third_array = np.array(ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION).reshape(-1)
                 this_res_cost_2 = np.concatenate([third_array, np.zeros(self.number_of_resources)])
-                print(origin_node,destination_node,this_res_cost)
+                #print(origin_node,destination_node,this_res_cost)
                 graph.add_edge(
                     origin_node,
                     action_node,

@@ -442,9 +442,9 @@ class PGM_appraoch:
         for my_var in primal_solution:
             if primal_solution[my_var]>0:
                 if my_var[0]=='eq_act_var':
-                    print('my_var')
-                    print(my_var)
-                    self.the_null_action.pretty_print_action()
+                    # print('my_var')
+                    # print(my_var)
+                    #self.the_null_action.pretty_print_action()
                     my_action_id=my_var[3]
                     if my_action_id!=null_action_id:
                         my_action=self.action_id_2_actions[my_action_id]
@@ -561,8 +561,8 @@ class PGM_appraoch:
             #print('g.l_id: '+str(l_id))
             s1=self.my_PGM_graph_list[l_id].state_id_to_state[s1_id]
             s2=self.my_PGM_graph_list[l_id].state_id_to_state[s2_id]
-            s1.pretty_print_state()
-            s2.pretty_print_state()
+            # s1.pretty_print_state()
+            # s2.pretty_print_state()
 
         else:
             #print('eq_act_var')
@@ -572,7 +572,7 @@ class PGM_appraoch:
             my_action=self.action_id_2_actions[my_action_id]
             #print('g.l_id: '+str(l_id))
             #print('my_eq: '+str(my_eq))
-            my_action.pretty_print_action()
+            #my_action.pretty_print_action()
 
         #print('*******')
 
@@ -711,7 +711,7 @@ class PGM_appraoch:
                 my_states_in_path = []
                 for my_state_id in shortest_path:
                     my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
-                    print([my_state.node, my_state.state_vec.toarray()[0][0]])
+                    #print([my_state.node, my_state.state_vec.toarray()[0][0]])
                     my_states_in_path.append(my_state)
                 
                 # Check for expansion
@@ -739,7 +739,6 @@ class PGM_appraoch:
                 break
         
         # Calculate total time and print summary
-        total_time = time.time() - total_start_time
         self.time_profile['lp_time'] = total_rmp_time
         self.time_profile['pricing_time'] = total_pricing_time
         self.time_profile['compressiong_time'] = total_compression_time
@@ -858,7 +857,7 @@ class PGM_appraoch:
                 my_action=self.action_id_2_actions[action_id]
                 if type(my_action)!=Action:
                     print('type(action)')
-                    print(type(action))
+                    print(type(my_action))
                     input('error here')
                 self.rez_actions_minus.add(my_action)  # Store the action
 
@@ -938,7 +937,7 @@ class PGM_appraoch:
         #for s in self.states_used_sol:
         #    self.res_states_minus.add(s)
         end_time = time.time()
-        print(f'return state minus and action minus: {end_time-start_time}')
+        #print(f'return state minus and action minus: {end_time-start_time}')
         #input('print return return state minus and action minus time')
         return self.rez_states_minus,self.rez_actions_minus
 
@@ -950,7 +949,7 @@ class PGM_appraoch:
         #print(self.rezStates_minus_by_node.keys())
         #input('---')
         self.l_id_2_active_graph=dict()
-        print('initializing graphs ')
+        #print('initializing graphs ')
 
         for l_id in self.index_to_graph:#.items():
             g=self.index_to_graph[l_id]
@@ -961,7 +960,7 @@ class PGM_appraoch:
                 self.l_id_2_active_graph[l_id]=True
             else:
                 self.l_id_2_active_graph[l_id]=False
-        print('initializing graphs ')
+        #print('initializing graphs ')
 
         # Step 2: Initialize variables and constraints
         self.all_vars = []  # List to store all variables
@@ -1133,9 +1132,9 @@ class PGM_appraoch:
                 prob += (constraint_expr <= ubCon[con_name], f"UB_{con_name}")
 
         # Step 5: Solve the ILP
-        print('Starting ILP call')
+        #print('Starting ILP call')
         prob.solve(pl.PULP_CBC_CMD(msg=False))  # Using CBC solver for ILPs
-        print('Done ILP call')
+        #print('Done ILP call')
 
         # Step 6: Extract primal solution (decision variables)
         primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
@@ -1195,9 +1194,7 @@ class PGM_appraoch:
         #self.print_pulp_formulation(prob)
         
         # Step 5: Solve the problem
-        print('starting lp call')
-        prob.solve()
-        print('done lp call')
+        prob.solve(pl.PULP_CBC_CMD(msg=False))
 
         # Step 6: Extract solutions
         primal_solution = {}

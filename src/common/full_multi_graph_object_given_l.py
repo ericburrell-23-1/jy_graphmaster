@@ -343,7 +343,6 @@ class Full_Multi_Graph_Object_given_l:
                         #    print('a1.trans_term_add[cap_remain]')
                         ##    print(a1.trans_term_add['cap_remain'])
                         #    input('----')
-        print('check here')
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
         #state_2_dom_states_dict is a dictionary that when s is put in provdies all states taht s dominates

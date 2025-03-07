@@ -91,9 +91,9 @@ class GraphMaster:
                         input('error here')
     
     def solve(self):
+        all_time_profile = defaultdict(int)
         l_id = 0
         random.seed(0)
-        size_rhs, size_res_vec = len(self.rhs_exog_vec), len(self.initial_resource_state)
         max_iterations = 100000
         
         my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action)
@@ -102,6 +102,8 @@ class GraphMaster:
         #l_id = 0
         #multi_graph = Full_Multi_Graph_Object_given_l(l_id,self.initial_res_states,self.initial_res_actions,self.dominate_actions)
         my_init_graph.initialize_system()
+        for key,value in my_init_graph.time_profile.items():
+            all_time_profile[f'multigraph:{key}'] = value
         self.index_to_multi_graph[l_id] = my_init_graph
         iteration = 1
         incombentLP = np.inf
@@ -120,12 +122,13 @@ class GraphMaster:
         jy_options_user_defined['epsilon']=.00001
         jy_options_user_defined['tolerance_compress']=100
         jy_options_user_defined['allow_compression']=True
-
+        
+        cg_iteration_time =1
         while iteration < max_iterations:
-            self.time_profile = defaultdict(lambda: defaultdict(int))
-            self.time_profile['pgm'] = defaultdict(int)
-            self.time_profile['multigraph']= defaultdict(int)
-            self.time_profile['solve'] = defaultdict(int)
+            time_profile = defaultdict(lambda: defaultdict(int))
+            time_profile['pgm'] = defaultdict(int)
+            time_profile['multigraph']= defaultdict(int)
+            time_profile['solve'] = defaultdict(int)
             #parameter for PGM
             
             pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, jy_options_user_defined)
@@ -136,7 +139,7 @@ class GraphMaster:
             pgm_solver.ilp_solve()
 
             this_pgm_time = pgm_solver.time_profile
-            self.time_profile['pgm'] = this_pgm_time
+            time_profile['pgm'] = this_pgm_time
 
             
             self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
@@ -154,11 +157,11 @@ class GraphMaster:
             pricing_start_time = time.time()
             if do_pricing==False:
                 #print('in pricing')
-                print('in pricing')
+                #print('in pricing')
                 beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
                 reduced_cost = -np.inf
             else:
-                print('in not  pricing')
+                #print('in not  pricing')
 
                 #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
@@ -169,31 +172,30 @@ class GraphMaster:
                         s1.pretty_print_state()
                         input('error here this is not correct')
                 
-                print('path')
-                print(list_of_nodes_in_shortest_path)
-                print('reduce cost')
+                print('shortest path reduce cost')
                 print(reduced_cost)
 
             pricing_time = time.time() - pricing_start_time
-            self.time_profile['solve']['pricing_time'] = pricing_time
+            time_profile['solve']['pricing_time'] = pricing_time
 
             if reduced_cost >= -1e-6:
+                self.output_all_time_profile(all_time_profile)
                 return {
                     'status': 'optimal',
                     'x': pgm_solver.primal_sol,
                     'iterations': iteration,
                     'graph': self.index_to_multi_graph.values()
                 }
-            print('creating new graph object')
+
             new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action)
-            print('initalizing new graph object')
+
 
             new_multi_graph.initialize_system()
 
             this_multi_graph_time = new_multi_graph.time_profile
-            self.time_profile['multigraph']=this_multi_graph_time
+            time_profile['multigraph']=this_multi_graph_time
 
-            print('done initalizing new graph object')
+
             self.index_to_multi_graph[l_id] = new_multi_graph
             
             debug_start_time = time.time()
@@ -213,33 +215,37 @@ class GraphMaster:
             else:
                 #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
                 #input('julian predicts that these states will be the ones foudn to incduce errors')
-                print('new states are ')
 
                 for s in states_used_in_this_col:
                     self.rez_states_minus.add(s)
-                    s.pretty_print_state()
+                    #s.pretty_print_state()
                     if s not in new_multi_graph.rez_states:
                         input('look this new state is not in the multigraph justadded ')
                 #debug here 
                 #input('-----')
                 self.debug_check_duplicates(self.rez_states_minus)
             debug_end_time = time.time()
-            self.time_profile['solve']['debug_time'] = debug_end_time - debug_start_time
+            time_profile['solve']['debug_time'] = debug_end_time - debug_start_time
             iteration += 1
             self.restricted_master_problem = 0
             #input(' DONE A COMPLETE GM step')
-            self.output_time_profile()
-            
+            print(f'========= cg iteration: {cg_iteration_time} =========')
+            this_profile = self.output_time_profile_for_this_iteration(time_profile)
+            cg_iteration_time+=1
+            for outer_key, inner_key, value, percentage in this_profile:
+                all_time_profile[f'{outer_key}:{inner_key}'] += value
+        
         return {'status': 'max_iterations', 'iterations': iteration}      
         
     
 
     
-    def output_time_profile(self):
-        time_sum = sum(sum(value.values()) for value in self.time_profile.values())
+    def output_time_profile_for_this_iteration(self,time_profile):
+        time_profile = time_profile
+        time_sum = sum(sum(value.values()) for value in time_profile.values())
 
         results = []
-        for outer_key, inner_dict in self.time_profile.items():
+        for outer_key, inner_dict in time_profile.items():
             for inner_key, value in inner_dict.items():
                 percentage = (value / time_sum) * 100
                 results.append((outer_key, inner_key, value, percentage))
@@ -251,9 +257,24 @@ class GraphMaster:
             if this_percent>99:
                 break
         print('stop output')
+        return results
         # for key, value in self.time_profile.items():
         #     for step, duration in sorted(value.items(), key=lambda x: x[1], reverse=True):
         #         print(f"{step}: {duration:.4f} seconds ({duration/time_sum*100:.1f}%)")
+    def output_all_time_profile(self,all_time_profile):
+        print('====== time profile for all ======')
+        time_sum = sum(all_time_profile.values())
+        results = []
+        for key , value in all_time_profile.items():
+            percentage = (value / time_sum) * 100
+            results.append((key,value,percentage))
+        results.sort(key=lambda x: x[2], reverse=True)
+        this_percent = 0
+        for key, value, percentage in results:
+            print(f"{key} seconds {value:.4f} percent {percentage:.2f}%")
+            this_percent += percentage
+            if this_percent>99:
+                break
     def _solve_pricing(self, dual_vector: Dict[int, float]) -> Tuple[List[State], float]:
         """
         Calls the `pricer` solve method using the provided dual vector, and returns the path found.
