@@ -8,11 +8,14 @@ from src.common.jy_var import jy_var
 from typing import Dict, DefaultDict, Set, List
 import numpy as np
 import pulp as pl
+from pulp import LpProblem, LpVariable, LpMaximize, PULP_CBC_CMD
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import xpress as xp
 import networkx as nx
 import time
+from src.common.helper import Helper
+from src.common.time_profile import TimeProfiler
 class route:
     def __init__(self,state_action_alt_repeat,weight):
 
@@ -136,10 +139,11 @@ class PGM_appraoch:
         self.incumbant_lp=incumbant_lp# has incumbent LP objective
         self.the_null_action = the_null_action
         self.dominated_actions = dominated_action
+        self.time_profile = defaultdict(float)
         self.set_jy_options_via_user_and_default(jy_options_user_defined)
         self.lp_before_operations=lp_before_operations
-        self.make_rez_states_minus_by_node()
-        self.time_profile = defaultdict()
+        with TimeProfiler(self.time_profile, "pgm:make_rez_states_minus_by_node"):
+            self.make_rez_states_minus_by_node()
         self.primal_solution, self.dual_solution, self.optimal_value = None, None, None
 
     #put your stuff here start with marting debug
@@ -158,7 +162,8 @@ class PGM_appraoch:
                 self.rez_actions_minus.add(my_action)
 
     def verify_routes_solution_feasibility(self,opt_ilp_obj,is_binary,my_routes):
-        epsilon=.0001
+
+        epsilon=self.jy_options['epsilon']
         #check that binary holds if needed and otherwise non-negative
         for r in my_routes:
             if is_binary:
@@ -187,17 +192,17 @@ class PGM_appraoch:
         if np.sum(self.prob_RHS-exog_vec)>epsilon:
             input('error rhs and exog dont lien up')
     def ilp_solve(self):
-        
-        self.get_all_state_pairs_extra_actions()
-        ilp_start_time = time.time()
-        [primal_sol,junk,opt_ilp_obj]=self.call_PGM_RMP_solver_from_scratch(use_ilp=True)
-        solve_ilp_time = time.time()- ilp_start_time
-        self.time_profile['ilp_solve_time'] = solve_ilp_time
-        self.primal_sol_ilp=primal_sol
-        self.opt_ilp_obj=opt_ilp_obj
-        self.decode_sol_2_paths(primal_sol)
+        with TimeProfiler(self.time_profile, "pgm:(ilp_solve)get_all_state_pairs_extra_actions"):
+            self.get_all_state_pairs_extra_actions()
+        with TimeProfiler(self.time_profile, "pgm:(ilp_solve)call_PGM_RMP_solver_from_scratch"):
+            [primal_sol,junk,opt_ilp_obj]=self.call_PGM_RMP_solver_from_scratch(use_ilp=True)
+            self.primal_sol_ilp=primal_sol
+            self.opt_ilp_obj=opt_ilp_obj
+        with TimeProfiler(self.time_profile, "pgm:(ilp_solve):decode_sol_2_paths"):
+            self.decode_sol_2_paths(primal_sol)
         is_binary=True
-        self.verify_routes_solution_feasibility(opt_ilp_obj,is_binary,self.complete_routes)
+        with TimeProfiler(self.time_profile, "pgm:(ilp_solve)verify_routes_solution_feasibility"):
+            self.verify_routes_solution_feasibility(opt_ilp_obj,is_binary,self.complete_routes)
 
         #input('printout ilp solving time')
         #debug_on=True
@@ -588,21 +593,24 @@ class PGM_appraoch:
 
     def make_rez_states_minus_by_node(self):
         """Groups states by (l_id, node) into a dictionary of lists with structure {l_id: {node: [states]}}."""
-
-        self.rez_states_minus_by_node = defaultdict(lambda: defaultdict(set))  # Nested defaultdict for automatic list initialization
-        self.rez_states_minus_by_graph: Dict[int, Set[State]] = defaultdict(set)
-        self.debug_check_all_states_of_id_in_parent()
-        for my_state in self.rez_states_minus:
+        with TimeProfiler(self.time_profile, "make_rez_states_minus_by_node"):
+            self.rez_states_minus_by_node = defaultdict(lambda: defaultdict(set))  # Nested defaultdict for automatic list initialization
+            self.rez_states_minus_by_graph: Dict[int, Set[State]] = defaultdict(set)
             
-            self.rez_states_minus_by_node[my_state.l_id][my_state.node].add(my_state)
-            self.rez_states_minus_by_graph[my_state.l_id].add(my_state)
-        # Check that each l_id has exactly one source and one sink
-        for l_id in self.rez_states_minus_by_node:
-            source_count = len(self.rez_states_minus_by_node[l_id].get(-1, []))
-            sink_count = len(self.rez_states_minus_by_node[l_id].get(-2, []))
+            if self.jy_options['debug'] == True:
+                with TimeProfiler(self.time_profile, "debug"):
+                    self.debug_check_all_states_of_id_in_parent()
+            for my_state in self.rez_states_minus:
+                
+                self.rez_states_minus_by_node[my_state.l_id][my_state.node].add(my_state)
+                self.rez_states_minus_by_graph[my_state.l_id].add(my_state)
+            # Check that each l_id has exactly one source and one sink
+            for l_id in self.rez_states_minus_by_node:
+                source_count = len(self.rez_states_minus_by_node[l_id].get(-1, []))
+                sink_count = len(self.rez_states_minus_by_node[l_id].get(-2, []))
 
-            if source_count != 1 or sink_count != 1:
-                raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")
+                if source_count != 1 or sink_count != 1:
+                    raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")
 
         #print('hello moose')
         #print('hello moose2')
@@ -615,7 +623,7 @@ class PGM_appraoch:
         #self.jy_options['tolerance_compress']=tolerance_compress
         #self.jy_options['allow_compression']=allow_compression
         #set default Values
-        self.jy_options['epsilon']=.00001
+        self.jy_options['epsilon']=.0001
         self.jy_options['tolerance_compress']=.00001
         self.jy_options['allow_compression']=True
         #set the actual values
@@ -643,54 +651,38 @@ class PGM_appraoch:
 
     def call_PGM(self):   
         # Start tracking total time
-        total_start_time = time.time()
-        
+        time_return = defaultdict(int)
         # Initialize timing counters
-        total_rmp_time = 0
-        total_pricing_time = 0
-        total_expansion_time = 0
-        total_compression_time = 0
+        # Main loop
         expansion_count = 0
         compression_count = 0
         iteration_count = 0
-        debugging_time = 0
-        # Main loop
         while(True):
             iteration_count += 1
-            debug_start = time.time()
-            self.debug_check_elem_res_nodes()
-            
+            with TimeProfiler(self.time_profile, "pgm:debug"):
+                if self.jy_options['debug'] == True:
+                    self.debug_check_elem_res_nodes()
             # Time RMP solver
-            rmp_start = time.time()
-            debug_time = rmp_start- debug_start
-            debugging_time += debug_time
-            [self.primal_sol, self.dual_exog, self.cur_lp] = self.call_PGM_RMP_solver_from_scratch()
-            rmp_time = time.time() - rmp_start
-            total_rmp_time += rmp_time
-
-            debug_start = time.time()
-            self.debug_check_elem_res_nodes()
-            debug_end = time.time()
-            debug_time = debug_end- debug_start
-            debugging_time += debug_time
+            with TimeProfiler(self.time_profile, "pgm:call_PGM_RMP_solver_from_scratch"):
+                [self.primal_sol, self.dual_exog, self.cur_lp] = self.call_PGM_RMP_solver_from_scratch()
+            
+            with TimeProfiler(self.time_profile, "pgm:debug"):
+                if self.jy_options['debug'] == True:
+                    self.debug_check_elem_res_nodes()
             # Check for compression
+            
             if self.jy_options['allow_compression'] == True:
-                if self.cur_lp < self.incumbant_lp - self.jy_options['tolerance_compress']:
-                    compression_start = time.time()
-                    self.apply_compression_operator()
-                    compression_time = time.time() - compression_start
-                    total_compression_time += compression_time
-                    compression_count += 1
-                    self.incumbant_lp = self.cur_lp
-                    continue
+                with TimeProfiler(self.time_profile, "pgm:apply_compression_operator"):
+                    if self.cur_lp < self.incumbant_lp - self.jy_options['tolerance_compress']:
+                        self.apply_compression_operator()
+                        compression_count += 1
+                        self.incumbant_lp = self.cur_lp
+                        continue
             else:
                 self.incumbant_lp = self.cur_lp
-
-            debug_start = time.time()
-            self.debug_check_elem_res_nodes()
-            debug_end = time.time()
-            debug_time = debug_start- debug_end
-            debugging_time += debug_time
+            with TimeProfiler(self.time_profile, "pgm:debug"):
+                if self.jy_options['debug'] == True:
+                    self.debug_check_elem_res_nodes()
 
             did_find_neg_red_cost = False
             tot_shortest_path_len = 0
@@ -700,35 +692,26 @@ class PGM_appraoch:
             # Time pricing problem
             
             for my_graph in self.my_PGM_graph_list:
-                pricing_start = time.time()
-                shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm(
-                    self.dual_exog, self.rez_states_minus_by_node
-                )
-                pricing_time = time.time() - pricing_start
-                total_pricing_time += pricing_time
-                tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
-                
-                my_states_in_path = []
-                for my_state_id in shortest_path:
-                    my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
-                    #print([my_state.node, my_state.state_vec.toarray()[0][0]])
-                    my_states_in_path.append(my_state)
-                
-                # Check for expansion
-                if shortest_path_length < -self.jy_options['epsilon']:
-                    expansion_start = time.time()
-                    self.apply_expansion_operator(my_states_in_path, shortest_path, shortest_path_length, ordered_path_rows, my_graph)
-                    expansion_time = time.time() - expansion_start
-                    total_expansion_time += expansion_time
-                    expansion_count += 1
-                    did_find_neg_red_cost = True
-            
-            
-            debug_start = time.time()
-            self.debug_check_elem_res_nodes()
-            debug_end = time.time()
-            debug_time = debug_start- debug_end
-            debugging_time += debug_time
+                with TimeProfiler(self.time_profile, "pgm:construct_specific_pricing_pgm"):
+                    shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm(
+                        self.dual_exog, self.rez_states_minus_by_node
+                    )
+                    tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
+                    
+                    my_states_in_path = []
+                    for my_state_id in shortest_path:
+                        my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
+                        #print([my_state.node, my_state.state_vec.toarray()[0][0]])
+                        my_states_in_path.append(my_state)
+                with TimeProfiler(self.time_profile, "pgm:apply_expansion_operator"):
+                    # Check for expansion
+                    if shortest_path_length < -self.jy_options['epsilon']:
+                        self.apply_expansion_operator(my_states_in_path, shortest_path, shortest_path_length, ordered_path_rows, my_graph)
+                        expansion_count += 1
+                        did_find_neg_red_cost = True
+            with TimeProfiler(self.time_profile, "pgm:debug"):
+                if self.jy_options['debug'] == True:
+                    self.debug_check_elem_res_nodes()
             
             print('did_find_neg_red_cost:', did_find_neg_red_cost)
             print('tot_shortest_path_len:', tot_shortest_path_len)
@@ -739,11 +722,6 @@ class PGM_appraoch:
                 break
         
         # Calculate total time and print summary
-        self.time_profile['lp_time'] = total_rmp_time
-        self.time_profile['pricing_time'] = total_pricing_time
-        self.time_profile['compressiong_time'] = total_compression_time
-        self.time_profile['expansion_time'] = total_expansion_time
-        self.time_profile['debug_time'] = debugging_time
         # print("\n=== PGM TIMING SUMMARY ===")
         # print(f"Total PGM execution time: {total_time:.4f} seconds")
         # print(f"Iterations completed: {iteration_count}")
@@ -786,7 +764,10 @@ class PGM_appraoch:
         #    self.rezStates_minus_by_node[my_graph.l_id] = defaultdict(set)
 
         # Step 4: Group states by their associated node
-        self.debug_check_elem_res_nodes()
+        with TimeProfiler(self.time_profile, "debug"):
+            if self.jy_options['debug'] == True:
+
+                self.debug_check_elem_res_nodes()
 
         for my_state in my_states_in_path:
             my_node = my_state.node  # Assuming each state object has a `node` attribute
@@ -794,11 +775,13 @@ class PGM_appraoch:
             if my_state not in self.rez_states_minus_by_node[my_graph.l_id][my_node]:
                 self.did_find_new_state=True
                 debug_on=True
-                if debug_on==True:
-                    tmp_list=[my_state]
-                    do_flag=self.is_state_set_subset(self.rez_states_minus_by_node[my_graph.l_id][my_node],tmp_list)
-                    if do_flag==True:
-                        input('error here')
+                with TimeProfiler(self.time_profile, "debug"):
+                    if debug_on==True:
+                        tmp_list=[my_state]
+                        do_flag=self.is_state_set_subset(self.rez_states_minus_by_node[my_graph.l_id][my_node],tmp_list)
+                        if do_flag==True:
+                            input('error here')
+
                 self.rez_states_minus_by_node[my_graph.l_id][my_node].add(my_state)
                 self.rez_states_minus_by_graph[my_graph.l_id].add(my_state)
                 #print('adding state ')
@@ -818,9 +801,10 @@ class PGM_appraoch:
                     self.did_find_new_action=True
                     self.rez_actions_minus.add(my_action)
         if self.did_find_new_action==False and self.did_find_new_state==False:
-
             input('error nothing added ')
-        self.debug_check_elem_res_nodes()
+        with TimeProfiler(self.time_profile, "pgm:debug"):
+            if self.jy_options['debug'] == True:
+                self.debug_check_elem_res_nodes()
 
         # Step 6: Update `res_states_minus` as the union of all `res_states_minus_by_graph`
         #self.res_states_minus_by_graph[my_graph.l_id] = set().union(*self.rezStates_minus_by_node[my_graph.l_id].values())
@@ -831,13 +815,11 @@ class PGM_appraoch:
         #    for n in self.rez_states_minus_by_node[g_id]:
         #       for s in self.rez_states_minus_by_node[g_id][n]:
         #           self.rez_states_minus_by_graph[g_id].add(s)
-        self.debug_check_elem_res_nodes()
         #print('at end of thies')
         #print('self.rezStates_minus_by_node.keys()')
         #print(self.rezStates_minus_by_node.keys())
         #print('-----')
         #input('----')
-
 
     def apply_compression_operator(self):
         """Applies the compression operator to filter active variables from the LP solution."""
@@ -854,7 +836,11 @@ class PGM_appraoch:
         for var_name in active_vars:
             if var_name[0] == "eq_act_var":  # Action variable format: ('eq_act_var', g, eq_class, action)
                 _, g, eq_class, action_id = var_name  # Extract components
-                my_action=self.action_id_2_actions[action_id]
+                try:
+                    my_action=self.action_id_2_actions[action_id]
+                except:
+                    print(active_vars)
+                    print('checkhere')
                 if type(my_action)!=Action:
                     print('type(action)')
                     print(type(my_action))
@@ -899,17 +885,20 @@ class PGM_appraoch:
                 self.rez_states_minus.add(state1)
                 self.rez_states_minus.add(state2)
         self.make_rez_states_minus_by_node
+
+
         #compute_res_states,
         #self.res_states_minus= set().union(*self.res_states_minus_by_graph.values())
 
     
 
     def make_rez_states_minus_from_by_nodes(self):
-        self.rez_states_minus=set()
-        for g_id in self.rez_states_minus_by_node:
-            for n in self.rez_states_minus_by_node[g_id]:
-                for s in self.rez_states_minus_by_node[g_id][n]:
-                    self.rez_states_minus.add(s)
+        with TimeProfiler(self.time_profile, "pgm:make_rez_states_minus_from_by_nodes"):
+            self.rez_states_minus=set()
+            for g_id in self.rez_states_minus_by_node:
+                for n in self.rez_states_minus_by_node[g_id]:
+                    for s in self.rez_states_minus_by_node[g_id][n]:
+                        self.rez_states_minus.add(s)
 
     
     def return_rez_states_minus_and_res_actions(self):
@@ -930,16 +919,21 @@ class PGM_appraoch:
 
         
                     #ids_in_state_res_minus.add(s.state_id)
-        start_time = time.time()
-        self.make_rez_states_minus_from_by_nodes()
-        self.debug_check_all_states_of_id_in_parent()
-        #self.debug_exper(self.states_used_sol,self.res_states_minus)
-        #for s in self.states_used_sol:
-        #    self.res_states_minus.add(s)
-        end_time = time.time()
-        #print(f'return state minus and action minus: {end_time-start_time}')
-        #input('print return return state minus and action minus time')
-        return self.rez_states_minus,self.rez_actions_minus
+        with TimeProfiler(self.time_profile, "pgm:return_rez_states_minus_and_res_actions"):
+
+            self.make_rez_states_minus_from_by_nodes()
+            with TimeProfiler(self.time_profile, "debug"):
+                if self.jy_options['debug'] == True:
+
+                    self.debug_check_all_states_of_id_in_parent()
+
+            #self.debug_exper(self.states_used_sol,self.res_states_minus)
+            #for s in self.states_used_sol:
+            #    self.res_states_minus.add(s)
+
+            #print(f'return state minus and action minus: {end_time-start_time}')
+            #input('print return return state minus and action minus time')
+            return self.rez_states_minus,self.rez_actions_minus
 
     def call_PGM_RMP_solver_from_scratch(self,use_ilp=False):
         """Constructs and initializes the RMP solver from scratch."""
@@ -952,303 +946,380 @@ class PGM_appraoch:
         #print('initializing graphs ')
 
         for l_id in self.index_to_graph:#.items():
-            g=self.index_to_graph[l_id]
-            my_states_g_by_node = self.rez_states_minus_by_node[l_id]
-            self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.dominated_actions,self.the_null_action,self.action_id_2_actions)
+            with TimeProfiler(self.time_profile, "pgm:rmp:__init__ call"):
+                g=self.index_to_graph[l_id]
+                my_states_g_by_node = self.rez_states_minus_by_node[l_id]
+                self.pgm_graph_2_rmp_graph[g] = RMP_graph_given_l(g, my_states_g_by_node, self.rez_actions_minus, self.dominated_actions,self.the_null_action,self.action_id_2_actions, self.jy_options)
             if len(my_states_g_by_node)>0.5:
-                self.pgm_graph_2_rmp_graph[g].initialize_system()  # Initialize RMP graph
-                self.l_id_2_active_graph[l_id]=True
+                with TimeProfiler(self.time_profile, "pgm:rmp:initialize_system"):
+                    self.pgm_graph_2_rmp_graph[g].initialize_system()  # Initialize RMP graph
+                    self.time_profile = Helper.merge_two_dict(self.time_profile,self.pgm_graph_2_rmp_graph[g].time_profile)
+                    self.l_id_2_active_graph[l_id]=True
             else:
                 self.l_id_2_active_graph[l_id]=False
         #print('initializing graphs ')
+        with TimeProfiler(self.time_profile, "pgm:construct var and cons"):
+            # Step 2: Initialize variables and constraints
+            self.all_vars = []  # List to store all variables
+            self.all_con_names = set()  # Set of all constraint names
+            self.lbCon = defaultdict(float)  # Lower bounds on constraints
+            self.ubCon = defaultdict(float)  # Upper bounds on constraints
+            # Step 3: Create exogenous constraints
+            for exog_num in range(self.prob_RHS.size):
+                exog_name = ('exog', exog_num)
+                self.all_con_names.add(exog_name)
+                self.lbCon[exog_name] = self.prob_RHS[exog_num]  # Set lower bound
+                #self.ubCon[exog_name] = np.inf  # Upper bound is infinity
 
-        # Step 2: Initialize variables and constraints
-        self.all_vars = []  # List to store all variables
-        self.all_con_names = set()  # Set of all constraint names
-        self.lbCon = defaultdict(float)  # Lower bounds on constraints
-        self.ubCon = defaultdict(float)  # Upper bounds on constraints
-
-        # Step 3: Create exogenous constraints
-        for exog_num in range(self.prob_RHS.size):
-            exog_name = ('exog', exog_num)
-            self.all_con_names.add(exog_name)
-            self.lbCon[exog_name] = self.prob_RHS[exog_num]  # Set lower bound
-            #self.ubCon[exog_name] = np.inf  # Upper bound is infinity
-
-        # Step 4: Create non-exogenous constraints
-        for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
-            if self.l_id_2_active_graph[g.l_id]==False:
-                continue
-            for my_eq in rmp_graph.equiv_class_2_s1_s2_pairs:
-                non_exog_name = ('eq_con', my_eq, g.l_id)
-                self.all_con_names.add(non_exog_name)
-
-                self.ubCon[non_exog_name] = 0
-                self.lbCon[non_exog_name] = 0
-
-        # Step 5: Create flow conservation constraints
-        for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
-            if self.l_id_2_active_graph[g.l_id]==False:
-                continue
-            for my_node in rmp_graph.resStates_minus_by_node:
-                for my_state in rmp_graph.resStates_minus_by_node[my_node]:
-                    if not my_state.is_source and not my_state.is_sink:
-                        non_exog_name = ('flow_con', my_state.state_id, g.l_id)
-                        self.all_con_names.add(non_exog_name)
-
-                        self.ubCon[non_exog_name] = 0
-                        self.lbCon[non_exog_name] = 0
-        # Step 6: Create variables and associated actions
-        for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
-            #input('1  i should make it here lots of times')
-            if self.l_id_2_active_graph[g.l_id]==False:
-                continue
-            for my_eq in rmp_graph.equiv_class_2_s1_s2_pairs:
-                #input('2 i should make it here lots of times')
-
-                for my_act in rmp_graph.equiv_class_2_actions[my_eq]:
-                    #input('3  i should make it here lots of times')
-                    my_cost = my_act.cost  # Get cost
-                    my_exog = my_act.Exog_vec  # Get exogenous vector
-                    my_contrib_dict = defaultdict()  # Dictionary for contributions
-
-                    # Use precomputed nonzero indices for efficiency
-                    for exog_num in my_act.non_zero_indices_exog:
-                        exog_name = ('exog', exog_num)
-                        my_contrib_dict[exog_name] = my_act.Exog_vec[exog_num]
-
-                    # Create constraint for the equivalence class
+            # Step 4: Create non-exogenous constraints
+            for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
+                if self.l_id_2_active_graph[g.l_id]==False:
+                    continue
+                for my_eq in rmp_graph.equiv_class_2_s1_s2_pairs:
                     non_exog_name = ('eq_con', my_eq, g.l_id)
-                    my_contrib_dict[non_exog_name] = -1
-                    
-                    # Define variable name and store it
-                    my_name = ('eq_act_var', g.l_id, my_eq, my_act.action_id)
-                    #TODO: remove my_exog here
-                    #new_var = jy_var(my_cost, my_exog, my_contrib_dict, my_name)
-                    new_var = jy_var(my_cost, my_contrib_dict, my_name)
-                    self.all_vars.append(new_var)
+                    self.all_con_names.add(non_exog_name)
 
-                # Step 7: Create variables for state transitions (edges)
-                for (s1, s2) in rmp_graph.equiv_class_2_s1_s2_pairs[my_eq]:
-                    my_cost = 0
-                    my_exog = None  # No exogenous contribution for edges
-                    my_contrib_dict = defaultdict(float)
+                    self.ubCon[non_exog_name] = 0
+                    self.lbCon[non_exog_name] = 0
 
-                    non_exog_name = ('eq_con', my_eq, g.l_id)
-                    my_contrib_dict[non_exog_name] = 1
-                    
-                    # Flow conservation constraints
-                    
-                    if not s1.is_source:
-                        flow_in_name_exog_name = ('flow_con', s1.state_id, g.l_id)
-                        my_contrib_dict[flow_in_name_exog_name] = 1
+            # Step 5: Create flow conservation constraints
+            for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
+                if self.l_id_2_active_graph[g.l_id]==False:
+                    continue
+                for my_node in rmp_graph.resStates_minus_by_node:
+                    for my_state in rmp_graph.resStates_minus_by_node[my_node]:
+                        if not my_state.is_source and not my_state.is_sink:
+                            non_exog_name = ('flow_con', my_state.state_id, g.l_id)
+                            self.all_con_names.add(non_exog_name)
+
+                            self.ubCon[non_exog_name] = 0
+                            self.lbCon[non_exog_name] = 0
+            # Step 6: Create variables and associated actions
+            for g, rmp_graph in self.pgm_graph_2_rmp_graph.items():
+                #input('1  i should make it here lots of times')
+                if self.l_id_2_active_graph[g.l_id]==False:
+                    continue
+                for my_eq in rmp_graph.equiv_class_2_s1_s2_pairs:
+                    #input('2 i should make it here lots of times')
+
+                    for my_act in rmp_graph.equiv_class_2_actions[my_eq]:
+                        #input('3  i should make it here lots of times')
+                        my_cost = my_act.cost  # Get cost
+                        my_exog = my_act.Exog_vec  # Get exogenous vector
+                        my_contrib_dict = defaultdict()  # Dictionary for contributions
+
+                        # Use precomputed nonzero indices for efficiency
+                        for exog_num in my_act.non_zero_indices_exog:
+                            exog_name = ('exog', exog_num)
+                            my_contrib_dict[exog_name] = my_act.Exog_vec[exog_num]
+
+                        # Create constraint for the equivalence class
+                        non_exog_name = ('eq_con', my_eq, g.l_id)
+                        my_contrib_dict[non_exog_name] = -1
                         
-                    if not s2.is_sink:
-                        flow_out_name_exog_name = ('flow_con', s2.state_id, g.l_id)
-                        my_contrib_dict[flow_out_name_exog_name] = -1
-                        
+                        # Define variable name and store it
+                        my_name = ('eq_act_var', g.l_id, my_eq, my_act.action_id)
+                        #TODO: remove my_exog here
+                        #new_var = jy_var(my_cost, my_exog, my_contrib_dict, my_name)
+                        new_var = jy_var(my_cost, my_contrib_dict, my_name)
+                        self.all_vars.append(new_var)
 
-                    # Define variable name and store it
-                    my_name = ('edge', g.l_id, s1.state_id, s2.state_id)
-                    if g.l_id>0.5 and s1.node>0 and s2.node>0 :
-                        if s2.state_vec.toarray()[0][0]==s1.state_vec.toarray()[0][0]:
-                            print('making edge')
-                            print('s1.node,s2.node')
-                            print([s1.node,s2.node])
-                            print('s1.state_vec.toarray()')
-                            print(s1.state_vec.toarray())
-                            print('s2.state_vec.toarray()')
-                            print(s2.state_vec.toarray())
-                            input('yo error here')
-                    #TODO: remove my_exog here
-                    new_var = jy_var(my_cost, my_contrib_dict, my_name)
-                    if s1.state_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
-                        print('s1.state_id')
-                        print(s1.state_id)
-                        print('s1.l_id')
-                        print(s1.l_id)
-                        print('s1.node')
-                        print(s1.node)
-                        print('self.pgm_graph_2_rmp_graph[g].l_id')
-                        print(self.pgm_graph_2_rmp_graph[g].l_id)
-                        input('errror here1 ')
-                    if s2.state_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
-                        print('s2.state_id')
-                        print(s2.state_id)
-                        print('s2.node')
-                        print(s2.node)
-                        print('s2.l_id')
-                        print(s2.l_id)
-                        print('self.pgm_graph_2_rmp_graph[g].l_id')
-                        print(self.pgm_graph_2_rmp_graph[g].l_id)
-                        input('errror here2 ')
-                    self.all_vars.append(new_var)
-                    #print('new_var')
-                    #print(new_var)
-                    #input('----')
+                    # Step 7: Create variables for state transitions (edges)
+                    for (s1, s2) in rmp_graph.equiv_class_2_s1_s2_pairs[my_eq]:
+                        my_cost = 0
+                        my_exog = None  # No exogenous contribution for edges
+                        my_contrib_dict = defaultdict(float)
+
+                        non_exog_name = ('eq_con', my_eq, g.l_id)
+                        my_contrib_dict[non_exog_name] = 1
+                        
+                        # Flow conservation constraints
+                        
+                        if not s1.is_source:
+                            flow_in_name_exog_name = ('flow_con', s1.state_id, g.l_id)
+                            my_contrib_dict[flow_in_name_exog_name] = 1
+                            
+                        if not s2.is_sink:
+                            flow_out_name_exog_name = ('flow_con', s2.state_id, g.l_id)
+                            my_contrib_dict[flow_out_name_exog_name] = -1
+                            
+
+                        # Define variable name and store it
+                        my_name = ('edge', g.l_id, s1.state_id, s2.state_id)
+                        # if g.l_id>0.5 and s1.node>0 and s2.node>0 :
+                        #     if s2.state_vec.toarray()[0][0]==s1.state_vec.toarray()[0][0]:
+                        #         print('making edge')
+                        #         print('s1.node,s2.node')
+                        #         print([s1.node,s2.node])
+                        #         print('s1.state_vec.toarray()')
+                        #         print(s1.state_vec.toarray())
+                        #         print('s2.state_vec.toarray()')
+                        #         print(s2.state_vec.toarray())
+                        #         input('yo error here')
+                        #TODO: remove my_exog here
+                        new_var = jy_var(my_cost, my_contrib_dict, my_name)
+                        # if s1.state_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
+                        #     print('s1.state_id')
+                        #     print(s1.state_id)
+                        #     print('s1.l_id')
+                        #     print(s1.l_id)
+                        #     print('s1.node')
+                        #     print(s1.node)
+                        #     print('self.pgm_graph_2_rmp_graph[g].l_id')
+                        #     print(self.pgm_graph_2_rmp_graph[g].l_id)
+                        #     input('errror here1 ')
+                        # if s2.state_id not in self.pgm_graph_2_rmp_graph[g].state_id_to_state:
+                        #     print('s2.state_id')
+                        #     print(s2.state_id)
+                        #     print('s2.node')
+                        #     print(s2.node)
+                        #     print('s2.l_id')
+                        #     print(s2.l_id)
+                        #     print('self.pgm_graph_2_rmp_graph[g].l_id')
+                        #     print(self.pgm_graph_2_rmp_graph[g].l_id)
+                        #     input('errror here2 ')
+                        self.all_vars.append(new_var)
+                        #print('new_var')
+                        #print(new_var)
+                        #input('----')
         
         dual_exog=[]
         if use_ilp==False:
-            primal_solution, dual_solution, optimal_value = self.solve_with_pulp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
-            dual_exog=np.zeros(self.prob_RHS.size)
-            for exog_num in range(self.prob_RHS.size):
-                exog_name = ('exog', exog_num)
-                exog_name_aug="LowerBound_"+str(exog_name)
-                dual_exog[exog_num]=dual_solution[exog_name_aug]
-        else:
-            primal_solution, optimal_value = self.solve_with_pulp_ilp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
+            with TimeProfiler(self.time_profile, "pgm:solve_with_pulp_lp"):
+                primal_solution, dual_solution, optimal_value = self.solve_with_pulp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
+                dual_exog=np.zeros(self.prob_RHS.size)
 
-        self.debug_check_primal_solution_match(primal_solution)
-        self.debug_check_primal_exog_feas(primal_solution)
-        self.decode_sol_2_paths(primal_solution)
-        self.verify_routes_solution_feasibility(optimal_value,use_ilp,self.complete_routes)
+                for exog_num in range(self.prob_RHS.size):
+                    exog_name = ('exog', exog_num)
+                    exog_name_aug="LowerBound_"+str(exog_name)
+                    dual_exog[exog_num]=dual_solution[exog_name_aug]
+        else:
+            with TimeProfiler(self.time_profile, "pgm:solve_with_pulp_ilp"):
+                primal_solution, optimal_value = self.solve_with_pulp_ilp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
+        with TimeProfiler(self.time_profile, "debug"):
+            if self.jy_options['debug'] == True:
+
+                self.debug_check_primal_solution_match(primal_solution)
+                self.debug_check_primal_exog_feas(primal_solution)
+
+        with TimeProfiler(self.time_profile, "pgm:decode_sol_2_path"):
+            self.decode_sol_2_paths(primal_solution)
+
+        with TimeProfiler(self.time_profile, "pgm:verify_routes_solution_feasibility"):
+            self.verify_routes_solution_feasibility(optimal_value,use_ilp,self.complete_routes)
 
 
         return primal_solution, dual_exog, optimal_value
 
-    
+    # def solve_with_pulp_ilp(self, jy_vars, all_con_names, lbCon, ubCon):
+    #     """Solves the problem as an Integer Linear Program (ILP) with binary decision variables."""
+        
+    #     # Step 1: Create a PuLP minimization problem
+    #     with TimeProfiler(self.time_profile, "pgm:construct ilp pulp problem"):
+    #         prob = pl.LpProblem(name="OptimizationProblem_ILP", sense=pl.LpMinimize)
+
+    #         # Step 2: Create PuLP variables (BINARY)
+    #         pulp_vars = {var.my_name: pl.LpVariable(name=str(var.my_name), cat='Binary') for var in jy_vars}
+
+    #         # Step 3: Define the Objective Function (Minimize Cost)
+    #         objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
+    #         prob += objective
+
+    #         # Step 4: Add Constraints
+    #         for con_name in all_con_names:
+    #             constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
+                
+    #             if con_name in lbCon:
+    #                 prob += (constraint_expr >= lbCon[con_name], f"LB_{con_name}")
+                    
+    #             if con_name in ubCon:
+    #                 prob += (constraint_expr <= ubCon[con_name], f"UB_{con_name}")
+
+    #     # Step 5: Solve the ILP
+    #     #print('Starting ILP call')
+    #     with TimeProfiler(self.time_profile, "pgm:ilp_solve"):
+    #         prob.solve(pl.PULP_CBC_CMD(msg=False))  # Using CBC solver for ILPs
+    #     #print('Done ILP call')
+    #     # Step 6: Extract primal solution (decision variables)
+    #     with TimeProfiler(self.time_profile, "pgm:extract pulp ilp solution"):
+    #         primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
+
+    #         # Get optimal objective value
+    #         optimal_value = pl.value(prob.objective)
+
+    #         # Validate that objective did not increase unexpectedly
+    #         #if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
+    #         #    input('Error: Objective function increased unexpectedly.')
+    #         #else:
+    #         #    self.lp_before_operations = optimal_value
+
+    #     return primal_solution,optimal_value
 
     def solve_with_pulp_ilp(self, jy_vars, all_con_names, lbCon, ubCon):
-        """Solves the problem as an Integer Linear Program (ILP) with binary decision variables."""
+        """Solves the problem as an Integer Linear Program (ILP) with binary decision variables.
+        Optimized for faster constraint construction while maintaining the original structure."""
         
         # Step 1: Create a PuLP minimization problem
-        prob = pl.LpProblem(name="OptimizationProblem_ILP", sense=pl.LpMinimize)
+        with TimeProfiler(self.time_profile, "pgm:construct ilp pulp problem"):
+            prob = pl.LpProblem(name="OptimizationProblem_ILP", sense=pl.LpMinimize)
 
-        # Step 2: Create PuLP variables (BINARY)
-        pulp_vars = {var.my_name: pl.LpVariable(name=str(var.my_name), cat='Binary') for var in jy_vars}
+            # Step 2: Create PuLP variables (BINARY)
+            # Use the original naming approach since it's working well
+            pulp_vars = {var.my_name: pl.LpVariable(name=str(var.my_name), cat='Binary') for var in jy_vars}
 
-        # Step 3: Define the Objective Function (Minimize Cost)
-        objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
-        prob += objective
+            # Step 3: Define the Objective Function (Minimize Cost)
+            # Optimization: Filter out zero-cost variables
+            non_zero_cost_vars = [(var.my_cost, var.my_name) for var in jy_vars if var.my_cost != 0]
+            objective = pl.lpSum(cost * pulp_vars[name] for cost, name in non_zero_cost_vars)
+            prob += objective
 
-        # Step 4: Add Constraints
-        for con_name in all_con_names:
-            constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
+            # Step 4: Add Constraints - Optimize constraint building
+            # Pre-calculate which variables participate in each constraint
+            constraint_vars = {con_name: [] for con_name in all_con_names}
+            for var in jy_vars:
+                for con_name in all_con_names:
+                    coeff = var.my_contrib_dict.get(con_name, 0)
+                    if coeff != 0:  # Only store non-zero coefficients
+                        constraint_vars[con_name].append((coeff, var.my_name))
             
-            if con_name in lbCon:
-                prob += (constraint_expr >= lbCon[con_name], f"LB_{con_name}")
+            # Build constraints more efficiently
+            for con_name in all_con_names:
+                # Skip constraints with no variables
+                if not constraint_vars[con_name]:
+                    continue
+                    
+                # Build constraint expression only with non-zero coefficients
+                constraint_expr = pl.lpSum(coeff * pulp_vars[name] for coeff, name in constraint_vars[con_name])
                 
-            if con_name in ubCon:
-                prob += (constraint_expr <= ubCon[con_name], f"UB_{con_name}")
+                # Add constraints with the original naming approach
+                if con_name in lbCon:
+                    prob += (constraint_expr >= lbCon[con_name], f"LB_{con_name}")
+                    
+                if con_name in ubCon:
+                    prob += (constraint_expr <= ubCon[con_name], f"UB_{con_name}")
 
         # Step 5: Solve the ILP
-        #print('Starting ILP call')
-        prob.solve(pl.PULP_CBC_CMD(msg=False))  # Using CBC solver for ILPs
-        #print('Done ILP call')
-
+        with TimeProfiler(self.time_profile, "pgm:ilp_solve"):
+            # Use the same solving approach that's working
+            prob.solve(pl.PULP_CBC_CMD(msg=False))
+        
         # Step 6: Extract primal solution (decision variables)
-        primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
+        with TimeProfiler(self.time_profile, "pgm:extract pulp ilp solution"):
+            primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
 
-        # Get optimal objective value
-        optimal_value = pl.value(prob.objective)
+            # Get optimal objective value
+            optimal_value = pl.value(prob.objective)
 
-        # Validate that objective did not increase unexpectedly
-        #if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
-        #    input('Error: Objective function increased unexpectedly.')
-        #else:
-        #    self.lp_before_operations = optimal_value
+            # Validate that objective did not increase unexpectedly
+            if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
+                print("Warning: Objective function increased unexpectedly.")
+            else:
+                self.lp_before_operations = optimal_value
 
-        return primal_solution,optimal_value
+        return primal_solution, optimal_value
 
 
     def solve_with_pulp(self, jy_vars, all_con_names, lbCon, ubCon):
-        # Step 1: Create a PuLP minimization problem
-        prob = pl.LpProblem(name="OptimizationProblem", sense=pl.LpMinimize)
-        
-        # Step 2: Create PuLP variables
-        pulp_vars = {}
-        for var in jy_vars:
-            var_name = var.my_name
-            pulp_vars[var_name] = pl.LpVariable(name=str(var_name), lowBound=0, cat='Continuous')
-        
-        # Step 3: Define the Objective Function (Minimize Cost)
-        objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
-        prob += objective
-        
-        # Step 4: Add Constraints
-        constraint_dict = {}  # Store constraint objects for dual values
-        constraint_mapping = {}  # Map from original constraint name to the actual PuLP constraint name
-        
-        for con_name in all_con_names:
-            # Compute constraint sum from contributions
-            constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
+        """Efficiently solves the LP problem using PuLP with optimized constraint construction."""
+        with TimeProfiler(self.time_profile, "pgm:construct lp pulp problem"):
+            # Create a PuLP minimization problem
+            prob = pl.LpProblem(name="OptimizationProblem", sense=pl.LpMinimize)
             
-            # Apply lower and upper bounds if they exist
-            if con_name in lbCon:
-                constraint = constraint_expr >= lbCon[con_name]
-                # Create a much simpler constraint name using a counter
-                constraint_name = f"LB_{len(constraint_dict)}"
-                prob += (constraint, constraint_name)
-                constraint_dict[constraint_name] = constraint
-                constraint_mapping[f"LowerBound_{con_name}"] = constraint_name
+            # Pre-create all PuLP variables at once
+            pulp_vars = {var.my_name: pl.LpVariable(name=f"var_{hash(str(var.my_name))}", 
+                                                lowBound=0, cat='Continuous') 
+                        for var in jy_vars}
+            
+            # Build objective function - group by cost coefficient for efficiency
+            obj_coeffs = {}
+            for var in jy_vars:
+                if var.my_cost != 0:  # Skip zero-cost variables in objective
+                    obj_coeffs[var.my_name] = var.my_cost
+            
+            objective = pl.lpSum(obj_coeffs[name] * pulp_vars[name] for name in obj_coeffs)
+            prob += objective
+            
+            # Pre-process constraint contributions for more efficient access
+            # Structure: {constraint_name: {var_name: coefficient}}
+            constraint_contribs = {con_name: {} for con_name in all_con_names}
+            
+            # First pass: collect all coefficients for each constraint
+            for var in jy_vars:
+                var_name = var.my_name
+                for con_name, coeff in var.my_contrib_dict.items():
+                    if coeff != 0 and con_name in constraint_contribs:  # Skip zero coefficients
+                        constraint_contribs[con_name][var_name] = coeff
+            
+            # Second pass: efficiently build and add constraints
+            constraint_dict = {}  # For dual values
+            constraint_mapping = {}
+            
+            # Process constraints in batches to amortize overhead
+            for i, con_name in enumerate(all_con_names):
+                # Only include variables with non-zero coefficients
+                vars_in_constraint = constraint_contribs[con_name]
+                if not vars_in_constraint:
+                    continue  # Skip constraints with no variables
+                    
+                # Build constraint expression more efficiently
+                constraint_expr = pl.lpSum(vars_in_constraint[var_name] * pulp_vars[var_name] 
+                                        for var_name in vars_in_constraint)
                 
-            if con_name in ubCon:
-                constraint = constraint_expr <= ubCon[con_name]
-                # Create a much simpler constraint name using a counter
-                constraint_name = f"UB_{len(constraint_dict)}"
-                prob += (constraint, constraint_name)
-                constraint_dict[constraint_name] = constraint
-                constraint_mapping[f"UpperBound_{con_name}"] = constraint_name
+                # Add lower bound constraint if needed
+                if con_name in lbCon:
+                    constraint_name = f"LB_{i}"
+                    constraint = constraint_expr >= lbCon[con_name]
+                    prob += (constraint, constraint_name)
+                    constraint_dict[constraint_name] = constraint
+                    constraint_mapping[f"LowerBound_{con_name}"] = constraint_name
+                
+                # Add upper bound constraint if needed
+                if con_name in ubCon:
+                    constraint_name = f"UB_{i}"
+                    constraint = constraint_expr <= ubCon[con_name]
+                    prob += (constraint, constraint_name)
+                    constraint_dict[constraint_name] = constraint
+                    constraint_mapping[f"UpperBound_{con_name}"] = constraint_name
         
-        # Step 4.5: Print the model formulation
-        #self.print_pulp_formulation(prob)
+        # Solve the LP problem
+        with TimeProfiler(self.time_profile, "pgm:lp_solve"):
+            prob.solve(pl.PULP_CBC_CMD(msg=False))
         
-        # Step 5: Solve the problem
-        prob.solve(pl.PULP_CBC_CMD(msg=False))
-
-        # Step 6: Extract solutions
-        primal_solution = {}
-        for var_name, pulp_var in pulp_vars.items():
-            primal_solution[var_name] = pulp_var.value()
-        
-        # Extract dual values
-        dual_solution = {}
-        
-        if prob.status == 1:  # If the problem was solved optimally
-            # Print all constraint names that PuLP knows about
-            #print("Available constraints in PuLP:", list(prob.constraints.keys()))
+        # Extract primal solution values in a single pass
+        with TimeProfiler(self.time_profile, "pgm:extract pulp lp solution"):
+            primal_solution = {var_name: pulp_vars[var_name].value() for var_name in pulp_vars}
             
-            # First, get all the duals using the simplified names we created
-            temp_duals = {}
-            for simplified_name in constraint_dict.keys():
-                try:
+            # Extract dual values
+            dual_solution = {}
+            
+            if prob.status == 1:  # If solved optimally
+                temp_duals = {}
+                # Get duals using the simplified constraint names
+                for simplified_name in constraint_dict:
                     if simplified_name in prob.constraints:
                         temp_duals[simplified_name] = prob.constraints[simplified_name].pi
                     else:
-                        # Try a direct lookup in constraints dictionary
-                        found = False
-                        for name in prob.constraints:
-                            if simplified_name in name:  # Check if our simplified name is part of the actual name
-                                temp_duals[simplified_name] = prob.constraints[name].pi
-                                found = True
-                                print(f"Found constraint {simplified_name} as {name}")
-                                break
-                        
-                        if not found:
-                            print(f"Warning: Could not find constraint: {simplified_name}")
-                            temp_duals[simplified_name] = 0
-                except Exception as e:
-                    print(f"Error getting dual for {simplified_name}: {e}")
-                    temp_duals[simplified_name] = 0
+                        temp_duals[simplified_name] = 0
+                
+                # Map back to original constraint names
+                for original_name, simplified_name in constraint_mapping.items():
+                    dual_solution[original_name] = temp_duals.get(simplified_name, 0)
+            else:
+                # Set all duals to 0 if not solved optimally
+                for original_name in constraint_mapping:
+                    dual_solution[original_name] = 0
             
-            # Now map back to the original constraint names format
-            for original_name, simplified_name in constraint_mapping.items():
-                dual_solution[original_name] = temp_duals.get(simplified_name, 0)
-        else:
-            # If the problem wasn't solved optimally, set all duals to 0
-            for original_name in constraint_mapping.keys():
-                dual_solution[original_name] = 0
+            dual_sol = np.array(list(dual_solution.values()))
+            
+            # Get optimal objective value
+            optimal_value = pl.value(prob.objective)
+            
+            # Validate objective value
+            if optimal_value > self.lp_before_operations + 0.0001:
+                print("Warning: Objective function value increased unexpectedly.")
+            else:
+                self.lp_before_operations = optimal_value
         
-        dual_sol = np.array(list(dual_solution.values()))
-        
-        # Get optimal objective value
-        optimal_value = pl.value(prob.objective)
-
-        if optimal_value>self.lp_before_operations+.0001 :
-            input('error here objective went up')
-        else:
-            self.lp_before_operations=optimal_value
-
         return primal_solution, dual_solution, optimal_value
 
     def construct_and_solve_lp(self, jy_vars, all_con_names, lbCon, ubCon):

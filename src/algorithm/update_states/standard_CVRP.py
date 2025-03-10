@@ -8,7 +8,6 @@ from src.common.helper import Helper
 from scipy.sparse import csr_matrix
 from collections import defaultdict
 import numpy as np
-import random
 
 class CVRP_state_update_function(StateUpdateFunction):
     """This module is very important!!! It tells us how we will update `res_states` after pricing!!!
@@ -24,7 +23,7 @@ class CVRP_state_update_function(StateUpdateFunction):
         self.initial_resource_vector = initial_resource_vector
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
-        random.seed(1115)
+        random.seed(1000)
 
     def get_states_from_random_beta(self, customer_list,l_id):
         this_beta = customer_list[1:-1]
@@ -444,7 +443,10 @@ class CVRP_state_update_function(StateUpdateFunction):
         for action in action_list:
             
             new_state = action.get_head_state(pred_state,l_id)
-            
+            if new_state == None:
+                
+                input('check here, none state generated from path')
+                continue
             # if new_resource_vector is None:
             #     print(f"Invalid resource transition from {action.node_head} to {action.node_tail}")
             #     break

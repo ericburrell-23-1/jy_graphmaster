@@ -1,8 +1,6 @@
 from random import randint
 import hashlib
 import numpy as np
-import uuid
-from uuid import UUID
 from collections import ChainMap
 from src.common.helper import Helper
 from scipy.sparse import csr_matrix

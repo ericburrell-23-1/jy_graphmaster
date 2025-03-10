@@ -8,11 +8,14 @@ from src.common.action import Action
 from src.common.state import State
 from src.common.helper import Helper
 from scipy import sparse
+import scipy.sparse as sp
 import time
+from scipy.sparse import vstack
+from src.common.time_profile import TimeProfiler
 class Full_Multi_Graph_Object_given_l:
  
     #Computed once multi-graph which is generated once
-    def __init__(self, l_id, res_states:set[State], all_actions: set[Action],action_dict, dom_actions_pairs,the_null_action):
+    def __init__(self, l_id, res_states:set[State], all_actions: set[Action],action_dict, dom_actions_pairs,the_null_action,jy_option):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.rez_states = res_states  # set of all states
@@ -23,39 +26,42 @@ class Full_Multi_Graph_Object_given_l:
        # self.null_action_info = null_action_info
         self.null_action = the_null_action
         self.action_dict = action_dict
+        self.jy_option = jy_option
         #self.resource_name_to_index = resource_name_to_index
         #self.number_of_resources = number_of_resources
         #self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
- 
+        self.time_profile = defaultdict(float)
         # Initialize dictionary grouping states by node
-        self.resStates_by_node:DefaultDict[int,Set[State]] = defaultdict(set)
-        for s in res_states:
-            self.resStates_by_node[s.node].add(s)  # Append the actual state object
- 
-        # Optimized check for source and sink nodes
-        node_states = self.resStates_by_node  # Store dictionary lookup once
-        source_count = len(node_states.get(-1, []))
-        sink_count = len(node_states.get(-2, []))
- 
-        if source_count != 1 or sink_count != 1:
-            raise ValueError(
-                f"Graph {l_id} must have exactly one source and one sink, "
-                f"but found {source_count} source(s) and {sink_count} sink(s)."
-            )
-        self.source_state=list(self.resStates_by_node[-1])[0]
-        self.sink_state=list(self.resStates_by_node[-2])[0]
-        self.time_profile = defaultdict()
+        with TimeProfiler(self.time_profile, "multi_graph:init_states_by_node"):
+            self.resStates_by_node:DefaultDict[int,Set[State]] = defaultdict(set)
+            for s in res_states:
+                self.resStates_by_node[s.node].add(s)  # Append the actual state object
+    
+            # Optimized check for source and sink nodes
+            node_states = self.resStates_by_node  # Store dictionary lookup once
+            source_count = len(node_states.get(-1, []))
+            sink_count = len(node_states.get(-2, []))
+    
+            if source_count != 1 or sink_count != 1:
+                raise ValueError(
+                    f"Graph {l_id} must have exactly one source and one sink, "
+                    f"but found {source_count} source(s) and {sink_count} sink(s)."
+                )
+            self.source_state=list(self.resStates_by_node[-1])[0]
+            self.sink_state=list(self.resStates_by_node[-2])[0]
+            self.time_profile = defaultdict(int)
 
     def make_state_id_to_state(self):
         """Creates a mapping from state ID to state object."""
-        
-        self.state_id_to_state = {
-            my_state.state_id: my_state
-            for node in self.resStates_by_node
-            for my_state in self.resStates_by_node[node]
-        }
+        with TimeProfiler(self.time_profile, "multi_graph:make_state_id_to_state"):
+            self.state_id_to_state = {
+                my_state.state_id: my_state
+                for node in self.resStates_by_node
+                for my_state in self.resStates_by_node[node]
+            }
     def debug_action_ub_check(self):
         # remove dominated action for state pair
+        
         this_action_dict = defaultdict(list)
         for key,action_list in self.action_dict.items():
             this_action_dict[key]= action_list
@@ -234,54 +240,55 @@ class Full_Multi_Graph_Object_given_l:
         
         return True
     def initialize_system(self):
-        start_time = time.time()
     
         
         
         # Step 1
-        step_start = time.time()
+        
         self.make_state_id_to_state()
-        self.time_profile['make_state_id_to_state'] = time.time() - step_start
+
         
         # Step 2
-        step_start = time.time()
-        self.compute_actions_ub()
-        self.time_profile['compute_actions_ub'] = time.time() - step_start
-        
+        with TimeProfiler(self.time_profile, "multi_graph:compute_actions_ub"):
+            self.compute_actions_ub()
+
         # Step 3
-        step_start = time.time()
-        self.compute_dom_states_by_node()
-        self.time_profile['compute_dom_states_by_node'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:compute_dom_states_by_node"):
+            self.compute_dom_states_by_node()
+
         
         # Step 4
-        step_start = time.time()
-        self.PGM_sub_compute_min_dominating_states_by_node()
-        self.time_profile['PGM_sub_compute_min_dominating_states_by_node'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:PGM_sub_compute_min_dominating_states_by_node"):
+            self.PGM_sub_compute_min_dominating_states_by_node()
+
         
         # Step 5
-        step_start = time.time()
-        self.PGM_sub_compute_maximum_dominated_states_by_node()
-        self.time_profile['PGM_sub_compute_maximum_dominated_states_by_node'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:PGM_sub_compute_maximum_dominated_states_by_node"):
+            self.PGM_sub_compute_maximum_dominated_states_by_node()
+
         
         # Step 6
-        step_start = time.time()
-        self.PGM_clean_states_EZ()
-        self.time_profile['PGM_clean_states_EZ'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:PGM_clean_states_EZ"):
+            self.PGM_clean_states_EZ()
+
         
         # Step 7
-        step_start = time.time()
-        self.PGM_compute_remove_redundant_actions()
-        self.time_profile['PGM_compute_remove_redundant_actions'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:PGM_compute_remove_redundant_actions"):
+            self.PGM_compute_remove_redundant_actions()
+
         
         # Step 8
-        step_start = time.time()
-        self.PGM_make_equiv_classes()
-        self.time_profile['PGM_make_equiv_classes'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:PGM_make_equiv_classes"):
+            self.PGM_make_equiv_classes()
+
         
         # Step 9
-        step_start = time.time()
-        self.construct_pricing_pgm_graph()
-        self.time_profile['construct_pricing_pgm_graph'] = time.time() - step_start
+        with TimeProfiler(self.time_profile, "multi_graph:construct_pricing_pgm_graph"):
+            self.construct_pricing_pgm_graph()
+
+        # if self.jy_option['debug'] == True:
+        #     with TimeProfiler(self.time_profile, "debug"):
+        #         self.debug_action_ub_check()
         
         #self.time_profile['multi_graph_initialization'] = time.time() - start_time
         # print("Initialization completed in {:.4f} seconds".format(time.time() - start_time))
@@ -290,59 +297,103 @@ class Full_Multi_Graph_Object_given_l:
         # for step, duration in sorted(self.step_times.items(), key=lambda x: x[1], reverse=True):
         #     print(f"{step}: {duration:.4f} seconds ({duration/sum(self.step_times.values())*100:.1f}%)")
         #input('output multi graph initialization here')
-        # Step 10
-        # step_start = time.time()
-        #self.debug_action_ub_check()
-        # action_ub_check_time = time.time() - step_start
-        # print(f"action_ub_check: {action_ub_check_time:.4f} seconds")
+        # if self.jy_option['debug'] == True:
+        #     # Step 10
+        #     step_start = time.time()
+        #     self.debug_action_ub_check()
+        #     action_ub_check_time = time.time() - step_start
+        #     print(f"action_ub_check: {action_ub_check_time:.4f} seconds")
     
     
+
+
     def compute_actions_ub(self):
         """Computes upper bound actions for each (s1, s2) pair."""
         
+        # Precompute dense representations for all states in self.resStates_by_node.
+        
+        precomputed_dense = {}
+        for node, states in self.resStates_by_node.items():
+            # Convert to list for consistent indexing
+            states_list = list(states)
+            if not states_list:
+                continue
+                
+            # Precompute the dense matrix for all states in this bucket.
+            candidate_dense = vstack([s.state_vec for s in states_list]).toarray()
+            precomputed_dense[node] = (states_list, candidate_dense)
+    
         # Initialize defaultdicts properly
         self.actions_ub_given_s1s2_2 = defaultdict(set)
         self.action_tail_head = defaultdict(set)
         self.actions_head_tail = defaultdict(set)
         self.action_ub_tail_head = defaultdict(lambda: defaultdict(set))
         self.action_ub_head_tail = defaultdict(lambda: defaultdict(set))
- 
+    
         # Iterate over all actions
         for a1 in self.all_actions:
             node_tail, node_head = a1.node_tail, a1.node_head
             
+            # Skip if either node doesn't exist in our precomputed data
+            if node_head not in precomputed_dense or node_tail not in self.resStates_by_node:
+                continue
+    
+            # Retrieve precomputed candidate data for node_head.
+            cand_states_list, cand_dense_all = precomputed_dense[node_head]
+            
+            # Get all states with matching node values
             for state_tail in self.resStates_by_node[node_tail]:
-                head_ideal = a1.get_head_state(state_tail,self.l_id)
-                if head_ideal== None:
+                with TimeProfiler(self.time_profile, "multi_graph:PGM_make_equiv_classes:get_head_state"):
+                    head_ideal = a1.get_head_state(state_tail, self.l_id)
+                if head_ideal is None:
                     continue
-                for state_head in self.resStates_by_node[node_head]:
                     
-                    does_dom,does_equal=head_ideal.this_state_dominates_input_state(state_head)
+                # Filter candidate states to only those with the same node as head_ideal
+                head_node_candidates = []
+                head_node_dense = []
+                
+                for i, candidate in enumerate(cand_states_list):
+                    if candidate.node == head_ideal.node:
+                        head_node_candidates.append(candidate)
+                        head_node_dense.append(cand_dense_all[i])
+                
+                if not head_node_candidates:
+                    continue
                     
-                    if does_dom or does_equal: #head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
-                        key = (state_tail, state_head)
- 
-                        # Store results efficiently
-                        self.actions_ub_given_s1s2_2[key].add(a1)
-                        self.action_ub_tail_head[a1][state_tail].add(state_head)
-                        self.action_ub_head_tail[a1][state_head].add(state_tail)
-                        a1.check_valid(state_tail, state_head)
-                        #if state_tail.node>0 and state_head.node>0 and state_tail.state_vec.toarray()[0][0]==state_head.state_vec.toarray()[0][0]:
-                        #    print('issue is here too pgm clean')
-                        #    input('error here in compute ub')
-                        #if state_head.node>0 and state_tail.node>0:
-                        #    print('adding')
-                        #    print('state_head.node,state_tail.node')
-                        #    print([state_head.node,state_tail.node])
-                        #    print('state_head.state_vec.toarray()')
-                        #    print(state_head.state_vec.toarray())
-                        #    print('state_tail.state_vec.toarray()')
-                        #    print(state_tail.state_vec.toarray())
-                        #    print('head_ideal.state_vec.toarray()')
-                        ##    print(head_ideal.state_vec.toarray())
-                        #    print('a1.trans_term_add[cap_remain]')
-                        ##    print(a1.trans_term_add['cap_remain'])
-                        #    input('----')
+                # Convert to numpy array for vectorized operations
+                head_node_dense = np.array(head_node_dense)
+    
+                # Convert head_ideal state vector to a dense 1D array.
+                head_dense = head_ideal.state_vec.toarray().ravel()
+    
+                # For proper domination check we need:
+                # 1. All elements in head_ideal >= candidate state (min_diff >= 0)
+                # 2. Some element in head_ideal > candidate state (sum_diff > 0) 
+                # OR states are exactly equal
+                
+                # Check if head_ideal dominates or equals each candidate
+                diff_matrix = head_dense.reshape(1, -1) - head_node_dense
+                min_diffs = np.min(diff_matrix, axis=1)
+                sum_diffs = np.sum(diff_matrix, axis=1)
+                
+                # A state dominates if all elements are >= (min_diff >= 0) and sum > 0
+                dominates_mask = (min_diffs >= 0) & (sum_diffs > 0)
+                
+                # Check for equality (all differences are exactly 0)
+                equals_mask = np.all(diff_matrix == 0, axis=1)
+                
+                # Valid candidates are either dominated by or equal to head_ideal
+                valid_mask = dominates_mask | equals_mask
+                
+                # Get the states that are valid based on the mask
+                valid_candidates = [candidate for candidate, valid in zip(head_node_candidates, valid_mask) if valid]
+    
+                # Update dictionaries for all valid candidates
+                for candidate in valid_candidates:
+                    key = (state_tail, candidate)
+                    self.actions_ub_given_s1s2_2[key].add(a1)
+                    self.action_ub_tail_head[a1][state_tail].add(candidate)
+                    self.action_ub_head_tail[a1][candidate].add(state_tail)
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
         #state_2_dom_states_dict is a dictionary that when s is put in provdies all states taht s dominates
@@ -407,7 +458,7 @@ class Full_Multi_Graph_Object_given_l:
                     if a1 in self.actions_s1_s2_non_dom[(s_tail, s_head)]:
                         input('error here already found')
                     self.actions_s1_s2_non_dom[(s_tail, s_head)].add(a1)
-                    a1.check_valid(s_tail, s_head)
+                    #a1.check_valid(s_tail, s_head)
                     #if s_tail.node>0 and s_head.node>0 and s_tail.state_vec.toarray()[0][0]==s_head.state_vec.toarray()[0][0]:
                     ##    print('issue is here too pgm clean')
                     #    input('error here')
@@ -415,14 +466,16 @@ class Full_Multi_Graph_Object_given_l:
     def PGM_compute_remove_redundant_actions(self):
         #remove any dominated actions  from each s1,s2
         #see teh rmp vesion for detailss
-        self.actions_s1_s2_clean:Dict[Tuple[State,State],Set[Action]] = defaultdict(set)
-        for [s1,s2] in self.actions_s1_s2_non_dom: #iterate over non-full s1,s2
-            my_tup=(s1,s2)
-            my_actions=self.actions_s1_s2_non_dom[my_tup] #grab the actions
-            do_remove=Helper.union_of_sets(self.dom_actions_pairs,my_actions)
-            self.actions_s1_s2_clean[my_tup]=my_actions-do_remove
+        self.actions_s1_s2_clean = defaultdict(set)
+    
+        # Correct syntax: iterate through tuples, not lists
+        for (s1, s2) in self.actions_s1_s2_non_dom: 
+            my_tup = (s1, s2)
+            my_actions = self.actions_s1_s2_non_dom[my_tup] 
+            do_remove = Helper.union_of_sets(self.dom_actions_pairs, my_actions)
+            self.actions_s1_s2_clean[my_tup] = my_actions - do_remove
 
-            if s1.node>0 and s2.node>0 and s1.state_vec.toarray()[0][0]==s2.state_vec.toarray()[0][0]:
+            if s1.node > 0 and s2.node > 0 and s1.state_vec.toarray()[0][0] == s2.state_vec.toarray()[0][0]:
                 print('issue is here too')
                 input('error here')
     #def PGM_make_null_actions(self):  
@@ -459,16 +512,16 @@ class Full_Multi_Graph_Object_given_l:
         """Computes the lowest reduced cost action per equivalence class."""
         
         # Compute reduced costs for all actions
-
-        self.action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
- 
-        # Find the action with the lowest reduced cost per equivalence class
-        self.equiv_class_2_low_red_action = {}
- 
-        for my_eq_class in self.equiv_class_2_actions:#iterate overs all equivelnce classes
-            min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: self.action_2_red_cost[a1])#copute loewst reduced cost action
-            self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, self.action_2_red_cost[min_a1])# compute the lowest reduced cost action and store the reduced cost
- 
+        with TimeProfiler(self.time_profile, "multi_graph:PGM_equiv_class_dual_2_low"):
+            self.action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
+    
+            # Find the action with the lowest reduced cost per equivalence class
+            self.equiv_class_2_low_red_action = {}
+    
+            for my_eq_class in self.equiv_class_2_actions:#iterate overs all equivelnce classes
+                min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: self.action_2_red_cost[a1])#copute loewst reduced cost action
+                self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, self.action_2_red_cost[min_a1])# compute the lowest reduced cost action and store the reduced cost
+    
     def construct_pricing_pgm_graph(self):
         """Constructs the PGM graph with (state_id_tail, state_id_head, equiv_class_id) tuples."""
     
@@ -481,45 +534,63 @@ class Full_Multi_Graph_Object_given_l:
     
     def construct_specific_pricing_pgm(self, dual_exog_vec,rezStates_minus_by_node):
         """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
+        with TimeProfiler(self.time_profile, "multi_graph:construct_specific_pricing_pgm"):
+            # Step 1: Compute reduced costs and construct the pricing graph rows
+            with TimeProfiler(self.time_profile, "multi_graph:PGM_equiv_class_dual_2_low"):
+                self.PGM_equiv_class_dual_2_low(dual_exog_vec)
+    
+                self.rows_pgm_spec_pricing = [
+                    (row[0].state_id, row[1].state_id, eq_class, action_red_cost, action)
+                    for row in self.my_rows_pgm_pricing
+                    for eq_class in [row[2]]  # Extract eq_class cleanly
+                    for action, action_red_cost in [self.equiv_class_2_low_red_action[eq_class]]  # Unpack action tuple
+                ]
+            with TimeProfiler(self.time_profile, "multi_graph:construct pricing graph"):
+                # Step 2: Create directed graph
+                self.pgm_graph = nx.DiGraph()
+                #TODO:
+                # Step 3: Add edges (tail -> head) with weights (4th index = action_red_cost)
+                #print('making graph')
+                for tail, head, _, action_red_cost, action in self.rows_pgm_spec_pricing:
+                    self.pgm_graph.add_edge(tail,head,  weight=action_red_cost, action=action)
+                #    print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
+                #    print(f'node_head:{action.node_tail},node_tail:{action.node_head},weight:{action_red_cost}')
+                #print('check here')
+                #input('----')
+                # Step 4: Compute the shortest path from source to sink
+                # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
         
-        # Step 1: Compute reduced costs and construct the pricing graph rows
-        self.PGM_equiv_class_dual_2_low(dual_exog_vec)
- 
-        self.rows_pgm_spec_pricing = [
-            (row[0].state_id, row[1].state_id, eq_class, action_red_cost, action)
-            for row in self.my_rows_pgm_pricing
-            for eq_class in [row[2]]  # Extract eq_class cleanly
-            for action, action_red_cost in [self.equiv_class_2_low_red_action[eq_class]]  # Unpack action tuple
-        ]
- 
-        # Step 2: Create directed graph
-        self.pgm_graph = nx.DiGraph()
-        #TODO:
-        # Step 3: Add edges (tail -> head) with weights (4th index = action_red_cost)
-        #print('making graph')
-        for tail, head, _, action_red_cost, action in self.rows_pgm_spec_pricing:
-            self.pgm_graph.add_edge(tail,head,  weight=action_red_cost, action=action)
-        #    print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
-        #    print(f'node_head:{action.node_tail},node_tail:{action.node_head},weight:{action_red_cost}')
-        #print('check here')
-        #input('----')
-        # Step 4: Compute the shortest path from source to sink
-        # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
- 
-        # # Compute the shortest path cost
-        shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
-        shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
-       # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
-       #                                                   source=self.source_state.state_id ,
-       #                                                     target=self.sink_state.state_id ,
-       #                                                     weight="weight"
-       #                                                 )
-        # Step 5: Extract the ordered list of states and actions along the shortest path
-        ordered_path_rows = [
-            (tail, head, self.pgm_graph[tail][head]["action"])
-            for tail, head in zip(shortest_path[:-1], shortest_path[1:])
-        ]
-        
+            # # Compute the shortest path cost
+            #TODO: call once
+            with TimeProfiler(self.time_profile, "multi_graph:looking for shortest path"):
+                predecessors, distances = nx.bellman_ford_predecessor_and_distance(
+                    self.pgm_graph, 
+                    source=self.source_state.state_id, 
+                    weight="weight"
+                )
+
+                # Get the shortest path length
+                shortest_path_length = distances[self.sink_state.state_id]
+
+                # Reconstruct the path
+                shortest_path = [self.sink_state.state_id]
+                current = self.sink_state.state_id
+                while predecessors[current]:  # While current has predecessors
+                    current = predecessors[current][0]  # Take the first predecessor
+                    shortest_path.append(current)
+                shortest_path.reverse()  # Path is built backward, so reverse it
+                # shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
+                # shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
+        # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
+        #                                                   source=self.source_state.state_id ,
+        #                                                     target=self.sink_state.state_id ,
+        #                                                     weight="weight"
+        #                                                 )
+            # Step 5: Extract the ordered list of states and actions along the shortest path
+            ordered_path_rows = [
+                (tail, head, self.pgm_graph[tail][head]["action"])
+                for tail, head in zip(shortest_path[:-1], shortest_path[1:])
+            ]
         return shortest_path, shortest_path_length, ordered_path_rows
     # def make_null_action(self, size_rhs, size_res_vec):
     #     """Creates a NullAction with zero transitions and no exogenous contribution."""

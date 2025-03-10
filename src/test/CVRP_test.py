@@ -14,7 +14,7 @@ class CVRPTest(TestCase):
 
     def test_thirty_customers(self):
         try:
-            instance = "10_customers"
+            instance = "prob_inst_33"
             #instance = "prob_inst_33"
             problem = CVRP(
                 os.path.join(os.path.dirname(__file__),
@@ -34,5 +34,4 @@ class CVRPTest(TestCase):
 
 
 if __name__ == "__main__":
-    random.seed(0)
     main()

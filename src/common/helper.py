@@ -1,6 +1,7 @@
 import operator
 import numpy as np
 from scipy.sparse import csr_matrix
+from collections import defaultdict
 class Helper:
     @staticmethod
     def subset_where_z_in_Y(z, X, Y):
@@ -64,3 +65,25 @@ class Helper:
         #my_vec = csr_matrix((data, (np.zeros(len(data), dtype=int), indices)),shape=(1,vec_sz))                
 
         return indices
+    def merge_two_dict(dict1, dict2):
+        """
+        Merges two time profile dictionaries, adding values for keys that appear in both.
+        
+        Args:
+            dict1: First dictionary
+            dict2: Second dictionary
+            
+        Returns:
+            dict: Combined dictionary with summed values for shared keys
+        """
+        merged = defaultdict(float)
+        
+        # Add all entries from the first dictionary
+        for key, value in dict1.items():
+            merged[key] += value
+        
+        # Add all entries from the second dictionary, summing values for shared keys
+        for key, value in dict2.items():
+            merged[key] += value
+        
+        return merged
