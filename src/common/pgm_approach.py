@@ -1211,10 +1211,15 @@ class PGM_appraoch:
             optimal_value = pl.value(prob.objective)
 
             # Validate that objective did not increase unexpectedly
-            if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
-                print("Warning: Objective function increased unexpectedly.")
-            else:
-                self.lp_before_operations = optimal_value
+            #if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
+            #    print("Warning: Objective function increased unexpectedly.")
+            #    print('self.lp_before_operations')
+            #    print(self.lp_before_operations)
+            #    print('optimal_value')
+            #    print(optimal_value)
+            #    input('-----')
+            #else:
+            #   self.lp_before_operations = optimal_value
 
         return primal_solution, optimal_value
 

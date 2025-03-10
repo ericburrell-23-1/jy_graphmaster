@@ -95,7 +95,7 @@ class GraphMaster:
         with TimeProfiler(all_time_profile, "all_time"):
             jy_options_user_defined=dict()
             jy_options_user_defined['epsilon']=1
-            jy_options_user_defined['tolerance_compress']=100
+            jy_options_user_defined['tolerance_compress']=.1
             jy_options_user_defined['allow_compression']=True
             jy_options_user_defined['debug'] =True
             
