@@ -16,6 +16,7 @@ import networkx as nx
 import time
 from src.common.helper import Helper
 from src.common.time_profile import TimeProfiler
+from scipy.sparse import csr_matrix
 class route:
     def __init__(self,state_action_alt_repeat,weight):
 
@@ -129,11 +130,12 @@ class PGM_appraoch:
     #This will do the enitre RMP. 
 
 
-    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,incumbant_lp,dominated_action,the_null_action,action_id_2_actions,lp_before_operations,jy_options_user_defined):
+    def __init__(self,index_to_graph:dict[Full_Multi_Graph_Object_given_l],prob_RHS,rez_states_minus: Set[State],rez_actions_minus,all_actions,incumbant_lp,dominated_action,the_null_action,action_id_2_actions,lp_before_operations,jy_options_user_defined):
         self.index_to_graph:DefaultDict[int,Full_Multi_Graph_Object_given_l] = index_to_graph
         self.my_PGM_graph_list:List[Full_Multi_Graph_Object_given_l]=list(self.index_to_graph.values()) #list of all of the PGM graphs
         self.prob_RHS:np.ndarray=prob_RHS #RHS
         self.action_id_2_actions=action_id_2_actions
+        self.all_actions = all_actions
         self.rez_states_minus:Set[State]=rez_states_minus #has all of the states in rez states minus by graph . So if I put in a grpah id then i get out the rez states minus to initialize
         self.rez_actions_minus=rez_actions_minus #get all actions that are currently under consdieration
         self.incumbant_lp=incumbant_lp# has incumbent LP objective
@@ -189,7 +191,12 @@ class PGM_appraoch:
         exog_vec=0*self.prob_RHS
         for r in my_routes:
             exog_vec=exog_vec+(r.weight*r.Exog_vec)
+        
         if np.sum(self.prob_RHS-exog_vec)>epsilon:
+            print('epsilon')
+            print(epsilon)
+            print('np.sum(self.prob_RHS-exog_vec)')
+            print(np.sum(self.prob_RHS-exog_vec))
             input('error rhs and exog dont lien up')
     def ilp_solve(self):
         with TimeProfiler(self.time_profile, "pgm:(ilp_solve)get_all_state_pairs_extra_actions"):
@@ -648,6 +655,46 @@ class PGM_appraoch:
         self.put_all_nodes_actions_in_consideration_set()
         [self.primal_sol,self.dual_exog,self.cur_lp]=self.call_PGM_RMP_solver_from_scratch()#we can do better a different time. lets not make it too hard on the first try
 
+    def compute_action_reduced_costs_csr(self, dual_vec):
+        """Computes the reduced cost of actions efficiently using optimized matrix operations."""
+    
+        action_2_red_cost = {}
+        # for a1 in self.all_actions:
+        #     if isinstance(a1.Exog_vec, csr_matrix):
+        #         # Get non-zero indices and values
+        #         _, cols = a1.Exog_vec.nonzero()
+                
+        #         # Only calculate dot product using non-zero elements
+        #         dot_product = 0.0
+        #         for col in cols:
+        #             dot_product += a1.Exog_vec[0, col] * dual_vec[col]
+                    
+        #         action_2_red_cost[a1] = a1.cost - dot_product
+        #     else:
+        #         # Fallback for non-sparse vectors
+        #         action_2_red_cost[a1] = a1.cost - np.dot(a1.Exog_vec, dual_vec)
+        # #action_2_red_cost = {a1: a1.cost - np.dot(a1.Exog_vec, dual_vec) for a1 in self.all_actions}  
+        # if not isinstance(dual_vec, csr_matrix):
+        #     dual_vec = csr_matrix(dual_vec).T  # Ensure it's a column vector
+    
+        # # Step 1: Precompute Exog_vec * dual_vec efficiently
+        # precomputed_costs = {
+        #     a1: a1.Exog_vec_csr.dot(dual_vec)[0, 0] for a1 in self.all_actions  # Optimized dot product for sparse matrix
+        # }
+    
+        # Step 2: Compute reduced cost
+        #action_2_red_cost = {a1: a1.cost - precomputed_costs[a1] for a1 in self.all_actions}
+        for a1 in self.all_actions:
+            if len(a1.non_zero_indices_exog)>0:
+                action_2_red_cost[a1] = a1.cost-np.dot(a1.Exog_vec[a1.non_zero_indices_exog], dual_vec[a1.non_zero_indices_exog])
+            else:
+                action_2_red_cost[a1] = a1.cost
+        #action_2_red_cost = {a1: a1.cost - a1.Exog_vec[a1.non_zero_indices_exog][0]*dual_vec[a1.non_zero_indices_exog][0] for a1 in self.all_actions}
+  
+        return action_2_red_cost
+    def compute_action_reduced_costs(self,dual_exog_vec):
+        action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
+        return action_2_red_cost
 
     def call_PGM(self):   
         # Start tracking total time
@@ -690,25 +737,46 @@ class PGM_appraoch:
             self.did_find_new_state = False
             
             # Time pricing problem
-            
-            for my_graph in self.my_PGM_graph_list:
-                with TimeProfiler(self.time_profile, "pgm:construct_specific_pricing_pgm"):
-                    shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm(
-                        self.dual_exog, self.rez_states_minus_by_node
-                    )
-                    tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
-                    
-                    my_states_in_path = []
-                    for my_state_id in shortest_path:
-                        my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
-                        #print([my_state.node, my_state.state_vec.toarray()[0][0]])
-                        my_states_in_path.append(my_state)
-                with TimeProfiler(self.time_profile, "pgm:apply_expansion_operator"):
-                    # Check for expansion
-                    if shortest_path_length < -self.jy_options['epsilon']:
-                        self.apply_expansion_operator(my_states_in_path, shortest_path, shortest_path_length, ordered_path_rows, my_graph)
-                        expansion_count += 1
-                        did_find_neg_red_cost = True
+            if self.jy_options['use_csr_exog'] == True:
+                with TimeProfiler(self.time_profile, "pgm:compute_action_reduced_costs"):
+                    action_2_red_cost = self.compute_action_reduced_costs_csr(self.dual_exog)
+                for my_graph in self.my_PGM_graph_list:
+                    with TimeProfiler(self.time_profile, "pgm:construct_specific_pricing_pgm"):
+                        shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm_csr(
+                            action_2_red_cost, self.rez_states_minus_by_node)
+                        tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
+                        
+                        my_states_in_path = []
+                        for my_state_id in shortest_path:
+                            my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
+                            #print([my_state.node, my_state.state_vec.toarray()[0][0]])
+                            my_states_in_path.append(my_state)
+                    with TimeProfiler(self.time_profile, "pgm:apply_expansion_operator"):
+                        # Check for expansion
+                        if shortest_path_length < -self.jy_options['epsilon']:
+                            self.apply_expansion_operator(my_states_in_path, shortest_path, shortest_path_length, ordered_path_rows, my_graph)
+                            expansion_count += 1
+                            did_find_neg_red_cost = True
+            else:
+                action_2_red_cost = self.compute_action_reduced_costs(self.dual_exog)
+                for my_graph in self.my_PGM_graph_list:
+                    with TimeProfiler(self.time_profile, "pgm:construct_specific_pricing_pgm"):
+                        shortest_path, shortest_path_length, ordered_path_rows = my_graph.construct_specific_pricing_pgm(
+                            action_2_red_cost, self.rez_states_minus_by_node
+                        )
+                        tot_shortest_path_len = tot_shortest_path_len + min([0, shortest_path_length])
+                        
+                        my_states_in_path = []
+                        for my_state_id in shortest_path:
+                            my_state = self.my_PGM_graph_list[my_graph.l_id].state_id_to_state[my_state_id]
+                            #print([my_state.node, my_state.state_vec.toarray()[0][0]])
+                            my_states_in_path.append(my_state)
+                    with TimeProfiler(self.time_profile, "pgm:apply_expansion_operator"):
+                        # Check for expansion
+                        if shortest_path_length < -self.jy_options['epsilon']:
+                            self.apply_expansion_operator(my_states_in_path, shortest_path, shortest_path_length, ordered_path_rows, my_graph)
+                            expansion_count += 1
+                            did_find_neg_red_cost = True
             with TimeProfiler(self.time_profile, "pgm:debug"):
                 if self.jy_options['debug'] == True:
                     self.debug_check_elem_res_nodes()

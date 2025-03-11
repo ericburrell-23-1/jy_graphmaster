@@ -3,9 +3,10 @@ from typing import List, Dict, Tuple, Any
 import networkx as nx
 from networkx import DiGraph
 import random
+from scipy.sparse import csr_matrix
 
 class GWOPricingSolver:
-    def __init__(self, actions,initial_resource_state,nodes, resource_name_to_index,initial_resource_vector):
+    def __init__(self, actions,initial_resource_state,nodes, resource_name_to_index,initial_resource_vector,jy_option):
         self.actions = actions
         self.initial_resource_state = initial_resource_state
         self.nodes = nodes
@@ -23,6 +24,7 @@ class GWOPricingSolver:
         self.node_actions = {}  # Maps nodes to their associated action objects
         self.pop_size: int = 10 
         self.max_iter: int = 30
+        self.jy_option = jy_option
         random.seed(1000)
     def check_path_feasibility(self, path: List[str]) -> Tuple[bool, List[str]]:
         """
@@ -312,7 +314,7 @@ class GWOPricingSolver:
                     destination_node = "Sink"
                     
                 action_node = f"action_{action.node_tail}_{action.node_head}_{action.action_id}"
-                
+
                 exog_duals = dual_vector[:len(action.Exog_vec)]
                 dual_contribution = np.dot(action.Exog_vec, exog_duals)
                 edge_weight = action.cost - dual_contribution

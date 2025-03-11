@@ -12,6 +12,7 @@ import scipy.sparse as sp
 import time
 from scipy.sparse import vstack
 from src.common.time_profile import TimeProfiler
+from scipy.sparse import csr_matrix
 class Full_Multi_Graph_Object_given_l:
  
     #Computed once multi-graph which is generated once
@@ -508,19 +509,41 @@ class Full_Multi_Graph_Object_given_l:
             self.equiv_class_2_s1_s2_pairs[my_name_id].add((s1,s2)) #add the new edge to the equivlenece clas
             if my_name_id not in self.equiv_class_2_actions:
                 self.equiv_class_2_actions[my_name_id]=self.actions_s1_s2_clean[(s1,s2)]
-    def PGM_equiv_class_dual_2_low(self, dual_exog_vec):
+    def PGM_equiv_class_dual_2_low_csr(self,action_2_red_cost):
+        """Computes the lowest reduced cost action per equivalence class."""
+        
+        # Compute reduced costs for all actions
+        # self.action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
+
+        # Find the action with the lowest reduced cost per equivalence class
+        self.equiv_class_2_low_red_action = {}
+        for my_eq_class in self.equiv_class_2_actions:#iterate overs all equivelnce classes
+            min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: action_2_red_cost[a1])#copute loewst reduced cost action
+            self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, action_2_red_cost[min_a1])# compute the lowest reduced cost action and store the reduced cost
+    def PGM_equiv_class_dual_2_low(self, action_2_red_cost):
         """Computes the lowest reduced cost action per equivalence class."""
         
         # Compute reduced costs for all actions
         with TimeProfiler(self.time_profile, "multi_graph:PGM_equiv_class_dual_2_low"):
-            self.action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
-    
+            
+            
             # Find the action with the lowest reduced cost per equivalence class
             self.equiv_class_2_low_red_action = {}
-    
-            for my_eq_class in self.equiv_class_2_actions:#iterate overs all equivelnce classes
-                min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: self.action_2_red_cost[a1])#copute loewst reduced cost action
-                self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, self.action_2_red_cost[min_a1])# compute the lowest reduced cost action and store the reduced cost
+
+            for my_eq_class, actions in self.equiv_class_2_actions.items():
+                min_a1 = None
+                min_cost = float('inf')
+                
+                for a1 in actions:
+                    cost = action_2_red_cost[a1]
+                    if cost < min_cost:
+                        min_cost = cost
+                        min_a1 = a1
+                        
+                self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, min_cost)
+            # for my_eq_class in self.equiv_class_2_actions:#iterate overs all equivelnce classes
+            #     min_a1 = min(self.equiv_class_2_actions[my_eq_class], key=lambda a1: action_2_red_cost[a1])#copute loewst reduced cost action
+            #     self.equiv_class_2_low_red_action[my_eq_class] = (min_a1, action_2_red_cost[min_a1])# compute the lowest reduced cost action and store the reduced cost
     
     def construct_pricing_pgm_graph(self):
         """Constructs the PGM graph with (state_id_tail, state_id_head, equiv_class_id) tuples."""
@@ -531,13 +554,102 @@ class Full_Multi_Graph_Object_given_l:
             for s1, s2 in pairs
         ]
  
-    
-    def construct_specific_pricing_pgm(self, dual_exog_vec,rezStates_minus_by_node):
+
+
+    def construct_specific_pricing_pgm_csr(self, action_2_red_cost,rezStates_minus_by_node):
+        """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
+        with TimeProfiler(self.time_profile, "multi_graph:construct_specific_pricing_pgm"):
+            # Step 1: Compute reduced costs and construct the pricing graph rows
+            # with TimeProfiler(self.time_profile, "multi_graph:compute_action_reduced_costs"):
+            #     self.compute_action_reduced_costs(dual_exog_vec)
+            with TimeProfiler(self.time_profile, "multi_graph:PGM_equiv_class_dual_2_low"):
+                self.PGM_equiv_class_dual_2_low_csr(action_2_red_cost)
+            with TimeProfiler(self.time_profile, "multi_graph:get_rows_pgm_spec_pricing"):
+                self.rows_pgm_spec_pricing = [
+                    (row[0].state_id, row[1].state_id, eq_class, action_red_cost, action)
+                    for row in self.my_rows_pgm_pricing
+                    for eq_class in [row[2]]  # Extract eq_class cleanly
+                    for action, action_red_cost in [self.equiv_class_2_low_red_action[eq_class]]  # Unpack action tuple
+                ]
+            with TimeProfiler(self.time_profile, "multi_graph:construct pricing graph"):
+                # Step 2: Create directed graph
+                self.pgm_graph = nx.DiGraph()
+                #TODO:
+                # Step 3: Add edges (tail -> head) with weights (4th index = action_red_cost)
+                #print('making graph')
+                self.pgm_graph.add_edges_from(
+                    (tail, head, {"weight": action_red_cost, "action": action})
+                    for tail, head, _, action_red_cost, action in self.rows_pgm_spec_pricing
+                )
+                #    print(f'node_head:{action.node_head}-{head},node_tail:{action.node_tail}-{tail},weight:{action_red_cost}')
+                #    print(f'node_head:{action.node_tail},node_tail:{action.node_head},weight:{action_red_cost}')
+                #print('check here')
+                #input('----')
+                # Step 4: Compute the shortest path from source to sink
+                # shortest_path = nx.shortest_path(self.pgm_graph, source=rezStates_minus_by_node[-1].state_id, target=rezStates_minus_by_node[-2].state_id, weight="weight", method="dijkstra")
+        
+            # # Compute the shortest path cost
+            #TODO: call once
+            with TimeProfiler(self.time_profile, "multi_graph:looking for shortest path"):
+                source, sink = self.source_state.state_id, self.sink_state.state_id
+                try:
+                    shortest_path_length, shortest_path = nx.single_source_bellman_ford(
+                        self.pgm_graph, source=source, target=sink, weight="weight"
+                    )
+                except nx.NetworkXNoPath:
+                    print("No path found from source to sink")
+                    return None, float("inf"), []
+                # predecessors, distances = nx.bellman_ford_predecessor_and_distance(
+                #     self.pgm_graph, 
+                #     source=self.source_state.state_id, 
+                #     weight="weight"
+                # )
+
+                # # Get the shortest path length
+                # shortest_path_length = distances[self.sink_state.state_id]
+
+                # # Reconstruct the path
+                # shortest_path = [self.sink_state.state_id]
+                # current = self.sink_state.state_id
+                # while predecessors[current]:  # While current has predecessors
+                #     current = predecessors[current][0]  # Take the first predecessor
+                #     shortest_path.append(current)
+                # shortest_path.reverse()  # Path is built backward, so reverse it
+                # shortest_path = nx.bellman_ford_path(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight="weight")
+                # shortest_path_length = nx.bellman_ford_path_length(self.pgm_graph, source=self.source_state.state_id, target=self.sink_state.state_id, weight='weight')
+        # shortest_path_length, shortest_path = nx.single_source_dijkstra(self.pgm_graph,
+        #                                                   source=self.source_state.state_id ,
+        #                                                     target=self.sink_state.state_id ,
+        #                                                     weight="weight"
+        #                                                 )
+            # Step 5: Extract the ordered list of states and actions along the shortest path
+            ordered_path_rows = [
+                (tail, head, self.pgm_graph[tail][head]["action"])
+                for tail, head in zip(shortest_path[:-1], shortest_path[1:])
+            ]
+        return shortest_path, shortest_path_length, ordered_path_rows
+    # def make_null_action(self, size_rhs, size_res_vec):
+    #     """Creates a NullAction with zero transitions and no exogenous contribution."""
+    #     trans_min_input = np.zeros(size_res_vec)  # Minimum input term
+    #     trans_term_add = np.zeros(size_res_vec)  # Addition term
+    #     trans_term_min = np.full(size_res_vec, np.inf)  # Minimum transition term
+    #     node_tail, node_head = None, None  # No tail or head for null action
+    #     action_id = "NullAction"  # Unique identifier for the null action
+    #     Exog_vec = np.zeros(size_rhs)  # Exogenous contribution vector
+    #     cost = 0  # Null action has no cost
+    #     non_zero_indices_exog = []  # Empty since Exog_vec is all zeros
+    #     min_resource_vec = np.zeros(size_res_vec)
+    #     resource_consumption_vec = np.zeros(size_res_vec)
+    #     indices_non_zero_max = []    
+    #     max_resource_vec = np.full(size_res_vec, np.inf)
+    #     #indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
+    #     return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )
+    def construct_specific_pricing_pgm(self, action_2_red_cost,rezStates_minus_by_node):
         """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
         with TimeProfiler(self.time_profile, "multi_graph:construct_specific_pricing_pgm"):
             # Step 1: Compute reduced costs and construct the pricing graph rows
             with TimeProfiler(self.time_profile, "multi_graph:PGM_equiv_class_dual_2_low"):
-                self.PGM_equiv_class_dual_2_low(dual_exog_vec)
+                self.PGM_equiv_class_dual_2_low(action_2_red_cost)
     
                 self.rows_pgm_spec_pricing = [
                     (row[0].state_id, row[1].state_id, eq_class, action_red_cost, action)
@@ -592,22 +704,6 @@ class Full_Multi_Graph_Object_given_l:
                 for tail, head in zip(shortest_path[:-1], shortest_path[1:])
             ]
         return shortest_path, shortest_path_length, ordered_path_rows
-    # def make_null_action(self, size_rhs, size_res_vec):
-    #     """Creates a NullAction with zero transitions and no exogenous contribution."""
-    #     trans_min_input = np.zeros(size_res_vec)  # Minimum input term
-    #     trans_term_add = np.zeros(size_res_vec)  # Addition term
-    #     trans_term_min = np.full(size_res_vec, np.inf)  # Minimum transition term
-    #     node_tail, node_head = None, None  # No tail or head for null action
-    #     action_id = "NullAction"  # Unique identifier for the null action
-    #     Exog_vec = np.zeros(size_rhs)  # Exogenous contribution vector
-    #     cost = 0  # Null action has no cost
-    #     non_zero_indices_exog = []  # Empty since Exog_vec is all zeros
-    #     min_resource_vec = np.zeros(size_res_vec)
-    #     resource_consumption_vec = np.zeros(size_res_vec)
-    #     indices_non_zero_max = []    
-    #     max_resource_vec = np.full(size_res_vec, np.inf)
-    #     #indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
-    #     return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )
     def return_time_profile(self):
         return self.time_profile
     def output_profile_time(self):

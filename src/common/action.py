@@ -36,6 +36,7 @@ class Action:
         self.node_tail = node_tail
         self.node_head = node_head
         self.Exog_vec = Exog_vec
+        self.Exog_vec_csr = csr_matrix(Exog_vec)
         self.cost = cost
         self.min_resource_vec = min_resource_vec
         self.resource_consumption_vec = resource_consumption_vec
@@ -73,7 +74,15 @@ class Action:
 
     def comp_red_cost(self, dual_vec):
         """Computes the reduced cost by multiplying the dual vector times the exogenous."""
-        return self.cost - np.sum(self.Exog_vec * dual_vec)
+        # this_red_cost = 0
+        # if len(self.non_zero_indices_exog) > 0:
+        #     this_red_cost =  self.cost - np.dot(self.Exog_vec[self.non_zero_indices_exog], 
+        #                             dual_vec[self.non_zero_indices_exog])
+        # else:
+        #     this_red_cost =  self.cost
+        this_red_cost_2 =  self.cost - np.sum(self.Exog_vec * dual_vec)
+
+        return this_red_cost_2
     
     def _get_state_cache_key(self, state_tail: State) -> int:
         """

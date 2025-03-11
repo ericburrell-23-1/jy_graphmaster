@@ -76,7 +76,14 @@ class GraphMaster:
         self.rez_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
         #self.pricing_problem = PricingProblem(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
-        self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector)
+        
+        self.jy_options_user_defined=dict()
+        self.jy_options_user_defined['epsilon']=1
+        self.jy_options_user_defined['tolerance_compress']=100
+        self.jy_options_user_defined['allow_compression']=True
+        self.jy_options_user_defined['debug'] =True
+        self.jy_options_user_defined['use_csr_exog'] =False
+        self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
         random.seed(1000)
     def debug_check_duplicates(self,res_states):
         res_states_list=list(res_states)
@@ -92,17 +99,13 @@ class GraphMaster:
     
     def solve(self):
         all_time_profile = defaultdict(float)
+        all_time_start = time.time()
         with TimeProfiler(all_time_profile, "all_time"):
-            jy_options_user_defined=dict()
-            jy_options_user_defined['epsilon']=1
-            jy_options_user_defined['tolerance_compress']=.1
-            jy_options_user_defined['allow_compression']=True
-            jy_options_user_defined['debug'] =True
             
             l_id = 0
             max_iterations = 100000
 
-            my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action,jy_options_user_defined)
+            my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined)
             self.rez_states_minus:Set[State]=self.initial_res_states
             self.res_actions=self.initial_res_actions
             #l_id = 0
@@ -132,7 +135,7 @@ class GraphMaster:
                     time_profile = defaultdict(int)
                     #parameter for PGM
 
-                    pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, jy_options_user_defined)
+                    pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,self.actions,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, self.jy_options_user_defined)
                     pgm_solver.call_PGM()
                     #this_visulizer = Visulizer(pgm_solver)
                     #this_visulizer.plot_graph()
@@ -165,7 +168,7 @@ class GraphMaster:
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
                             beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
                         #debug
-                        if jy_options_user_defined['debug'] == True:
+                        if self.jy_options_user_defined['debug'] == True:
                             with TimeProfiler(all_time_profile, "debug"):
                                 for s1 in states_used_in_this_col:
                                     if s1 not in new_states_describing_new_graph:
@@ -174,10 +177,12 @@ class GraphMaster:
                         
                         print('shortest path reduce cost')
                         print(reduced_cost)
-                    if reduced_cost >= -1e-6:
+                    if reduced_cost >= -1e-5:
                         for index, graph in self.index_to_multi_graph.items():
                             all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
                         #all_time_profile['all_time'] = iteration_end_time- current_time
+                        all_time_end = time.time()
+                        all_time_profile['all_time'] = all_time_end - all_time_start
                         self.output_all_time_profile(all_time_profile)
                         return {
                             'status': 'optimal',
@@ -185,7 +190,7 @@ class GraphMaster:
                             'iterations': iteration,
                             'graph': self.index_to_multi_graph.values()
                         }
-                    new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,jy_options_user_defined)
+                    new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined)
 
 
                     new_multi_graph.initialize_system()
@@ -195,7 +200,7 @@ class GraphMaster:
 
 
                     self.index_to_multi_graph[l_id] = new_multi_graph
-                    if jy_options_user_defined['debug']==True:
+                    if self.jy_options_user_defined['debug']==True:
                         with TimeProfiler(all_time_profile, "debug"):
                             if debug_init_all_actions==False:
                                 #self.res_actions_minus = self.res_actions_minus.union(list_of_actions_used_in_col)
@@ -267,8 +272,8 @@ class GraphMaster:
         """
         # Calculate total time
         total_time = all_time_profile.get('all_time', 0)
-        if total_time == 0:
-            total_time = sum(time for op, time in all_time_profile.items() if op != 'all_time')
+        # if total_time == 0:
+        #     total_time = sum(time for op, time in all_time_profile.items() if op != 'all_time')
         
         # Print header
         print("\n=== Complete GraphMaster Time Profile ===")

@@ -80,7 +80,7 @@ class PricingProblem:
                     destination_node = "Sink"
 
                 action_node = f"action_{action.node_tail}_{action.node_head}_{action.action_id}"
-
+ 
                 exog_duals = dual_vector[:len(action.Exog_vec)]
                 dual_contribution = np.dot(action.Exog_vec, exog_duals)
                 edge_weight = action.cost - dual_contribution

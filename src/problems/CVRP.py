@@ -175,6 +175,7 @@ class CVRP(OptimizationProblem):
                 contribution_vector = zeros(num_customers)
                 if origin_node > 0:
                     contribution_vector[self.constraint_name_to_index[str(("Cover", origin_node))]] = 1
+                
                 partial_min_resource_dict = {"cap_remain": self.demands[origin_node] + self.demands[destination_node]}
                 partial_resource_consumption_dict = {"cap_remain": -self.demands[origin_node]}
                 
@@ -242,6 +243,7 @@ class CVRP(OptimizationProblem):
             trans_min_input[res_name] = 0
             trans_term_add[res_name] = 0
             trans_term_min[res_name] = np.inf
+        #contribution_vector = np.zeros(len(self.rhs_vector))
         contribution_vector = np.zeros(len(self.rhs_vector))
         cost = 0
         min_resource_vec = np.zeros(self.number_of_resources)
