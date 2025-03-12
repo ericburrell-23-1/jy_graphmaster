@@ -904,11 +904,7 @@ class PGM_appraoch:
         for var_name in active_vars:
             if var_name[0] == "eq_act_var":  # Action variable format: ('eq_act_var', g, eq_class, action)
                 _, g, eq_class, action_id = var_name  # Extract components
-                try:
-                    my_action=self.action_id_2_actions[action_id]
-                except:
-                    print(active_vars)
-                    print('checkhere')
+                my_action=self.action_id_2_actions[action_id]
                 if type(my_action)!=Action:
                     print('type(action)')
                     print(type(my_action))

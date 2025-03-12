@@ -32,17 +32,18 @@ class CVRP_state_update_function(StateUpdateFunction):
         return [-1]+this_beta+[-2],new_states,self.states_used_in_this_col
 
     def get_new_states(self, list_of_customer, list_of_actions,l_id):
-
+        
         beta_dict, beta_list = self._generate_beta_term(list_of_customer[1:-1]) #attached customer not in path into nearest customer in path
         
         #new_states:List[State] = self._generate_state_based_on_beta_2_and_states_path(beta_list,beta_dict,l_id) # generate possible states with given beta
         states_in_path:List[State] = self.get_states_from_action_list(list_of_actions,l_id) # generate states in path
         beta_list,states_for_new_graph,states_in_path_to_return = self._generate_state_based_on_beta_2_and_ndoes_path(beta_list,beta_dict,l_id,states_in_path,list_of_actions)
+        
         for state in states_in_path_to_return:
             if state not in states_for_new_graph:
                 state.pretty_print_state()
                 input('state in path not in state in beta')
-
+        
         return beta_list, states_for_new_graph,  states_in_path_to_return
     
     def _generate_beta_term(self, list_of_customer):

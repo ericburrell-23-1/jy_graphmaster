@@ -91,7 +91,7 @@ class PricingProblem:
                 this_res_cost = np.concatenate([first_array,second_array])
                 third_array = np.array(ARBITRARY_MONOTONE_RESOURCE_CONSUMPTION).reshape(-1)
                 this_res_cost_2 = np.concatenate([third_array, np.zeros(self.number_of_resources)])
-                print(origin_node,destination_node,this_res_cost)
+                #print(origin_node,destination_node,this_res_cost)
                 graph.add_edge(
                     origin_node,
                     action_node,
@@ -112,10 +112,10 @@ class PricingProblem:
                     action=None
                 )
         max_res = [ARBITRARY_RESOURCE_MAX] + list(self.initial_resource_vector.toarray()[0])
-        print('max_res',max_res)
+        #print('max_res',max_res)
         #max_res = self.max_resource_state
         min_res = [0]+ list(self.min_resource_state)
-        print('min_res',min_res)
+        #print('min_res',min_res)
         #min_res = self.min_resource_state
 
         # Solve the RCSPP

@@ -5,6 +5,7 @@ from src.common.action import Action
 from src.common.state import State
 from src.algorithm.solver import GraphMaster
 from src.algorithm.update_states.state_update_function import StateUpdateFunction
+from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from itertools import permutations
 from collections import defaultdict
 
@@ -34,6 +35,7 @@ class OptimizationProblem(ABC):
         self._create_initial_res_states()
         self._create_initial_res_actions()
         self._generate_neighbors()
+        self._closest_k_neighbors(5)
         self._define_state_update_module()
 
     @abstractmethod
@@ -90,7 +92,9 @@ class OptimizationProblem(ABC):
     def _define_state_update_module(self):
         """Defines the `state_update_module`, which is used to update `res_states` after pricing is finished."""
         pass
-
+    @abstractmethod
+    def _closest_k_neighbors(self):
+        pass
     def _create_dom_action_object(self):
         
         dom_actions_pairs=dict()

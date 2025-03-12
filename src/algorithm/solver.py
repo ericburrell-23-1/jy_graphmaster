@@ -9,6 +9,7 @@ from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
+from src.algorithm.update_states.general_states_update import General_state_update
 from src.common.visulizer import Visulizer
 from collections import defaultdict
 from src.common.helper import Helper
@@ -65,7 +66,9 @@ class GraphMaster:
         self.initial_resource_vector = initial_resource_vector
         self.initial_res_states = initial_res_states
         self.initial_res_actions = initial_res_actions
-        self.state_update_function = state_update_module
+        self.state_update_function_cvrp = state_update_module[0]
+        self.state_update_function = state_update_module[1]
+        self.general_state_update = General_state_update(nodes, actions, self.state_update_function.neighbors_by_distance, initial_resource_vector,resource_name_to_index,number_of_resources)
         self.dominate_actions = initial_dominate_actions
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
@@ -91,8 +94,8 @@ class GraphMaster:
             for j in range(0,len(res_states_list)):
                 if i!=j:
                     if res_states_list[i].equals(res_states_list[j]):
-                        print('[i,j]')
-                        print([i,j])
+                        # print('[i,j]')
+                        # print([i,j])
                         res_states[i].pretty_print_state()
                         res_states[j].pretty_print_state()
                         input('error here')
@@ -166,7 +169,11 @@ class GraphMaster:
                         #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                             [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
-                            beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+                            max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
+                            
+                            new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
+                            beta_term, true_new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+
                         #debug
                         if self.jy_options_user_defined['debug'] == True:
                             with TimeProfiler(all_time_profile, "debug"):
