@@ -3,7 +3,7 @@ from src.common.action import Action
 from typing import List, Dict
 from numpy import zeros, ones, append
 from collections import ChainMap
-from math import hypot
+from math import hypot, radians, sin, cos, sqrt, asin
 import pandas as pd
 
 # CONSTANTS
@@ -15,6 +15,7 @@ HOS_WORK_TIME = 14 * 60
 HOS_REST_TIME = 9 * 60
 AVERAGE_SPEED = 55 / 60
 MIN_DISTANCE_SAVING = 100
+STANDARD_SERVICE_TIME = 2 * 60
 
 class loadAI(OptimizationProblem):
     def __init__(self, problem_instance_file_name, file_type: str = "Standard_Form"):
@@ -72,8 +73,8 @@ class loadAI(OptimizationProblem):
             # Assign weight and volume demands
             self.weight_demands[pickup_id] = row["Total Weight"]
             self.volume_demands[pickup_id] = row["Pallet Count"]
-            self.weight_demands[dropoff_id] = 0  # Dropoffs have no demand
-            self.volume_demands[dropoff_id] = 0
+            # self.weight_demands[dropoff_id] = 0  # Dropoffs have no demand
+            # self.volume_demands[dropoff_id] = 0
             
             # Store coordinates
             self.coordinates[pickup_id] = (row["Pickup Lat"], row["Pickup Lon"])
@@ -85,14 +86,14 @@ class loadAI(OptimizationProblem):
             delivery_start = int((row["Delivery Appointment Start Date Time"] - earliest_time).total_seconds() // 60)
             delivery_end = int((row["Delivery Appointment End Date Time"] - earliest_time).total_seconds() // 60)
             
-            self.time_window_start[pickup_id] = pickup_start
-            self.time_window_end[pickup_id] = pickup_end
-            self.time_window_start[dropoff_id] = delivery_start
-            self.time_window_end[dropoff_id] = delivery_end
+            self.time_window_start[pickup_id] = self.maximum_time - pickup_start
+            self.time_window_end[pickup_id] = self.maximum_time - pickup_end
+            self.time_window_start[dropoff_id] = self.maximum_time - delivery_start
+            self.time_window_end[dropoff_id] = self.maximum_time - delivery_end
             
             # Service time (assumed to be 0 for now, but can be updated if needed)
-            self.service_time[pickup_id] = 0
-            self.service_time[dropoff_id] = 0
+            self.service_time[pickup_id] = STANDARD_SERVICE_TIME
+            self.service_time[dropoff_id] = STANDARD_SERVICE_TIME
             
             # Assign pickup-dropoff relationships
             self.pickup_to_dropoff[pickup_id] = dropoff_id
@@ -100,7 +101,7 @@ class loadAI(OptimizationProblem):
 
     def _build_problem_model(self):
         # NODES
-        self.nodes.append[-1]
+        self.nodes.append(-1)
         self.number_of_customers = len(self.pickup_to_dropoff)
         for node in self.weight_demands:
             self.nodes.append(node)
@@ -111,6 +112,8 @@ class loadAI(OptimizationProblem):
         for pickup_node in self.pickup_to_dropoff:
             skip_node = round(round(pickup_node + (2 * self.number_of_customers)))
             self.nodes.append(skip_node)
+
+        self.nodes.append(-2)
 
         # EXOG RHS
         self.rhs_vector = ones(self.number_of_customers)
@@ -157,6 +160,12 @@ class loadAI(OptimizationProblem):
         self.initial_resource_vector = append(self.initial_resource_vector, self.maximum_time)
         self.resource_name_to_index["time_remain"] = idx
         self.resource_index_to_name[idx] = "time_remain"
+        idx += 1
+
+        self.initial_resource_dict["max_combined_loads"] = self.max_combined_loads
+        self.initial_resource_vector = append(self.initial_resource_vector, self.max_combined_loads)
+        self.resource_name_to_index["max_combined_loads"] = idx
+        self.resource_index_to_name[idx] = "max_combined_loads"
         idx += 1
 
         # self.initial_resource_dict["HOS_drive_time"] = HOS_DRIVE_TIME
@@ -258,16 +267,16 @@ class loadAI(OptimizationProblem):
                 if origin_node == destination_node:
                     continue
 
-                cost = self._distance(origin_node, destination_node)
+                cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
-                cover_constraint_index = self.rhs_constraint_name_to_index[("cover", origin_node)]
+                cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
                 exog_contrib_vec[cover_constraint_index] = 1
-                partial_trans_min_input = {"time": self._travel_time[origin_node, destination_node] + self.service_time[origin_node] + self.service_time[destination_node], 
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node], 
                                            "volume": self.volume_demands[origin_node] + self.volume_demands[destination_node],
                                            "weight": self.weight_demands[origin_node] + self.weight_demands[destination_node],
                                            "max_combined_loads": 1,
                                            ("may_pickup", destination_node): 1}
-                partial_trans_term_vec = {"time": -self._travel_time[origin_node, destination_node] - self.service_time[origin_node], 
+                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_node],
                                            "weight": -self.weight_demands[origin_node],
                                            "max_combined_loads": -1,
@@ -283,12 +292,12 @@ class loadAI(OptimizationProblem):
     def _create_pickup_to_dropoff_actions(self):
         for origin_node in self.pickup_to_dropoff:
             for destination_node in self.dropoff_to_pickup:
-                cost = self._distance(origin_node, destination_node)
+                cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
-                cover_constraint_index = self.rhs_constraint_name_to_index[("cover", origin_node)]
+                cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
                 exog_contrib_vec[cover_constraint_index] = 1
-                partial_trans_min_input = {"time": self._travel_time[origin_node, destination_node] + self.service_time[origin_node] + self.service_time[destination_node]}
-                partial_trans_term_vec = {"time": -self._travel_time[origin_node, destination_node] - self.service_time[origin_node], 
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node]}
+                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_node],
                                            "weight": -self.weight_demands[origin_node],
                                            "max_combined_loads": -1,
@@ -305,16 +314,19 @@ class loadAI(OptimizationProblem):
     def _create_dropoff_to_pickup_actions(self):
         for origin_node in self.dropoff_to_pickup:
             for destination_node in self.pickup_to_dropoff:
-                cost = self._distance(origin_node, destination_node)
+                origin_pickup_node = self.dropoff_to_pickup[origin_node]
+                if origin_pickup_node == destination_node:
+                    continue
+                cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
-                partial_trans_min_input = {"time": self._travel_time[origin_node, destination_node] + self.service_time[origin_node] + self.service_time[destination_node], 
-                                           "volume": self.volume_demands[destination_node] - self.volume_demands[origin_node],
-                                           "weight": self.weight_demands[destination_node] - self.weight_demands[origin_node],
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node], 
+                                           "volume": self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
+                                           "weight": self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
                                            "max_combined_loads": 1,
                                            ("may_pickup", destination_node): 1}
-                partial_trans_term_vec = {"time": -self._travel_time[origin_node, destination_node] - self.service_time[origin_node], 
-                                           "volume": -self.volume_demands[origin_node],
-                                           "weight": -self.weight_demands[origin_node],
+                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
+                                           "volume": -self.volume_demands[origin_pickup_node],
+                                           "weight": -self.weight_demands[origin_pickup_node],
                                            ("may_avoid_dropoff", origin_node): 1}
                 partial_trans_term_min = {"time": self.time_window_start[destination_node]}
                 trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
@@ -329,13 +341,13 @@ class loadAI(OptimizationProblem):
             for destination_node in self.dropoff_to_pickup:
                 if origin_node == destination_node:
                     continue
-
-                cost = self._distance(origin_node, destination_node)
+                origin_pickup_node = self.dropoff_to_pickup[origin_node]
+                cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
-                partial_trans_min_input = {"time": self._travel_time[origin_node, destination_node] + self.service_time[origin_node] + self.service_time[destination_node]}
-                partial_trans_term_vec = {"time": -self._travel_time[origin_node, destination_node] - self.service_time[origin_node], 
-                                           "volume": -self.volume_demands[origin_node],
-                                           "weight": -self.weight_demands[origin_node],
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node]}
+                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
+                                           "volume": -self.volume_demands[origin_pickup_node],
+                                           "weight": -self.weight_demands[origin_pickup_node],
                                            ("may_avoid_dropoff", origin_node): 1}
                 partial_trans_term_min = {"time": self.time_window_start[destination_node]}
                 trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
@@ -346,11 +358,11 @@ class loadAI(OptimizationProblem):
         
         
     def _create_skip_actions(self):
-        for destination_node in self.dropoff_to_pickup:
+        for destination_node in self.pickup_to_dropoff:
             origin_node = -1
             cost = self._slack(destination_node)
             exog_contrib_vec = self._default_contribution_vector()
-            cover_constraint_index = self.rhs_constraint_name_to_index[("cover", origin_node)]
+            cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", destination_node))]
             exog_contrib_vec[cover_constraint_index] = 1
 
             trans_min_input = ChainMap({}, self.default_trans_min_input)
@@ -375,20 +387,43 @@ class loadAI(OptimizationProblem):
         return zeros(self.number_of_customers)
 
     def _distance(self, origin, destination):
-        x1, y1 = self.coordinates(origin)
-        x2, y2 = self.coordinates(destination)
+        x1, y1 = self.coordinates[origin]
+        x2, y2 = self.coordinates[destination]
         return hypot(x2 - x1, y2 - y1)
+    
+    def _haversine_distance(self, origin, destination):
+        EARTH_RADIUS = 3958.8  # Radius of Earth in miles
+        lat1, lon1 = map(radians, self.coordinates[origin])
+        lat2, lon2 = map(radians, self.coordinates[destination])
+
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * asin(sqrt(a))
+
+        return EARTH_RADIUS * c  # Distance in miles
 
     def _travel_time(self, origin, destination):
-        distance = self._distance(origin, destination)
+        distance = self._haversine_distance(origin, destination)
         drive_time = distance / AVERAGE_SPEED
         number_of_rests = int(drive_time / HOS_DRIVE_TIME)
         travel_time = drive_time + number_of_rests * HOS_REST_TIME
         return travel_time
     
     def _slack(self, pickup_node):
-        dropoff_node = self.pickup_to_dropoff(pickup_node)
-        pickup_dropoff_direct_distance = self._distance(pickup_node, dropoff_node)
+        dropoff_node = self.pickup_to_dropoff[pickup_node]
+        pickup_dropoff_direct_distance = self._haversine_distance(pickup_node, dropoff_node)
         slack_coeff = pickup_dropoff_direct_distance - MIN_DISTANCE_SAVING
         return slack_coeff
         
+
+    def _create_initial_res_actions(self):
+        return super()._create_initial_res_actions()
+    
+    def _create_initial_res_states(self):
+        return super()._create_initial_res_states()
+    
+    def _define_state_update_module(self):
+        return super()._define_state_update_module()
+    
