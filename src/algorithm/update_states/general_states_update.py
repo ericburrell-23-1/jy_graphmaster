@@ -108,7 +108,8 @@ class General_state_update:
                     
                 # 36: Update s2.stateVec with the minimum values from NodeMinTermVec
                 candidate_state_vec= self.elementwise_min_csr(s2.state_vec,nodes_min_term_vec[s2.node])
-
+                if np.array_equal(candidate_state_vec.toarray(), np.array([0,1,0,0])):
+                    print('some error here')
                 # Check if there are any negative values
                 if (candidate_state_vec.data < 0).any():
                     input('some negative in candidate_state_vec')

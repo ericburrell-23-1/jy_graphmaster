@@ -14,7 +14,7 @@ class CVRPTest(TestCase):
 
     def test_thirty_customers(self):
         try:
-            instance = "100_customers"
+            instance = "NYC7"
             #instance = "prob_inst_33"
             problem = CVRP(
                 os.path.join(os.path.dirname(__file__),
