@@ -10,15 +10,15 @@ from math import hypot
 from scipy.sparse import csr_matrix
 from src.common.helper import Helper
  
-class CVRP_Clipped_LA(OptimizationProblem):
+class CVRP_Clipped_LA_arc(OptimizationProblem):
  
 
-    def get_valid_subsets(neighbors, u_p):
+    def get_valid_subsets(self,neighbors, u_p):
         """Returns all non-empty subsets of neighbors that satisfy the capacity constraint."""
         valid_subsets = []
         for r in range(1, len(neighbors) + 1):
             for subset in combinations(neighbors, r):
-                total_demand = self.demand(u_p) + sum(self.demand(w) for w in subset)
+                total_demand = self.demands(u_p) + sum(self.demands(w) for w in subset)
                 if total_demand <= self.capacityRemaining:
                     valid_subsets.append(set(subset))
         return valid_subsets
@@ -41,18 +41,18 @@ class CVRP_Clipped_LA(OptimizationProblem):
             neighbors = self.neighbors_by_distance.get(u, [])
 
             # Generate valid subsets of neighbors based on capacity constraint
-            for N_p in get_valid_subsets(neighbors, u):
+            for N_p in self.get_valid_subsets(neighbors, u):
                 for v_p in N_p:
-                    total_demand = self.demand(u) + sum(self.demand(w) for w in N_p) + self.demand(v_p)
+                    total_demand = self.demands[u] + sum(self.demands[w] for w in N_p) + self.demands[v_p]
                     if total_demand <= self.capacityRemaining:
                         all_tuples.append((u, N_p, v_p))
 
             # Special case: u_p = v_p when N_p is empty (single node case)
-            if self.demand(u) <= self.capacityRemaining:
-                all_tuples.append((u, set(), u))
+            #if self.demands[u] <= self.capacity:
+            all_tuples.append((u, set(), u))
     
         self.all_LA_tuples_sorted = sorted(
-            [tup for tup in self.all_tuples if tup[0] != tup[2]],  # Filter where u_p ≠ v_p
+            [tup for tup in all_tuples if tup[0] != tup[2]],  # Filter where u_p ≠ v_p
             key=lambda tup: len(tup[1])  # Sort by |N_p|
         )
 
@@ -84,24 +84,26 @@ class CVRP_Clipped_LA(OptimizationProblem):
             self.tup_2_cost[my_tup]=cost
             self.tup_2_ordering[my_tup]=this_ordering
     
-
+        self._closest_k_neighbors()
         distant_pairs = [
             (u, v) 
             for u in self.nodes 
             for v in self.nodes
-            if v != u and v not in self.LA_neighbors[u]  # Exclude neighbors and self-loops
-            and self.demand[u] + self.demand[v] <= self.capacity  # Capacity constraint
+            if v != u and v not in self.node_2_la_neigh[u]  # Exclude neighbors and self-loops
+            and self.demands[u] + self.demands[v] <= self.capacity  # Capacity constraint
             and v!=-1
             and u!=-2
         ]
         for (u,v) in distant_pairs:
             if u==-1 and v==-2:
                 continue
-            N_p=(v)
+            N_p=frozenset([v])
             if v!=-2:
-                N_p=[]
-            my_tup=([u,N_p,v])
+                N_p=frozenset([])
+            my_tup=tuple([u,N_p,v])
             self.tup_2_cost[my_tup]=self._distance(u, v)
+
+
             self.tup_2_ordering[my_tup]=[u,v]
         
         self.tup_2_dem_used=dict()
@@ -125,9 +127,9 @@ class CVRP_Clipped_LA(OptimizationProblem):
     def __init__(self, problem_instance_file_name: str, file_type: str = "Standard_VRP"):
         """Defines all aspects of a CVRP problem needed before calling the `solve` method."""
         self.neighbors_by_distance = {}
+        self.num_LA_neigh=10
         super().__init__(problem_instance_file_name, file_type)
         
-        self.num_LA_neigh=10
         self._generate_neighbors()
         self.LA_generate_LA_neighbors()
         self._create_null_action_info()
@@ -204,7 +206,7 @@ class CVRP_Clipped_LA(OptimizationProblem):
         self.coordinates = coordinates
     
  
-    def build_problem_model(self):
+    def _build_problem_model(self):
         num_customers = len(self.demands) - 2
         self.nodes = [-1]
         self.initial_resource_dict = {"cap_remain": self.capacity}
@@ -217,7 +219,9 @@ class CVRP_Clipped_LA(OptimizationProblem):
             if node not in {-1,-2}:
                 self.nodes.append(node)
                 self.initial_resource_dict[f'can_visit: {node}'] = 1
-        
+        print('self.initial_resource_dict')
+        print(self.initial_resource_dict)
+        input('-==-')
         self.nodes.append(-2)
         self.number_of_resources = num_customers + 1 # number of customer + source + sink + capremain
         full_resource_dict = np.ones(self.number_of_resources)
@@ -247,7 +251,7 @@ class CVRP_Clipped_LA(OptimizationProblem):
         self.default_exog_name_to_coeff_dict = {}
         for node in self.nodes:
              self.default_exog_name_to_coeff_dict[("Cover", node)] = 0
- 
+        
         idx = 0
         partial_max_resource_dict = {"cap_remain":self.capacity}
         for node in self.nodes:
@@ -262,12 +266,35 @@ class CVRP_Clipped_LA(OptimizationProblem):
                 self.rhs_constraint_name_to_index[str(("Cover", origin_node))] = idx
                 self.rhs_index_to_constraint_name[idx] = str(("Cover", origin_node))
                 idx += 1
+        idx = 1
+        for u in self.nodes:
+            if u in (-1,-2):
+                continue
+            self.default_min_resource_dict[f'can_visit: {u}'] = 0
+            self.default_max_resource_dict[f'can_visit: {u}'] = 1
+            self.default_resource_consumption_dict[f'can_visit: {u}'] = 0
+            self.resource_name_to_index[f'can_visit: {u}'] = idx
+            idx +=1
+        self.get_all_valid_node_tuples()
+
         my_tuples=self.tup_2_cover.keys()
-        
+        print('my_tuples')
+        print(my_tuples)
+        input('go')
+        for origin_node in self.nodes:
+            for destination_node in self.nodes:
+                if origin_node==-2 or destination_node==-1 or origin_node==destination_node:
+                    continue
+                self.actions[origin_node,destination_node]=[]
         for my_tup in my_tuples:
             u_p=my_tup[0]
             N_p=my_tup[1]
             v_p=my_tup[2]
+            if u_p==-2 or v_p==-1 or u_p==v_p:
+                print('my_tup')
+                print(my_tup)
+                input('error here')
+            origin_node=u_p
             destination_node=v_p
             cost=self.tup_2_cost[my_tup]
             this_dem=self.tup_2_dem_used[my_tup]
@@ -280,8 +307,8 @@ class CVRP_Clipped_LA(OptimizationProblem):
             for w in this_cust_cover:
                 contribution_vector[self.constraint_name_to_index[str(("Cover", w))]] = 1
                 partial_resource_consumption_dict[f'can_visit: {w}'] =-1
-            if v_p!=-2:
-                partial_min_resource_dict
+            #if v_p!=-2:
+            #    partial_min_resource_dict
             partial_min_resource_dict = {"cap_remain":this_dem_extra}
             partial_resource_consumption_dict = {"cap_remain": -this_dem}
             
@@ -300,42 +327,42 @@ class CVRP_Clipped_LA(OptimizationProblem):
             _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_resource_consumption_dict)     
             _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_max_resource_dict)     
             indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_max_resource_dict)
-            action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_dict,empty_resource_vec)
-            self.actions[origin_node, destination_node] = [action]
+            my_action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_dict,empty_resource_vec)
+            self.actions[origin_node, destination_node].append(my_action)
                     
         
-    for origin_node in self.nodes:
-        
-        for destination_node in self.nodes:
-            if origin_node == destination_node or origin_node==-2 or destination_node == -1:
-                continue
-            if origin_node == -1 and destination_node == -2:
-                continue
-            cost = self._distance(origin_node, destination_node)
-            #print(origin_node,destination_node,cost)
-            contribution_vector = zeros(num_customers)
-            if origin_node > 0:
-                contribution_vector[self.constraint_name_to_index[str(("Cover", origin_node))]] = 1
-            partial_min_resource_dict = {"cap_remain": self.demands[origin_node] + self.demands[destination_node]}
-            partial_resource_consumption_dict = {"cap_remain": -self.demands[origin_node]}
+        for origin_node in self.nodes:
             
-            if origin_node != -1:
-                partial_resource_consumption_dict[f'can_visit: {origin_node}'] =-1
-            if destination_node!=-2:
-                partial_min_resource_dict[f'can_visit: {destination_node}']= 1
-            
-            trans_min_input = ChainMap(partial_min_resource_dict, self.default_min_resource_dict)
-            trans_term_min = ChainMap(partial_max_resource_dict, self.default_max_resource_dict)
-            trans_term_add = ChainMap(partial_resource_consumption_dict, self.default_resource_consumption_dict)
-            
+            for destination_node in self.nodes:
+                if origin_node == destination_node or origin_node==-2 or destination_node == -1:
+                    continue
+                if origin_node == -1 and destination_node == -2:
+                    continue
+                cost = self._distance(origin_node, destination_node)
+                #print(origin_node,destination_node,cost)
+                contribution_vector = zeros(num_customers)
+                if origin_node > 0:
+                    contribution_vector[self.constraint_name_to_index[str(("Cover", origin_node))]] = 1
+                partial_min_resource_dict = {"cap_remain": self.demands[origin_node] + self.demands[destination_node]}
+                partial_resource_consumption_dict = {"cap_remain": -self.demands[origin_node]}
+                
+                if origin_node != -1:
+                    partial_resource_consumption_dict[f'can_visit: {origin_node}'] =-1
+                if destination_node!=-2:
+                    partial_min_resource_dict[f'can_visit: {destination_node}']= 1
+                
+                trans_min_input = ChainMap(partial_min_resource_dict, self.default_min_resource_dict)
+                trans_term_min = ChainMap(partial_max_resource_dict, self.default_max_resource_dict)
+                trans_term_add = ChainMap(partial_resource_consumption_dict, self.default_resource_consumption_dict)
+                
 
-            _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_min_resource_dict)     
-            _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_resource_consumption_dict)     
-            _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_max_resource_dict)     
-            indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_max_resource_dict)
-            action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_dict,empty_resource_vec)
-            self.OLD_actions[origin_node, destination_node] = [action]
-               
+                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_min_resource_dict)     
+                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_resource_consumption_dict)     
+                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_max_resource_dict)     
+                indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_max_resource_dict)
+                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_dict,empty_resource_vec)
+                self.OLD_actions[origin_node, destination_node] = [action]
+                
  
     def _create_null_action_info(self):
         full_resource_dict = np.ones(self.number_of_resources)
@@ -423,7 +450,7 @@ class CVRP_Clipped_LA(OptimizationProblem):
         
         
 
-    def LA_generate_LA_neighbors(self):
+    def _closest_k_neighbors(self):
         """Computes the K nearest neighbors for each node, ensuring:
         - Nodes `-1` and `-2` have empty neighborhoods.
         - Customers `v` are excluded from `u`'s neighborhood if `self.demand(u) + self.demand(v) > self.capacity`.
@@ -434,7 +461,7 @@ class CVRP_Clipped_LA(OptimizationProblem):
                 [
                     v for v in self.nodes 
                     if v != u and v not in {-1, -2}  # Exclude -1 and -2
-                    and self.demand(u) + self.demand(v) <= self.capacity  # Exclude if demand exceeds capacity
+                    and self.demands[u] + self.demands[v] <= self.capacity  # Exclude if demand exceeds capacity
                 ],
                 key=lambda v: self._distance(u, v)
             )[:self.num_LA_neigh]  # Keep only the K nearest neighbors
