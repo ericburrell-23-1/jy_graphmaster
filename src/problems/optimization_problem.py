@@ -89,9 +89,8 @@ class OptimizationProblem(ABC):
     def _define_state_update_module(self):
         """Defines the `state_update_module`, which is used to update `res_states` after pricing is finished."""
         pass
-    @abstractmethod
+    
     def _create_dom_action_object(self):
-        
         dom_actions_pairs=dict()
         for _, action_list in self.actions.items():
             for action1, action2 in permutations(action_list, 2):

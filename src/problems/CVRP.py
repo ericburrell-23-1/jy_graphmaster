@@ -335,5 +335,7 @@ class CVRP(OptimizationProblem):
         x2, y2 = self.coordinates[destination]
  
         return hypot(x2 - x1, y2 - y1)
+    
     def _create_dom_action_object(self):
         self.dominated_action_pairs = set()
+        # You are overriding the default functionality with this. This may be okay, but just know that this function merely creates an empty set.
