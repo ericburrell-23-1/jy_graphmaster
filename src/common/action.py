@@ -89,40 +89,40 @@ class Action:
         Generate a cache key based on the state_tail but excluding l_id.
         """
         # Create a hash of the node, is_source, is_sink, and state_vec, but NOT l_id
-        state_vec_hash = state_tail._csr_matrix_hash()
+        state_vec_hash = state_tail.csr_matrix_hash()
         return hash((state_tail.node, state_tail.is_source, state_tail.is_sink, state_vec_hash))
 
     def get_head_state(self, state_tail: State, l_id):
         """
         Optimized version using zipVec pattern with caching for efficiency.
         """
-        # # Generate cache key
-        # cache_key = (self.action_id, self._get_state_cache_key(state_tail))
+        # Generate cache key
+        cache_key = (self.action_id, self._get_state_cache_key(state_tail))
         
-        # # Check if we have a cached result
-        # if cache_key in Action._head_state_cache:
-        #     cached_result = Action._head_state_cache[cache_key]
-        #     # If found in cache, handle accordingly
-        #     if cached_result is None:
-        #         return None
+        # Check if we have a cached result
+        if cache_key in Action._head_state_cache:
+            cached_result = Action._head_state_cache[cache_key]
+            # If found in cache, handle accordingly
+            if cached_result is None:
+                return None
                 
-        #     # Unpack the cached result - we store a tuple of (state_vec, is_source, is_sink)
-        #     cached_state_vec, is_source, is_sink = cached_result
+            # Unpack the cached result - we store a tuple of (state_vec, is_source, is_sink)
+            cached_state_vec, is_source, is_sink = cached_result
             
-        #     # Create a new state with the same data but updated l_id
-        #     return State(self.node_head, cached_state_vec, l_id, is_source, is_sink)
+            # Create a new state with the same data but updated l_id
+            return State(self.node_head, cached_state_vec, l_id, is_source, is_sink)
         
-        # # If not in cache, compute the head state
-        # # Early checks for minimum resource requirements
-        # diff_matrix = state_tail.state_vec - self.min_resource_vec
-        # if np.min(diff_matrix) < 0:
-        #     # Cache the negative result
-        #     Action._head_state_cache[cache_key] = None
-        #     return None
-        # if diff_matrix.data.size > 0 and np.min(diff_matrix.data) < 0:
-        #     # Cache the negative result
-        #     Action._head_state_cache[cache_key] = None
-        #     return None
+        # If not in cache, compute the head state
+        # Early checks for minimum resource requirements
+        diff_matrix = state_tail.state_vec - self.min_resource_vec
+        if np.min(diff_matrix) < 0:
+            # Cache the negative result
+            Action._head_state_cache[cache_key] = None
+            return None
+        if diff_matrix.data.size > 0 and np.min(diff_matrix.data) < 0:
+            # Cache the negative result
+            Action._head_state_cache[cache_key] = None
+            return None
             
         # Compute new state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption_vec

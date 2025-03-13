@@ -169,11 +169,30 @@ class GraphMaster:
                         #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                             [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
-                            max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
-                            
-                            new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
-                            beta_term, true_new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
-
+                            if 1>0:
+                                max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
+                                
+                                new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
+                            else:
+                                beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+                        # print('check true_new_states_describing_new_graph in new_states_describing_new_graph')
+                        # for s1 in true_new_states_describing_new_graph:
+                        #     is_exsit = False
+                        #     for s2 in new_states_describing_new_graph:
+                        #         if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
+                        #             is_exsit = True
+                        #             break
+                        #     if is_exsit == False:
+                        #         input('error here')
+                        # print('check new_states_describing_new_graph in true_new_states_describing_new_graph')
+                        # for s1 in new_states_describing_new_graph:
+                        #     is_exsit = False
+                        #     for s2 in true_new_states_describing_new_graph:
+                        #         if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
+                        #             is_exsit = True
+                        #     if is_exsit == False:
+                        #         print('error here')
+                        # print('finish check')
                         #debug
                         if self.jy_options_user_defined['debug'] == True:
                             with TimeProfiler(all_time_profile, "debug"):

@@ -21,7 +21,7 @@ class General_state_update:
         #         self.action_to_s1_s2[action] = (s1,s2)
 
 
-    def state_generation(self, max_depth, depth_used, my_init_states, nodes_min_term_vec, actions_reasonable:Set[Action], beta_dict, user_ignore_state_action=None):
+    def state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, actions_reasonable:Set[Action], beta_dict, user_ignore_state_action=None):
         """
         Implementation of Algorithm 1: State Generation Given Pricing
         
@@ -44,7 +44,7 @@ class General_state_update:
         
         # 6: ActionsSubset ← ActionsReasonable.copy()
         actions_subset = actions_reasonable.copy()
-        
+        #my_init_states = my_init_states.copy()
         # 7-11: Add actions between initial states
         for i in range(len(my_init_states)):
             for j in range(i + 1, len(my_init_states)):
@@ -70,7 +70,7 @@ class General_state_update:
         
         # 18: Initialize State2Depth
         state_2_depth = {s: max_depth for s in states_can_expand}
-        
+        state_tuple = {(s.node, tuple(s.state_vec.toarray().flatten())) for s in states_can_expand}
         # 19-24: Initialize ActionsFromNode
         actions_from_node = defaultdict(list)
         for a in actions_subset:
@@ -85,6 +85,7 @@ class General_state_update:
 
         
         # 25-42: Main loop for state expansion
+ 
         while len(states_can_expand)>0:
             # 26: Select state with maximum depth
             s = max(states_can_expand, key=lambda x: state_2_depth[x])
@@ -108,19 +109,31 @@ class General_state_update:
                 # 36: Update s2.stateVec with the minimum values from NodeMinTermVec
                 candidate_state_vec= self.elementwise_min_csr(s2.state_vec,nodes_min_term_vec[s2.node])
 
-
                 # Check if there are any negative values
                 if (candidate_state_vec.data < 0).any():
                     input('some negative in candidate_state_vec')
                 if np.sum(np.abs(candidate_state_vec - s2.state_vec)) >0:
                     s2 = State(s2.node, candidate_state_vec, s2.l_id, s2.is_source, s2.is_sink)
                 # 37-40: Add to states_can_expand if not seen or has positive depth
-                if s2 not in state_2_depth and state_2_depth[s] > 0:
-                    state_2_depth[s2] = state_2_depth[s] - depth_used[a]
-                    states_can_expand.append(s2)
-
+                try:
+                    #if not self._in_state_dict(s2,state_2_depth) and state_2_depth and state_2_depth[s] > 0:
+                    this_key = (s2.node, tuple(s2.state_vec.toarray().flatten()))
+                    if this_key not in state_tuple and state_2_depth and state_2_depth[s] > 0:
+                        state_2_depth[s2] = state_2_depth[s] - depth_used[a]
+                        state_tuple.add(this_key)
+                        states_can_expand.append(s2)
+                except:
+                    print('check this')
         state_2_depth = set(state_2_depth.keys())
+
         return state_2_depth
+
+    def _in_state_dict(self, s,state_2_depth):
+        for state, depth in state_2_depth.items():
+            if state.node == s.node and np.array_equal(state.state_vec.toarray(), s.state_vec.toarray()):
+                return True
+        return False
+    
 
 
     def elementwise_min_csr(self,vec1: csr_matrix, vec2: csr_matrix) -> csr_matrix:

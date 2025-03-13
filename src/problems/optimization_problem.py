@@ -35,7 +35,7 @@ class OptimizationProblem(ABC):
         self._create_initial_res_states()
         self._create_initial_res_actions()
         self._generate_neighbors()
-        self._closest_k_neighbors(5)
+        self._closest_k_neighbors(10)
         self._define_state_update_module()
 
     @abstractmethod
