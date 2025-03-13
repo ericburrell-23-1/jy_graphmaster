@@ -17,7 +17,6 @@ class CVRP(OptimizationProblem):
         self.neighbors_by_distance = {}
         super().__init__(problem_instance_file_name, file_type)
         
-        self._generate_neighbors()
         self._create_null_action_info()
  
     def solve(self):
@@ -286,7 +285,7 @@ class CVRP(OptimizationProblem):
         #one for the source
         source_state = State(-1,full_resource_vec,0,True,False)
         self.initial_res_states.add(source_state)
- 
+
         #one for the sink
         sink_state = State(-2,empty_resource_vec,0,False,True)
  
@@ -303,11 +302,13 @@ class CVRP(OptimizationProblem):
         
 
     def _define_state_update_module(self):
+        self._generate_neighbors()
+        self._closest_k_neighbors(10)
         """This is where we define how res_states is updated after pricing. We are using the `standard_CVRP` module for this definition."""
-        state_update_module_cvrp = CVRP_state_update_function(self.nodes, self.actions,self.capacity, self.demands, self.neighbors_by_distance, self.initial_resource_vector,self.resource_name_to_index,self.number_of_resources)
+        #state_update_module_cvrp = CVRP_state_update_function(self.nodes, self.actions,self.capacity, self.demands, self.neighbors_by_distance, self.initial_resource_vector,self.resource_name_to_index,self.number_of_resources)
 
         general_state_update_module = CVRP_state_input(self.nodes, self.actions,self.capacity, self.demands, self.neighbors_by_distance,self.neighbors, self.initial_resource_vector,self.resource_name_to_index,self.number_of_resources)
-        self.state_update_module = [state_update_module_cvrp,general_state_update_module]
+        self.state_update_module = general_state_update_module
     def _generate_neighbors(self):
         self.neighbors_by_distance = {
             u: sorted(
@@ -316,6 +317,7 @@ class CVRP(OptimizationProblem):
             )
             for u in self.nodes
         }
+        print('neighbor generated')
     def _closest_k_neighbors(self,user_k):
         k = min(user_k,len(self.nodes)-1)
         self.neighbors = {}
@@ -333,4 +335,5 @@ class CVRP(OptimizationProblem):
         x2, y2 = self.coordinates[destination]
  
         return hypot(x2 - x1, y2 - y1)
- 
+    def _create_dom_action_object(self):
+        self.dominated_action_pairs = set()

@@ -441,3 +441,6 @@ class loadAI(OptimizationProblem):
         # ASSIGN STATE UPDATE MODULE HERE
         return super()._define_state_update_module()
     
+    def _create_dom_action_object(self):
+        return super()._create_dom_action_object()
+    

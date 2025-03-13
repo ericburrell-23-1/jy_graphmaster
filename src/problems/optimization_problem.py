@@ -34,8 +34,6 @@ class OptimizationProblem(ABC):
         self._create_dom_action_object()
         self._create_initial_res_states()
         self._create_initial_res_actions()
-        self._generate_neighbors()
-        self._closest_k_neighbors(10)
         self._define_state_update_module()
 
     @abstractmethod
@@ -55,7 +53,6 @@ class OptimizationProblem(ABC):
             self.resource_name_to_index,
             self.number_of_resources,
             self.the_single_null_action,
-            
             #node_to_list
         )
         self.solver.solve()
@@ -78,10 +75,10 @@ class OptimizationProblem(ABC):
         pass
 
     
-    @abstractmethod
-    def _generate_neighbors(self):
-        """generate neighbors"""
-        pass
+    # @abstractmethod
+    # def _generate_neighbors(self):
+    #     """generate neighbors"""
+    #     pass
     
     @abstractmethod
     def _create_initial_res_actions(self):
@@ -93,8 +90,6 @@ class OptimizationProblem(ABC):
         """Defines the `state_update_module`, which is used to update `res_states` after pricing is finished."""
         pass
     @abstractmethod
-    def _closest_k_neighbors(self):
-        pass
     def _create_dom_action_object(self):
         
         dom_actions_pairs=dict()

@@ -8,10 +8,9 @@ from src.common.action import Action
 import numpy as np
 
 class General_state_update:
-    def __init__(self, nodes, actions, neighbors_by_distance, initial_resource_vector,resource_name_to_index,number_of_resources):
+    def __init__(self, nodes, actions,initial_resource_vector,resource_name_to_index,number_of_resources):
         self.node = nodes
         self.actions = actions
-        self.neighbors_by_distance = neighbors_by_distance
         self.initial_resource_vector = initial_resource_vector
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources

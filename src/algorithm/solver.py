@@ -66,9 +66,9 @@ class GraphMaster:
         self.initial_resource_vector = initial_resource_vector
         self.initial_res_states = initial_res_states
         self.initial_res_actions = initial_res_actions
-        self.state_update_function_cvrp = state_update_module[0]
-        self.state_update_function = state_update_module[1]
-        self.general_state_update = General_state_update(nodes, actions, self.state_update_function.neighbors_by_distance, initial_resource_vector,resource_name_to_index,number_of_resources)
+        self.state_update_function_cvrp = state_update_module
+        #self.state_update_function = state_update_module[1]
+        self.general_state_update = General_state_update(nodes, actions, initial_resource_vector,resource_name_to_index,number_of_resources)
         self.dominate_actions = initial_dominate_actions
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
@@ -161,7 +161,7 @@ class GraphMaster:
                     if do_pricing==False:
                         #print('in pricing')
                         #print('in pricing')
-                        beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function.get_states_from_random_beta(self.nodes, l_id)
+                        beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function_cvrp.get_states_from_random_beta(self.nodes, l_id)
                         reduced_cost = -np.inf
                     else:
                         #print('in not  pricing')
@@ -169,37 +169,37 @@ class GraphMaster:
                         #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
                             [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
-                            trig = 2
-                            if trig==0:
-                                max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
+                            trig = 0
+                            # if trig==0:
+                            max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function_cvrp._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
+                            
+                            new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
+                            # elif trig==1:
+                            #     beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
+                            # else:
+                            #     max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
                                 
-                                new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
-                            elif trig==1:
-                                beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
-                            else:
-                                max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
-                                
-                                new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
-                                beta_term, true_new_states_describing_new_graph,new_states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id,beta, beta_dict)
+                            #     new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
+                            #     beta_term, true_new_states_describing_new_graph,new_states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id,beta, beta_dict)
 
-                                print('check true_new_states_describing_new_graph in new_states_describing_new_graph')
-                                for s1 in true_new_states_describing_new_graph:
-                                    is_exsit = False
-                                    for s2 in new_states_describing_new_graph:
-                                        if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
-                                            is_exsit = True
-                                            break
-                                    if is_exsit == False:
-                                        print('error here')
-                                print('check new_states_describing_new_graph in true_new_states_describing_new_graph')
-                                for s1 in new_states_describing_new_graph:
-                                    is_exsit = False
-                                    for s2 in true_new_states_describing_new_graph:
-                                        if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
-                                            is_exsit = True
-                                    if is_exsit == False:
-                                        print('error here')
-                                print('finish check')
+                            #     print('check true_new_states_describing_new_graph in new_states_describing_new_graph')
+                            #     for s1 in true_new_states_describing_new_graph:
+                            #         is_exsit = False
+                            #         for s2 in new_states_describing_new_graph:
+                            #             if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
+                            #                 is_exsit = True
+                            #                 break
+                            #         if is_exsit == False:
+                            #             print('error here')
+                            #     print('check new_states_describing_new_graph in true_new_states_describing_new_graph')
+                            #     for s1 in new_states_describing_new_graph:
+                            #         is_exsit = False
+                            #         for s2 in true_new_states_describing_new_graph:
+                            #             if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
+                            #                 is_exsit = True
+                            #         if is_exsit == False:
+                            #             print('error here')
+                            #     print('finish check')
                         #debug
                         if self.jy_options_user_defined['debug'] == True:
                             with TimeProfiler(all_time_profile, "debug"):
