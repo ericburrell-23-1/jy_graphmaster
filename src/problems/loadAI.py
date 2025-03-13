@@ -1,5 +1,6 @@
 from src.problems.optimization_problem import OptimizationProblem
 from src.common.action import Action
+from src.common.state import State
 from typing import List, Dict
 from numpy import zeros, ones, append
 from collections import ChainMap
@@ -419,11 +420,24 @@ class loadAI(OptimizationProblem):
         
 
     def _create_initial_res_actions(self):
-        return super()._create_initial_res_actions()
+        for skip_node in self.nodes[(self.number_of_customers * 2):]:
+            self.initial_res_actions.add(self.actions[-1, skip_node][0])
+            self.initial_res_actions.add(self.actions[skip_node, -2][0])
+
     
     def _create_initial_res_states(self):
-        return super()._create_initial_res_states()
+        full_resource_vec = self.initial_resource_vector.copy()
+        self.initial_res_states.add(State(-1, full_resource_vec, 0, True, False))
+
+        for skip_node in self.nodes[(self.number_of_customers * 2):]:
+            full_resource_vec = self.initial_resource_vector.copy()
+            self.initial_res_states.add(State(skip_node, full_resource_vec, 0, False, False))
+
+        full_resource_vec = self.initial_resource_vector.copy()
+        self.initial_res_states.add(State(-2, full_resource_vec, 0, False, True))
+        
     
     def _define_state_update_module(self):
+        # ASSIGN STATE UPDATE MODULE HERE
         return super()._define_state_update_module()
     
