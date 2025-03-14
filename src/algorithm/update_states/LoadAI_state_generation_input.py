@@ -7,10 +7,10 @@ from src.common.helper import Helper
 from scipy.sparse import csr_matrix
 from collections import defaultdict
 import numpy as np
-
+ 
 class LoadAI_state_input():
     
-
+ 
     def __init__(self, nodes, actions, capacity, demands, time_window_start, time_window_end, pickup_to_dropoff, dropoff_to_pickup, neighbors_by_distance, neighbors, travel_time, initial_resource_vector, resource_name_to_index, number_of_resources):
         self.nodes = nodes
         self.actions = actions
@@ -27,8 +27,8 @@ class LoadAI_state_input():
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
         random.seed(1000)
-
-
+ 
+ 
     
     def _generate_beta_term(self, list_of_customer):
         idx_of_customer = {u: -1 for u in self.nodes if u not in {-1,-2}}
@@ -49,47 +49,100 @@ class LoadAI_state_input():
         beta_dict[-1] = -np.inf
         beta_dict[-2] = np.inf
         return beta_dict, beta
-
-    def _generate_node_min_term(self, beta,beta_dict, pick_up_state,list_of_customer):
+    def _generate_beta_time(self,list_of_customer, pick_up_state):
         self.betaTime = {state.node: state.time for state in pick_up_state}
         for node in self.nodes:
             if node not in list_of_customer and node in self.pickup_to_dropoff.keys():
                 this_time = random.randint(self.time_window_start[node], self.time_window_drop[node])
                 self.betaTime[node] = this_time
-        min_term_vec_dict = defaultdict()
+    def _generate_node_min_term(self, pickup_nodes,drop_off_nodes):
         
+        min_term_vec_dict = defaultdict()
+        for this_pickup_nodes in pickup_nodes:
+            minterm_vec = np.ones(self.number_of_resources)
+            minterm_vec[self.resource_name_to_index['weight']] = np.inf
+            minterm_vec[self.resource_name_to_index['volumn']] = np.inf
+            minterm_vec[self.resource_name_to_index['time']] = np.inf
+            minterm_vec[self.resource_name_to_index['max_combined_loads']] = np.inf
+            for other_pickup_node in pickup_nodes:
+                if self.betaTime[this_pickup_nodes] > self.betaTime[other_pickup_node]:
+                    minterm_vec[self.resource_name_to_index[(f'may_pickup',other_pickup_node)]] = 0
+            
+            min_term_vec_dict[this_pickup_nodes] =minterm_vec
+            for drop_off_node in drop_off_nodes:
+                minterm_vec[self.resource_name_to_index[(f'may_avoid_dropoff',drop_off_node)]] = 0
         
     
         return min_term_vec_dict
-
+ 
     def _get_input(self, list_of_customer, list_of_action, l_id):
         max_depth = self.capacity
-        action_reasonable = self._generate_reasonalbe_actions()
         list_of_customer = list_of_customer[1:-1]
-        beta_dict, beta = self._generate_beta_term(list_of_customer)
+        #beta_dict, beta = self._generate_beta_term(list_of_customer)
+        beta_dict=[]
+        beta=[]
         min_vec_dict = self._generate_node_min_term(beta,beta_dict)
+        action_reasonable = self._generate_reasonalbe_actions()
+ 
         state_in_path = self.get_states_from_action_list(list_of_action,l_id,beta_dict)
         depth_used = defaultdict()
         for actions in self.actions.values():
             for action in actions:
-                depth_used[action] = 1
+                if action.node_head in self.dropoff_to_pickup.keys():
+                    depth_used[action] = 0
+                else:
+                    depth_used[action] = 1
         #return min_vec_dict, max_depth, min_vec_dict, action_reasonable
         user_ignore_state_action=None
         return max_depth, depth_used, state_in_path, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict
     
     def _generate_reasonalbe_actions(self):
+        
+        num_pickups_keep=20
+        #map each node to its pickup actions
+        node_2_pickup_actions=dict()
+        for u in self.nodes:
+            node_2_pickup_actions[u]=[]
+        for ai in self.actions:
+            aL=self.actions[ai]
+            for a in aL:
+                n_tail=a.node_tail
+                n_head=a.node_head
+                my_cost=a.cost
+ 
+                if n_head in self.pickup_to_dropoff:
+                    
+                    #chatGPT please add
+                    node_2_pickup_actions[n_tail].append(tuple([a,my_cost]))
+        for u in self.nodes:
+            if u>-0.5:
+                tmp=sorted(node_2_pickup_actions[n_tail], key=lambda x: x[1])
+                tmp=tmp[0:num_pickups_keep]
+                node_2_pickup_actions[n_tail]=tmp
+        #chat gpt please remove from node_2_pickup_actions[n] all actions that are not in the K lowest cost actions
+        #how do i get action from a sep
+        #ittera
+        #itterate over all actions and store for each action
+ 
+        #comptue for each node the K nearest pickuop nodes
+ 
         reasonable_action = set()
         for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
             reasonable_action.update(self.actions[pickup_node,dropoff_node])
-
-        for drop_off_node in self.dropoff_to_pickup.items():
-            for node in self.neighbors[drop_off_node]:
-                if node in self.pickup_to_dropoff.keys():
-                    reasonable_action.update(self.actions[pickup_node,dropoff_node])
+        
+        for u in self.nodes:
+            for n in node_2_pickup_actions:
+                for a in node_2_pickup_actions[n]:
+                    reasonable_action.update(a)
+ 
+        #for drop_off_node in self.dropoff_to_pickup.items():
+        #    for node in self.neighbors[drop_off_node]:
+        #        if node in self.pickup_to_dropoff.keys():
+        #            reasonable_action.update(self.actions[pickup_node,dropoff_node])
         for u in self.dropoff_to_pickup.items():
             for v in self.dropoff_to_pickup.items():
                 if u!=v:
-                    """calculate cost_uvuv""" 
+                    """calculate cost_uvuv"""
                     cost_uvuv = self.betaTime[u]
                     arrive_at_pickup_v = cost_uvuv+self.travel_time[(u,v)]
                     if arrive_at_pickup_v < self.time_window_end[v]:
@@ -109,8 +162,8 @@ class LoadAI_state_input():
                     else:
                         cost_uvuv = np.inf
                         break
-                    """calculate cost_uuvv""" 
-
+                    """calculate cost_uuvv"""
+ 
                     cost_uuvv = self.betaTime[u]
                     # Travel from pickup u to dropoff u
                     arrive_at_dropoff_u = cost_uuvv + self.travel_time[(u, self.pickup_to_dropoff[u])]
@@ -118,14 +171,14 @@ class LoadAI_state_input():
                         cost_uuvv = max(arrive_at_dropoff_u, self.time_window_start[self.pickup_to_dropoff[u]])
                     else:
                         cost_uuvv = np.inf
-
+ 
                     # Travel from dropoff u to pickup v
                     arrive_at_pickup_v = cost_uuvv + self.travel_time[(self.pickup_to_dropoff[u], v)]
                     if arrive_at_pickup_v < self.time_window_end[v]:
                         cost_uuvv = max(arrive_at_pickup_v, self.time_window_start[v])
                     else:
                         cost_uuvv = np.inf
-
+ 
                     # Travel from pickup v to dropoff v
                     arrive_at_dropoff_v = cost_uuvv + self.travel_time[(v, self.pickup_to_dropoff[v])]
                     if arrive_at_dropoff_v < self.time_window_end[self.pickup_to_dropoff[v]]:
@@ -157,7 +210,7 @@ class LoadAI_state_input():
             for idx in idx_list:
                 if idx >0 and beta_dict[idx] < beta_dict[new_state.node]:
                     new_state.state_vec[0,idx] = 0
-
+ 
             if new_state == None:
                 
                 #input('check here, none state generated from path')

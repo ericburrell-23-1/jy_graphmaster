@@ -10,7 +10,7 @@ from collections import ChainMap
 from math import hypot, radians, sin, cos, sqrt, asin
 import pandas as pd
 import numpy as np
-
+from collections import defaultdict
 # CONSTANTS
 VOLUME_CAPACITY = 3000
 WEIGHT_CAPACITY = 45000
@@ -459,7 +459,7 @@ class loadAI(OptimizationProblem):
 
     def _default_contribution_vector(self):
         return zeros(self.number_of_customers)
-
+        
     def _distance(self, origin, destination):
         x1, y1 = self.coordinates[origin]
         x2, y2 = self.coordinates[destination]
