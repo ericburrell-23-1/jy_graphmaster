@@ -11,7 +11,7 @@ import numpy as np
 class LoadAI_state_input():
     
 
-    def __init__(self, nodes, actions, capacity, demands, time_window_start,time_window_end,pickup_to_dropoff,dropoff_to_pickup,neighbors_by_distance, neighbors, travel_time,initial_resource_vector,resource_name_to_index,number_of_resources):
+    def __init__(self, nodes, actions, capacity, demands, time_window_start, time_window_end, pickup_to_dropoff, dropoff_to_pickup, neighbors_by_distance, neighbors, travel_time, initial_resource_vector, resource_name_to_index, number_of_resources):
         self.nodes = nodes
         self.actions = actions
         self.capacity = capacity
@@ -80,12 +80,12 @@ class LoadAI_state_input():
     def _generate_reasonalbe_actions(self):
         reasonable_action = set()
         for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
-            reasonable_action.add(self.actions(pickup_node,dropoff_node))
+            reasonable_action.update(self.actions[pickup_node,dropoff_node])
 
         for drop_off_node in self.dropoff_to_pickup.items():
             for node in self.neighbors[drop_off_node]:
                 if node in self.pickup_to_dropoff.keys():
-                    reasonable_action.add(self.actions(pickup_node,dropoff_node))
+                    reasonable_action.update(self.actions[pickup_node,dropoff_node])
         for u in self.dropoff_to_pickup.items():
             for v in self.dropoff_to_pickup.items():
                 if u!=v:
@@ -133,9 +133,9 @@ class LoadAI_state_input():
                     else:
                         cost_uuvv = np.inf
                     if cost_uvuv < cost_uuvv:
-                        reasonable_action.add(self.actions(u,v))
-                        reasonable_action.add(self.actions(v,self.pickup_to_dropoff[u]))
-                        reasonable_action.add(self.actions(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]))
+                        reasonable_action.update(self.actions[u,v])
+                        reasonable_action.update(self.actions[v,self.pickup_to_dropoff[u]])
+                        reasonable_action.update(self.actions[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
     def get_states_from_action_list(self, action_list: List[Action],l_id, beta_dict):
         """
         Returns a list of states given an action_list.

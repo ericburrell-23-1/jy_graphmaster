@@ -2,6 +2,7 @@ from src.problems.optimization_problem import OptimizationProblem
 from src.common.action import Action
 from src.common.state import State
 from src.common.helper import Helper
+from src.algorithm.update_states.LoadAI_state_generation_input import LoadAI_state_input
 from typing import List, Dict
 from numpy import zeros, ones, append
 from scipy.sparse import csr_matrix
@@ -540,5 +541,5 @@ class loadAI(OptimizationProblem):
 
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        return super()._define_state_update_module()
+        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, {}, {}, {}, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources)
     
