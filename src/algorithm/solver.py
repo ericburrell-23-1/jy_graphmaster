@@ -108,6 +108,15 @@ class GraphMaster:
             l_id = 0
             max_iterations = 100000
 
+            state_remove=[]
+            for s in self.initial_res_states:
+                
+                if s.node==-2 and np.sum(s.state_vec)>0.5:
+                    state_remove.append(s)
+            for s in state_remove:
+
+                self.initial_res_states.remove(s)
+
             my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined)
             self.rez_states_minus:Set[State]=self.initial_res_states
             self.res_actions=self.initial_res_actions

@@ -7,9 +7,8 @@ from numpy import zeros, ones, append
 from scipy.sparse import csr_matrix
 from collections import ChainMap
 from math import hypot, radians, sin, cos, sqrt, asin
-from src.algorithm.update_states.LoadAI_state_generation_input import LoadAI_state_input
-from collections import defaultdict
 import pandas as pd
+import numpy as np
 
 # CONSTANTS
 VOLUME_CAPACITY = 3000
@@ -34,6 +33,7 @@ class loadAI(OptimizationProblem):
         match self.file_type:
             case "Standard_Form":
                 self._load_standard_form_file()
+
             # Call file parsing functions for other file types here
             case _:
                 raise Exception(f"No file parsing logic available for file type {self.file_type}")
@@ -57,6 +57,7 @@ class loadAI(OptimizationProblem):
         
         file_path = self.problem_instance_file_name # FIX THIS FOR THE PROPER FILE PATH
         df = pd.read_csv(file_path)
+        self._create_null_action_info()
 
         # Convert time columns to datetime objects
         df["Pickup Appointment Start Date Time"] = pd.to_datetime(df["Pickup Appointment Start Date Time"])
@@ -200,6 +201,7 @@ class loadAI(OptimizationProblem):
             idx += 1
 
         self.number_of_resources = len(self.initial_resource_dict)
+        self.initial_resource_vector=csr_matrix(self.initial_resource_vector.reshape(1, -1))
 
     def _empty_resource_vec(self) -> csr_matrix:
         return csr_matrix(self.empty_resource_array.reshape(1, -1))
@@ -504,37 +506,39 @@ class loadAI(OptimizationProblem):
         self.initial_res_states.add(State(-2, self._empty_resource_vec(), 0, False, True))
         
     
+    def _create_null_action_info(self):
+        full_resource_array = np.ones(self.number_of_resources)
+        full_resource_vec = csr_matrix(full_resource_array.reshape(1, -1))
+        empty_resource_array = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_array.reshape(1, -1))
+        trans_min_input = {}
+        trans_term_add = {}
+        trans_term_min = {}
+        for res_name in self.resource_name_to_index.keys():
+            trans_min_input[res_name] = 0
+            trans_term_add[res_name] = 0
+            trans_term_min[res_name] = np.inf
+        #contribution_vector = np.zeros(len(self.rhs_vector))
+        contribution_vector = np.zeros(len(self.rhs_vector))
+        cost = 0
+        min_resource_vec = np.zeros(self.number_of_resources)
+        resource_consumption_vec = np.zeros(self.number_of_resources)
+        indices_apply_min_to = []    
+        max_resource_vec = np.full(self.number_of_resources, np.inf)
+       # self.initial_null_actions['trans_min_input'] = trans_min_input
+       # self.initial_null_actions['trans_term_add'] = trans_term_add
+       # self.initial_null_actions['trans_term_min'] = trans_term_min
+       # self.initial_null_actions['contribution_vector'] = contribution_vector
+       # self.initial_null_actions['cost'] = cost
+       # self.initial_null_actions['min_resource_vec'] = min_resource_vec
+       # self.initial_null_actions['resource_consumption_vec'] = resource_consumption_vec
+       # self.initial_null_actions['indices_non_zero_max'] = indices_non_zero_max
+       # self.initial_null_actions['max_resource_vec'] = max_resource_vec
+
+        self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_vec,empty_resource_vec)
+
+
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        self._node_to_closest_customer()
-        self._closest_k_neighbors(10)
-        general_state_update_module = LoadAI_state_input(self.nodes, self.actions,self.capacity, self.demands, self.neighbors_by_distance,self.neighbors, self.travel_time,self.initial_resource_vector,self.resource_name_to_index,self.number_of_resources)
-        self.state_update_module = general_state_update_module
-
-    def _node_to_closest_customer(self):
-        self.node_to_closest_customer = {
-            u: sorted(
-                [v for v in self.nodes if v != u],
-                key=lambda v: self._distance(u, v)
-            )
-            for u in self.nodes
-        }
-        print('neighbor generated')
-
-    def _closest_k_neighbors(self,user_k):
-        k = min(user_k,len(self.nodes)-1)
-        self.neighbors = {}
-        for u, nodes in self.node_to_closest_customer.items():
-            self.neighbors[u] = nodes[:k]
-            if u == -1:
-                self.neighbors[u].remove(-2)
-            if u == -2:
-                self.neighbors[u].remove(-1)
-        
-    def _travel_time_node_to_node(self):
-        self.travel_time=defaultdict()
-        for n1 in self.nodes:
-            for n2 in self.nodes:
-                self.travel_time[(n1,n2)] = self._travel_time(n1,n2)
-
+        return super()._define_state_update_module()
     
