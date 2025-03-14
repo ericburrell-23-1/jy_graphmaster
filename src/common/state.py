@@ -5,7 +5,7 @@ from collections import ChainMap
 from src.common.helper import Helper
 from scipy.sparse import csr_matrix
 class State:
-    def __init__(self, node:int, state_vec:csr_matrix, l_id,is_source,is_sink):
+    def __init__(self, node:int, state_vec:csr_matrix, l_id: int, is_source: bool, is_sink: bool):
         self.node = node
         self.state_vec = state_vec.astype(int) 
 

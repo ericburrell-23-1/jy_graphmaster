@@ -92,9 +92,6 @@ class CVRP(OptimizationProblem):
     
  
     def _build_problem_model(self):
-        
- 
-
         num_customers = len(self.demands) - 2
 
         self.nodes = [-1]
@@ -114,11 +111,11 @@ class CVRP(OptimizationProblem):
  
         #Make default dictionary for actions
         self.number_of_resources = num_customers + 1 # number of customer + source + sink + capremain
-        full_resource_dict = np.ones(self.number_of_resources)
-        full_resource_dict[0] = self.capacity
-        full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
-        empty_resource_dict = np.zeros(self.number_of_resources)
-        empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
+        full_resource_array = np.ones(self.number_of_resources)
+        full_resource_array[0] = self.capacity
+        full_resource_vec = csr_matrix(full_resource_array.reshape(1, -1))
+        empty_resource_array = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_array.reshape(1, -1))
         
 
         self.default_min_resource_vector=np.array([])
@@ -180,9 +177,9 @@ class CVRP(OptimizationProblem):
                 partial_resource_consumption_dict = {"cap_remain": -self.demands[origin_node]}
                 
                 if origin_node != -1:
-                    partial_resource_consumption_dict[f'can_visit: {origin_node}'] =-1
+                    partial_resource_consumption_dict[f'can_visit: {origin_node}'] = -1
                 if destination_node!=-2:
-                    partial_min_resource_dict[f'can_visit: {destination_node}']= 1
+                    partial_min_resource_dict[f'can_visit: {destination_node}'] = 1
                 #str("Cover", origin_node)
                 #print('origin_node')
                 #print(origin_node)
@@ -220,7 +217,7 @@ class CVRP(OptimizationProblem):
  
                 #action = Action(origin_node, destination_node, cost, contribution_vector, trans_min_input, trans_term_add, trans_term_min,min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec)
  
-                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_dict,empty_resource_vec)
+                action = Action(trans_min_input,trans_term_add,trans_term_min,destination_node,origin_node,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_vec,empty_resource_vec)
                 self.actions[origin_node, destination_node] = [action]
                 #start delete
                # print(f'origin:{origin_node},destination:{destination_node}')
@@ -231,11 +228,11 @@ class CVRP(OptimizationProblem):
         #input('donez')
  
     def _create_null_action_info(self):
-        full_resource_dict = np.ones(self.number_of_resources)
-        full_resource_dict[0] = self.capacity
-        full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
-        empty_resource_dict = np.zeros(self.number_of_resources)
-        empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
+        full_resource_array = np.ones(self.number_of_resources)
+        full_resource_array[0] = self.capacity
+        full_resource_vec = csr_matrix(full_resource_array.reshape(1, -1))
+        empty_resource_array = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_array.reshape(1, -1))
         trans_min_input = {}
         trans_term_add = {}
         trans_term_min = {}
@@ -264,8 +261,7 @@ class CVRP(OptimizationProblem):
 
 
     def _create_initial_res_actions(self):
-        """Note to Julian: No code exists for this yet."""
- 
+        """Creates a set of initial actions that describe a feasible solution."""
         for node in self.nodes:
             if node > 0:
                 #one for the source to each customer
@@ -274,13 +270,13 @@ class CVRP(OptimizationProblem):
                 self.initial_res_actions.update(self.actions[node, -2])
  
     def _create_initial_res_states(self):
-        """Note to Julian: No code exists for this yet."""
-        full_resource_dict = np.ones(self.number_of_resources)
-        full_resource_dict[0] = self.capacity
-        full_resource_vec = csr_matrix(full_resource_dict.reshape(1, -1))
+        """Creates a set of initial states that describe a feasible solution."""
+        full_resource_array = np.ones(self.number_of_resources)
+        full_resource_array[0] = self.capacity
+        full_resource_vec = csr_matrix(full_resource_array.reshape(1, -1))
         self.initial_resource_vector = full_resource_vec
-        empty_resource_dict = np.zeros(self.number_of_resources)
-        empty_resource_vec = csr_matrix(empty_resource_dict.reshape(1, -1))
+        empty_resource_array = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_array.reshape(1, -1))
 
         #one for the source
         source_state = State(-1,full_resource_vec,0,True,False)
