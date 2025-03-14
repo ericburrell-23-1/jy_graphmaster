@@ -140,6 +140,8 @@ class General_state_update:
         """
         Compute the elementwise minimum of two CSR matrices.
         """
+        vec2 = vec2.reshape(1, -1)
+
         if vec1.shape != vec2.shape:
             raise ValueError(f"Matrices have incompatible shapes: {vec1.shape} vs {vec2.shape}")
         

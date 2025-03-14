@@ -212,15 +212,18 @@ class LoadAI_state_input():
                         reasonable_action.update(self.actions[u,v])
                         reasonable_action.update(self.actions[v,self.pickup_to_dropoff[u]])
                         reasonable_action.update(self.actions[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
+        print('return reasonable action')
+        return reasonable_action
+        
     def get_states_from_action_list(self, initial_state,action_list: List[Action],l_id):
         """
         Returns a list of states given an action_list.
         """
-        State_in_col=set()
+        State_in_col=[]
         cur_state= State(action_list[0].node_tail,self.initial_resource_vector,l_id,action_list[0].node_tail == -1,action_list[0].node_head == -2)
         for a in action_list:
             new_s=a.get_head_state(cur_state, l_id)
-            State_in_col.add(new_s)
+            State_in_col.append(new_s)
             cur_state=new_s
         s_remove=[]
         s_add=[]
@@ -238,7 +241,7 @@ class LoadAI_state_input():
         for s in s_remove:
             State_in_col.remove(s)
         for s in s_add:
-            State_in_col.add(s)
+            State_in_col.append(s)
         return State_in_col
     def elementwise_min_csr(self, vec1, vec2) -> csr_matrix:
         """
