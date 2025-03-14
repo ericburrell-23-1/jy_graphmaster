@@ -45,7 +45,7 @@ class Full_Multi_Graph_Object_given_l:
     
             if source_count != 1 or sink_count != 1:
                 raise ValueError(
-                    f"Graph {l_id} must have exactly one source and one sink, "
+                    f"Graph {l_id} must have exactly one source and one sink,"
                     f"but found {source_count} source(s) and {sink_count} sink(s)."
                 )
             self.source_state=list(self.resStates_by_node[-1])[0]

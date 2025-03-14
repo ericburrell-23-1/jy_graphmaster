@@ -13,7 +13,7 @@ class CVRPTest(TestCase):
 
     def test_thirty_customers(self):
         try:
-            instance = "loadAI_example_1"
+            instance = "loadAI_toy"
             problem = loadAI(
                 os.path.join(os.path.dirname(__file__),
                              "assets/instances/", f"{instance}.csv"),

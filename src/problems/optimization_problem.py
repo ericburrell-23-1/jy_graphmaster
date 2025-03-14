@@ -40,6 +40,7 @@ class OptimizationProblem(ABC):
     def solve(self):
         """Creates a GraphMasterSolver instance from problem data and calls its solve() method"""
         #node_to_list = self._group_states_by_node_l(self.initial_res_states)
+        print('check input here')
         self.solver = GraphMaster(
             self.nodes,
             self.actions,
