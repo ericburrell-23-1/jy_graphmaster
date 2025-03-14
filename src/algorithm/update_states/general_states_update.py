@@ -20,7 +20,7 @@ class General_state_update:
         #         self.action_to_s1_s2[action] = (s1,s2)
 
 
-    def state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, actions_reasonable:Set[Action], beta_dict, user_ignore_state_action=None):
+    def state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, actions_reasonable:Set[Action],user_ignore_state_action=None):
         """
         Implementation of Algorithm 1: State Generation Given Pricing
         
@@ -79,8 +79,6 @@ class General_state_update:
             #if nodes_min_term_vec[self.action_to_s1_s2[0]] >= a.min_resource_vec:
 
                 actions_from_node[a.node_tail].append(a)
-                if beta_dict[a.node_tail] >= beta_dict[a.node_head]:
-                    print('error here')
 
         
         # 25-42: Main loop for state expansion
@@ -126,6 +124,8 @@ class General_state_update:
                     print('check this')
         state_2_depth = set(state_2_depth.keys())
 
+        
+        
         return state_2_depth
 
     def _in_state_dict(self, s,state_2_depth):

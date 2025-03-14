@@ -24,8 +24,9 @@ STANDARD_SERVICE_TIME = 2 * 60
 
 class loadAI(OptimizationProblem):
     def __init__(self, problem_instance_file_name, file_type: str = "Standard_Form"):
+        
         super().__init__(problem_instance_file_name, file_type)
-
+        
     def solve(self):
         return super().solve()
     
@@ -105,7 +106,10 @@ class loadAI(OptimizationProblem):
             # Assign pickup-dropoff relationships
             self.pickup_to_dropoff[pickup_id] = dropoff_id
             self.dropoff_to_pickup[dropoff_id] = pickup_id
-
+        self.time_window_start[-1] = np.inf
+        self.time_window_end[-1] = 0
+        self.time_window_start[-2] = np.inf
+        self.time_window_end[-2] = 0
     def _build_problem_model(self):
         # NODES
         self.nodes.append(-1)
@@ -119,7 +123,9 @@ class loadAI(OptimizationProblem):
         for pickup_node in self.pickup_to_dropoff:
             skip_node = round(round(pickup_node + (2 * self.number_of_customers)))
             self.nodes.append(skip_node)
-
+        # for n1, n2 in self.pickup_to_dropoff.items():
+        #     self.nodes.append(n1)
+        #     self.nodes.append(n2)
         self.nodes.append(-2)
 
         # EXOG RHS
@@ -537,9 +543,23 @@ class loadAI(OptimizationProblem):
        # self.initial_null_actions['max_resource_vec'] = max_resource_vec
 
         self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_vec,empty_resource_vec)
-
-
+    def _create_travel_time(self):
+        self.travel_time = {}
+        nodes = []
+        for n1,n2 in self.pickup_to_dropoff.items():
+            nodes.append(n1)
+            nodes.append(n2)
+        for n1 in nodes:
+            for n2 in nodes:
+                if n1 != n2:
+                    self.travel_time[(n1,n2)] = self._travel_time(n1,n2)
+                else:
+                    self.travel_time[(n1,n2)] =0
+        nodes.append(-1)
+        nodes.append(-2)
+        return nodes
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, {}, {}, {}, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources)
+        nodes = self._create_travel_time()
+        self.state_update_module = LoadAI_state_input(nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, {}, {}, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources)
     
