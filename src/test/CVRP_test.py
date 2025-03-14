@@ -18,7 +18,7 @@ class CVRPTest(TestCase):
             #instance = "prob_inst_33"
             problem = CVRP(
                 os.path.join(os.path.dirname(__file__),
-                             "assets/instances/", f"{instance}.vrp"),
+                             "assets/cvrp_instances/", f"{instance}.vrp"),
             )
 
             start = time.time()

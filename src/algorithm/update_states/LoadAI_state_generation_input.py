@@ -8,26 +8,26 @@ from scipy.sparse import csr_matrix
 from collections import defaultdict
 import numpy as np
 
-class CVRP_state_input():
+class LoadAI_state_input():
     
 
-    def __init__(self, nodes, actions, capacity, demands, neighbors_by_distance, neighbors, initial_resource_vector,resource_name_to_index,number_of_resources):
+    def __init__(self, nodes, actions, capacity, demands, time_window_start,time_window_end,pickup_to_dropoff,dropoff_to_pickup,neighbors_by_distance, neighbors, travel_time,initial_resource_vector,resource_name_to_index,number_of_resources):
         self.nodes = nodes
         self.actions = actions
         self.capacity = capacity
         self.demands = demands
+        self.time_window_start=time_window_start
+        self.time_window_end=time_window_end
+        self.pickup_to_dropoff=pickup_to_dropoff
+        self.dropoff_to_pickup=dropoff_to_pickup
         self.neighbors_by_distance = neighbors_by_distance
         self.neighbors = neighbors
+        self.travel_time = travel_time
         self.initial_resource_vector = initial_resource_vector
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
         random.seed(1000)
 
-    def get_states_from_random_beta(self, customer_list,l_id):
-        this_beta = customer_list[1:-1]
-        random.shuffle(this_beta)
-        new_states:List[State] = self._generate_state_based_on_beta(this_beta,l_id)
-        return [-1]+this_beta+[-2],new_states,self.states_used_in_this_col
 
     
     def _generate_beta_term(self, list_of_customer):
@@ -50,29 +50,21 @@ class CVRP_state_input():
         beta_dict[-2] = np.inf
         return beta_dict, beta
 
-    def _generate_node_min_term(self, beta,beta_dict):
+    def _generate_node_min_term(self, beta,beta_dict, pick_up_state,list_of_customer):
+        self.betaTime = {state.node: state.time for state in pick_up_state}
+        for node in self.nodes:
+            if node not in list_of_customer and node in self.pickup_to_dropoff.keys():
+                this_time = random.randint(self.time_window_start[node], self.time_window_drop[node])
+                self.betaTime[node] = this_time
         min_term_vec_dict = defaultdict()
         
-        for node in self.nodes:
-            min_term_vec = np.ones(self.number_of_resources)
-            min_term_vec[0] = self.capacity
-            for other_node in self.nodes:
-                if other_node not in (-1,-2) and beta_dict[other_node] < beta_dict[node] and other_node != node:
-                    min_term_vec[other_node] = 0
-            min_term_vec_dict[node] = csr_matrix(min_term_vec)
+        
     
         return min_term_vec_dict
 
     def _get_input(self, list_of_customer, list_of_action, l_id):
         max_depth = self.capacity
-        action_reasonable = set()
-        for n1 in self.nodes:
-            for n2 in self.neighbors[n1]:
-                if (n1,n2) in self.actions.keys():
-                    try:
-                        action_reasonable.update(set(self.actions[(n1,n2)]))
-                    except:
-                        input('check here')
+        action_reasonable = self._generate_reasonalbe_actions()
         list_of_customer = list_of_customer[1:-1]
         beta_dict, beta = self._generate_beta_term(list_of_customer)
         min_vec_dict = self._generate_node_min_term(beta,beta_dict)
@@ -85,6 +77,65 @@ class CVRP_state_input():
         user_ignore_state_action=None
         return max_depth, depth_used, state_in_path, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict
     
+    def _generate_reasonalbe_actions(self):
+        reasonable_action = set()
+        for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
+            reasonable_action.add(self.actions(pickup_node,dropoff_node))
+
+        for drop_off_node in self.dropoff_to_pickup.items():
+            for node in self.neighbors[drop_off_node]:
+                if node in self.pickup_to_dropoff.keys():
+                    reasonable_action.add(self.actions(pickup_node,dropoff_node))
+        for u in self.dropoff_to_pickup.items():
+            for v in self.dropoff_to_pickup.items():
+                if u!=v:
+                    """calculate cost_uvuv""" 
+                    cost_uvuv = self.betaTime[u]
+                    arrive_at_pickup_v = cost_uvuv+self.travel_time[(u,v)]
+                    if arrive_at_pickup_v < self.time_window_end[v]:
+                        cost_uvuv = max(arrive_at_pickup_v, self.time_window_start[v])
+                    else:
+                        cost_uvuv = np.inf
+                        break
+                    arrive_at_dropoff_u = cost_uvuv + self.travel_time[(v,self.pickup_to_dropoff[u])]
+                    if arrive_at_dropoff_u < self.time_window_end[self.pickup_to_dropoff[u]]:
+                        cost_uvuv = max(arrive_at_dropoff_u, self.time_window_start[self.pickup_to_dropoff[u]])
+                    else:
+                        cost_uvuv = np.inf
+                        break
+                    arrive_at_dropoff_v = cost_uvuv + self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
+                    if arrive_at_dropoff_v < self.time_window_end[self.pickup_to_dropoff[v]]:
+                        cost_uvuv = max(arrive_at_dropoff_v, self.time_window_start[self.pickup_to_dropoff[v]])
+                    else:
+                        cost_uvuv = np.inf
+                        break
+                    """calculate cost_uuvv""" 
+
+                    cost_uuvv = self.betaTime[u]
+                    # Travel from pickup u to dropoff u
+                    arrive_at_dropoff_u = cost_uuvv + self.travel_time[(u, self.pickup_to_dropoff[u])]
+                    if arrive_at_dropoff_u < self.time_window_end[self.pickup_to_dropoff[u]]:
+                        cost_uuvv = max(arrive_at_dropoff_u, self.time_window_start[self.pickup_to_dropoff[u]])
+                    else:
+                        cost_uuvv = np.inf
+
+                    # Travel from dropoff u to pickup v
+                    arrive_at_pickup_v = cost_uuvv + self.travel_time[(self.pickup_to_dropoff[u], v)]
+                    if arrive_at_pickup_v < self.time_window_end[v]:
+                        cost_uuvv = max(arrive_at_pickup_v, self.time_window_start[v])
+                    else:
+                        cost_uuvv = np.inf
+
+                    # Travel from pickup v to dropoff v
+                    arrive_at_dropoff_v = cost_uuvv + self.travel_time[(v, self.pickup_to_dropoff[v])]
+                    if arrive_at_dropoff_v < self.time_window_end[self.pickup_to_dropoff[v]]:
+                        cost_uuvv = max(arrive_at_dropoff_v, self.time_window_start[self.pickup_to_dropoff[v]])
+                    else:
+                        cost_uuvv = np.inf
+                    if cost_uvuv < cost_uuvv:
+                        reasonable_action.add(self.actions(u,v))
+                        reasonable_action.add(self.actions(v,self.pickup_to_dropoff[u]))
+                        reasonable_action.add(self.actions(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]))
     def get_states_from_action_list(self, action_list: List[Action],l_id, beta_dict):
         """
         Returns a list of states given an action_list.

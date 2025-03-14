@@ -7,6 +7,8 @@ from numpy import zeros, ones, append
 from scipy.sparse import csr_matrix
 from collections import ChainMap
 from math import hypot, radians, sin, cos, sqrt, asin
+from src.algorithm.update_states.LoadAI_state_generation_input import LoadAI_state_input
+from collections import defaultdict
 import pandas as pd
 
 # CONSTANTS
@@ -504,5 +506,35 @@ class loadAI(OptimizationProblem):
     
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        return super()._define_state_update_module()
+        self._node_to_closest_customer()
+        self._closest_k_neighbors(10)
+        general_state_update_module = LoadAI_state_input(self.nodes, self.actions,self.capacity, self.demands, self.neighbors_by_distance,self.neighbors, self.travel_time,self.initial_resource_vector,self.resource_name_to_index,self.number_of_resources)
+        self.state_update_module = general_state_update_module
+
+    def _node_to_closest_customer(self):
+        self.node_to_closest_customer = {
+            u: sorted(
+                [v for v in self.nodes if v != u],
+                key=lambda v: self._distance(u, v)
+            )
+            for u in self.nodes
+        }
+        print('neighbor generated')
+
+    def _closest_k_neighbors(self,user_k):
+        k = min(user_k,len(self.nodes)-1)
+        self.neighbors = {}
+        for u, nodes in self.node_to_closest_customer.items():
+            self.neighbors[u] = nodes[:k]
+            if u == -1:
+                self.neighbors[u].remove(-2)
+            if u == -2:
+                self.neighbors[u].remove(-1)
+        
+    def _travel_time_node_to_node(self):
+        self.travel_time=defaultdict()
+        for n1 in self.nodes:
+            for n2 in self.nodes:
+                self.travel_time[(n1,n2)] = self._travel_time(n1,n2)
+
     
