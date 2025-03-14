@@ -1,8 +1,10 @@
 from src.problems.optimization_problem import OptimizationProblem
 from src.common.action import Action
 from src.common.state import State
+from src.common.helper import Helper
 from typing import List, Dict
 from numpy import zeros, ones, append
+from scipy.sparse import csr_matrix
 from collections import ChainMap
 from math import hypot, radians, sin, cos, sqrt, asin
 import pandas as pd
@@ -145,22 +147,22 @@ class loadAI(OptimizationProblem):
         """Helper function to handle building the resource dicts/vector"""
         idx = 0
 
-        self.initial_resource_dict["weight_remain"] = self.weight_capacity
+        self.initial_resource_dict["weight"] = self.weight_capacity
         self.initial_resource_vector = append(self.initial_resource_vector, self.weight_capacity)
-        self.resource_name_to_index["weight_remain"] = idx
-        self.resource_index_to_name[idx] = "weight_remain"
+        self.resource_name_to_index["weight"] = idx
+        self.resource_index_to_name[idx] = "weight"
         idx += 1
 
-        self.initial_resource_dict["volume_remain"] = self.volume_capacity
+        self.initial_resource_dict["volume"] = self.volume_capacity
         self.initial_resource_vector = append(self.initial_resource_vector, self.volume_capacity)
-        self.resource_name_to_index["volume_remain"] = idx
-        self.resource_index_to_name[idx] = "volume_remain"
+        self.resource_name_to_index["volume"] = idx
+        self.resource_index_to_name[idx] = "volume"
         idx += 1
 
-        self.initial_resource_dict["time_remain"] = self.maximum_time
+        self.initial_resource_dict["time"] = self.maximum_time
         self.initial_resource_vector = append(self.initial_resource_vector, self.maximum_time)
-        self.resource_name_to_index["time_remain"] = idx
-        self.resource_index_to_name[idx] = "time_remain"
+        self.resource_name_to_index["time"] = idx
+        self.resource_index_to_name[idx] = "time"
         idx += 1
 
         self.initial_resource_dict["max_combined_loads"] = self.max_combined_loads
@@ -195,9 +197,19 @@ class loadAI(OptimizationProblem):
             self.resource_index_to_name[idx] = str(("may_avoid_dropoff", dropoff_node))
             idx += 1
 
+        self.number_of_resources = len(self.initial_resource_dict)
+
+    def _empty_resource_vec(self) -> csr_matrix:
+        return csr_matrix(self.empty_resource_array.reshape(1, -1))
+    
+    def _full_resource_vec(self):
+        return csr_matrix(self.full_resource_array.reshape(1, -1))
+
 
     def _create_default_resource_values(self):
         """Defines default resource values for actions."""
+        self.empty_resource_array = zeros(self.number_of_resources)
+
         self.default_trans_min_input = {
             "volume": 0,
             "weight": 0,
@@ -218,14 +230,20 @@ class loadAI(OptimizationProblem):
         }
 
         for pickup in self.pickup_to_dropoff:
-            self.default_trans_min_input[("may_pickup", pickup)] = 0
-            self.default_trans_term_vec[("may_pickup", pickup)] = 0
-            self.default_trans_term_min[("may_pickup", pickup)] = 1
+            self.default_trans_min_input[str(("may_pickup", pickup))] = 0
+            self.default_trans_term_vec[str(("may_pickup", pickup))] = 0
+            self.default_trans_term_min[str(("may_pickup", pickup))] = 1
 
         for dropoff in self.dropoff_to_pickup:
-            self.default_trans_min_input[("may_avoid_dropoff", dropoff)] = 0
-            self.default_trans_term_vec[("may_avoid_dropoff", dropoff)] = 0
-            self.default_trans_term_min[("may_avoid_dropoff", dropoff)] = 1
+            self.default_trans_min_input[str(("may_avoid_dropoff", dropoff))] = 0
+            self.default_trans_term_vec[str(("may_avoid_dropoff", dropoff))] = 0
+            self.default_trans_term_min[str(("may_avoid_dropoff", dropoff))] = 1
+
+        self.full_resource_array = zeros(len(self.resource_name_to_index))
+
+        for resource_name, index in self.resource_name_to_index.items():
+            if resource_name in self.default_trans_term_min:
+                self.full_resource_array[index] = self.default_trans_term_min[resource_name]
 
 
     def _create_source_sink_actions(self):
@@ -239,7 +257,13 @@ class loadAI(OptimizationProblem):
             trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
             trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
             trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
-            self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+            _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+            _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+            _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)     
+            indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,trans_term_min)
+
+            action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+            self.actions[origin_node, destination_node] = [action]
 
         for origin_node in self.dropoff_to_pickup:
             origin_node = origin_node
@@ -252,14 +276,20 @@ class loadAI(OptimizationProblem):
             for dropoff_node in self.dropoff_to_pickup:
                 if dropoff_node == origin_node:
                     continue
-                partial_trans_min_input[("may_avoid_dropoff", dropoff_node)] = 1
-                partial_trans_term_vec[("may_avoid_dropoff", dropoff_node)] = -1
+                partial_trans_min_input[str(("may_avoid_dropoff", dropoff_node))] = 1
+                partial_trans_term_vec[str(("may_avoid_dropoff", dropoff_node))] = -1
 
             trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
             trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
             trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
 
-            self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+            _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+            _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+            _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+            indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+
+            action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+            self.actions[origin_node, destination_node] = [action]
             
         
     def _create_pickup_to_pickup_actions(self):
@@ -276,19 +306,25 @@ class loadAI(OptimizationProblem):
                                            "volume": self.volume_demands[origin_node] + self.volume_demands[destination_node],
                                            "weight": self.weight_demands[origin_node] + self.weight_demands[destination_node],
                                            "max_combined_loads": 1,
-                                           ("may_pickup", destination_node): 1}
+                                           str(("may_pickup", destination_node)): 1}
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_node],
                                            "weight": -self.weight_demands[origin_node],
                                            "max_combined_loads": -1,
-                                           ("may_pickup", origin_node): -1,
-                                           ("may_avoid_dropoff", self.pickup_to_dropoff[origin_node]): -1}
+                                           str(("may_pickup", origin_node)): -1,
+                                           str(("may_avoid_dropoff", self.pickup_to_dropoff[origin_node])): -1}
                 partial_trans_term_min = {"time": self.time_window_start[destination_node]}
                 trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
                 trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
                 trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
                 
-                self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+                indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+
+                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+                self.actions[origin_node, destination_node] = [action]
         
     def _create_pickup_to_dropoff_actions(self):
         for origin_node in self.pickup_to_dropoff:
@@ -302,15 +338,21 @@ class loadAI(OptimizationProblem):
                                            "volume": -self.volume_demands[origin_node],
                                            "weight": -self.weight_demands[origin_node],
                                            "max_combined_loads": -1,
-                                           ("may_pickup", origin_node): -1,
-                                           ("may_avoid_dropoff", self.pickup_to_dropoff[origin_node]): -1}
+                                           str(("may_pickup", origin_node)): -1,
+                                           str(("may_avoid_dropoff", self.pickup_to_dropoff[origin_node])): -1}
                 partial_trans_term_min = {"time": self.time_window_start[destination_node]}
                 trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
                 trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
                 trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
                 
-                self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
-        
+                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+                indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+
+                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+                self.actions[origin_node, destination_node] = [action]
+            
         
     def _create_dropoff_to_pickup_actions(self):
         for origin_node in self.dropoff_to_pickup:
@@ -324,17 +366,23 @@ class loadAI(OptimizationProblem):
                                            "volume": self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
                                            "weight": self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
                                            "max_combined_loads": 1,
-                                           ("may_pickup", destination_node): 1}
+                                           str(("may_pickup", destination_node)): 1}
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_pickup_node],
                                            "weight": -self.weight_demands[origin_pickup_node],
-                                           ("may_avoid_dropoff", origin_node): 1}
+                                           str(("may_avoid_dropoff", origin_node)): 1}
                 partial_trans_term_min = {"time": self.time_window_start[destination_node]}
                 trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
                 trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
                 trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
                 
-                self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+                indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+
+                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+                self.actions[origin_node, destination_node] = [action]
         
         
     def _create_dropoff_to_dropoff_actions(self):
@@ -349,13 +397,19 @@ class loadAI(OptimizationProblem):
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_pickup_node],
                                            "weight": -self.weight_demands[origin_pickup_node],
-                                           ("may_avoid_dropoff", origin_node): 1}
+                                           str(("may_avoid_dropoff", origin_node)): 1}
                 partial_trans_term_min = {"time": self.time_window_start[destination_node]}
                 trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
                 trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
                 trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
                 
-                self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+                indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+
+                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+                self.actions[origin_node, destination_node] = [action]
         
         
     def _create_skip_actions(self):
@@ -370,9 +424,16 @@ class loadAI(OptimizationProblem):
             trans_term_vec = ChainMap({}, self.default_trans_term_vec)
             trans_term_min = ChainMap({}, self.default_trans_term_min)
             
-            self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+            _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
+            _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
+            _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
+            indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,{})
+
+            destination_node = destination_node + 2 * self.number_of_customers
+            action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+            self.actions[origin_node, destination_node] = [action]
     
-        for origin_node in self.dropoff_to_pickup:
+        for origin_node in self.pickup_to_dropoff:
             destination_node = -2
             cost = 0
             exog_contrib_vec = self._default_contribution_vector()
@@ -381,7 +442,14 @@ class loadAI(OptimizationProblem):
             trans_term_vec = ChainMap({}, self.default_trans_term_vec)
             trans_term_min = ChainMap({}, self.default_trans_term_min)
             
-            self.actions[origin_node, destination_node] = [Action(trans_min_input, trans_term_vec, trans_term_min, origin_node, destination_node, exog_contrib_vec, cost, {}, {}, [], {})]
+            _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
+            _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
+            _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
+            indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,{})
+
+            origin_node = origin_node + 2 * self.number_of_customers
+            action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+            self.actions[origin_node, destination_node] = [action]
     
 
     def _default_contribution_vector(self):
@@ -420,21 +488,18 @@ class loadAI(OptimizationProblem):
         
 
     def _create_initial_res_actions(self):
-        for skip_node in self.nodes[(self.number_of_customers * 2):]:
+        for skip_node in self.nodes[((self.number_of_customers * 2) + 1):-1]:
             self.initial_res_actions.add(self.actions[-1, skip_node][0])
             self.initial_res_actions.add(self.actions[skip_node, -2][0])
 
     
     def _create_initial_res_states(self):
-        full_resource_vec = self.initial_resource_vector.copy()
-        self.initial_res_states.add(State(-1, full_resource_vec, 0, True, False))
+        self.initial_res_states.add(State(-1, self._full_resource_vec(), 0, True, False))
 
         for skip_node in self.nodes[(self.number_of_customers * 2):]:
-            full_resource_vec = self.initial_resource_vector.copy()
-            self.initial_res_states.add(State(skip_node, full_resource_vec, 0, False, False))
+            self.initial_res_states.add(State(skip_node, self._full_resource_vec(), 0, False, False))
 
-        full_resource_vec = self.initial_resource_vector.copy()
-        self.initial_res_states.add(State(-2, full_resource_vec, 0, False, True))
+        self.initial_res_states.add(State(-2, self._empty_resource_vec(), 0, False, True))
         
     
     def _define_state_update_module(self):
