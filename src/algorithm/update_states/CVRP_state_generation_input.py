@@ -63,7 +63,7 @@ class CVRP_state_input():
     
         return min_term_vec_dict
 
-    def _get_input(self, list_of_customer, list_of_action, l_id):
+    def _get_input(self, list_of_customer, list_of_action, l_id ,initi_resource):
         max_depth = self.capacity
         action_reasonable = set()
         for n1 in self.nodes:
@@ -83,7 +83,8 @@ class CVRP_state_input():
                 depth_used[action] = 1
         #return min_vec_dict, max_depth, min_vec_dict, action_reasonable
         user_ignore_state_action=None
-        return max_depth, depth_used, state_in_path, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict
+        beta_info = [beta_dict,beta]
+        return max_depth, depth_used, state_in_path, min_vec_dict, action_reasonable, user_ignore_state_action, beta_info
     
     def get_states_from_action_list(self, action_list: List[Action],l_id, beta_dict):
         """

@@ -9,6 +9,7 @@ from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
+from src.algorithm.gwo_pricing_solver_LoadAI import GWOPricingSolverLoadAI
 from src.algorithm.update_states.general_states_update import General_state_update
 from src.common.visulizer import Visulizer
 from collections import defaultdict
@@ -66,7 +67,7 @@ class GraphMaster:
         self.initial_resource_vector = initial_resource_vector
         self.initial_res_states = initial_res_states
         self.initial_res_actions = initial_res_actions
-        self.state_update_function_cvrp = state_update_module
+        self.state_update_module = state_update_module
         #self.state_update_function = state_update_module[1]
         self.general_state_update = General_state_update(nodes, actions, initial_resource_vector,resource_name_to_index,number_of_resources)
         self.dominate_actions = initial_dominate_actions
@@ -86,7 +87,8 @@ class GraphMaster:
         self.jy_options_user_defined['allow_compression']=True
         self.jy_options_user_defined['debug'] =True
         self.jy_options_user_defined['use_csr_exog'] =False
-        self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
+        #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
+        self.gwo_pricing_solver_loadAI = GWOPricingSolverLoadAI(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined,self.state_update_module)
         random.seed(1000)
     def debug_check_duplicates(self,res_states):
         res_states_list=list(res_states)
@@ -176,11 +178,12 @@ class GraphMaster:
                         #print('in not  pricing')
                         with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
                         #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
-                            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver.call_gwo_pricing(pgm_solver.dual_exog)
+                            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(pgm_solver.dual_exog)
+                            
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
                             trig = 0
                             # if trig==0:
-                            max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, user_ignore_state_action,beta_info = self.state_update_function_cvrp._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
+                            max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
                             
                             new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
                             # elif trig==1:

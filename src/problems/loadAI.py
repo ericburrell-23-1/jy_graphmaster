@@ -56,7 +56,12 @@ class loadAI(OptimizationProblem):
         self.service_time : Dict[int, float] = {}
         self.pickup_to_dropoff : Dict[int, int] = {}
         self.dropoff_to_pickup : Dict[int, int] = {}
-        
+        self.problem_info = {}
+        self.problem_info['volume_capacity'] = VOLUME_CAPACITY
+        self.problem_info['weight_capacity'] = WEIGHT_CAPACITY
+        self.problem_info['hos_drive_time'] = HOS_DRIVE_TIME
+        self.problem_info['hos_work_time'] = HOS_WORK_TIME
+        self.problem_info['max_combined_loads'] = MAX_COMBINED_LOADS
         file_path = self.problem_instance_file_name # FIX THIS FOR THE PROPER FILE PATH
         df = pd.read_csv(file_path)
         self._create_null_action_info()
@@ -579,5 +584,5 @@ class loadAI(OptimizationProblem):
         # ASSIGN STATE UPDATE MODULE HERE
         nodes = self._create_travel_time()
         neighbors_by_distance, neighbors = self._create_nearest_node(nodes,10)
-        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources)
+        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
     

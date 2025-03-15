@@ -11,7 +11,7 @@ import numpy as np
 class LoadAI_state_input():
     
  
-    def __init__(self, nodes, actions, capacity, demands, time_window_start, time_window_end, pickup_to_dropoff, dropoff_to_pickup, neighbors_by_distance, neighbors, travel_time, initial_resource_vector, resource_name_to_index, number_of_resources):
+    def __init__(self, nodes, actions, capacity, demands, time_window_start, time_window_end, pickup_to_dropoff, dropoff_to_pickup, neighbors_by_distance, neighbors, travel_time, initial_resource_vector, resource_name_to_index, number_of_resources,problem_info):
         self.nodes = nodes
         
         self.actions = actions
@@ -29,6 +29,7 @@ class LoadAI_state_input():
         self.initial_resource_vector = initial_resource_vector
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
+        self.problem_info = problem_info
         random.seed(1000)
  
  
@@ -169,48 +170,13 @@ class LoadAI_state_input():
             for v in self.pickup_node:
                 if u!=v:
                     """calculate cost_uvuv"""
-                    cost_uvuv = self.betaTime[u]
-                    arrive_at_pickup_v = cost_uvuv+self.travel_time[(u,v)]
-                    if arrive_at_pickup_v < self.time_window_end[v]:
-                        cost_uvuv = max(arrive_at_pickup_v, self.time_window_start[v])
-                    else:
-                        cost_uvuv = np.inf
-                        break
-                    arrive_at_dropoff_u = cost_uvuv + self.travel_time[(v,self.pickup_to_dropoff[u])]
-                    if arrive_at_dropoff_u < self.time_window_end[self.pickup_to_dropoff[u]]:
-                        cost_uvuv = max(arrive_at_dropoff_u, self.time_window_start[self.pickup_to_dropoff[u]])
-                    else:
-                        cost_uvuv = np.inf
-                        break
-                    arrive_at_dropoff_v = cost_uvuv + self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
-                    if arrive_at_dropoff_v < self.time_window_end[self.pickup_to_dropoff[v]]:
-                        cost_uvuv = max(arrive_at_dropoff_v, self.time_window_start[self.pickup_to_dropoff[v]])
-                    else:
-                        cost_uvuv = np.inf
-                        break
+                    cost_uvuv = self.betaTime[u] + self.travel_time[(u,v)] + \
+                        self.travel_time[(v,self.pickup_to_dropoff[u])]+ self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
+                    
                     """calculate cost_uuvv"""
  
-                    cost_uuvv = self.betaTime[u]
-                    # Travel from pickup u to dropoff u
-                    arrive_at_dropoff_u = cost_uuvv + self.travel_time[(u, self.pickup_to_dropoff[u])]
-                    if arrive_at_dropoff_u < self.time_window_end[self.pickup_to_dropoff[u]]:
-                        cost_uuvv = max(arrive_at_dropoff_u, self.time_window_start[self.pickup_to_dropoff[u]])
-                    else:
-                        cost_uuvv = np.inf
- 
-                    # Travel from dropoff u to pickup v
-                    arrive_at_pickup_v = cost_uuvv + self.travel_time[(self.pickup_to_dropoff[u], v)]
-                    if arrive_at_pickup_v < self.time_window_end[v]:
-                        cost_uuvv = max(arrive_at_pickup_v, self.time_window_start[v])
-                    else:
-                        cost_uuvv = np.inf
- 
-                    # Travel from pickup v to dropoff v
-                    arrive_at_dropoff_v = cost_uuvv + self.travel_time[(v, self.pickup_to_dropoff[v])]
-                    if arrive_at_dropoff_v < self.time_window_end[self.pickup_to_dropoff[v]]:
-                        cost_uuvv = max(arrive_at_dropoff_v, self.time_window_start[self.pickup_to_dropoff[v]])
-                    else:
-                        cost_uuvv = np.inf
+                    cost_uuvv = self.betaTime[u] + self.travel_time[(u,self.pickup_to_dropoff[u])] + \
+                        self.travel_time[(self.pickup_to_dropoff[u],v)] + self.travel_time[(v,self.pickup_to_dropoff[v])]
                     if cost_uvuv < cost_uuvv:
                         reasonable_action.update(self.actions[u,v])
                         reasonable_action.update(self.actions[v,self.pickup_to_dropoff[u]])
@@ -231,7 +197,10 @@ class LoadAI_state_input():
         State_in_col.append(cur_state)
         for a in action_list:
             new_s=a.get_head_state(cur_state, l_id)
-
+            try:
+                print(new_s.state_vec)
+            except:
+                print('check here')
             State_in_col.append(new_s)
             cur_state=new_s
         s_remove=[]
@@ -299,3 +268,5 @@ class LoadAI_state_input():
         
         # Create a new CSR matrix
         return csr_matrix((data, (rows, cols)), shape=vec1.shape)
+
+        

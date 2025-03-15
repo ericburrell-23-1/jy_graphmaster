@@ -357,7 +357,8 @@ class Full_Multi_Graph_Object_given_l:
                     if candidate.node == head_ideal.node:
                         head_node_candidates.append(candidate)
                         head_node_dense.append(cand_dense_all[i])
-                
+                    # else:
+                    #     input('chekc here')
                 if not head_node_candidates:
                     continue
                     

@@ -1,0 +1,4 @@
+Shipment ID,Pickup Appointment Start Date Time,Pickup Appointment End Date Time,Delivery Appointment Start Date Time,Delivery Appointment End Date Time,Pickup Appointment Work Duration,Delivery Appointment Work Duration,Pickup City,Delivery City,Pickup Lat,Pickup Lon,Delivery Lat,Delivery Lon,Pickup State,Delivery State,Total Weight,Pallet Count,Loaded Miles,If Consolidated,ManifestID
+4043901,1/24/2025 10:05,1/24/2025 12:29,1/27/2025 6:29,1/27/2025 7:12,0,0,Miami,Grove City,25.846,-80.247,39.883,-83.064,FL,OH,6923,7.051762941,981,TRUE,4043901-4043920-4043925
+4043902,1/24/2025 7:41,1/24/2025 9:07,1/28/2025 6:07,1/28/2025 6:51,0,0,Sebring,Ludington,27.516,-81.497,43.944,-86.431,FL,MI,5383,4.576144036,1166,TRUE,4043900-4043902-4043943
+4043907,1/23/2025 22:05,1/23/2025 23:46,1/26/2025 17:46,1/26/2025 19:55,0,0,Miami,Grove City,25.846,-80.247,39.883,-83.064,FL,OH,6923,7.051762941,981,TRUE,4043907-4043918-4043942
