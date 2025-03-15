@@ -72,7 +72,7 @@ class GWOPricingSolverLoadAI:
                 if edge not in self.edge_resources:
                     return False, []
                     
-
+                new_resources = resources + self.edge_resources[edge]
                 if current == 'Source':
                     current = -1
                 if current == 'Sink':
