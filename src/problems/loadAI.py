@@ -557,8 +557,27 @@ class loadAI(OptimizationProblem):
                     self.travel_time[(n1,n2)] =0
         nodes.append(-1)
         nodes.append(-2)
+        return nodes
+    def _create_nearest_node(self,nodes,k):
+        neighbors_by_distance = {
+            u: sorted(
+                [v for v in nodes if v != u and v not in {-1, -2}],
+                key=lambda v: self.travel_time[(u, v)]
+            )
+            for u in nodes if u not in {-1, -2}
+        }
+        k = min(k,len(self.nodes)-1)
+        neighbors = {}
+        for u, nodes in neighbors_by_distance.items():
+            neighbors[u] = nodes[:k]
+            if u == -1:
+                neighbors[u].remove(-2)
+            if u == -2:
+                neighbors[u].remove(-1)
+        return neighbors_by_distance, neighbors
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        self._create_travel_time()
-        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, {}, {}, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources)
+        nodes = self._create_travel_time()
+        neighbors_by_distance, neighbors = self._create_nearest_node(nodes,10)
+        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources)
     

@@ -85,10 +85,10 @@ class LoadAI_state_input():
                 
                 for drop_off_node in drop_off_nodes:
                     minterm_vec[self.resource_name_to_index[str((f'may_avoid_dropoff',drop_off_node))]] = np.inf
-                min_term_vec_dict[this_pickup_nodes] =minterm_vec
+                min_term_vec_dict[this_pickup_nodes] =csr_matrix(minterm_vec)
             else:
                 minterm_vec = np.full((1,self.number_of_resources), np.inf)
-                min_term_vec_dict[this_pickup_nodes] =minterm_vec
+                min_term_vec_dict[this_pickup_nodes] =csr_matrix(minterm_vec)
     
         return min_term_vec_dict
 
@@ -151,12 +151,15 @@ class LoadAI_state_input():
  
         reasonable_action = set()
         for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
-            reasonable_action.update(self.actions[pickup_node,dropoff_node])
+
+            this_action = self.actions[pickup_node,dropoff_node]
+            reasonable_action.update(this_action)
         
-        for u in self.nodes:
-            for n in node_2_pickup_actions:
-                for a in node_2_pickup_actions[n]:
-                    reasonable_action.update(a)
+        for u in self.dropoff_node:
+            for v in self.neighbors[u]:
+                if v in self.pickup_node and (u,v) in self.actions.keys():
+                    
+                    reasonable_action.update(self.actions[(u,v)])
  
         #for drop_off_node in self.dropoff_to_pickup.items():
         #    for node in self.neighbors[drop_off_node]:
@@ -213,6 +216,10 @@ class LoadAI_state_input():
                         reasonable_action.update(self.actions[v,self.pickup_to_dropoff[u]])
                         reasonable_action.update(self.actions[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
         print('return reasonable action')
+        for a in reasonable_action:
+            if not isinstance(a, Action):
+                print(a)
+                print('error here')
         return reasonable_action
         
     def get_states_from_action_list(self, initial_state,action_list: List[Action],l_id):
@@ -221,8 +228,10 @@ class LoadAI_state_input():
         """
         State_in_col=[]
         cur_state= State(action_list[0].node_tail,self.initial_resource_vector,l_id,action_list[0].node_tail == -1,action_list[0].node_head == -2)
+        State_in_col.append(cur_state)
         for a in action_list:
             new_s=a.get_head_state(cur_state, l_id)
+
             State_in_col.append(new_s)
             cur_state=new_s
         s_remove=[]
@@ -245,63 +254,48 @@ class LoadAI_state_input():
         return State_in_col
     def elementwise_min_csr(self, vec1, vec2) -> csr_matrix:
         """
-        Compute the elementwise minimum of a NumPy array and a CSR matrix.
+        Compute the elementwise minimum of two CSR matrices.
         
         Parameters:
         -----------
-        vec1 : numpy.ndarray
-            First input vector/matrix
+        vec1 : scipy.sparse.csr_matrix
+            First input sparse matrix
         vec2 : scipy.sparse.csr_matrix
-            Second input vector/matrix
+            Second input sparse matrix
             
         Returns:
         --------
         scipy.sparse.csr_matrix
             A CSR matrix containing the elementwise minimum
         """
-        vec1 = vec1.reshape(1, -1)
         # Check if shapes are compatible
         if vec1.shape != vec2.shape:
             raise ValueError(f"Matrices have incompatible shapes: {vec1.shape} vs {vec2.shape}")
         
-        # Create a copy of vec2 to modify
-        result = vec2.copy()
+        # Convert to COO format for easier manipulation
+        cx1 = vec1.tocoo()
+        cx2 = vec2.tocoo()
         
-        # Get the indices of non-zero elements in vec2
-        rows, cols = vec2.nonzero()
+        # Create dictionaries for non-zero values
+        dict1 = {(i, j): v for i, j, v in zip(cx1.row, cx1.col, cx1.data)}
+        dict2 = {(i, j): v for i, j, v in zip(cx2.row, cx2.col, cx2.data)}
         
-        # For each non-zero element in vec2, take the minimum with the corresponding element in vec1
-        for i, j in zip(rows, cols):
-            result[i, j] = min(vec1[i, j], vec2[i, j])
+        # Combine keys
+        all_keys = set(dict1.keys()).union(set(dict2.keys()))
         
-        # Find elements in vec1 that are non-zero but zero in vec2
-        # Convert vec2 to a dense array for boolean comparison
-        vec2_dense = vec2.toarray()
-        mask = (vec2_dense == 0) & (vec1 != 0)
-        additional_rows, additional_cols = np.where(mask)
-        
-        # Create lists to hold the new data
-        new_data = []
-        new_rows = []
-        new_cols = []
-        
-        # Add the values from vec1 where vec2 is zero
-        for i, j in zip(additional_rows, additional_cols):
-            new_rows.append(i)
-            new_cols.append(j)
-            new_data.append(vec1[i, j])
-        
-        # If we have new values to add
-        if new_data:
-            # Convert current result to COO format for easier modification
-            result_coo = result.tocoo()
+        # Create new data for the minimum values
+        rows, cols, data = [], [], []
+        for i, j in all_keys:
+            # Get values, with 0 as default for missing keys
+            val1 = dict1.get((i, j), 0)
+            val2 = dict2.get((i, j), 0)
+            min_val = min(val1, val2)
             
-            # Combine existing and new data
-            combined_data = np.concatenate([result_coo.data, new_data])
-            combined_rows = np.concatenate([result_coo.row, new_rows])
-            combined_cols = np.concatenate([result_coo.col, new_cols])
-            
-            # Create a new CSR matrix
-            result = csr_matrix((combined_data, (combined_rows, combined_cols)), shape=vec1.shape)
+            # Only include non-zero values in the result
+            if min_val != 0:
+                rows.append(i)
+                cols.append(j)
+                data.append(min_val)
         
-        return result
+        # Create a new CSR matrix
+        return csr_matrix((data, (rows, cols)), shape=vec1.shape)
