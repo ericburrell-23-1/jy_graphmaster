@@ -106,10 +106,17 @@ class GWOPricingSolverLoadAI:
         reduced_cost = 0
         resources = self.initial_resource()
         
-        for i in range(len(path) - 1):
-            edge = (path[i], path[i + 1])
-            reduced_cost += self.edge_weights[edge]
-            resources += self.edge_resources[edge]
+        if path ==['Source','Sink']:
+            reduced_cost = np.inf
+            resources = np.inf
+        else:
+            for i in range(len(path) - 1):
+                edge = (path[i], path[i + 1])
+                try:
+                    reduced_cost += self.edge_weights[edge]
+                except:
+                    print('check here')
+                resources += self.edge_resources[edge]
             
         return reduced_cost, resources
     
@@ -222,85 +229,180 @@ class GWOPricingSolverLoadAI:
 
 
     def generate_valid_path(self) -> List[str]:
-        """Generate path with improved feasibility checking"""
+        """Generate path with improved feasibility checking using beam search width=2"""
         max_attempts = 10
         best_path = None
         best_cost = float('inf')
-        resources = self.initial_resource()
-        for _ in range(max_attempts):
-            path = ['Source']
-            current = 'Source'
-            visited = {'Source'}
+        
+        for attempt in range(max_attempts):
+            # Initialize with 2 identical starting states
+            states = [
+                {
+                    'path': ['Source'],
+                    'current': 'Source',
+                    'visited': {'Source'},
+                    'avoid_cycle': [],
+                    'can_drop_off': [],
+                    'resources': self.initial_resource(),
+                    'cost': 0
+                }
+            ]
             
-            avoid_cycle = []
-            can_drop_off = []
-            resources = self.initial_resource()
-            while current != 'Sink':
-                neighbors = []
-                if isinstance(current,int):
-                    print('check here')
-                if avoid_cycle == [1,4]:
-                    print('stop here')
-                for neighbor in self.graph.neighbors(current):
-                    edge = (current, neighbor)
-                    # Check if adding this edge would maintain feasibility
-                    new_resources = resources + self.edge_resources[edge]
-                    if isinstance(neighbor,str) and neighbor != 'Sink':
-                        parts = neighbor.split('_')
-                        des_node = int(parts[2])
+            iteration = 0
+            max_iterations = 4 * len(self.graph.nodes)  # Safety limit
+            
+            # Keep expanding states until we reach the sink or run out of states
+            while states and iteration < max_iterations:
+                iteration += 1
+                next_states = []
+                
+                # For each current state, find all possible next nodes
+                for state in states:
+                    current = state['current']
+                    
+                    # Already reached sink - add to next_states and continue
+                    if current == 'Sink':
+                        next_states.append(state)
+                        continue
+                    
+                    path = state['path']
+                    visited = state['visited']
+                    avoid_cycle = state['avoid_cycle']
+                    can_drop_off = state['can_drop_off']
+                    resources = state['resources']
+                    
+                    neighbors = []
+                    
+                    # Find all possible neighbors, exactly as in the original code
+                    for neighbor in self.graph.neighbors(current):
+                        edge = (current, neighbor)
                         
-                        if des_node not in avoid_cycle:
-                            if des_node in self.pickup_node:
-                                new_resources[self.resource_name_to_index['time']+1] = min(new_resources[self.resource_name_to_index['time']+1],self.time_window_start[des_node])
-                                if all(new_resources <= self.max_res[des_node]) and all(new_resources >= self.min_res[des_node]):
+                        # First check - compute temporary resources
+                        temp_resources = resources.copy() + self.edge_resources[edge]
+                        
+                        if isinstance(neighbor, str) and neighbor != 'Sink':
+                            parts = neighbor.split('_')
+                            des_node = int(parts[2])
+                            
+                            if des_node not in avoid_cycle:
+                                if des_node in self.pickup_node:
+                                    # Keep original time constraint handling
+                                    temp_resources[self.resource_name_to_index['time']+1] = min(
+                                        temp_resources[self.resource_name_to_index['time']+1],
+                                        self.time_window_start[des_node]
+                                    )
+                                    if all(temp_resources <= self.max_res[des_node]) and all(temp_resources >= self.min_res[des_node]):
+                                        neighbors.append((neighbor, self.edge_weights[edge]))
+                                        
+                                if des_node in self.dropoff_node and des_node in can_drop_off:
+                                    # Keep original time constraint handling
+                                    temp_resources[self.resource_name_to_index['time']+1] = min(
+                                        temp_resources[self.resource_name_to_index['time']+1],
+                                        self.time_window_start[des_node]
+                                    )
+                                    if all(temp_resources <= self.max_res[des_node]) and all(temp_resources >= self.min_res[des_node]):
+                                        neighbors.append((neighbor, self.edge_weights[edge]))
+                                        
+                                if des_node == -2:
                                     neighbors.append((neighbor, self.edge_weights[edge]))
-                            if des_node in self.dropoff_node and des_node in can_drop_off:
-                                new_resources[self.resource_name_to_index['time']+1] = min(new_resources[self.resource_name_to_index['time']+1],self.time_window_start[des_node])
-                                if all(new_resources <= self.max_res[des_node]) and all(new_resources >= self.min_res[des_node]):
-                                    neighbors.append((neighbor, self.edge_weights[edge]))
-                            if des_node == -2:
-                                neighbors.append((neighbor, self.edge_weights[edge]))
-                    elif isinstance(neighbor,int):
-                        neighbors.append((neighbor, self.edge_weights[edge]))
-                    elif neighbor == 'Sink':
-                        des_node = -2
-                        new_resources[self.resource_name_to_index['time']+1] = min(new_resources[self.resource_name_to_index['time']+1],self.time_window_start[des_node])
-                        if all(new_resources <= self.max_res[des_node]) and all(new_resources >= self.min_res[des_node]):
+                                    
+                        elif isinstance(neighbor, int):
                             neighbors.append((neighbor, self.edge_weights[edge]))
-
-                    else:
-                        print(neighbor)
-                        input('neighbor wierd here')
+                            
+                        elif neighbor == 'Sink':
+                            des_node = -2
+                            temp_resources[self.resource_name_to_index['time']+1] = min(
+                                temp_resources[self.resource_name_to_index['time']+1],
+                                self.time_window_start[des_node]
+                            )
+                            if all(temp_resources <= self.max_res[des_node]) and all(temp_resources >= self.min_res[des_node]):
+                                neighbors.append((neighbor, self.edge_weights[edge]))
+                    
+                    if not neighbors:
+                        continue  # No valid neighbors from this state
+                    
+                    # Sort neighbors by edge weight (like original)
+                    neighbors.sort(key=lambda x: x[1])
+                    
+                    # Try at most 2 neighbors from each state
+                    selected_neighbors = []
+                    
+                    # Always consider the best neighbor
+                    selected_neighbors.append(neighbors[0])
+                    
+                    # Add a random neighbor with probability 0.7 (like original)
+                    if len(neighbors) > 1 and random.random() < 0.7:
+                        # Pick a random neighbor that's not already selected
+                        candidates = [n for n in neighbors[1:]]
+                        if candidates:
+                            selected_neighbors.append(random.choice(candidates))
+                    
+                    # Create a new state for each selected neighbor
+                    for next_node, edge_weight in selected_neighbors:
+                        new_path = path + [next_node]
+                        new_visited = visited.copy()
+                        new_visited.add(next_node)
                         
-                if not neighbors:
+                        # Update resources EXACTLY as in original code
+                        new_resources = resources.copy() + self.edge_resources[(path[-1], next_node)]
+                        new_avoid_cycle = avoid_cycle.copy()
+                        new_can_drop_off = can_drop_off.copy()
+                        
+                        # Apply resource constraints based on node type
+                        if isinstance(next_node, int):
+                            new_resources[self.resource_name_to_index['time']+1] = min(
+                                new_resources[self.resource_name_to_index['time']+1],
+                                self.time_window_start[next_node]
+                            )
+                            new_avoid_cycle.append(next_node)
+                            if next_node in self.pickup_node:
+                                new_can_drop_off.append(self.pickup_to_dropoff[next_node])
+                        
+                        # Calculate cost
+                        new_cost = state['cost'] + edge_weight
+                        
+                        new_state = {
+                            'path': new_path,
+                            'current': next_node,
+                            'visited': new_visited,
+                            'avoid_cycle': new_avoid_cycle,
+                            'can_drop_off': new_can_drop_off,
+                            'resources': new_resources,
+                            'cost': new_cost
+                        }
+                        
+                        next_states.append(new_state)
+                
+                # If no more valid next states, end this attempt
+                if not next_states:
                     break
                     
-                # Prefer neighbors with lower reduced cost
-                neighbors.sort(key=lambda x: x[1])
-                next_node = neighbors[0][0] if random.random() < 0.7 else random.choice(neighbors)[0]
+                # Sort by cost and keep at most 2 best states
+                next_states.sort(key=lambda s: s['cost'])
+                states = next_states[:min(2, len(next_states))]
                 
-                path.append(next_node)
-                print(path)
-                current = next_node
-                visited.add(next_node)
-                resources += self.edge_resources[(path[-2], path[-1])]
-                if isinstance(path[-1],int):
-                    resources[self.resource_name_to_index['time']+1] = \
-                        min(resources[self.resource_name_to_index['time']+1],self.time_window_start[path[-1]])
-                    avoid_cycle.append(path[-1])
-                    if path[-1] in self.pickup_node:
-                        can_drop_off.append(self.pickup_to_dropoff[path[-1]])
-                
-                if len(path) > 2 * len(self.graph.nodes):
+                # If both states reach the sink, we can stop
+                if all(state['current'] == 'Sink' for state in states):
                     break
-                    
-            if current == 'Sink':
-                cost, _ = self.calculate_fitness(path)
+            
+            # Check if we found any paths to the sink
+            completed_states = [s for s in states if s['current'] == 'Sink']
+            
+            for state in completed_states:
+                cost, _ = self.calculate_fitness(state['path'])
                 if cost < best_cost:
-                    best_path = path
+                    best_path = state['path']
                     best_cost = cost
-                    
-        return best_path if best_path else ['Source', 'Sink']
+        
+        # Return the best path found or default path
+        if best_path:
+            return best_path
+        else:
+            # Fallback to the original implementation for one final attempt
+            original_path = self._original_generate_valid_path()
+            if original_path and original_path != ['Source', 'Sink']:
+                return original_path
+            return ['Source', 'Sink']
     
 
 

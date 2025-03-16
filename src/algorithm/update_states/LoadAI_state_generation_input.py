@@ -213,8 +213,8 @@ class LoadAI_state_input():
             s2=State(s.node,my_state_vec, l_id, s.node==-1,s.node==-2)# make a new state
             if np.sum(np.abs(s2.state_vec-s.state_vec))>.001:
                 s_remove.append(s)
-            else:
                 s_add.append(s2)
+                
 
         for s in s_remove:
             State_in_col.remove(s)
