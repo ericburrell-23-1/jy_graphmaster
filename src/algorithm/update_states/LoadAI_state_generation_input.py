@@ -80,7 +80,8 @@ class LoadAI_state_input():
                 minterm_vec[self.resource_name_to_index['time']] = np.inf
                 minterm_vec[self.resource_name_to_index['max_combined_loads']] = np.inf
                 for other_pickup_node in pickup_nodes:
-                    if self.betaTime[this_pickup_nodes] > self.betaTime[other_pickup_node]:
+                    #TODO: double check here if it is less or greater
+                    if self.betaTime[this_pickup_nodes] < self.betaTime[other_pickup_node]:
                         minterm_vec[self.resource_name_to_index[str((f'may_pickup',other_pickup_node))]] = 0
                 
                 
@@ -93,15 +94,30 @@ class LoadAI_state_input():
     
         return min_term_vec_dict
 
-    def _get_input(self, list_of_customer, list_of_action, l_id, init_state):
+    def _get_input(self, list_of_customer, list_of_action, l_id, init_state_resource):
         max_depth = self.capacity
         list_of_customer = list_of_customer[1:-1]
         #beta_dict, beta = self._generate_beta_term(list_of_customer)
-        initial_state = init_state
+        initial_state = init_state_resource
         self._generate_beta_time(list_of_customer,list_of_action,initial_state)
         self.node_min_vec_dict = self._generate_node_min_term(self.pickup_node,self.dropoff_node)
-        state_in_path = self.get_states_from_action_list(initial_state,list_of_action,l_id)
+        state_in_path = self.get_states_from_action_list(list_of_customer,list_of_action,l_id)
         
+        #debug 
+        # for s1,s2 in zip(state_in_path[:-1],state_in_path[1:]):
+        #     a = self.actions[(s1.node,s2.node)][0]
+        #     vec1 = (s1.state_vec + a.resource_consumption_vec).toarray()
+        #     vec2 = s2.state_vec.toarray()
+        #     if  np.any(vec1 < vec2):
+        #         print('s1 state_vec')
+        #         s1.pretty_print_state()
+        #         print('s2 state_vec')
+        #         s2.pretty_print_state()
+        #         print('action trans term vec')
+        #         print(a.resource_consumption_vec.toarray())
+        #         input('error here')
+                
+
         
         
         action_reasonable = self._generate_reasonalbe_actions()
@@ -191,32 +207,41 @@ class LoadAI_state_input():
                 input('error here')
         return reasonable_action
         
-    def get_states_from_action_list(self, initial_state,action_list: List[Action],l_id):
+    def get_states_from_action_list(self, list_of_customer, action_list: List[Action], l_id):
         """
-        Returns a list of states given an action_list.
+        Returns a list of states given an action_list, ensuring the states follow the 
+        sequence in list_of_customer, with source (-1) at the beginning and sink (-2) at the end.
         """
-        State_in_col=[]
-        cur_state= State(action_list[0].node_tail,self.initial_resource_vector,l_id,action_list[0].node_tail == -1,action_list[0].node_head == -2)
-        State_in_col.append(cur_state)
+        # Create initial state
+        cur_state = State(action_list[0].node_tail, self.initial_resource_vector, l_id, 
+                        action_list[0].node_tail == -1, action_list[0].node_head == -2)
+        
+        # Initialize ordered state list with the source state
+        State_in_col = [cur_state]
+        
+        # Generate states in the original sequence
         for a in action_list:
-            new_s=a.get_head_state(cur_state, l_id)
+            new_s = a.get_head_state(cur_state, l_id)
             State_in_col.append(new_s)
-            cur_state=new_s
-        s_remove=[]
-        s_add=[]
+            cur_state = new_s
+        
+        # Create a mapping to track replacements while preserving order
+        replacement_map = {}
+        
+        # Identify states that need replacement
         for s in State_in_col:
+            my_node = s.node
+            my_state_vec = self.elementwise_min_csr(self.node_min_vec_dict[my_node], s.state_vec)
+            
+            # Check if state vector needs adjustment
+            if np.sum(np.abs(my_state_vec - s.state_vec)) > .001:
+                # Create replacement state
+                s2 = State(s.node, my_state_vec, l_id, s.node == -1, s.node == -2)
+                replacement_map[s] = s2
         
-            my_node=s.node
+        # Replace the states while preserving order
+        State_in_col = [replacement_map.get(s, s) for s in State_in_col]
         
-            my_state_vec=self.elementwise_min_csr(self.node_min_vec_dict [my_node],s.state_vec)
-            s2=State(s.node,my_state_vec, l_id, s.node==-1,s.node==-2)# make a new state
-            if np.sum(np.abs(s2.state_vec-s.state_vec))>.001:
-                s_remove.append(s)
-                s_add.append(s2)
-        for s in s_remove:
-            State_in_col.remove(s)
-        for s in s_add:
-            State_in_col.append(s)
         return State_in_col
     def elementwise_min_csr(self, vec1, vec2) -> csr_matrix:
         """
@@ -266,4 +291,18 @@ class LoadAI_state_input():
         # Create a new CSR matrix
         return csr_matrix((data, (rows, cols)), shape=vec1.shape)
 
+    def is_less_than_elementwise(self,matrix1, matrix2):
+        """
+        Checks if matrix1 is elementwise less than matrix2 for sparse matrices.
+        Returns True if ALL elements in matrix1 are less than corresponding elements in matrix2.
+        Returns False otherwise.
+        """
+        # Convert to arrays for elementwise comparison
+        matrix1_array = matrix1.toarray()
+        matrix2_array = matrix2.toarray()
         
+        # Perform elementwise comparison
+        comparison = matrix1_array < matrix2_array
+        
+        # Return True if ALL elements satisfy the condition
+        return np.all(comparison)
