@@ -186,6 +186,7 @@ class GraphMaster:
                             max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
                             
                             new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
+                            
                             # elif trig==1:
                             #     beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
                             # else:

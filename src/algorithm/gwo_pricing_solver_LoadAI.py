@@ -379,12 +379,12 @@ class GWOPricingSolverLoadAI:
                     
                 # Sort by cost and keep at most 2 best states
                 next_states.sort(key=lambda s: s['cost'])
-                states = next_states[:min(2, len(next_states))]
+                states = next_states[:min(10, len(next_states))]
                 
                 # If both states reach the sink, we can stop
                 if all(state['current'] == 'Sink' for state in states):
                     break
-            
+                    
             # Check if we found any paths to the sink
             completed_states = [s for s in states if s['current'] == 'Sink']
             

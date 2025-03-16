@@ -100,14 +100,14 @@ class General_state_update:
                 # 30-32: Skip if None (action not valid from this state)
                 if s2 is None:
                     continue
-                print('====check state update====')
-                print('----s1------')
-                s.pretty_print_state()
-                print('----action------')
-                print(a.resource_consumption_vec.toarray())
-                print('----s2------')
-                s2.pretty_print_state()
-                print('============')
+                # print('====check state update====')
+                # print('----s1------')
+                # s.pretty_print_state()
+                # print('----action------')
+                # print(a.resource_consumption_vec.toarray())
+                # print('----s2------')
+                # s2.pretty_print_state()
+                # print('============')
                 # 33-35: Skip if user_ignore_state_action returns True
                 if user_ignore_state_action(s2, a):
                     continue

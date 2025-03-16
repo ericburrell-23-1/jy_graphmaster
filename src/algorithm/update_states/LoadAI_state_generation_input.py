@@ -149,17 +149,18 @@ class LoadAI_state_input():
         #itterate over all actions and store for each action
  
         #comptue for each node the K nearest pickuop nodes
- 
+        # action from source to pick up, from drop off to sink
         reasonable_action = set()
         for u in self.pickup_node:
             reasonable_action.update(self.actions[(-1,u)])
         for v in self.dropoff_node:
             reasonable_action.update(self.actions[(v,-2)])
+        # action from pickup to dropoff
         for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
 
             this_action = self.actions[pickup_node,dropoff_node]
             reasonable_action.update(this_action)
-        
+        # action from dropoff to nearby pickup if it is neighbor
         for u in self.dropoff_node:
             for v in self.neighbors[u]:
                 if v in self.pickup_node and (u,v) in self.actions.keys():
@@ -174,22 +175,20 @@ class LoadAI_state_input():
             for v in self.pickup_node:
                 if u!=v:
                     """calculate cost_uvuv"""
-                    cost_uvuv = self.betaTime[u] + self.travel_time[(u,v)] + \
+                    cost_uvuv = self.travel_time[(u,v)] + \
                         self.travel_time[(v,self.pickup_to_dropoff[u])]+ self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
                     
                     """calculate cost_uuvv"""
  
-                    cost_uuvv = self.betaTime[u] + self.travel_time[(u,self.pickup_to_dropoff[u])] + \
+                    cost_uuvv = self.travel_time[(u,self.pickup_to_dropoff[u])] + \
                         self.travel_time[(self.pickup_to_dropoff[u],v)] + self.travel_time[(v,self.pickup_to_dropoff[v])]
                     if cost_uvuv < cost_uuvv:
                         reasonable_action.update(self.actions[u,v])
-                        reasonable_action.update(self.actions[v,self.pickup_to_dropoff[u]])
-                        reasonable_action.update(self.actions[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
-        print('return reasonable action')
+        #print('return reasonable action')
         for a in reasonable_action:
             if not isinstance(a, Action):
                 print(a)
-                print('error here')
+                input('error here')
         return reasonable_action
         
     def get_states_from_action_list(self, initial_state,action_list: List[Action],l_id):
@@ -201,10 +200,6 @@ class LoadAI_state_input():
         State_in_col.append(cur_state)
         for a in action_list:
             new_s=a.get_head_state(cur_state, l_id)
-            try:
-                print(new_s.state_vec)
-            except:
-                print('check here')
             State_in_col.append(new_s)
             cur_state=new_s
         s_remove=[]
@@ -218,8 +213,6 @@ class LoadAI_state_input():
             if np.sum(np.abs(s2.state_vec-s.state_vec))>.001:
                 s_remove.append(s)
                 s_add.append(s2)
-                
-
         for s in s_remove:
             State_in_col.remove(s)
         for s in s_add:
