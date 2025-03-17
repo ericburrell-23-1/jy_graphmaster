@@ -299,6 +299,8 @@ class jy_slow_general_pricing_solver:
             print('red_cost')
             print(red_cost)
             #input('---')
+        else :
+            print('DONE NO NEG REDUCED COST FOUND')
         return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost]
     def call_expansion_algorihtm_till(self):
 
