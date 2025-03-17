@@ -407,12 +407,18 @@ class Full_Multi_Graph_Object_given_l:
         self.state_2_is_dom_states_dict = defaultdict(set)
     
     # Iterate over all nodes and compute dominance
+        print('len(rez_states)')
+        print(len(self.rez_states))
+        print('starting dom state generation')
         for my_node, states in self.resStates_by_node.items():
             for s1, s2 in permutations(states, 2):  # Generate all ordered pairs (s1, s2)
+                if s1.node!=s2.node:
+                    input('error here')
                 [is_dom,is_equal] = s1.this_state_dominates_input_state(s2)
                 if is_dom:
                     self.state_2_dom_states_dict[s1].add(s2)
                     self.state_2_is_dom_states_dict[s2].add(s1)
+        print('done state generation')
     def PGM_sub_compute_min_dominating_states_by_node(self):
         #Compute for each s the minimally dominating states .
         #s1 in self.state_min_dom_dict[s] meaning s1>s
