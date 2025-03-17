@@ -306,8 +306,31 @@ class Full_Multi_Graph_Object_given_l:
         #     print(f"action_ub_check: {action_ub_check_time:.4f} seconds")
     
     
-
-
+    def LOAD_AI_simple_check_valid_action_ub(self,my_action,my_state):
+        LAD=self.jy_option['load_ai_dict']#[]
+        node_destination=my_action.node_head
+        node_origin=my_action.node_tail
+        is_possible=True
+        if node_destination in LAD['drop_off_nodes']:
+            res_index=LAD['node_2_must_dropoff_resource_number'][node_destination]
+            pickup_4_destination=LAD['dropoff_node_2_pickup_node'][node_destination]
+            #print('res_index')
+            #print(res_index)
+            tmp=my_state.state_vec[0,res_index]<0.5
+            if tmp and node_origin!=pickup_4_destination:
+                is_possible=False
+       #if is_possible==False:
+            #print('is_possible')
+            #print('my state')
+       #     my_state.pretty_print_state()
+            #print('my action')
+       #     my_action.pretty_print_action()
+            #input('nothin is wrong i just want to know if this flags show me ')
+       # print(is_possible)
+       # print('node_destination')
+       # print(node_destination)
+       # input('hihi')
+        return is_possible
     def compute_actions_ub(self):
         """Computes upper bound actions for each (s1, s2) pair."""
         
@@ -348,7 +371,9 @@ class Full_Multi_Graph_Object_given_l:
                     head_ideal = a1.get_head_state(state_tail, self.l_id)
                 if head_ideal is None:
                     continue
-                    
+                if self.jy_option['use_load_ai_in_pgm']==True:
+                    if self.LOAD_AI_simple_check_valid_action_ub(a1,state_tail)==False:
+                        continue
                 # Filter candidate states to only those with the same node as head_ideal
                 head_node_candidates = []
                 head_node_dense = []

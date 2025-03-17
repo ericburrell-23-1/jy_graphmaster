@@ -121,7 +121,7 @@ class loadAI(OptimizationProblem):
         self.number_of_customers = len(self.pickup_to_dropoff)
         for node in self.weight_demands:
             self.nodes.append(node)
-
+        
         for node in self.weight_demands:
             self.nodes.append(round(node + self.number_of_customers))
         
@@ -132,7 +132,9 @@ class loadAI(OptimizationProblem):
         #     self.nodes.append(n1)
         #     self.nodes.append(n2)
         self.nodes.append(-2)
-
+        #print('self.nodes')
+        #print(self.nodes)
+        #input('---')
         # EXOG RHS
         self.rhs_vector = ones(self.number_of_customers)
         idx = 0

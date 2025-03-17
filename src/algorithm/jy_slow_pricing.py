@@ -67,7 +67,7 @@ class label:
         self.jy_num_pickups=0
         for s in self.my_states_ordered:
             self.all_nodes_ordered.append(s.node)
-            if self.jy_opt['using_load_ai_lazy'] and s.node>=-0.5 and s.node<self.jy_opt['using_load_ai_lazy_num_pickups']:
+            if self.jy_opt['using_load_ai_lazy'] and s.node>=-0.5 and s.node<=self.jy_opt['using_load_ai_lazy_num_pickups']:
                 self.jy_num_pickups=self.jy_num_pickups+1
         
         self.DEBUG_check_label_correct()
@@ -103,17 +103,17 @@ class label:
                 #print('my_act.node_head')
                 #print(my_act.node_head)
                 #input('---')
-                if my_act.node_head>=2*self.jy_opt['using_load_ai_lazy_num_pickups']:
+                if my_act.node_head>2*self.jy_opt['using_load_ai_lazy_num_pickups']:
                     #print('kill 1')
                     #input('--killin g -')
                     continue
-                if my_act.node_head>=self.jy_opt['using_load_ai_lazy_num_pickups'] and my_act.node_head<2*self.jy_opt['using_load_ai_lazy_num_pickups']:
+                if my_act.node_head>self.jy_opt['using_load_ai_lazy_num_pickups'] and my_act.node_head<=2*self.jy_opt['using_load_ai_lazy_num_pickups']:
                     cust_pickup=my_act.node_head-self.jy_opt['using_load_ai_lazy_num_pickups']
                     if cust_pickup not in self.all_nodes_ordered:
                         #print('kill 2')
                         #input('kill ing 2 ')
                         continue
-                if my_act.node_head<self.jy_opt['using_load_ai_lazy_num_pickups'] and my_act.node_head>-0.5 and self.jy_num_pickups==self.jy_opt['using_load_ai_lazy_max_pickups']:
+                if my_act.node_head<=self.jy_opt['using_load_ai_lazy_num_pickups'] and my_act.node_head>-0.5 and self.jy_num_pickups==self.jy_opt['using_load_ai_lazy_max_pickups']:
                     #print('kill 3')
                     continue
                 if my_act.node_head in self.all_nodes_ordered:

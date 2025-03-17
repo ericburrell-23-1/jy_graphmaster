@@ -88,9 +88,59 @@ class GraphMaster:
         self.jy_options_user_defined['allow_compression']=True
         self.jy_options_user_defined['debug'] =True
         self.jy_options_user_defined['use_csr_exog'] =False
+        self.jy_options_user_defined['use_load_ai_in_pgm'] =True
+        if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
+            self.LOAD_AI_setup()
         #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
         self.gwo_pricing_solver_loadAI = GWOPricingSolverLoadAI(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined,self.state_update_module)
         random.seed(1000)
+
+    def LOAD_AI_setup(self):
+        load_ai_dict=dict()
+        NC=(len(self.nodes)-2)/3
+        NC=int(NC)
+        load_ai_dict['num_pickups']=NC
+        my_list_pickups=np.arange(1,NC+1).astype('int')
+        pickup_nodes=set(my_list_pickups)
+        load_ai_dict['pickup_nodes']=pickup_nodes
+        my_list_dropoffs=np.arange(NC+1,(2*NC)+1).astype('int')
+        print(my_list_dropoffs)
+        drop_off_nodes=set(my_list_dropoffs)
+        load_ai_dict['drop_off_nodes']=drop_off_nodes
+        my_list_AUX=np.arange((NC*2)+1,(3*NC)+1).astype('int')
+
+        aux_nodes=set(my_list_AUX)
+        load_ai_dict['aux_nodes']=aux_nodes
+
+        pickup_node_2_dropoff_node=dict()
+        dropoff_node_2_pickup_node=dict()
+        for i in pickup_nodes:
+            pickup_node_2_dropoff_node[i]=i+load_ai_dict['num_pickups']
+        load_ai_dict['pickup_node_2_dropoff_node']=pickup_node_2_dropoff_node
+
+        for i in drop_off_nodes:
+            dropoff_node_2_pickup_node[i]=i-load_ai_dict['num_pickups']
+        load_ai_dict['dropoff_node_2_pickup_node']=dropoff_node_2_pickup_node
+
+        print('self.resource_name_to_index')
+        print(self.resource_name_to_index)
+        node_2_may_pickup_resource_number=dict()
+        node_2_must_dropoff_resource_number=dict()
+        for i in pickup_nodes:
+            j=i+load_ai_dict['num_pickups']
+            my_name_may_pickup=str(("may_pickup", i))
+            my_name_may_avoid_dropoff=str(("may_avoid_dropoff", j))
+            idx_pickup=self.resource_name_to_index[my_name_may_pickup]
+            idx_dropoff=self.resource_name_to_index[my_name_may_avoid_dropoff]
+            node_2_may_pickup_resource_number[i]=idx_pickup
+            node_2_may_pickup_resource_number[j]=idx_pickup
+            node_2_must_dropoff_resource_number[i]=idx_dropoff
+            node_2_must_dropoff_resource_number[j]=idx_dropoff
+            #self.resource_name_to_index[my_name_pickup]
+        load_ai_dict['node_2_may_pickup_resource_number']=node_2_may_pickup_resource_number
+        load_ai_dict['node_2_must_dropoff_resource_number']=node_2_must_dropoff_resource_number
+        self.jy_options_user_defined['load_ai_dict']=load_ai_dict
+        print('hi')
     def debug_check_duplicates(self,res_states):
         res_states_list=list(res_states)
         for i in range(0,len(res_states_list)):

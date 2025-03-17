@@ -225,11 +225,13 @@ class General_state_update:
             for a in actions_from_node[s.node]:
                 # 29: Get next state using the Action's get_head_state method
                 n2=a.node_head
-                try:
-                    if n2 in dropoff_node and self.resource_name_to_index[str(('may_avoid_dropoff',n2))]==1:
+                #try:
+                if n2 in dropoff_node and self.resource_name_to_index[str(('may_avoid_dropoff',n2))]>0.5:
+                    coresp_pickup_node=drop_off_to_pickup_mapping[n2]
+                    if coresp_pickup_node!=s.node:
                         continue
-                except:
-                    print('check here')
+                #except:
+                #    print('check here')
 
                 s2 = a.get_head_state(s, s.l_id)
                 
