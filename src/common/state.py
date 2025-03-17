@@ -46,8 +46,43 @@ class State:
        We hash by the node and the contents of res_vec.
        """
        return self.state_id
+    import numpy as np
 
     def this_state_dominates_input_state(self, other_state):
+        """
+        Determines if this state dominates the input `other_state`.
+        Also determines if a tie occurs.
+        """
+        does_dom = False
+        does_equal = False
+
+        # Ensure both states belong to the same node before comparison
+        if other_state.node != self.node:
+            return [False, False]
+
+        # Convert sparse vectors to dense NumPy arrays to align indices
+        vec1_dense = self.state_vec.toarray().flatten()
+        vec2_dense = other_state.state_vec.toarray().flatten()
+
+        # Compute element-wise difference
+        res_vec_diff = vec1_dense - vec2_dense
+
+        # Compute min and sum values
+        min_value = res_vec_diff.min()  # Minimum difference
+        sum_value = np.abs(res_vec_diff).sum()  # Absolute sum of differences
+
+        # Domination condition
+        if min_value >= 0 and sum_value > 0:
+            does_dom = True
+
+        # Equality check
+        if np.array_equal(vec1_dense, vec2_dense):
+            does_equal = True
+
+        return [does_dom, does_equal]
+
+
+    def OLD_this_state_dominates_input_state(self, other_state):
         """
         Determines if this state dominates the input `other_state`.
         Also determines if a tie occurs.

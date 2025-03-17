@@ -287,16 +287,18 @@ class jy_slow_general_pricing_solver:
         my_states_ordered=self.my_final_label.my_states_ordered
         red_cost=self.my_final_label.red_cost
         list_of_nodes_in_shortest_path=[]
-        list_of_actions_used_in_col=self.my_final_label.my_actions_ordered
-        print('my_states_ordered')
-        print(my_states_ordered)
-        for s in my_states_ordered:
-            list_of_nodes_in_shortest_path.append(s.node)
-        print('list_of_nodes_in_shortest_path')
-        print(list_of_nodes_in_shortest_path)
-        print('red_cost')
-        print(red_cost)
-        #input('---')
+        list_of_actions_used_in_col=[]
+        if red_cost<0:
+            list_of_actions_used_in_col=self.my_final_label.my_actions_ordered
+            print('my_states_ordered')
+            print(my_states_ordered)
+            for s in my_states_ordered:
+                list_of_nodes_in_shortest_path.append(s.node)
+            print('list_of_nodes_in_shortest_path')
+            print(list_of_nodes_in_shortest_path)
+            print('red_cost')
+            print(red_cost)
+            #input('---')
         return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost]
     def call_expansion_algorihtm_till(self):
 
