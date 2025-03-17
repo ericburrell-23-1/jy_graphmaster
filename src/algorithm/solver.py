@@ -14,6 +14,7 @@ from src.algorithm.update_states.general_states_update import General_state_upda
 from src.common.visulizer import Visulizer
 from collections import defaultdict
 from src.common.helper import Helper
+from src.algorithm.jy_slow_pricing import jy_slow_general_pricing_solver
 import time
 import random
 from src.common.time_profile import TimeProfiler
@@ -178,11 +179,20 @@ class GraphMaster:
                         #print('in not  pricing')
                         with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
                         #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
-                            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(pgm_solver.dual_exog)
-                            
+                            if 0>0:
+                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(pgm_solver.dual_exog)
+                            else:
+                                jy_init_res_state=self.index_to_multi_graph[0].source_state
+                                jy_actions_node=None
+                                jy_max_actions_in_route=100
+                                jy_pricing_on=True
+                                jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,jy_max_actions_in_route,jy_actions_node,self.nodes,self.jy_options_user_defined)
+                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] =jy_pricer_my.return_solution()
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
                             trig = 0
                             # if trig==0:
+                            print('===path before state generation')
+                            print(list_of_nodes_in_shortest_path)
                             max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
                             
                             new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
@@ -220,9 +230,11 @@ class GraphMaster:
                                     if s1 not in new_states_describing_new_graph:
                                         s1.pretty_print_state()
                                         input('error here this is not correct')
-                        
+                        print('shortest path')
+                        print(list_of_nodes_in_shortest_path)
                         print('shortest path reduce cost')
                         print(reduced_cost)
+                        
                     if reduced_cost >= -1e-5:
                         for index, graph in self.index_to_multi_graph.items():
                             all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)

@@ -127,7 +127,7 @@ class Action:
         # Compute new state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption_vec
         if (head_state_vec.data < 0).any():
-            return
+            return None
         # Convert to CSR if needed
         if not isinstance(head_state_vec, sp.csr_matrix):
             head_state_vec = head_state_vec.tocsr()
@@ -272,18 +272,25 @@ class Action:
         is_valid = True
 
         if self.mark_of_null_action == True and (state_tail.node != state_head.node):
-            input('not valid due null action for different')
+            is_valid = False
+            print('not valid due null action for different')
+            return is_valid
         if self.mark_of_null_action == False and (state_tail.node != self.node_tail or state_head.node != self.node_head):
             self.pretty_print_action()
             state_head.pretty_print_state()
             state_tail.pretty_print_state()
-            input('not valid due to node not agree')
+            is_valid = False
+            print('not valid due to node not agree')
+            return is_valid
         ideal_head = self.get_head_state(state_tail, state_tail.l_id)
         [is_dom, is_equal] = ideal_head.this_state_dominates_input_state(state_head)
         if is_equal == False and is_dom == False:
             state_head.pretty_print_state()
             state_tail.pretty_print_state()
-            input('not valid reason 2')
+            is_valid = False
+            print('not valid reason 2')
+            return is_valid
+        return is_valid
 
     # Methods to clear the caches
     @classmethod

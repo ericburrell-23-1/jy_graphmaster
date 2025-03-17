@@ -286,6 +286,7 @@ class GWOPricingSolverLoadAI:
                             
                             if des_node not in avoid_cycle:
                                 if des_node in self.pickup_node:
+                                    
                                     # Keep original time constraint handling
                                     temp_resources[self.resource_name_to_index['time']+1] = min(
                                         temp_resources[self.resource_name_to_index['time']+1],
@@ -293,6 +294,7 @@ class GWOPricingSolverLoadAI:
                                     )
                                     if all(temp_resources <= self.max_res[des_node]) and all(temp_resources >= self.min_res[des_node]):
                                         neighbors.append((neighbor, self.edge_weights[edge]))
+
                                         
                                 if des_node in self.dropoff_node and des_node in can_drop_off:
                                     # Keep original time constraint handling
@@ -304,7 +306,25 @@ class GWOPricingSolverLoadAI:
                                         neighbors.append((neighbor, self.edge_weights[edge]))
                                         
                                 if des_node == -2:
-                                    neighbors.append((neighbor, self.edge_weights[edge]))
+                                    temp_resources[self.resource_name_to_index['time']+1] = min(
+                                        temp_resources[self.resource_name_to_index['time']+1],
+                                        self.time_window_start[des_node]
+                                    )
+                                    if all(temp_resources <= self.max_res[des_node]) and all(temp_resources >= self.min_res[des_node]):
+                                        this_path = path[0::2]
+                                        #print(this_path)
+                                        for num in this_path[1:]:
+                                            if num <=10 and num+10 not in this_path:
+                                                print('error here')
+                                            elif num >10 and num-10 not in this_path:
+                                                print('error here')
+
+
+                                        neighbors.append((neighbor, self.edge_weights[edge]))
+                                        if len(path)%2==0:
+                                            print(f'Current path: {path}')
+                                            print('check here')
+                                    
                                     
                         elif isinstance(neighbor, int):
                             neighbors.append((neighbor, self.edge_weights[edge]))
@@ -396,12 +416,14 @@ class GWOPricingSolverLoadAI:
         
         # Return the best path found or default path
         if best_path:
+            if len(best_path)%2 ==0:
+                print('error here')
             return best_path
         else:
             # Fallback to the original implementation for one final attempt
-            original_path = self._original_generate_valid_path()
-            if original_path and original_path != ['Source', 'Sink']:
-                return original_path
+            # original_path = self._original_generate_valid_path()
+            # if original_path and original_path != ['Source', 'Sink']:
+            #     return original_path
             return ['Source', 'Sink']
     
 
@@ -468,6 +490,9 @@ class GWOPricingSolverLoadAI:
                 this_min_res = [0]+ list(self.min_resource_state)
                 this_min_res[self.resource_name_to_index['time']+1] = self.time_window_end[node]
                 self.min_res[node] = this_min_res
+        self.max_res[-2] = [ARBITRARY_RESOURCE_MAX] + list(self.initial_resource_vector.toarray()[0])
+        self.min_res[-2] = [0]+ list(self.min_resource_state)
+        self.max_res[-2][self.resource_name_to_index['max_combined_loads']+1] =0
         return graph
     def call_gwo_pricing(self,dual):
         self.graph:DiGraph = self.construct_graph(dual)
@@ -505,7 +530,8 @@ class GWOPricingSolverLoadAI:
         # print(states)
         #print(path)
         list_of_nodes, list_of_actions = self._get_nodes_and_actions_from_path(path, self.graph)
-        
+        print('=======path before list of node=========')
+        print(path)
 
         return list_of_nodes, list_of_actions, total_cost
     def _get_nodes_and_actions_from_path(self,path: list, graph: nx.DiGraph):

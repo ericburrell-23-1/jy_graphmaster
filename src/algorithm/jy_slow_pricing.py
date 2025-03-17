@@ -46,36 +46,45 @@ class SortedObjectList:
 
 class label:
 
-    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,action_2_red_cost_dict,actions_of_node):
+    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,action_2_red_cost_dict,actions_of_node,jy_opt):
+        self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         self.my_states_ordered=my_states_ordered
         self.parent_label=parent_label
         self.red_cost=red_cost
         self.cost=cost
-        self.parent_label=parent_label
         self.dual_vec=dual_vec
+        self.node=self.my_states_ordered[-1].node
         self.max_actions_in_route=max_actions_in_route
         self.lowest_action_contrib_red_cost=lowest_action_contrib_red_cost
         self.action_2_red_cost_dict=action_2_red_cost_dict
         self.actions_of_node=actions_of_node
-        self.my_lb=self.red_cost+(max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
+        self.lb=self.red_cost+(max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
+
 
         self.is_complete_route=self.my_states_ordered[-1].is_sink
-
+        self.all_nodes_ordered=[]
+        self.jy_num_pickups=0
+        for s in self.my_states_ordered:
+            self.all_nodes_ordered.append(s.node)
+            if self.jy_opt['using_load_ai_lazy'] and s.node>=-0.5 and s.node<self.jy_opt['using_load_ai_lazy_num_pickups']:
+                self.jy_num_pickups=self.jy_num_pickups+1
+        
+        self.DEBUG_check_label_correct()
     def this_label_dominates_input(self,candid_label):
         
         my_flag=True
         is_identical=True
         if self.red_cost>candid_label.red_cost:
             my_flag=False
-        if self.my_lb>candid_label.lb:
+        if self.lb>candid_label.lb:
             my_flag=False
-        state_does_dom, state_does_equal=self.my_states_ordered[-1].this_state_dominates_input_state(self, candid_label.my_states_ordered[-1])
+        state_does_dom, state_does_equal=self.my_states_ordered[-1].this_state_dominates_input_state(candid_label.my_states_ordered[-1])
         if state_does_dom==False and state_does_equal==False:
             my_flag=False
         
         is_identical=False
-        if state_does_equal==True and self.red_cost==candid_label.red_cost and self.my_lb==candid_label.lb:
+        if state_does_equal==True and self.red_cost==candid_label.red_cost and self.lb==candid_label.lb:
             is_identical=True
         if is_identical==True:
             my_flag=False
@@ -87,14 +96,45 @@ class label:
         my_node=my_last_state.node
         all_labels_out=[]
         for my_act in self.actions_of_node[my_node]:
+            if self.jy_opt['using_load_ai_lazy']==True:
+                #print('looking to expand ')
+                #print('self.all_nodes_ordered')
+                #print(self.all_nodes_ordered)
+                #print('my_act.node_head')
+                #print(my_act.node_head)
+                #input('---')
+                if my_act.node_head>=2*self.jy_opt['using_load_ai_lazy_num_pickups']:
+                    #print('kill 1')
+                    #input('--killin g -')
+                    continue
+                if my_act.node_head>=self.jy_opt['using_load_ai_lazy_num_pickups'] and my_act.node_head<2*self.jy_opt['using_load_ai_lazy_num_pickups']:
+                    cust_pickup=my_act.node_head-self.jy_opt['using_load_ai_lazy_num_pickups']
+                    if cust_pickup not in self.all_nodes_ordered:
+                        #print('kill 2')
+                        #input('kill ing 2 ')
+                        continue
+                if my_act.node_head<self.jy_opt['using_load_ai_lazy_num_pickups'] and my_act.node_head>-0.5 and self.jy_num_pickups==self.jy_opt['using_load_ai_lazy_max_pickups']:
+                    #print('kill 3')
+                    continue
+                if my_act.node_head in self.all_nodes_ordered:
+                    #print('kill 4')
+                    continue
+            #print('my_act.node_head')
+            #print(my_act.node_head)
+            #input('--')
             new_label=self.expand_given_action(my_act)
             if new_label!=None:
                 all_labels_out.append(new_label)
+                #print('new_label.all_nodes_ordered')
+                #print(new_label.all_nodes_ordered)
+        #print('from ')
+        #print(self.all_nodes_ordered)
+        #input('---')
         return all_labels_out
     def expand_given_action(self,my_action):
         NEW_label=None
-        
-        new_head=my_action.get_head_state(self.my_states_ordered[-1])
+        last_state=self.my_states_ordered[-1]
+        new_head=my_action.get_head_state(last_state,last_state.l_id)
 
         if self.max_actions_in_route<len(self.my_actions_ordered) :
             input('errror here not posible')
@@ -102,12 +142,12 @@ class label:
             input('errror here not posible 2')
 
         if new_head!=None:
-            NEW_my_actions_ordered=[self.my_actions_ordered]+[my_action]
-            NEW_my_states_ordered=[self.my_states_ordered]+[new_head]
+            NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
+            NEW_my_states_ordered=self.my_states_ordered+[new_head]
             NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node)
+            NEW_label=label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.jy_opt)
         return NEW_label
     
     def DEBUG_check_label_correct(self):
@@ -117,7 +157,7 @@ class label:
             this_act=self.my_actions_ordered[ai]
             state_tail_this_act=self.my_states_ordered[ai]
             state_head_this_act=self.my_states_ordered[ai+1]
-            new_head=this_act.get_head_state(state_tail_this_act)
+            new_head=this_act.get_head_state(state_tail_this_act,state_tail_this_act.l_id)
             is_equal=state_head_this_act.equals_minus_id(new_head)
             if is_equal==False:
                 input('error here')
@@ -132,14 +172,14 @@ class efficient_frontier:
         self.all_nodes=all_nodes
         self.node_2_eff_fronteir=dict()
         for my_node in all_nodes:
-            self.node_2_eff_fronteir[my_node]=[]
+            self.node_2_eff_fronteir[my_node]=set([])
 
-    def is_in_fronteir(input_label):
+    def is_in_fronteir(self,input_label):
         if input_label in self.node_2_eff_fronteir[input_label.node]:
             return True
         return False
 
-    def alter_fronteir_given_new_element(new_label):
+    def alter_fronteir_given_new_element(self,new_label):
 
         is_in_frontier=True
 
@@ -147,8 +187,15 @@ class efficient_frontier:
             does_dom,does_equal = old_label.this_label_dominates_input(new_label)
             if does_dom==True or does_equal==True :
                 is_in_frontier=False
+                #print('old_label')
+                #print(old_label.all_nodes_ordered)
+                #print('new_label')
+                #print(new_label.all_nodes_ordered)
+                #input('--not adding --')
                 break
-        
+        #print('is_in_frontier')
+       # print(is_in_frontier)
+
         if is_in_frontier==True:
             labels_input_dominates=[]
 
@@ -166,23 +213,24 @@ class efficient_frontier:
 class jy_slow_general_pricing_solver:
 
     def create_action_2_red_cost_dict(self):
-        print('fil me in ')
         self.action_2_red_cost=dict()
         self.lowest_action_contrib_red_cost=np.inf
         for my_act in self.all_actions:
             this_red_cost=my_act.comp_red_cost(self.dual_vec)
             self.action_2_red_cost[my_act]=this_red_cost
             self.lowest_action_contrib_red_cost=np.min([self.lowest_action_contrib_red_cost,this_red_cost])
-    
+        #print('self.lowest_action_contrib_red_cost')
+        #print(self.lowest_action_contrib_red_cost)
+        #input('hold')
     def create_init_label(self):
 
         my_actions_ordered=[]
-        my_states_ordered=self.init_res_state
+        my_states_ordered=[self.init_res_state]
         red_cost=0
         cost=0
         parent_label=None
 
-        init_label=label(my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost,self.actions_of_node)
+        init_label=label(my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost,self.actions_of_node,self.jy_opt)
         return init_label
 
     def compute_actions_of_each_node(self):
@@ -195,31 +243,43 @@ class jy_slow_general_pricing_solver:
 
     def add_label(self,my_label_add):
 
-        if my_label_add.my_lb<0:
+        if my_label_add.lb<0:
             self.my_efficient_frontier.alter_fronteir_given_new_element(my_label_add)
             if self.my_efficient_frontier.is_in_fronteir(my_label_add):
-                my_coef=my_label_add.my_lb*(self.jy_opt['weight_expand_lb'])+my_label_add.red_cost*(1-self.jy_opt['weight_expand_lb'])
+                my_coef=my_label_add.lb*(self.jy_opt['weight_expand_lb'])+my_label_add.red_cost*(1-self.jy_opt['weight_expand_lb'])
                 self.unexpand_labels.insert(my_label_add,my_coef)
 
     def __init__(self,all_actions,dual_vec,init_res_state,max_actions_in_route,actions_of_node,all_nodes,jy_opt):
+        self.all_nodes=all_nodes
+        self.all_actions=all_actions
+        self.jy_opt=jy_opt
+        if 'min_red_cost_terminate_early' not in jy_opt:
+            self.jy_opt['min_red_cost_terminate_early']=-1
+        if 'weight_expand_lb' not in jy_opt:
+            self.jy_opt['weight_expand_lb']=.0001
+        if 'using_load_ai_lazy' not in jy_opt:
+            self.jy_opt['using_load_ai_lazy']=True
+            self.jy_opt['using_load_ai_lazy_num_pickups']=(len(all_nodes)-2)/3
+            self.jy_opt['using_load_ai_lazy_max_pickups']=3
+            #print('self.jy_opt[using_load_ai_num_pickups]')
+            #print(self.jy_opt['using_load_ai_num_pickups'])
+            #input('---')
         self.actions_of_node=actions_of_node
         if self.actions_of_node==None:
             self.compute_actions_of_each_node()
-        self.all_nodes=all_nodes
-        self.all_actions=all_actions
         self.dual_vec=dual_vec
         self.max_actions_in_route=max_actions_in_route
-        self.jy_opt=jy_opt
+        
+        
         self.create_action_2_red_cost_dict()
-        my_init_label=self.create_init_label(init_res_state)
-        my_efficient_frontier=efficient_frontier(all_nodes)
-        my_efficient_frontier.alter_fronteir_given_new_element(my_init_label)
+        self.init_res_state=init_res_state
+        my_init_label=self.create_init_label()
+        self.my_efficient_frontier=efficient_frontier(self.all_nodes)
+        self.my_efficient_frontier.alter_fronteir_given_new_element(my_init_label)
         self.unexpand_labels=SortedObjectList()
 
-        if 'min_red_cost_terminate_early' not in jy_opt:
-            jy_opt['min_red_cost_terminate_early']=-1
-        if 'weight_expand_lb' not in jy_opt:
-            jy_opt['weight_expand_lb']=.0001
+        
+        
         self.add_label(my_init_label)
         self.call_expansion_algorihtm_till()
     
@@ -228,28 +288,59 @@ class jy_slow_general_pricing_solver:
         red_cost=self.my_final_label.red_cost
         list_of_nodes_in_shortest_path=[]
         list_of_actions_used_in_col=self.my_final_label.my_actions_ordered
+        print('my_states_ordered')
+        print(my_states_ordered)
         for s in my_states_ordered:
             list_of_nodes_in_shortest_path.append(s.node)
+        print('list_of_nodes_in_shortest_path')
+        print(list_of_nodes_in_shortest_path)
+        print('red_cost')
+        print(red_cost)
+        input('---')
         return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost]
-    def call_expansion_algorihtm_till():
+    def call_expansion_algorihtm_till(self):
 
         my_final_label=None
-        best_red_cost=0
-        
+        best_red_cost=1
+        #print('len(self.nodes)')
+        #print(len(self.all_nodes))
+        #input('---')
         while len(self.unexpand_labels)>0:
             best_label=self.unexpand_labels.pop()
-            
+            #print('expanding')
+            #print('best_label.lb')
+            #print(best_label.lb)
+            #print('best_label.red_cost')
+            #print(best_label.red_cost)
+            #print('self.my_efficient_frontier.is_in_fronteir(best_label)')
+            #print(self.my_efficient_frontier.is_in_fronteir(best_label))
+            #print('self.all_nodes_ordered')
+            #print(best_label.all_nodes_ordered)
+            #input('---')
             if self.my_efficient_frontier.is_in_fronteir(best_label) ==False:
                 continue
-            if best_label.my_lb>=best_red_cost:
+            if best_label.lb>=best_red_cost:
+                print('breaking ')
                 break
-            all_new_labels=best_label.expand_node_fully()
+            all_new_labels=best_label.expand_label_fully()
+            #print('len(all_new_labels)')
+            #print(len(all_new_labels))
             for new_lab in all_new_labels:
                 self.my_efficient_frontier.alter_fronteir_given_new_element(new_lab)
+                if self.my_efficient_frontier.is_in_fronteir(new_lab):
+                    #print('adding label')
+                    self.add_label(new_lab)
                 if new_lab.is_complete_route==True and  best_red_cost>new_lab.red_cost:
                     my_final_label=new_lab
                     best_red_cost=new_lab.red_cost
             if self.jy_opt['min_red_cost_terminate_early']>best_red_cost: 
                 break
+        if my_final_label==None:
+            input('no column found')
+        print('best_red_cost')
+        print(best_red_cost)
+        print('len(self.unexpand_labels)')
+        print(len(self.unexpand_labels))
+        input('---')
         self.my_final_label=my_final_label
         self.best_red_cost=best_red_cost

@@ -61,11 +61,13 @@ class LoadAI_state_input():
             time_consume = this_res_vec[0,self.resource_name_to_index['time']]
             beta_time_value = min(time_start + time_consume, self.time_window_start[a.node_head])
             self.betaTime[a.node_head] = beta_time_value 
+            time_start = beta_time_value
         
         for node in self.nodes:
-            if node not in list_of_customer and node in self.pickup_node and node not in {-1,-2}:
-                this_time = random.randint(self.time_window_end[node],self.time_window_start[node])
-                self.betaTime[node] = this_time
+            if node not in list_of_customer and node not in {-1,-2}:
+                if node in self.time_window_end:
+                    this_time = random.randint(self.time_window_end[node],self.time_window_start[node])
+                    self.betaTime[node] = this_time
         self.betaTime[-1] = np.inf
         self.betaTime[-2] = 0
         print('finish beta time')
@@ -88,6 +90,16 @@ class LoadAI_state_input():
                 for drop_off_node in drop_off_nodes:
                     minterm_vec[self.resource_name_to_index[str((f'may_avoid_dropoff',drop_off_node))]] = np.inf
                 min_term_vec_dict[this_pickup_nodes] =csr_matrix(minterm_vec)
+            elif this_pickup_nodes in self.dropoff_node:
+                minterm_vec = np.full((1,self.number_of_resources), np.inf)
+                for other_pickup_node in pickup_nodes:
+                    #TODO: double check here if it is less or greater
+                    try:
+                        if self.betaTime[this_pickup_nodes] < self.betaTime[other_pickup_node]:
+                            minterm_vec[0,self.resource_name_to_index[str((f'may_pickup',other_pickup_node))]] = 0
+                    except:
+                        print('check here')
+                    min_term_vec_dict[this_pickup_nodes] =csr_matrix(minterm_vec)
             else:
                 minterm_vec = np.full((1,self.number_of_resources), np.inf)
                 min_term_vec_dict[this_pickup_nodes] =csr_matrix(minterm_vec)
@@ -103,22 +115,16 @@ class LoadAI_state_input():
         self.node_min_vec_dict = self._generate_node_min_term(self.pickup_node,self.dropoff_node)
         state_in_path = self.get_states_from_action_list(list_of_customer,list_of_action,l_id)
         
-        #debug 
-        # for s1,s2 in zip(state_in_path[:-1],state_in_path[1:]):
-        #     a = self.actions[(s1.node,s2.node)][0]
-        #     vec1 = (s1.state_vec + a.resource_consumption_vec).toarray()
-        #     vec2 = s2.state_vec.toarray()
-        #     if  np.any(vec1 < vec2):
-        #         print('s1 state_vec')
-        #         s1.pretty_print_state()
-        #         print('s2 state_vec')
-        #         s2.pretty_print_state()
-        #         print('action trans term vec')
-        #         print(a.resource_consumption_vec.toarray())
-        #         input('error here')
-                
+        for idx in range(len(state_in_path)-1):
+            s1 = state_in_path[idx]
+            s2 = state_in_path[idx+1]
+            a = list_of_action[idx]
+            if a.check_valid(s1,s2)==False:
+                input('error here')
 
-        
+                
+ 
+            
         
         action_reasonable = self._generate_reasonalbe_actions()
  
@@ -222,9 +228,19 @@ class LoadAI_state_input():
         # Generate states in the original sequence
         for a in action_list:
             new_s = a.get_head_state(cur_state, l_id)
+            if new_s == None:
+                print('error here')
             State_in_col.append(new_s)
             cur_state = new_s
-        
+        for idx in range(len(State_in_col)-1):
+                    s1 = State_in_col[idx]
+                    s2 = State_in_col[idx+1]
+                    a = action_list[idx]
+                    try:
+                        if a.check_valid(s1,s2)==False:
+                            input('error here')
+                    except:
+                        print('check here')
         # Create a mapping to track replacements while preserving order
         replacement_map = {}
         
@@ -237,11 +253,22 @@ class LoadAI_state_input():
             if np.sum(np.abs(my_state_vec - s.state_vec)) > .001:
                 # Create replacement state
                 s2 = State(s.node, my_state_vec, l_id, s.node == -1, s.node == -2)
+            
                 replacement_map[s] = s2
-        
+
+                
         # Replace the states while preserving order
         State_in_col = [replacement_map.get(s, s) for s in State_in_col]
-        
+
+        for idx in range(len(State_in_col)-1):
+            s1 = State_in_col[idx]
+            s2 = State_in_col[idx+1]
+            a = action_list[idx]
+            try:
+                if a.check_valid(s1,s2)==False:
+                    input('error here')
+            except:
+                print('none here')
         return State_in_col
     def elementwise_min_csr(self, vec1, vec2) -> csr_matrix:
         """
