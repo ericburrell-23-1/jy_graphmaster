@@ -40,6 +40,7 @@ class General_state_update:
             def user_ignore_state_action(state, action):
                 # Line 33 in Algorithm 1: UserIgnoreStateAction(s2, a) = True. User defined function; always False by default
                 return False
+
         
         # 6: ActionsSubset ← ActionsReasonable.copy()
         actions_subset = actions_reasonable.copy()
@@ -65,7 +66,7 @@ class General_state_update:
                 states_can_expand.append(s2)
             else:
                 states_can_expand.append(s)
-
+            
         
         # 18: Initialize State2Depth
         state_2_depth = {s: max_depth for s in states_can_expand}
@@ -135,6 +136,151 @@ class General_state_update:
 
         
         
+        return state_2_depth
+
+    def load_ai_state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, 
+                   actions_reasonable: Set[Action], user_ignore_state_action=None, problem_module=None):
+        """
+        Implementation of Algorithm 1: State Generation Given Pricing with LOAD AI modifications
+        
+        Parameters:
+        - max_depth: User input (line 1: MaxDepth ← User)
+        - depth_used: User defined function (line 2: DepthUsed(a) ←User Defined)
+        - my_init_states: User input from Pricing (line 3: myInitStates ← From User; By Calling Pricing)
+        - nodes_min_term_vec: User input (line 4: n.NodeMinTermVec ← User)
+        - actions_reasonable: User input (line 5: ActionsReasonable ← User)
+        - user_ignore_state_action: Optional user function (line 33: UserIgnoreStateAction(s2, a))
+        - pickup_to_dropoff_mapping: Dictionary mapping pickup node IDs to their corresponding dropoff node IDs
+        
+        Returns:
+        - State2Depth: Set of states with their associated depths
+        """
+        # Initialize visited nodes tracking for each state
+        # We'll use this to implement the LOAD AI modifications
+        state_to_visited_nodes = {}
+        state_to_visited_pickups = {}
+        pickup_to_dropoff_mapping = problem_module.pickup_to_dropoff
+        drop_off_to_pickup_mapping = problem_module.dropoff_to_pickup
+        pickup_node = problem_module.pickup_node
+        dropoff_node = problem_module.dropoff_node
+        # Default for user_ignore_state_action if not provided (UserIgnoreStateAction is user-defined, default is False)
+        if user_ignore_state_action is None:
+            def user_ignore_state_action(state, action):
+                # Line 33 in Algorithm 1: UserIgnoreStateAction(s2, a) = True. User defined function; always False by default
+                return False
+        
+        # If pickup_to_dropoff_mapping is not provided, initialize an empty dictionary
+        if pickup_to_dropoff_mapping is None:
+            pickup_to_dropoff_mapping = {}
+        
+        # 6: ActionsSubset ← ActionsReasonable.copy()
+        actions_subset = actions_reasonable.copy()
+        
+        # 7-11: Add actions between initial states
+        for i in range(len(my_init_states)):
+            for j in range(i + 1, len(my_init_states)):
+                s1 = my_init_states[i]
+                s2 = my_init_states[j]
+                if (s1.node, s2.node) in self.actions.keys():
+                    # Add actions between nodes
+                    actions_between = self.actions[(s1.node, s2.node)]
+                    actions_subset.union(set(actions_between))
+        
+        # 12-17: Initialize states that can be expanded
+        states_can_expand = []
+        for s in my_init_states:
+            new_state_vec = self.elementwise_min_csr(s.state_vec, nodes_min_term_vec[s.node])
+            
+            if np.sum(np.abs(new_state_vec-s.state_vec)) > .00001:
+                s2 = State(s.node, new_state_vec, s.l_id, s.is_source, s.is_sink)
+                states_can_expand.append(s2)
+            else:
+                states_can_expand.append(s)
+                
+            # Initialize tracking of visited nodes and pickups for initial states
+            if not s.is_source and not s.is_sink:
+                state_to_visited_nodes[s] = {s.node}
+                state_to_visited_pickups[s] = set()
+        
+        # 18: Initialize State2Depth
+        state_2_depth = {s: max_depth for s in states_can_expand}
+        state_tuple = {(s.node, tuple(s.state_vec.toarray().flatten())) for s in states_can_expand}
+        
+        # 19-24: Initialize ActionsFromNode
+        actions_from_node = defaultdict(list)
+        for a in actions_subset:
+            # Check if the action's origin node meets the minimum requirements
+            if self.is_elementwise_greater_equal(nodes_min_term_vec[a.node_tail], a.min_resource_vec):
+                actions_from_node[a.node_tail].append(a)
+        
+        # 25-42: Main loop for state expansion
+        while len(states_can_expand) > 0:
+            # 26: Select state with maximum depth
+            s = max(states_can_expand, key=lambda x: state_2_depth[x])
+            
+            # 27: Remove s from states_can_expand
+            states_can_expand.remove(s)
+            
+            # 28-41: Process actions from the current node
+            for a in actions_from_node[s.node]:
+                # 29: Get next state using the Action's get_head_state method
+                n2=a.node_head
+                try:
+                    if n2 in dropoff_node and self.resource_name_to_index[str(('may_avoid_dropoff',n2))]==1:
+                        continue
+                except:
+                    print('check here')
+
+                s2 = a.get_head_state(s, s.l_id)
+                
+                # 30-32: Skip if None (action not valid from this state)
+                if s2 is None:
+                    continue
+                    
+                # 33-35: Skip if user_ignore_state_action returns True
+                if user_ignore_state_action(s2, a):
+                    continue
+                    
+                # LOAD AI Modifications: Check for invalid state transitions
+                # this_state_vec = s2.state_vec
+                # if s2.node in dropoff_node:
+                #     this_pickup_node = drop_off_to_pickup_mapping[s2.node]
+                #     this_may_pickup = s2.state_vec[0,self.resource_name_to_index[str(('may_pickup',this_pickup_node))]]
+
+                    # if self.neighbors == 1:
+                    #     print('visit dropoff before pickup')
+                    #     continue
+                    # if s2.state_vec[0,self.resource_name_to_index[str(('may_dropoff',s2.node))]] == 0:
+                    #     break
+                
+                if s2.node in pickup_node:
+                    if s2.state_vec[0,self.resource_name_to_index[str(('may_pickup',s2.node))]] == 0:
+                        input('error here')
+                
+
+
+                # 36: Update s2.stateVec with the minimum values from NodeMinTermVec
+                candidate_state_vec = self.elementwise_min_csr(s2.state_vec, nodes_min_term_vec[s2.node])
+                if np.array_equal(candidate_state_vec.toarray(), np.array([0,1,0,0])):
+                    print('some error here')
+                # Check if there are any negative values
+                if (candidate_state_vec.data < 0).any():
+                    input('some negative in candidate_state_vec')
+                if np.sum(np.abs(candidate_state_vec - s2.state_vec)) > 0:
+                    s2 = State(s2.node, candidate_state_vec, s2.l_id, s2.is_source, s2.is_sink)
+                    
+                # 37-40: Add to states_can_expand if not seen or has positive depth
+                try:
+                    #if not self._in_state_dict(s2,state_2_depth) and state_2_depth and state_2_depth[s] > 0:
+                    this_key = (s2.node, tuple(s2.state_vec.toarray().flatten()))
+                    if this_key not in state_tuple and state_2_depth and state_2_depth[s] > 0:
+                        state_2_depth[s2] = state_2_depth[s] - depth_used[a]
+                        state_tuple.add(this_key)
+                        states_can_expand.append(s2)
+                except:
+                    print('check this')
+        
+        state_2_depth = set(state_2_depth.keys())
         return state_2_depth
 
     def _in_state_dict(self, s,state_2_depth):
