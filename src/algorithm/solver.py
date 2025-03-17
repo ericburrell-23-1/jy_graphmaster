@@ -182,12 +182,15 @@ class GraphMaster:
                             if 0>0:
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(pgm_solver.dual_exog)
                             else:
+                                print('starting jy pricing ')
                                 jy_init_res_state=self.index_to_multi_graph[0].source_state
                                 jy_actions_node=None
                                 jy_max_actions_in_route=100
                                 jy_pricing_on=True
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,jy_max_actions_in_route,jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] =jy_pricer_my.return_solution()
+                                print('done jy pricing ')
+
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
                             trig = 0
                             # if trig==0:

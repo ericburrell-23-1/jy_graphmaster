@@ -296,7 +296,7 @@ class jy_slow_general_pricing_solver:
         print(list_of_nodes_in_shortest_path)
         print('red_cost')
         print(red_cost)
-        input('---')
+        #input('---')
         return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost]
     def call_expansion_algorihtm_till(self):
 
@@ -335,12 +335,12 @@ class jy_slow_general_pricing_solver:
                     best_red_cost=new_lab.red_cost
             if self.jy_opt['min_red_cost_terminate_early']>best_red_cost: 
                 break
-        if my_final_label==None:
-            input('no column found')
+        #if my_final_label==None:
+        #    input('no column found')
         print('best_red_cost')
         print(best_red_cost)
         print('len(self.unexpand_labels)')
         print(len(self.unexpand_labels))
-        input('---')
+        #input('---')
         self.my_final_label=my_final_label
         self.best_red_cost=best_red_cost
