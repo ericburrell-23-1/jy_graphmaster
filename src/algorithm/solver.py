@@ -190,7 +190,20 @@ class GraphMaster:
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,jy_max_actions_in_route,jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
-
+                        
+                        if reduced_cost >= -1e-5:
+                            for index, graph in self.index_to_multi_graph.items():
+                                all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
+                            #all_time_profile['all_time'] = iteration_end_time- current_time
+                            all_time_end = time.time()
+                            all_time_profile['all_time'] = all_time_end - all_time_start
+                            self.output_all_time_profile(all_time_profile)
+                            return {
+                                'status': 'optimal',
+                                'x': pgm_solver.primal_sol,
+                                'iterations': iteration,
+                                'graph': self.index_to_multi_graph.values()
+                            }
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
                             trig = 0
                             # if trig==0:
@@ -238,19 +251,7 @@ class GraphMaster:
                         print('shortest path reduce cost')
                         print(reduced_cost)
                         
-                    if reduced_cost >= -1e-5:
-                        for index, graph in self.index_to_multi_graph.items():
-                            all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
-                        #all_time_profile['all_time'] = iteration_end_time- current_time
-                        all_time_end = time.time()
-                        all_time_profile['all_time'] = all_time_end - all_time_start
-                        self.output_all_time_profile(all_time_profile)
-                        return {
-                            'status': 'optimal',
-                            'x': pgm_solver.primal_sol,
-                            'iterations': iteration,
-                            'graph': self.index_to_multi_graph.values()
-                        }
+                    
                     new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined)
 
 
