@@ -13,6 +13,7 @@ import time
 from scipy.sparse import vstack
 from src.common.time_profile import TimeProfiler
 from scipy.sparse import csr_matrix
+from tqdm import tqdm
 class Full_Multi_Graph_Object_given_l:
  
     #Computed once multi-graph which is generated once
@@ -380,7 +381,7 @@ class Full_Multi_Graph_Object_given_l:
         self.action_ub_head_tail = defaultdict(lambda: defaultdict(set))
     
         # Iterate over all actions
-        for a1 in self.all_actions:
+        for a1 in tqdm(self.all_actions,desc = 'computing action ub'):
             node_tail, node_head = a1.node_tail, a1.node_head
             
             # Skip if either node doesn't exist in our precomputed data

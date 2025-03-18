@@ -88,7 +88,7 @@ class GraphMaster:
         self.jy_options_user_defined['allow_compression']=True
         self.jy_options_user_defined['debug'] =True
         self.jy_options_user_defined['use_csr_exog'] =False
-        self.jy_options_user_defined['use_load_ai_in_pgm'] =True
+        self.jy_options_user_defined['use_load_ai_in_pgm'] =False
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.LOAD_AI_setup()
         #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
@@ -270,44 +270,11 @@ class GraphMaster:
                             # if trig==0:
                             print('===path before state generation')
                             print(list_of_nodes_in_shortest_path)
-                            max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
+                            max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, action_reasonable_dict,user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
                             
                             #new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
-                            new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action,self.state_update_module)
-                            
-                           # if 1>0:
-                           #     for s in new_states_describing_new_graph:
-                           #         self.LOAD_AI_CHECK_Valid_states(s)
-
-                                    #when generating the states we want to remove all states that are not one of hte ofllowing
-                                    #connected to the sink
-                                    #or connected to a state taht is connected to teh sink
-                            # elif trig==1:
-                            #     beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
-                            # else:
-                            #     max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, user_ignore_state_action, beta, beta_dict = self.state_update_function._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id)
-                                
-                            #     new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, min_vec_dict, action_reasonable, beta_dict,user_ignore_state_action)
-                            #     beta_term, true_new_states_describing_new_graph,new_states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id,beta, beta_dict)
-
-                            #     print('check true_new_states_describing_new_graph in new_states_describing_new_graph')
-                            #     for s1 in true_new_states_describing_new_graph:
-                            #         is_exsit = False
-                            #         for s2 in new_states_describing_new_graph:
-                            #             if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
-                            #                 is_exsit = True
-                            #                 break
-                            #         if is_exsit == False:
-                            #             print('error here')
-                            #     print('check new_states_describing_new_graph in true_new_states_describing_new_graph')
-                            #     for s1 in new_states_describing_new_graph:
-                            #         is_exsit = False
-                            #         for s2 in true_new_states_describing_new_graph:
-                            #             if s1.node == s2.node and np.array_equal(s1.state_vec.toarray(), s2.state_vec.toarray()):
-                            #                 is_exsit = True
-                            #         if is_exsit == False:
-                            #             print('error here')
-                            #     print('finish check')
+                            new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,action_reasonable_dict,user_ignore_state_action,self.state_update_module)
+                            print('check states generated')
                         #debug
                         if self.jy_options_user_defined['debug'] == True:
                             with TimeProfiler(all_time_profile, "debug"):

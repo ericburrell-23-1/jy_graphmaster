@@ -20,7 +20,7 @@ class General_state_update:
         #         self.action_to_s1_s2[action] = (s1,s2)
 
 
-    def state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, actions_reasonable:Set[Action],user_ignore_state_action=None):
+    def state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, actions_reasonable:Set[Action],action_reasonable_dict,user_ignore_state_action=None):
         """
         Implementation of Algorithm 1: State Generation Given Pricing
         
@@ -139,7 +139,7 @@ class General_state_update:
         return state_2_depth
 
     def load_ai_state_generation(self, max_depth, depth_used, my_init_states: Set[State], nodes_min_term_vec, 
-                   actions_reasonable: Set[Action], user_ignore_state_action=None, problem_module=None):
+                   actions_reasonable: Set[Action],action_reasonable_dict, user_ignore_state_action=None, problem_module=None):
         """
         Implementation of Algorithm 1: State Generation Given Pricing with LOAD AI modifications
         
@@ -283,6 +283,21 @@ class General_state_update:
                     print('check this')
         
         state_2_depth = set(state_2_depth.keys())
+        # check state duplicate
+        if 0>0:
+            node_2_state_set = defaultdict()
+            for n in pickup_node:
+                node_2_state_set[n] = [s for s in state_2_depth if s.node ==n]
+            for n in dropoff_node:
+                node_2_state_set[n] = [s for s in state_2_depth if s.node ==n]
+            for n, state_list in node_2_state_set.items():
+                if len(state_list)>1:
+                    for i in range(len(state_list)-1):
+                        for j in range(i+1,len(state_list)):
+                            s1 = state_list[i]
+                            s2 = state_list[j]
+                            if self.are_csr_matrices_equal(s1.state_vec, s2.state_vec):
+                                input('duplicate generated')
         return state_2_depth
 
     def _in_state_dict(self, s,state_2_depth):
@@ -444,3 +459,40 @@ class General_state_update:
         
         # If minimum value is >= 0, then matrix1 is element-wise >= matrix2
         return min_value >= 0
+    
+    def are_csr_matrices_equal(self,A, B):
+        """
+        Compare if two CSR matrices are exactly the same.
+        
+        Parameters:
+        -----------
+        A, B : scipy.sparse.csr_matrix
+            The CSR matrices to compare
+            
+        Returns:
+        --------
+        bool
+            True if matrices are equal, False otherwise
+        """
+        # Check if shapes match
+        if A.shape != B.shape:
+            return False
+        
+        # Check if number of non-zeros match
+        if A.nnz != B.nnz:
+            return False
+            
+        # Compare data arrays
+        if not np.array_equal(A.data, B.data):
+            return False
+            
+        # Compare indices
+        if not np.array_equal(A.indices, B.indices):
+            return False
+            
+        # Compare indptrs
+        if not np.array_equal(A.indptr, B.indptr):
+            return False
+            
+        # All checks passed
+        return True

@@ -93,7 +93,7 @@ class LoadAI_state_input():
             elif this_pickup_nodes in self.dropoff_node:
                 minterm_vec = np.full((1,self.number_of_resources), np.inf)
                 for other_pickup_node in pickup_nodes:
-                    #TODO: double check here if it is less or greater
+
                     try:
                         if self.betaTime[this_pickup_nodes] < self.betaTime[other_pickup_node]:
                             minterm_vec[0,self.resource_name_to_index[str((f'may_pickup',other_pickup_node))]] = 0
@@ -122,11 +122,7 @@ class LoadAI_state_input():
             if a.check_valid(s1,s2)==False:
                 input('error here')
 
-                
- 
-            
-        
-        action_reasonable = self._generate_reasonalbe_actions()
+        action_reasonable, action_reasonable_dict = self._generate_reasonalbe_actions()
  
         
         depth_used = defaultdict()
@@ -140,7 +136,7 @@ class LoadAI_state_input():
         user_ignore_state_action=None
         beta_info = {}
         beta_info['BetaTime'] = self.betaTime
-        return max_depth, depth_used, state_in_path, self.node_min_vec_dict, action_reasonable, user_ignore_state_action,beta_info
+        return max_depth, depth_used, state_in_path, self.node_min_vec_dict, action_reasonable,action_reasonable_dict, user_ignore_state_action,beta_info
     
     def _generate_reasonalbe_actions(self):
         
@@ -172,22 +168,27 @@ class LoadAI_state_input():
  
         #comptue for each node the K nearest pickuop nodes
         # action from source to pick up, from drop off to sink
+        reasonable_action_dict = defaultdict()
         reasonable_action = set()
         for u in self.pickup_node:
             reasonable_action.update(self.actions[(-1,u)])
+            reasonable_action_dict[(-1,u)] = self.actions[(-1,u)]
         for v in self.dropoff_node:
             reasonable_action.update(self.actions[(v,-2)])
+            reasonable_action_dict[(v,-2)] = self.actions[(v,-2)]
         # action from pickup to dropoff
         for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
 
-            this_action = self.actions[pickup_node,dropoff_node]
+            this_action = self.actions[(pickup_node,dropoff_node)]
             reasonable_action.update(this_action)
+            reasonable_action_dict[(pickup_node,dropoff_node)] = this_action
         # action from dropoff to nearby pickup if it is neighbor
         for u in self.dropoff_node:
             for v in self.neighbors[u]:
                 if v in self.pickup_node and (u,v) in self.actions.keys():
                     
                     reasonable_action.update(self.actions[(u,v)])
+                    reasonable_action_dict[(u,v)] = self.actions[(u,v)]
  
         #for drop_off_node in self.dropoff_to_pickup.items():
         #    for node in self.neighbors[drop_off_node]:
@@ -205,13 +206,14 @@ class LoadAI_state_input():
                     cost_uuvv = self.travel_time[(u,self.pickup_to_dropoff[u])] + \
                         self.travel_time[(self.pickup_to_dropoff[u],v)] + self.travel_time[(v,self.pickup_to_dropoff[v])]
                     if cost_uvuv < cost_uuvv:
-                        reasonable_action.update(self.actions[u,v])
+                        reasonable_action.update(self.actions[(u,v)])
+                        reasonable_action_dict[(u,v)] = self.actions[(u,v)]
         #print('return reasonable action')
         for a in reasonable_action:
             if not isinstance(a, Action):
                 print(a)
                 input('error here')
-        return reasonable_action
+        return reasonable_action, reasonable_action_dict
         
     def get_states_from_action_list(self, list_of_customer, action_list: List[Action], l_id):
         """
