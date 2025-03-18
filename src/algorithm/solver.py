@@ -141,6 +141,13 @@ class GraphMaster:
         load_ai_dict['node_2_must_dropoff_resource_number']=node_2_must_dropoff_resource_number
         self.jy_options_user_defined['load_ai_dict']=load_ai_dict
         print('hi')
+
+    def LOAD_AI_CHECK_Valid_states(self):
+        #pn, dn for a pickup and dropoff pair
+        #kills so anything that says that dropoff 
+        #possibilities (may pick up )
+        
+        print('fill me in ')
     def debug_check_duplicates(self,res_states):
         res_states_list=list(res_states)
         for i in range(0,len(res_states_list)):
@@ -245,7 +252,7 @@ class GraphMaster:
                         print('reduce cost')
                         print(reduced_cost)
                         input('check here')
-                        if reduced_cost >= -1e-5:
+                        if reduced_cost >= -1e-3:
                             for index, graph in self.index_to_multi_graph.items():
                                 all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
                             #all_time_profile['all_time'] = iteration_end_time- current_time
@@ -267,6 +274,14 @@ class GraphMaster:
                             
                             #new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
                             new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action,self.state_update_module)
+                            
+                           # if 1>0:
+                           #     for s in new_states_describing_new_graph:
+                           #         self.LOAD_AI_CHECK_Valid_states(s)
+
+                                    #when generating the states we want to remove all states that are not one of hte ofllowing
+                                    #connected to the sink
+                                    #or connected to a state taht is connected to teh sink
                             # elif trig==1:
                             #     beta_term, new_states_describing_new_graph,states_used_in_this_col=self.state_update_function_cvrp.get_new_states(list_of_nodes_in_shortest_path, list_of_actions_used_in_col,l_id)
                             # else:

@@ -287,6 +287,9 @@ class Full_Multi_Graph_Object_given_l:
         with TimeProfiler(self.time_profile, "multi_graph:construct_pricing_pgm_graph"):
             self.construct_pricing_pgm_graph()
 
+        # step 10 
+        self.clean_pricing_pgm_graph()
+
         # if self.jy_option['debug'] == True:
         #     with TimeProfiler(self.time_profile, "debug"):
         #         self.debug_action_ub_check()
@@ -307,6 +310,18 @@ class Full_Multi_Graph_Object_given_l:
     
     
     def LOAD_AI_simple_check_valid_action_ub(self,my_action,my_state):
+        
+        #consider any state $s1$ for which  is at node n1
+        # consider the action going from n1 to n2 
+        # where n2 is a dropoff node
+        # and n1 is a node OTHER THAN THE PICKUP NODE FOR n2 which is called n3
+        #suppose that in state s1 that MAY_AVOID_DROPOFF(n2)=1.
+        #   this means that n2 has one of the following holds
+        #       1.   been visited already in the route. This means taht n1 was picked up and dropped of at n2 prior 
+        #       2.   n3 has not been picked up yet
+        # in case 1 the path going from state s1 to node n2 dos not make sense.  
+        # in case 2 the path going from state s1 to node n2 dos not make sense
+        # hence I will not draw the edge.  What this doing  
         LAD=self.jy_option['load_ai_dict']#[]
         node_destination=my_action.node_head
         node_origin=my_action.node_tail
@@ -686,6 +701,41 @@ class Full_Multi_Graph_Object_given_l:
     #     max_resource_vec = np.full(size_res_vec, np.inf)
     #     #indices_non_zero_max,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)
     #     return Action(trans_min_input, trans_term_add, trans_term_min, node_tail, node_head, Exog_vec, cost, min_resource_vec,resource_consumption_vec,indices_non_zero_max,max_resource_vec )
+
+    def clean_pricing_pgm_graph(self):
+
+        #make artificial action to reduced cost
+        sample_action=list(self.all_actions)[0]
+        dual_exog_vec=sample_action.Exog_vec*0
+        action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
+        self.PGM_equiv_class_dual_2_low(action_2_red_cost)
+        #find unrachable state 
+        UNR_rows_pgm_spec_pricing = [
+                    (row[1].state_id, row[0].state_id, eq_class, action_red_cost, action)
+                    for row in self.my_rows_pgm_pricing
+                    for eq_class in [row[2]]  # Extract eq_class cleanly
+                    for action, action_red_cost in [self.equiv_class_2_low_red_action[eq_class]]  # Unpack action tuple
+                ]
+        UNR_pgm_graph = nx.DiGraph()
+        for tail, head, _, action_red_cost, action in UNR_rows_pgm_spec_pricing:
+            UNR_pgm_graph.add_edge(tail,head,  weight=action_red_cost, action=action)
+        sink_state=self.sink_state.state_id
+        reachable_states = nx.descendants(UNR_pgm_graph, sink_state) | {sink_state}
+# Determine unreachable nodes by subtracting the reachable nodes from all nodes in the graph.
+        unreachable_states = set(UNR_pgm_graph.nodes()) - reachable_states
+        print('len(self.unreachable_nodes)')
+        print(len(unreachable_states))
+        print('before edge set size')
+        print(len(self.my_rows_pgm_pricing))
+        self.my_rows_pgm_pricing = [
+            row for row in self.my_rows_pgm_pricing
+            if row[0].state_id not in unreachable_states and row[1].state_id not in unreachable_states
+        ]
+        print('AFTER edge set size')
+        print(len(self.my_rows_pgm_pricing))
+        input('num states remove')
+
+        #self.has_done_check_for_unreachable=True
     def construct_specific_pricing_pgm(self, action_2_red_cost,rezStates_minus_by_node):
         """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
         with TimeProfiler(self.time_profile, "multi_graph:construct_specific_pricing_pgm"):
