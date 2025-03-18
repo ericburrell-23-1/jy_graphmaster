@@ -240,7 +240,11 @@ class GraphMaster:
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,jy_max_actions_in_route,jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
-                        
+                        print('path')
+                        print(list_of_nodes_in_shortest_path)
+                        print('reduce cost')
+                        print(reduced_cost)
+                        input('check here')
                         if reduced_cost >= -1e-5:
                             for index, graph in self.index_to_multi_graph.items():
                                 all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)

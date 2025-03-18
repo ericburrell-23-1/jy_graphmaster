@@ -314,18 +314,28 @@ class Full_Multi_Graph_Object_given_l:
         if node_destination in LAD['drop_off_nodes']:
             res_index=LAD['node_2_must_dropoff_resource_number'][node_destination]
             pickup_4_destination=LAD['dropoff_node_2_pickup_node'][node_destination]
-            #print('res_index')
-            #print(res_index)
-            tmp=my_state.state_vec[0,res_index]<0.5
-            if tmp and node_origin!=pickup_4_destination:
+
+            
+            may_avoid_dropoff=my_state.state_vec[0,res_index]>0.5
+            #NOTEe node_origin!=pickup_4_destination covers the case since we update on departure
+            if may_avoid_dropoff and node_origin!=pickup_4_destination:
                 is_possible=False
-       #if is_possible==False:
-            #print('is_possible')
-            #print('my state')
-       #     my_state.pretty_print_state()
-            #print('my action')
-       #     my_action.pretty_print_action()
-            #input('nothin is wrong i just want to know if this flags show me ')
+            if 0>1 and is_possible==False:
+                print('is_possible')
+                print('pickup_4_destination')
+                print(pickup_4_destination)
+                print('res_index')
+                print(res_index)
+                print('my state')
+                my_state.pretty_print_state()
+                print('my action')
+                my_action.pretty_print_action()
+                print('pickups')
+                print('my_state.state_vec[4:9]')
+                print(my_state.state_vec[0,4:9].toarray())
+                print('my_state.state_vec[9:]')
+                print(my_state.state_vec[0,9:].toarray())
+                input('nothin is wrong i just want to know if this flags show me ')
        # print(is_possible)
        # print('node_destination')
        # print(node_destination)
