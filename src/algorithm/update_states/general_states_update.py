@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import List, Dict, Any, Optional, Union, Tuple, Set
 from src.common.state import State
 from src.common.action import Action
+from itertools import permutations
 import numpy as np
 
 class General_state_update:
@@ -212,7 +213,7 @@ class General_state_update:
             # Check if the action's origin node meets the minimum requirements
             if self.is_elementwise_greater_equal(nodes_min_term_vec[a.node_tail], a.min_resource_vec):
                 actions_from_node[a.node_tail].append(a)
-        
+        number_of_state_remove = 0
         # 25-42: Main loop for state expansion
         while len(states_can_expand) > 0:
             # 26: Select state with maximum depth
@@ -232,7 +233,7 @@ class General_state_update:
                         continue
                 #except:
                 #    print('check here')
-
+    
                 s2 = a.get_head_state(s, s.l_id)
                 
                 # 30-32: Skip if None (action not valid from this state)
@@ -243,18 +244,6 @@ class General_state_update:
                 if user_ignore_state_action(s2, a):
                     continue
                     
-                # LOAD AI Modifications: Check for invalid state transitions
-                # this_state_vec = s2.state_vec
-                # if s2.node in dropoff_node:
-                #     this_pickup_node = drop_off_to_pickup_mapping[s2.node]
-                #     this_may_pickup = s2.state_vec[0,self.resource_name_to_index[str(('may_pickup',this_pickup_node))]]
-
-                    # if self.neighbors == 1:
-                    #     print('visit dropoff before pickup')
-                    #     continue
-                    # if s2.state_vec[0,self.resource_name_to_index[str(('may_dropoff',s2.node))]] == 0:
-                    #     break
-                
                 if s2.node in pickup_node:
                     if s2.state_vec[0,self.resource_name_to_index[str(('may_pickup',s2.node))]] == 0:
                         input('error here')
@@ -271,17 +260,127 @@ class General_state_update:
                 if np.sum(np.abs(candidate_state_vec - s2.state_vec)) > 0:
                     s2 = State(s2.node, candidate_state_vec, s2.l_id, s2.is_source, s2.is_sink)
                     
-                # 37-40: Add to states_can_expand if not seen or has positive depth
-                try:
+
                     #if not self._in_state_dict(s2,state_2_depth) and state_2_depth and state_2_depth[s] > 0:
-                    this_key = (s2.node, tuple(s2.state_vec.toarray().flatten()))
-                    if this_key not in state_tuple and state_2_depth and state_2_depth[s] > 0:
-                        state_2_depth[s2] = state_2_depth[s] - depth_used[a]
-                        state_tuple.add(this_key)
-                        states_can_expand.append(s2)
-                except:
-                    print('check this')
-        
+                this_key = (s2.node, tuple(s2.state_vec.toarray().flatten()))
+                if this_key not in state_tuple and state_2_depth and state_2_depth[s] > 0:
+                    if s2.node in pickup_node:
+                        if 0>0:
+                            pick_up_vec = s2.state_vec[0,4:4+len(pickup_node)]
+                            drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                            dense_array = pick_up_vec.toarray()[0]
+                            zero_indices = np.where(dense_array == 0)[0]
+                            drop_off_node_need_to_visit = []
+
+                            for n in zero_indices:
+                                if drop_off_vec[0,n] == 0:
+                                    drop_off_node_need_to_visit.append(n+1+len(pickup_node))
+                        else:
+                            drop_off_node_need_to_visit = []
+                            drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                            dense_array = drop_off_vec.toarray()[0]
+                            zero_indices = np.where(dense_array == 0)[0]
+                            for n in zero_indices:
+                                drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+                        if len(drop_off_node_need_to_visit) >0:
+                            permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
+                            
+                            valid = False
+
+                            for list_of_node in permutation_of_drop_off_node:
+                                pre_node = s2.node
+                                pre_state = s2
+                                
+                                go_next_loop = False
+                                for this_node in list_of_node:
+                                    a = self.actions[(pre_node,this_node)][0]
+                                    new_state = a.get_head_state(pre_state,pre_state.l_id) 
+                                    if new_state == None:
+                                        go_next_loop = True
+                                        break
+                                    pre_node = this_node
+                                    pre_state = new_state
+                                if go_next_loop:
+                                    continue
+                                if (pre_node,-2) not in self.actions:
+                                    input('error here')
+                                a = self.actions[(pre_node,-2)][0]
+                                
+                                new_state = a.get_head_state(pre_state,pre_state.l_id) 
+                                if new_state != None:
+                                    valid = True
+                                    break
+                        else:
+                            valid = True
+                        if valid == True:
+                            state_2_depth[s2] = state_2_depth[s] - depth_used[a]
+                            state_tuple.add(this_key)
+                            states_can_expand.append(s2)
+                        else:
+                            number_of_state_remove +=1
+                    elif s2.node in dropoff_node:
+                        if 0>0:
+                            pick_up_vec = s2.state_vec[0,4:4+len(pickup_node)]
+                            drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                            nonzero_indices = pick_up_vec.indices
+                            nonzero_values = pick_up_vec.data
+                            zero_indices = nonzero_indices[np.isclose(nonzero_values, 0)]
+                            drop_off_node_need_to_visit = []
+                            for n in zero_indices: # remove dropoff of current node
+                                if drop_off_vec[0,n] == 0 and n+1+len(pickup_node) != s2.node:
+                                    drop_off_node_need_to_visit.append(n+1+len(pickup_node))
+                        else:
+                            drop_off_node_need_to_visit = []
+                            drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                            dense_array = drop_off_vec.toarray()[0]
+                            zero_indices = np.where(dense_array == 0)[0]
+                            for n in zero_indices:
+                                if n+1+len(pickup_node) != s2.node:
+                                    drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+                        if len(drop_off_node_need_to_visit) >0:
+                            permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
+                            
+                            valid = False
+   
+                            for list_of_node in permutation_of_drop_off_node:
+                                pre_node = s2.node
+                                pre_state = s2
+                                go_next_loop = False
+                                for this_node in list_of_node:
+                                    a = self.actions[(pre_node,this_node)][0]
+                                    new_state = a.get_head_state(pre_state,pre_state.l_id) 
+                                    if new_state == None:
+                                        go_next_loop= True
+                                        break
+                                    pre_node = this_node
+                                    pre_state = new_state
+                                if go_next_loop:
+                                    continue
+                                a = self.actions[(pre_node,-2)][0]
+                                new_state = a.get_head_state(pre_state,pre_state.l_id) 
+                                if new_state != None:
+                                    valid = True
+                                    break
+                        else:
+                            a = self.actions[(s2.node,-2)][0]
+                            new_state = a.get_head_state(s2,s2.l_id)
+                            if new_state != None:
+                                valid = True
+                        if valid == True:
+                            state_2_depth[s2] = state_2_depth[s] - depth_used[a]
+                            state_tuple.add(this_key)
+                            states_can_expand.append(s2)
+                        else:
+                            number_of_state_remove +=1
+
+
+
+                    # state_2_depth[s2] = state_2_depth[s] - depth_used[a]
+                    # state_tuple.add(this_key)
+                    # states_can_expand.append(s2)
+
+        print('number of state remove by checking reachable to sink')
+        print(number_of_state_remove)
         state_2_depth = set(state_2_depth.keys())
         # check state duplicate
         if 0>0:

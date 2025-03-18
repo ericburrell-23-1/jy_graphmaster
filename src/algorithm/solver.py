@@ -251,7 +251,7 @@ class GraphMaster:
                         print(list_of_nodes_in_shortest_path)
                         print('reduce cost')
                         print(reduced_cost)
-                        input('check here')
+                        #input('check here')
                         if reduced_cost >= -1e-3:
                             for index, graph in self.index_to_multi_graph.items():
                                 all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
