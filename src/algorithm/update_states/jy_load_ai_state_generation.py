@@ -4,18 +4,55 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from src.common.state import State
 #jy_load_ai_state_generation
+from src.algorithm.jy_slow_pricing import SortedObjectList
+class jy_make_load_ai_states:
 
-class jy_make_load_ai_states():
+    def set_depth_used_by_action():
+        self.DepthUsed=dict()
 
-    def __init__(self,shawn_LoadAI_state_input,list_of_action_in_col_ordered,list_of_states_in_col_ordered):
+        Q=self.SLAI
+        for a in Q.actions:
+            node_destination=a.node_head
+            if node_destination in Q.pickup_nodes:
+                self.DepthUsed[a]=1
+            else:
+                self.DepthUsed[a]=0
+    def __init__(self,shawn_LoadAI_state_input,list_of_action_in_col_ordered,list_of_states_in_col_ordered,jy_options):
         print('hello world')
         self.SLAI=shawn_LoadAI_state_input
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
         self.list_of_states_in_col_ordered=list_of_states_in_col_ordered
-        self.node_2_actions=node_2_actions
         self.shawn_LoadAI_state_input = shawn_LoadAI_state_input
+        self.jy_options=jy_options
         self.node_min_term_vec = shawn_LoadAI_state_input['node_min_term_vec']
+        self.MaxDepth=self.jy_options['max_pickups_in_a_route']#S.max_depth
+        self.option_do_min_term=True
+        self.set_depth_used_by_action()
+        self.update_action_subset_given_col()
+        self.updeate_action_from_nodes_subset()
+        self.init_states_project_and_depth
+        #assign depth used to all actions;  Feel free to remove this later
+        
         self.gen_all_states_naive()
+    
+    def init_states_project_and_depth(self):
+        self.my_sorted=SortedObjectList()
+ 
+        self.states_can_expand=[]
+        if self.option_do_min_term==True:
+            tmp=[]
+            for s in self.list_of_states_in_col_ordered:
+                s2=self.apply_node_min_term(s)
+                tmp.append(s2)
+                self.states_can_expand.append(s2)
+                self.my_sorted.insert(s2,self.MaxDepth)
+                
+            self.list_of_states_in_col_ordered=tmp
+        self.State2Depth=dict()
+        for s in self.states_can_expand:
+            self.State2Depth[s]=self.MaxDepth
+        
+    
     def return_solution(self):
         return self.all_states
 
@@ -144,102 +181,91 @@ class jy_make_load_ai_states():
             s2 = State(s.node, new_state_vec, s.l_id, s.is_source, s.is_sink)
             return s2
         else:
-            return s            
+            return s   
+
+    def jy_can_expand(self,s_origin,my_action,option_do_min_term):
+        #return false if takign this action from theis state produces an ifeasible action
+        #possibilites
+        #possibility s_deestination is none
+        
+        #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it OR current location is not the associated pickup
+             #rmember to include if you are at the pickup for htat customer.  thats the speical case
+
+        #possibility confirm_if_state_possible returns false
+
+        #possibility:  there would be more than maxPickupsInstate pickups overall; 
+            #remember you have a reource for this. so this should be caught by get head state but do check
+            #rmember to include if you are at the pickup for htat customer
+        #possibility:  if option_do_min_term is false then you can count exactly how many pickups you have 
+            #make sure to include the pickup for the current node if it is a pickup
+        #return true otherwise
+        print('hello world')
+        return True
+
+    def update_action_subset_given_col(self):
+        Q=self.SLAI
+        self.Action_subset=Q.action_reasonable.copy()
+        for i_ind in range(0,len(self.list_of_states_in_col_ordered)):
+            for j_ind in range(i_ind+1,len(self.list_of_states_in_col_ordered)):
+                s1=    self.list_of_states_in_col_ordered[i_ind]
+                s2=    self.list_of_states_in_col_ordered[j_ind]
+                my_actions_n1_n2=Q.actions[s1.node,s2.node]
+                self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
+    def updeate_action_from_nodes_subset(self):
+        self.actions_from_node_subset=dict()
+        for n in Q.nodes:
+            self.actions_from_node_subset[n]=[]
+        for a in self.Action_subset:
+            my_origin=a.node_tail
+            if self.option_do_min_term:
+                if np.min(a.origin.NodeMinTermVec- a.minTermInput>=-0.0001):
+                    self.actions_from_node_subset[my_origin].append(a)
+            else:
+                self.actions_from_node_subset[my_origin].append(a)
+
+    def expand_state_given_action(self,s,my_act,orig_depth_s):
+
+        can_expand=self.jy_can_expand(my_act,s,self.option_do_min_term)
+        if can_expand==False:
+            return False,None,None
+        #\State  $s_2\leftarrow GetHeadState(s\rightarrow a)$
+        my_head=my_act.get_head_state(s)
+        my_new_depth=orig_depth_s-self.DepthUsed[my_act]
+        #\If {$s_2== None$}
+        did_make_term=False
+        debug_on=True
+        #\State Continue
+        did_make_term=True
+        #\EndIf
+        if debug_on:
+            if False==self.confirm_if_state_possible(my_head):
+                input('error here 1')
+        #\State $s_2.stateVec\leftarrow ElementwiseMin(s_2.stateVec,s2.node.NodeMinTermVec)$
+
+        my_head=self.apply_node_min_term(my_head)
+        if debug_on:
+            if False==self.confirm_if_state_possible(my_head):
+                input('error here 2')
+        return did_make_term,my_head,my_new_depth
+
     def gen_all_states_naive(self):
 
         Q=self.SLAI
-        option_do_min_term=True
-        my_sorted=SortedObjectList_2()
-        #        \State $MaxDepth\leftarrow $ User
-        MaxDepth=self.jy_options['max_pickups_in_a_route']#S.max_depth
-        #        \State $DepthUsed(a)\leftarrow $User Defined 
-        DepthUsed=dict()
-        for a in Q.actions:
-            node_origin=a.node_tail
-            node_destination=a.node_head
-            if node_destination in Q.pickup_nodes:
-                DepthUsed[a]=1
-            else:
-                DepthUsed[a]=0
         
+        while len(self.states_can_expand>0):
+            #State $s\leftarrow \mbox{arg} \max_{s\in StatesCanExpand}State2Depth(s)$
+            #Pop(s)$ from $StatesCanExpand$.  Always select to expand the term with $State2Depth$ 
 
+            s=self.my_sorted.pop_max()
+            orig_depth_s=self.State2Depth[s]
 
-            #State $myInitStates \leftarrow $ From User; By Calling Pricing.  These are the states in that column.  Ordered in terms of execution
-            #JY DONE
-                #%\State $\beta \leftarrow $User 
-            # JY GIVE SHAWN CODE beta=Q.generate_beta
-                #\State $n.NodeMinTermVec\leftarrow$ User (get from $\beta$ which we will compjute 
-                #separately)
-            #JY_GIVE SHAWN CODE
-                #\State $ActionsReasonalbe\leftarrow $ User; Can be all actions or just actions  or just actions that we know are not dumb.
-                #\State $ActionsSubset\leftarrow ActionsReasonalbe.copy()$
-                #\For{$i=0:Len(myInitStates)$, $j=i+1:len(myInitStates)$}
-                #    \State $s_1\leftarrow myInitStates[i]$ 
-                #    \State $s_2\leftarrow myInitStates[j]$ 
-                #    \State $ActionsSubset\leftarrow ActionsSubset+AllActions(node(s_1)\rightarrow node(s_2))$
-                #\EndFor
-                self.Action_subset=Q.action_reasonable.copy()
-                for i_ind in range(0,len(self.list_of_states_in_col_ordered)):
-                    for j_ind in range(i_ind+1,len(self.list_of_states_in_col_ordered)):
-                        s1=    self.list_of_states_in_col_ordered[i_ind]
-                        s2=    self.list_of_states_in_col_ordered[j_ind]
-                        my_actions_n1_n2=Q.actions[s1.node,s2.node]
-                        self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
-                self.states_can_expand=[]
-                if option_do_min_term==True:
-                    tmp=[]
-                    for s in self.list_of_states_in_col_ordered:
-                        s2=self.apply_node_min_term(s)
-                        tmp.append(s2)
-                        self.states_can_expand.append(s2)
-                        my_sorted.insert(s2,MaxDepth)
-                        
-                    self.list_of_states_in_col_ordered=tmp
-                #State $State2Depth(s)\leftarrow MaxDepth$ for all $s\in StatesCanExpand$
-                self.State2Depth=dict()
-                for s in self.states_can_expand:
-                    self.State2Depth[s]=MaxDepth
-                
-                #\State $ActionsFromNode(n)\leftarrow \{ \}$ for all $n\in Nodes$
-                #\For{$a \in ActionSubset$}
-                #\If{$a.origin.NodeMinTermVec\geq a.minTermInput$}
-                #\State $ActionsFromNode(a.origin)\leftarrow a$
-                #\EndIf
-                #\EndFor
+            for my_act in self.actions_from_node_subset[s.node]:
+                [did_make_new_state,my_head,my_new_depth]=self.expand_state_given_action(s,my_act,orig_depth_s)
+               
+                if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
+                    self.State2Depth[my_head]=my_new_depth
+                    self.states_can_expand.insert(my_head,my_new_depth)
 
-                self.actions_from_node=dict()
-                for n in Q.nodes:
-                    self.actions_from_node[n]=[]
-                for a in self.Action_subset:
-                    my_origin=a.node_tail
-                    if option_do_min_term:
-                        if np.min(a.origin.NodeMinTermVec- a.minTermInput>=-0.0001):
-                            self.actions_from_node[my_origin].append(a)
-                    else:
-                        self.actions_from_node[my_origin].append(a)
-                while len(StatesCanExpand>0):
-
-                \While{$|StatesCanExpand|>0$}
-                    \State $s\leftarrow \mbox{arg} \max_{s\in StatesCanExpand}State2Depth(s)$
-                    \State $StatesCanExpand\leftarrow StatesCanExpand-s$
-                    %Pop(s)$ from $StatesCanExpand$.  Always select to expand the term with $State2Depth$ 
-                    \For{$a\in ActionsFromNode(s.node)$}
-                    \State  $s_2\leftarrow GetHeadState(s\rightarrow a)$
-                        \If {$s_2== None$}
-                        \State Continue
-                        \EndIf
-                        \If{$UserIgnoreStateAction(s_2,a)=True$.  User defined function; always False by default}
-                        \State Continue
-                        \EndIf
-                        \State $s_2.stateVec\leftarrow ElementwiseMin(s_2.stateVec,s2.node.NodeMinTermVec)$
-                        \If{$s_2 \notin State2Depth$ and $State2Depth(s)>0$}
-                        \State $State2Depth(s_2)\leftarrow State2Depth(s)-DepthUsed(a)$
-                        \State $StatesCanExpand\leftarrow StatesCanExpand+s_2$
-                        \EndIf
-                    \EndFor
-                \EndWhile
-            \end{algorithmic}
-        \end{algorithm}
     def elementwise_min_csr(self,vec1: csr_matrix, vec2: csr_matrix) -> csr_matrix:
         """
         Compute the elementwise minimum of two CSR matrices.
@@ -276,37 +302,3 @@ class jy_make_load_ai_states():
        
         # Create a new CSR matrix
         return csr_matrix((data, (rows, cols)), shape=vec1.shape)
-
-
-class SortedObjectList_2:
-    """Maintains a sorted list of objects based on an associated scalar value."""
-    
-    def __init__(self):
-        self.values = []  # List of scalar values (used for sorting)
-        self.objects = []  # List of associated objects
-
-    def insert(self, obj, value):
-        """Inserts an object while keeping the list sorted by value."""
-        index = bisect.bisect_left(self.values, value)  # Find insertion index
-        self.values.insert(index, value)  # Insert value in sorted order
-        self.objects.insert(index, obj)  # Insert object in corresponding position
-
-    def pop(self):
-        """Removes and returns the object with the smallest value."""
-        if not self.objects:
-            raise IndexError("Pop from empty SortedObjectList")
-        self.values.pop(0)  # Remove first (smallest) value
-        return self.objects.pop(0)  # Remove and return first object
-
-    def pop_max(self):
-        """Removes and returns the object with the largest value."""
-        if not self.objects:
-            raise IndexError("Pop from empty SortedObjectList")
-        self.values.pop()  # Remove last (largest) value
-        return self.objects.pop()  # Remove and return last object
-
-    def __len__(self):
-        return len(self.objects)
-
-    def __repr__(self):
-        return str(list(zip(self.values, self.objects)))  # Show sorted pairs
