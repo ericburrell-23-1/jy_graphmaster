@@ -65,7 +65,6 @@ class jy_make_load_ai_states:
         dropoff_node = self.dropoff_node
         s2 = candid_state
         if s2.node in pickup_node:
-            
             drop_off_node_need_to_visit = []
             drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
             dense_array = drop_off_vec.toarray()[0]
@@ -75,7 +74,7 @@ class jy_make_load_ai_states:
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
             
-                valid = False
+                
     
                 for list_of_node in permutation_of_drop_off_node:
                     pre_node = s2.node
@@ -98,14 +97,10 @@ class jy_make_load_ai_states:
                 
                     new_state = a.get_head_state(pre_state,pre_state.l_id)
                     if new_state != None:
-                        valid = True
-                        break
-            else:
-                valid = True
-            if valid == True:
-                return True
-            else:
+                        return True
                 return False
+            else:
+                return True
         elif s2.node in dropoff_node:
             
             drop_off_node_need_to_visit = []
@@ -118,8 +113,6 @@ class jy_make_load_ai_states:
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
             
-                valid = False
-    
                 for list_of_node in permutation_of_drop_off_node:
                     pre_node = s2.node
                     pre_state = s2
@@ -137,18 +130,15 @@ class jy_make_load_ai_states:
                     a = self.actions[(pre_node,-2)][0]
                     new_state = a.get_head_state(pre_state,pre_state.l_id)
                     if new_state != None:
-                        valid = True
-                        break
+                        return True
+                return False
             else:
                 a = self.actions[(s2.node,-2)][0]
                 new_state = a.get_head_state(s2,s2.l_id)
                 if new_state != None:
-                    valid = True
-            if valid == True:
-    
-                return True
-            else:
-                return False
+                    return True
+                else:
+                    return False
         else:
             input('state is not pickup or drop off node')
         #checkign my permuations
