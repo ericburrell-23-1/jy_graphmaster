@@ -233,7 +233,7 @@ class GraphMaster:
                     self.lp_before_operations=pgm_solver.cur_lp
                     print('pgm_solver.cur_lp')
                     print(pgm_solver.cur_lp)
-                    input('lp now')
+                    #input('lp now')
                     l_id += 1
                     #all action used in specific column 
                     states_used_in_this_col=set([])

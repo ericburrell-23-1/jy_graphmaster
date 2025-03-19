@@ -11,13 +11,14 @@ class jy_make_load_ai_states:
         self.DepthUsed=dict()
 
         Q=self.SLAI
-        for a in Q.actions:
-            node_destination=a.node_head
-            if node_destination in Q.pickup_node:
-                self.DepthUsed[a]=1
-            else:
-                self.DepthUsed[a]=0
-    def __init__(self,shawn_LoadAI_state_input,list_of_action_in_col_ordered,list_of_states_in_col_ordered,jy_options):
+        for (n1,n2) in Q.actions:
+            for a  in Q.actions[n1,n2]:
+                node_destination=a.node_head
+                if node_destination in Q.pickup_node:
+                    self.DepthUsed[a]=1
+                else:
+                    self.DepthUsed[a]=0
+    def __init__(self,shawn_LoadAI_state_input,list_of_states_in_col_ordered,list_of_action_in_col_ordered,jy_options):
         print('hello world')
         self.SLAI=shawn_LoadAI_state_input
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
@@ -149,7 +150,7 @@ class jy_make_load_ai_states:
     def apply_node_min_term(self,in_state):
         print('hellow orld')
         s = in_state
-        new_state_vec = self.elementwise_min_csr(s.state_vec, self.nodes_min_term_vec[s.node])
+        new_state_vec = self.elementwise_min_csr(s.state_vec, self.node_min_term_vec[s.node])
         if np.sum(np.abs(new_state_vec-s.state_vec)) > .00001:
             s2 = State(s.node, new_state_vec, s.l_id, s.is_source, s.is_sink)
             return s2
@@ -211,8 +212,17 @@ class jy_make_load_ai_states:
             for j_ind in range(i_ind+1,len(self.list_of_states_in_col_ordered)):
                 s1=    self.list_of_states_in_col_ordered[i_ind]
                 s2=    self.list_of_states_in_col_ordered[j_ind]
-                my_actions_n1_n2=Q.actions[s1.node,s2.node]
-                self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
+                #print('type(s1)')
+                #print(type(s1))
+                #print('type(s2)')
+                ##print(type(s2))
+                #print('s1.node')
+                #print(s1.node)
+                #print('s2.node')
+                #print(s2.node)
+                if (s1.node,s2.node) in Q.actions:#[s1.node,s2.node]:
+                    my_actions_n1_n2=Q.actions[s1.node,s2.node]
+                    self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
     def updeate_action_from_nodes_subset(self):
         Q=self.SLAI
         self.actions_from_node_subset=dict()
@@ -222,18 +232,26 @@ class jy_make_load_ai_states:
         self.actions_from_node_subset_MINUS_dest_dropoff=dict()
         for n in Q.nodes:
             self.actions_from_node_subset[n]=[]
+            self.actions_from_node_subset_MINUS_dest_dropoff[n]=[]
+            self.actions_from_node_subset_dest_dropoff[n]=[]
+        print('actions_from_node_subset')
+        print(self.actions_from_node_subset)
         for a in self.Action_subset:
             my_origin=a.node_tail
             my_destination=a.node_head
             do_add=False
             if self.option_do_min_term:
                 #shawn 
-                if np.min(a.origin.NodeMinTermVec.toarray()- a.minTermInput.toarray())>=-0.0001:
+                if np.min(self.node_min_term_vec[a.node_tail].toarray()- a.min_resource_vec.toarray())>=-0.0001:
                     do_add=True
                     self.actions_from_node_subset[my_origin].append(a)
             else:
                 do_add=True
             if do_add==True:
+                print('my_origin')
+                print(my_origin)
+                print('my_origin in Q.nodes')
+                print(my_origin in Q.nodes)
                 self.actions_from_node_subset[my_origin].append(a)
                 if my_destination in Q.dropoff_node:
                     self.actions_from_node_subset_dest_dropoff[my_origin].append(a)
@@ -246,7 +264,7 @@ class jy_make_load_ai_states:
         if can_expand==False:
             return False,None,None
         #\State  $s_2\leftarrow GetHeadState(s\rightarrow a)$
-        my_head=my_act.get_head_state(s)
+        my_head=my_act.get_head_state(s,s.l_id)
         my_new_depth=orig_depth_s-self.DepthUsed[my_act]
         #\If {$s_2== None$}
         did_make_term=False
@@ -256,13 +274,19 @@ class jy_make_load_ai_states:
         #\EndIf
         if debug_on:
             if False==self.confirm_if_state_possible(my_head):
+                my_head.pretty_print_state()
                 input('error here 1')
         #\State $s_2.stateVec\leftarrow ElementwiseMin(s_2.stateVec,s2.node.NodeMinTermVec)$
 
         my_head=self.apply_node_min_term(my_head)
         if debug_on:
             if False==self.confirm_if_state_possible(my_head):
+                my_head.pretty_print_state()
+
                 input('error here 2')
+        #print('my_new_depth')
+        #print(my_new_depth)
+        #input('my_new_depth')
         return did_make_term,my_head,my_new_depth
 
     def get_must_drop_off_including_current(self,s):
@@ -292,7 +316,7 @@ class jy_make_load_ai_states:
         # if s.node in Q.pickup_node:
         #     must_dropoff.append(s.node+self.num_pickups)
         return must_drop_off
-    def actions_from_node_subset(self,s):
+    def get_actions_from_node_subset(self,s):
 
         actions_use=self.actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
         must_dropoff=self.get_must_drop_off_including_current(s)
@@ -305,21 +329,26 @@ class jy_make_load_ai_states:
 
         Q=self.SLAI
         
-        while len(self.states_can_expand)>0:
+        while len(self.my_sorted)>0:
             #State $s\leftarrow \mbox{arg} \max_{s\in StatesCanExpand}State2Depth(s)$
             #Pop(s)$ from $StatesCanExpand$.  Always select to expand the term with $State2Depth$ 
 
             s=self.my_sorted.pop_max()
             orig_depth_s=self.State2Depth[s]
 
-            actions_use=self.actions_from_node_subset(s)
+            actions_use=self.get_actions_from_node_subset(s)
             for my_act in actions_use:
                 [did_make_new_state,my_head,my_new_depth]=self.expand_state_given_action(s,my_act,orig_depth_s)
                
                 if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
                     self.State2Depth[my_head]=my_new_depth
-                    self.states_can_expand.insert(my_head,my_new_depth)
-
+                    print('my_new_depth')
+                    print(my_new_depth)
+                    print('type(my_new_depth)')
+                    print(type(my_new_depth))
+                    print('type(my_head)')
+                    print(type(my_head))
+                    self.my_sorted.insert(my_head,my_new_depth)
     def elementwise_min_csr(self,vec1: csr_matrix, vec2: csr_matrix) -> csr_matrix:
         """
         Compute the elementwise minimum of two CSR matrices.
