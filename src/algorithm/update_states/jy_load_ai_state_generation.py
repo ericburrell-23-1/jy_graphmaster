@@ -66,6 +66,8 @@ class jy_make_load_ai_states:
         pickup_node = self.pickup_node
         dropoff_node = self.dropoff_node
         s2 = candid_state
+        if candid_state.node in {-1,-2}:
+            return True
         if s2.node in pickup_node:
             drop_off_node_need_to_visit = []
             drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
