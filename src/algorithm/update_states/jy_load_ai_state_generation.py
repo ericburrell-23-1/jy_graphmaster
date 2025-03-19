@@ -292,7 +292,7 @@ class jy_make_load_ai_states:
 
         Q=self.SLAI
         
-        while len(self.states_can_expand>0):
+        while len(self.states_can_expand)>0:
             #State $s\leftarrow \mbox{arg} \max_{s\in StatesCanExpand}State2Depth(s)$
             #Pop(s)$ from $StatesCanExpand$.  Always select to expand the term with $State2Depth$ 
 
