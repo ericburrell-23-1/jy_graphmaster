@@ -104,7 +104,7 @@ class jy_make_load_ai_states:
         if candid_state.node in {-1,-2}:
             return True
         if s2.node in pickup_node:
-            drop_off_node_need_to_visit = []
+            drop_off_node_need_to_visit = [s2.node+len(pickup_node)]
             drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
             dense_array = drop_off_vec.toarray()[0]
             zero_indices = np.where(dense_array == 0)[0]
@@ -112,15 +112,14 @@ class jy_make_load_ai_states:
                 drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
             print('drop_off_node_need_to_visit')
             print(drop_off_node_need_to_visit)
+            if len(drop_off_node_need_to_visit)>self.MaxDepth:
+                return False
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
-            
-                
-    
                 for list_of_node in permutation_of_drop_off_node:
                     pre_node = s2.node
                     pre_state = s2
-                
+
                     go_next_loop = False
                     for this_node in list_of_node:
                         a = self.actions[(pre_node,this_node)][0]
@@ -153,6 +152,8 @@ class jy_make_load_ai_states:
             for n in zero_indices:
                 if n+1+len(pickup_node) != s2.node:
                     drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+            if len(drop_off_node_need_to_visit)>self.MaxDepth:
+                return False
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
             
