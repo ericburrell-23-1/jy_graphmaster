@@ -137,7 +137,7 @@ class LoadAI_state_input():
         beta_info = {}
         beta_info['BetaTime'] = self.betaTime
         return max_depth, depth_used, state_in_path, self.node_min_vec_dict, self.action_reasonable,self.action_reasonable_dict, user_ignore_state_action,beta_info
-    
+
     def _generate_reasonalbe_actions(self):
         
         num_pickups_keep=20

@@ -13,7 +13,7 @@ class jy_make_load_ai_states:
         Q=self.SLAI
         for a in Q.actions:
             node_destination=a.node_head
-            if node_destination in Q.pickup_nodes:
+            if node_destination in Q.pickup_node:
                 self.DepthUsed[a]=1
             else:
                 self.DepthUsed[a]=0
@@ -235,7 +235,7 @@ class jy_make_load_ai_states:
                 do_add=True
             if do_add==True:
                 self.actions_from_node_subset[my_origin].append(a)
-                if my_destination in Q.dropoff_nodes:
+                if my_destination in Q.dropoff_node:
                     self.actions_from_node_subset_dest_dropoff[my_origin].append(a)
                 else:
                     self.actions_from_node_subset_MINUS_dest_dropoff[my_origin].append(a)
@@ -274,7 +274,7 @@ class jy_make_load_ai_states:
         may_avoid_dropoff=s.state_vec[4+self.num_pickups:]
         must_dropoff=np.nonzero(may_avoid_dropoff<0.5)
         must_dropoff=may_avoid_dropoff_list+self.num_pickups
-        if s.node in Q.pickup_nodes:
+        if s.node in Q.pickup_node:
             must_dropoff.append(s.node+self.num_pickups)
         return must_dropoff
     def actions_from_node_subset(self,s):
@@ -282,7 +282,7 @@ class jy_make_load_ai_states:
         actions_use=self.actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
         must_dropoff=self.get_must_drop_off_including_current(s)
         for n in must_dropoff:
-            my_act_list=self.Q.node_2_actions[s.node,n.node]
+            my_act_list=self.Q.actions[(s.node,n.node)]
             for my_act in my_act_list:
                 actions_use.append(my_act)
         return actions_use
