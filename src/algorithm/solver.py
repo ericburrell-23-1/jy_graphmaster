@@ -88,11 +88,14 @@ class GraphMaster:
         self.jy_options_user_defined['allow_compression']=True
         self.jy_options_user_defined['debug'] =True
         self.jy_options_user_defined['use_csr_exog'] =False
-        self.jy_options_user_defined['use_load_ai_in_pgm'] =False
-        self.jy_opt['using_load_ai_lazy']=True
-        self.jy_opt['using_load_ai_lazy_num_pickups']=(len(nodes)-2)/3
-        self.jy_opt['using_load_ai_lazy_max_pickups']=3
+        self.jy_options_user_defined['use_load_ai_in_pgm'] =True
+        self.jy_options_user_defined['using_load_ai_lazy']=True
+        self.jy_options_user_defined['using_load_ai_lazy_num_pickups']=(len(nodes)-2)/3
+        self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=3
+        self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
+
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
+            self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
         #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
         self.gwo_pricing_solver_loadAI = GWOPricingSolverLoadAI(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined,self.state_update_module)
@@ -166,6 +169,8 @@ class GraphMaster:
     def solve(self):
         all_time_profile = defaultdict(float)
         all_time_start = time.time()
+        jy_actions_node=None
+
         with TimeProfiler(all_time_profile, "all_time"):
             
             l_id = 0
@@ -223,7 +228,9 @@ class GraphMaster:
 
                     incombentLP = pgm_solver.cur_lp
                     self.lp_before_operations=pgm_solver.cur_lp
-
+                    print('pgm_solver.cur_lp')
+                    print(pgm_solver.cur_lp)
+                    input('lp now')
                     l_id += 1
                     #all action used in specific column 
                     states_used_in_this_col=set([])
@@ -244,13 +251,12 @@ class GraphMaster:
                             else:
                                 print('starting jy pricing ')
                                 jy_init_res_state=self.index_to_multi_graph[0].source_state
-                                jy_actions_node=None
-                                jy_max_actions_in_route=100
-                                jy_pricing_on=True
-                                jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,jy_max_actions_in_route,jy_actions_node,self.nodes,self.jy_options_user_defined)
-                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] =jy_pricer_my.return_solution()
+                                #jy_max_actions_in_route=100
+                                #jy_pricing_on=True
+                                jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
+                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
-                        if tuple(list_of_nodes_in_shortest_path) in path_added:
+                        if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
                             
                             print('path')
                             print(list_of_nodes_in_shortest_path)

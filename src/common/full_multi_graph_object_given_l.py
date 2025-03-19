@@ -728,13 +728,16 @@ class Full_Multi_Graph_Object_given_l:
         print(len(unreachable_states))
         print('before edge set size')
         print(len(self.my_rows_pgm_pricing))
+        print('UNR_pgm_graph.nodes()')
+        print(len(UNR_pgm_graph.nodes()))
+        input('---')
         self.my_rows_pgm_pricing = [
             row for row in self.my_rows_pgm_pricing
             if row[0].state_id not in unreachable_states and row[1].state_id not in unreachable_states
         ]
         print('AFTER edge set size')
         print(len(self.my_rows_pgm_pricing))
-        #input('num states remove')
+        input('num states remove')
 
         #self.has_done_check_for_unreachable=True
     def construct_specific_pricing_pgm(self, action_2_red_cost,rezStates_minus_by_node):

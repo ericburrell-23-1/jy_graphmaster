@@ -261,6 +261,7 @@ class jy_slow_general_pricing_solver:
             self.jy_opt['using_load_ai_lazy']=True
             self.jy_opt['using_load_ai_lazy_num_pickups']=(len(all_nodes)-2)/3
             self.jy_opt['using_load_ai_lazy_max_pickups']=3
+            input('change in solve')
             #print('self.jy_opt[using_load_ai_num_pickups]')
             #print(self.jy_opt['using_load_ai_num_pickups'])
             #input('---')
@@ -301,7 +302,7 @@ class jy_slow_general_pricing_solver:
             #input('---')
         else :
             print('DONE NO NEG REDUCED COST FOUND')
-        return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost]
+        return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost,self.actions_of_node]
     def call_expansion_algorihtm_till(self):
 
         my_final_label=None
