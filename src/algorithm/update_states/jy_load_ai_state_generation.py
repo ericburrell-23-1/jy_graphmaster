@@ -281,7 +281,7 @@ class jy_make_load_ai_states:
         return must_dropoff
     def actions_from_node_subset(self,s):
 
-        actions_use=actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
+        actions_use=self.actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
         must_dropoff=self.get_must_drop_off_including_current(s)
         for n in must_dropoff:
             my_act_list=self.Q.node_2_actions[s.node,n.node]
@@ -299,7 +299,7 @@ class jy_make_load_ai_states:
             s=self.my_sorted.pop_max()
             orig_depth_s=self.State2Depth[s]
 
-            actions_use=self.get_actions_use(s)
+            actions_use=self.actions_from_node_subset(s)
             for my_act in actions_use:
                 [did_make_new_state,my_head,my_new_depth]=self.expand_state_given_action(s,my_act,orig_depth_s)
                
