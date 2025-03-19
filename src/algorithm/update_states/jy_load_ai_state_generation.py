@@ -7,7 +7,7 @@ from src.common.state import State
 from src.algorithm.jy_slow_pricing import SortedObjectList
 class jy_make_load_ai_states:
 
-    def set_depth_used_by_action():
+    def set_depth_used_by_action(self):
         self.DepthUsed=dict()
 
         Q=self.SLAI
