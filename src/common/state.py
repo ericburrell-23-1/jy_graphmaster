@@ -30,15 +30,22 @@ class State:
         - The indices array (as bytes).
         - The indptr array (as bytes).
         """
-        # Convert shape to a numpy array of consistent dtype, then to bytes
-        shape_bytes = np.array(self.state_vec.shape, dtype=np.int64).tobytes()
-        data_bytes = self.state_vec.data.tobytes()
-        indices_bytes = self.state_vec.indices.tobytes()
-        indptr_bytes = self.state_vec.indptr.tobytes()
-        combined = shape_bytes + data_bytes + indices_bytes + indptr_bytes
+        # # Convert shape to a numpy array of consistent dtype, then to bytes
+        # shape_bytes = np.array(self.state_vec.shape, dtype=np.int64).tobytes()
+        # data_bytes = self.state_vec.data.tobytes()
+        # indices_bytes = self.state_vec.indices.tobytes()
+        # indptr_bytes = self.state_vec.indptr.tobytes()
+        # combined = shape_bytes + data_bytes + indices_bytes + indptr_bytes
         
-        # Create an MD5 hash (you can switch to sha256 or other algorithms if desired)
-        return hashlib.sha512(combined).hexdigest()
+        # # Create an MD5 hash (you can switch to sha256 or other algorithms if desired)
+        # return hashlib.sha512(combined).hexdigest()
+        hash_value = hash((
+            tuple(self.state_vec.data),
+            tuple(self.state_vec.indices),
+            tuple(self.state_vec.indptr),
+            self.state_vec.shape
+        ))
+        return hash_value
 
     def __hash__(self) -> int:
        """

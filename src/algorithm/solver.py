@@ -201,7 +201,7 @@ class GraphMaster:
             
             
             cg_iteration_time =1
-
+            path_added = set()
             with TimeProfiler(all_time_profile, "solve:iteration"):
                 while iteration < max_iterations:
                     time_profile = defaultdict(int)
@@ -247,10 +247,15 @@ class GraphMaster:
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,jy_max_actions_in_route,jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
-                        print('path')
-                        print(list_of_nodes_in_shortest_path)
-                        print('reduce cost')
-                        print(reduced_cost)
+                        if tuple(list_of_nodes_in_shortest_path) in path_added:
+                            
+                            print('path')
+                            print(list_of_nodes_in_shortest_path)
+                            print('reduce cost')
+                            print(reduced_cost)
+                            input('this path added before')
+                        else:
+                            path_added.add(tuple(list_of_nodes_in_shortest_path))
                         #input('check here')
                         if reduced_cost >= -1e-3:
                             for index, graph in self.index_to_multi_graph.items():
