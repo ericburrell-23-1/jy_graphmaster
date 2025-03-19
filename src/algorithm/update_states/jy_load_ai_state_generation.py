@@ -22,7 +22,9 @@ class jy_make_load_ai_states:
         self.SLAI=shawn_LoadAI_state_input
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
         self.list_of_states_in_col_ordered=list_of_states_in_col_ordered
-        self.shawn_LoadAI_state_input = shawn_LoadAI_state_input
+        self.pickup_node = shawn_LoadAI_state_input.pickup_node
+        self.dropoff_node = shawn_LoadAI_state_input.dropoff_node
+        self.resource_name_to_index = shawn_LoadAI_state_input.resource_name_to_index
         self.jy_options=jy_options
         self.node_min_term_vec = shawn_LoadAI_state_input['node_min_term_vec']
         self.MaxDepth=self.jy_options['max_pickups_in_a_route']#S.max_depth
@@ -59,27 +61,17 @@ class jy_make_load_ai_states:
 
     def confirm_if_state_possible(self,candid_state):
         print('hello world')
-        pickup_node = self.shawn_LoadAI_state_input['pick up node']
-        dropoff_node = self.shawn_LoadAI_state_input['drop off node']
+        pickup_node = self.pickup_node
+        dropoff_node = self.dropoff_node
         s2 = candid_state
         if s2.node in pickup_node:
-            if 0>0:
-                pick_up_vec = s2.state_vec[0,4:4+len(pickup_node)]
-                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
-                dense_array = pick_up_vec.toarray()[0]
-                zero_indices = np.where(dense_array == 0)[0]
-                drop_off_node_need_to_visit = []
-    
-                for n in zero_indices:
-                    if drop_off_vec[0,n] == 0:
-                        drop_off_node_need_to_visit.append(n+1+len(pickup_node))
-            else:
-                drop_off_node_need_to_visit = []
-                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
-                dense_array = drop_off_vec.toarray()[0]
-                zero_indices = np.where(dense_array == 0)[0]
-                for n in zero_indices:
-                    drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+            
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
             
@@ -115,24 +107,14 @@ class jy_make_load_ai_states:
             else:
                 return False
         elif s2.node in dropoff_node:
-            if 0>0:
-                pick_up_vec = s2.state_vec[0,4:4+len(pickup_node)]
-                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
-                nonzero_indices = pick_up_vec.indices
-                nonzero_values = pick_up_vec.data
-                zero_indices = nonzero_indices[np.isclose(nonzero_values, 0)]
-                drop_off_node_need_to_visit = []
-                for n in zero_indices: # remove dropoff of current node
-                    if drop_off_vec[0,n] == 0 and n+1+len(pickup_node) != s2.node:
-                        drop_off_node_need_to_visit.append(n+1+len(pickup_node))
-            else:
-                drop_off_node_need_to_visit = []
-                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
-                dense_array = drop_off_vec.toarray()[0]
-                zero_indices = np.where(dense_array == 0)[0]
-                for n in zero_indices:
-                    if n+1+len(pickup_node) != s2.node:
-                        drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+            
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                if n+1+len(pickup_node) != s2.node:
+                    drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
             
@@ -182,6 +164,31 @@ class jy_make_load_ai_states:
             return s2
         else:
             return s   
+    def jy_can_expand(self,s_origin,my_action):
+        #return false if takign this action from theis state produces an ifeasible action
+        #possibilites
+        #possibility s_deestination is none
+        s_des = my_action.get_head_state(s_origin)
+        this_state_vec = s_des.state_vec
+        des_node = s_des.node
+        if s_des == None:
+            return False
+        if  des_node in self.pickup_node and this_state_vec[self.resource_name_to_index[str(tuple('mayAvoidDropOff',des_node))]] == 1:
+            return False
+        #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it
+        if self.confirm_if_state_possible(s_des) == False:
+            return False
+        #possibility confirm_if_state_possible returns false
+        pick_up_vec = s_des.state_vec[0,4:4+len(self.pickup_node)]
+        dense_array = pick_up_vec.toarray()[0]
+        num_pickup = len(np.where(dense_array == 0)[0])
+        if num_pickup > 3:
+            return False
+        #possibility:  there would be more than maxPickupsInstate pickups overall;
+            #remember you have a reource for this. so this should be caught by get head state but do check
+ 
+        
+        #return true otherwise
 
     def jy_can_expand(self,s_origin,my_action,option_do_min_term):
         #return false if takign this action from theis state produces an ifeasible action

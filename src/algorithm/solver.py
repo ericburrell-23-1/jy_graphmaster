@@ -11,6 +11,7 @@ from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
 from src.algorithm.gwo_pricing_solver_LoadAI import GWOPricingSolverLoadAI
 from src.algorithm.update_states.general_states_update import General_state_update
+from src.algorithm.update_states.jy_load_ai_state_generation import jy_make_load_ai_states
 from src.common.visulizer import Visulizer
 from collections import defaultdict
 from src.common.helper import Helper
@@ -71,6 +72,7 @@ class GraphMaster:
         self.state_update_module = state_update_module
         #self.state_update_function = state_update_module[1]
         self.general_state_update = General_state_update(nodes, actions, initial_resource_vector,resource_name_to_index,number_of_resources)
+
         self.dominate_actions = initial_dominate_actions
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
@@ -287,7 +289,12 @@ class GraphMaster:
                             max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, action_reasonable_dict,user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
                             
                             #new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
-                            new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,action_reasonable_dict,user_ignore_state_action,self.state_update_module)
+                            use_jy_state_gen = True
+                            if use_jy_state_gen == True:
+                                jy_state_gen = jy_make_load_ai_states(self.state_update_module,states_used_in_this_col,list_of_actions_used_in_col,self.jy_options_user_defined)
+                                new_states_describing_new_graph = jy_state_gen.gen_all_states_naive()
+                            else:
+                                new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,action_reasonable_dict,user_ignore_state_action,self.state_update_module)
                             print('check states generated')
                         #debug
                         if self.jy_options_user_defined['debug'] == True:
