@@ -171,40 +171,18 @@ class jy_make_load_ai_states:
         if self.confirm_if_state_possible(s_des) == False:
             return False
         #possibility confirm_if_state_possible returns false
-        pick_up_vec = s_des.state_vec[0,4:4+len(self.pickup_node)]
+        pick_up_vec = s_des.state_vec[0,4:4+len(self.pickup_node)] #NO CONSTANTS IN THE CODE PLEASE
         dense_array = pick_up_vec.toarray()[0]
         num_pickup = len(np.where(dense_array == 0)[0])
-        if num_pickup > 3:
+        if num_pickup > 3:# NO CONSTANTS IN THE CODE PLEASE
             return False
         #possibility:  there would be more than maxPickupsInstate pickups overall;
             #remember you have a reource for this. so this should be caught by get head state but do check
  
-        
-        #return true otherwise
-
-    def jy_can_expand(self,s_origin,my_action,option_do_min_term):
-        #return false if takign this action from theis state produces an ifeasible action
-        #possibilites
-        #possibility s_deestination is none
-        
-        #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it OR current location is not the associated pickup
-             #rmember to include if you are at the pickup for htat customer.  thats the speical case
-
-        #possibility confirm_if_state_possible returns false
-
-        #possibility:  there would be more than maxPickupsInstate pickups overall; 
-            #remember you have a reource for this. so this should be caught by get head state but do check
-            #rmember to include if you are at the pickup for htat customer
-        #possibility:  if option_do_min_term is false then you can count exactly how many pickups you have 
-            #make sure to include the pickup for the current node if it is a pickup
-        
-        
-        #possibility: the number of dropoffs required exceeds depth remaining:
-            #make sure to model the current node thing.  
-        #return true otherwise
-        print('hello world')
         return True
+        #return true otherwise
 
+    
     def update_action_subset_given_col(self):
         Q=self.SLAI
         self.Action_subset=Q.action_reasonable.copy()
