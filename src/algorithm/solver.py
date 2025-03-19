@@ -95,6 +95,7 @@ class GraphMaster:
         self.jy_options_user_defined['using_load_ai_lazy_num_pickups']=(len(nodes)-2)/3
         self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=3
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
+        self.jy_options_user_defined['max_pickups_in_a_route']=3
 
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)

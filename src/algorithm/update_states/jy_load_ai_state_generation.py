@@ -26,7 +26,7 @@ class jy_make_load_ai_states:
         self.dropoff_node = shawn_LoadAI_state_input.dropoff_node
         self.resource_name_to_index = shawn_LoadAI_state_input.resource_name_to_index
         self.jy_options=jy_options
-        self.node_min_term_vec = shawn_LoadAI_state_input['node_min_term_vec']
+        self.node_min_term_vec = shawn_LoadAI_state_input.node_min_vec_dict
         self.MaxDepth=self.jy_options['max_pickups_in_a_route']#S.max_depth
         self.option_do_min_term=True
         self.set_depth_used_by_action()
