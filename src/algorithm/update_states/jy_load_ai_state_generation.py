@@ -33,7 +33,7 @@ class jy_make_load_ai_states:
         self.set_depth_used_by_action()
         self.update_action_subset_given_col()
         self.updeate_action_from_nodes_subset()
-        self.init_states_project_and_depth
+        self.init_states_project_and_depth()
         #assign depth used to all actions;  Feel free to remove this later
         
         self.gen_all_states_naive()
