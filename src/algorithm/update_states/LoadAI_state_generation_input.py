@@ -234,43 +234,7 @@ class LoadAI_state_input():
                 print('error here')
             State_in_col.append(new_s)
             cur_state = new_s
-        for idx in range(len(State_in_col)-1):
-                    s1 = State_in_col[idx]
-                    s2 = State_in_col[idx+1]
-                    a = action_list[idx]
-                    try:
-                        if a.check_valid(s1,s2)==False:
-                            input('error here')
-                    except:
-                        print('check here')
-        # Create a mapping to track replacements while preserving order
-        replacement_map = {}
         
-        # Identify states that need replacement
-        for s in State_in_col:
-            my_node = s.node
-            my_state_vec = self.elementwise_min_csr(self.node_min_vec_dict[my_node], s.state_vec)
-            
-            # Check if state vector needs adjustment
-            if np.sum(np.abs(my_state_vec - s.state_vec)) > .001:
-                # Create replacement state
-                s2 = State(s.node, my_state_vec, l_id, s.node == -1, s.node == -2)
-            
-                replacement_map[s] = s2
-
-                
-        # Replace the states while preserving order
-        State_in_col = [replacement_map.get(s, s) for s in State_in_col]
-
-        for idx in range(len(State_in_col)-1):
-            s1 = State_in_col[idx]
-            s2 = State_in_col[idx+1]
-            a = action_list[idx]
-            try:
-                if a.check_valid(s1,s2)==False:
-                    input('error here')
-            except:
-                print('none here')
         return State_in_col
     def elementwise_min_csr(self, vec1, vec2) -> csr_matrix:
         """

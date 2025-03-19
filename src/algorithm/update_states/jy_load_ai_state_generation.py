@@ -18,6 +18,21 @@ class jy_make_load_ai_states:
                     self.DepthUsed[a]=1
                 else:
                     self.DepthUsed[a]=0
+    def debug_gen_states_from_actions(self):
+        cur_state=self.list_of_states_in_col_ordered[0]
+        for ai in range(0,len(self.list_of_action_in_col_ordered)):
+            my_act=self.list_of_action_in_col_ordered[ai]
+            cur_state=my_act.get_head_state(cur_state,cur_state.l_id)
+            target_state=self.list_of_states_in_col_ordered[ai+1]
+            if False==cur_state.equals(target_state):
+                print('target_state.pretty_print_state()')
+                target_state.pretty_print_state()
+                print('cur_state.pretty_print_state()')
+                
+                cur_state.pretty_print_state()
+                print('ai ')
+                print(ai)
+                input('error here ')
     def __init__(self,shawn_LoadAI_state_input,list_of_states_in_col_ordered,list_of_action_in_col_ordered,jy_options):
         #print('hello world')
         self.all_states=[]
@@ -26,6 +41,7 @@ class jy_make_load_ai_states:
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
         self.list_of_states_in_col_ordered=list_of_states_in_col_ordered
         self.actions = shawn_LoadAI_state_input.actions
+        self.debug_gen_states_from_actions()
         self.pickup_node = shawn_LoadAI_state_input.pickup_node
         self.dropoff_node = shawn_LoadAI_state_input.dropoff_node
         self.resource_name_to_index = shawn_LoadAI_state_input.resource_name_to_index
