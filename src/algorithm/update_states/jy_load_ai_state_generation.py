@@ -96,6 +96,8 @@ class jy_make_load_ai_states:
 
     def confirm_if_state_possible(self,candid_state):
         print('hello world')
+        print('candid_state')
+        candid_state.pretty_print_state()
         pickup_node = self.pickup_node
         dropoff_node = self.dropoff_node
         s2 = candid_state
@@ -108,6 +110,8 @@ class jy_make_load_ai_states:
             zero_indices = np.where(dense_array == 0)[0]
             for n in zero_indices:
                 drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+            print('drop_off_node_need_to_visit')
+            print(drop_off_node_need_to_visit)
             if len(drop_off_node_need_to_visit) >0:
                 permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
             
@@ -135,7 +139,8 @@ class jy_make_load_ai_states:
                     new_state = a.get_head_state(pre_state,pre_state.l_id)
                     if new_state != None:
                         return True
-                print('failing in confimr due to here')
+                print('THIS SPOT LOOK failing in confimr due to here')
+                input('not neccesaraylly wrong but check')
                 return False
             else:
                 return True
@@ -364,26 +369,26 @@ class jy_make_load_ai_states:
             orig_depth_s=self.State2Depth[s]
 
             actions_use=self.get_actions_from_node_subset(s)
-            print('working on state ')
-            s.pretty_print_state()
-            input('---')
-            print('actions above')
+            #print('working on state ')
+            #s.pretty_print_state()
+            #input('---')
+            #print('actions above')
             for my_act in actions_use:
                 my_act.pretty_print_action()
-            input('showing actions')
+            #input('showing actions')
             for my_act in actions_use:
-                print('working on state ')
-                s.pretty_print_state()
-                my_act.pretty_print_action()
+                #print('working on state ')
+                #s.pretty_print_state()
+                #my_act.pretty_print_action()
 
                 [did_make_new_state,my_head,my_new_depth]=self.expand_state_given_action(s,my_act,orig_depth_s)
-                print('did_make_new_state')
-                print(did_make_new_state)
-                print('my_new_depth')
-                print(my_new_depth)
-                if did_make_new_state==True:
-                    my_head.pretty_print_state()
-                input('---')
+                #print('did_make_new_state')
+                #print(did_make_new_state)
+                #print('my_new_depth')
+                #print(my_new_depth)
+                #if did_make_new_state==True:
+                #    my_head.pretty_print_state()
+                #input('---')
 
                 if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
                     print('doing addition ')
@@ -404,7 +409,7 @@ class jy_make_load_ai_states:
                 print(len(self.all_states))
                 print('len(self.my_sorted)')
                 print(len(self.my_sorted))
-                input('done iter')
+                #input('done iter')
         #print('at end of gen naive self.all_states')
         #print(self.all_states)
         #input('---')
