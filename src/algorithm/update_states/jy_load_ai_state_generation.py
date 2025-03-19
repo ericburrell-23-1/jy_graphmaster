@@ -198,6 +198,10 @@ class jy_make_load_ai_states:
             #rmember to include if you are at the pickup for htat customer
         #possibility:  if option_do_min_term is false then you can count exactly how many pickups you have 
             #make sure to include the pickup for the current node if it is a pickup
+        
+        
+        #possibility: the number of dropoffs required exceeds depth remaining:
+            #make sure to model the current node thing.  
         #return true otherwise
         print('hello world')
         return True
