@@ -122,7 +122,7 @@ class LoadAI_state_input():
             if a.check_valid(s1,s2)==False:
                 input('error here')
 
-        action_reasonable, action_reasonable_dict = self._generate_reasonalbe_actions()
+        self.action_reasonable, self.action_reasonable_dict = self._generate_reasonalbe_actions()
  
         
         depth_used = defaultdict()
@@ -136,7 +136,7 @@ class LoadAI_state_input():
         user_ignore_state_action=None
         beta_info = {}
         beta_info['BetaTime'] = self.betaTime
-        return max_depth, depth_used, state_in_path, self.node_min_vec_dict, action_reasonable,action_reasonable_dict, user_ignore_state_action,beta_info
+        return max_depth, depth_used, state_in_path, self.node_min_vec_dict, self.action_reasonable,self.action_reasonable_dict, user_ignore_state_action,beta_info
     
     def _generate_reasonalbe_actions(self):
         

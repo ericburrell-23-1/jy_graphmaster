@@ -22,6 +22,7 @@ class jy_make_load_ai_states:
         self.SLAI=shawn_LoadAI_state_input
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
         self.list_of_states_in_col_ordered=list_of_states_in_col_ordered
+        self.actions = shawn_LoadAI_state_input.actions
         self.pickup_node = shawn_LoadAI_state_input.pickup_node
         self.dropoff_node = shawn_LoadAI_state_input.dropoff_node
         self.resource_name_to_index = shawn_LoadAI_state_input.resource_name_to_index
