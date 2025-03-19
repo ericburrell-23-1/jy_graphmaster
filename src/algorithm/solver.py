@@ -293,7 +293,9 @@ class GraphMaster:
                             use_jy_state_gen = True
                             if use_jy_state_gen == True:
                                 jy_state_gen = jy_make_load_ai_states(self.state_update_module,states_used_in_this_col,list_of_actions_used_in_col,self.jy_options_user_defined)
-                                new_states_describing_new_graph = jy_state_gen.gen_all_states_naive()
+                                print('before jy_state_gen.all_states')
+                                print(jy_state_gen.all_states)
+                                [new_states_describing_new_graph,states_used_in_this_col] = jy_state_gen.return_solution()
                             else:
                                 new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,action_reasonable_dict,user_ignore_state_action,self.state_update_module)
                             print('check states generated')

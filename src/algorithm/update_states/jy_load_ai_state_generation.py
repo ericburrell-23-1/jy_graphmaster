@@ -20,6 +20,8 @@ class jy_make_load_ai_states:
                     self.DepthUsed[a]=0
     def __init__(self,shawn_LoadAI_state_input,list_of_states_in_col_ordered,list_of_action_in_col_ordered,jy_options):
         #print('hello world')
+        self.all_states=[]
+
         self.SLAI=shawn_LoadAI_state_input
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
         self.list_of_states_in_col_ordered=list_of_states_in_col_ordered
@@ -37,7 +39,7 @@ class jy_make_load_ai_states:
         self.init_states_project_and_depth()
         #assign depth used to all actions;  Feel free to remove this later
         
-        self.all_states=self.gen_all_states_naive()
+        self.gen_all_states_naive()
     
     def init_states_project_and_depth(self):
         self.my_sorted=SortedObjectList()
@@ -50,7 +52,7 @@ class jy_make_load_ai_states:
                 tmp.append(s2)
                 self.states_can_expand.append(s2)
                 self.my_sorted.insert(s2,self.MaxDepth)
-                
+                self.all_states.append(s2)
             self.list_of_states_in_col_ordered=tmp
         self.State2Depth=dict()
         for s in self.states_can_expand:
@@ -58,11 +60,16 @@ class jy_make_load_ai_states:
         
     
     def return_solution(self):
-        print('self.all_states')
+        print(' in returing self.all_states')
         print(self.all_states)
         print('returning solution')
 
-        return self.all_states
+
+        for s in self.list_of_states_in_col_ordered:
+            if s not in self.all_states:
+                input('error here not found')
+
+        return [self.all_states,self.list_of_states_in_col_ordered]
 
 
     def confirm_if_state_possible(self,candid_state):
@@ -312,7 +319,6 @@ class jy_make_load_ai_states:
     def gen_all_states_naive(self):
 
         Q=self.SLAI
-        self.all_states=[]
         
         while len(self.my_sorted)>0:
             #State $s\leftarrow \mbox{arg} \max_{s\in StatesCanExpand}State2Depth(s)$
@@ -327,19 +333,19 @@ class jy_make_load_ai_states:
                
                 if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
                     self.State2Depth[my_head]=my_new_depth
-                    print('my_new_depth')
-                    print(my_new_depth)
-                    print('type(my_new_depth)')
-                    print(type(my_new_depth))
-                    print('type(my_head)')
-                    print(type(my_head))
+                    #print('my_new_depth')
+                    #print(my_new_depth)
+                    #print('type(my_new_depth)')
+                    #print(type(my_new_depth))
+                    #print('type(my_head)')
+                    #print(type(my_head))
                     self.my_sorted.insert(my_head,my_new_depth)
                     if my_head==None:
                         input('error here')
                     self.all_states.append(my_head)
-        print('self.all_states')
-        print(self.all_states)
-        input('---')
+        #print('at end of gen naive self.all_states')
+        #print(self.all_states)
+        #input('---')
     def elementwise_min_csr(self,vec1: csr_matrix, vec2: csr_matrix) -> csr_matrix:
         """
         Compute the elementwise minimum of two CSR matrices.
