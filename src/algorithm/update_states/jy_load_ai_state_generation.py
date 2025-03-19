@@ -265,18 +265,33 @@ class jy_make_load_ai_states:
                 input('error here 2')
         return did_make_term,my_head,my_new_depth
 
-    def get_must_drop_off_including_current(s):
+    def get_must_drop_off_including_current(self,s):
         Q=self.SLAI
-        
         must_drop_off=[]
-       
+        if s.node in self.pickup_node:
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s.state_vec[0,4+len(self.pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node))
         
-        may_avoid_dropoff=s.state_vec[4+self.num_pickups:]
-        must_dropoff=np.nonzero(may_avoid_dropoff<0.5)
-        must_dropoff=may_avoid_dropoff_list+self.num_pickups
-        if s.node in Q.pickup_node:
-            must_dropoff.append(s.node+self.num_pickups)
-        return must_dropoff
+        elif s.node in self.dropoff_node:
+            
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s.state_vec[0,4+len(self.pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                if n+1+len(self.pickup_node) != s.node:
+                    drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node))
+        
+        # may_avoid_dropoff=s.state_vec[4+self.num_pickups:]
+        # must_dropoff=np.nonzero(may_avoid_dropoff<0.5)
+        # must_dropoff=may_avoid_dropoff_list+self.num_pickups
+        # if s.node in Q.pickup_node:
+        #     must_dropoff.append(s.node+self.num_pickups)
+        return must_drop_off
     def actions_from_node_subset(self,s):
 
         actions_use=self.actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
