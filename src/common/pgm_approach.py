@@ -147,11 +147,15 @@ class PGM_appraoch:
         with TimeProfiler(self.time_profile, "pgm:make_rez_states_minus_by_node"):
             self.make_rez_states_minus_by_node()
         self.primal_solution, self.dual_solution, self.optimal_value = None, None, None
+        #self.get_state_id_to_state()
 
     #put your stuff here start with marting debug
 
     #i want to take in two lists of states.  I want to determine if one list is a subset of the other list
-    
+    def get_state_id_to_state(self):
+        self.state_id_to_state = defaultdict()
+        for s in self.rez_states_minus:
+            self.state_id_to_state[s.state_id] = s
     def get_all_state_pairs_extra_actions(self):
 
         all_node_pairs=set([])
@@ -1160,6 +1164,8 @@ class PGM_appraoch:
         else:
             with TimeProfiler(self.time_profile, "pgm:solve_with_pulp_ilp"):
                 primal_solution, optimal_value = self.solve_with_pulp_ilp(self.all_vars,self.all_con_names,self.lbCon,self.ubCon)
+        
+        
         with TimeProfiler(self.time_profile, "debug"):
             if self.jy_options['debug'] == True:
 
@@ -1175,49 +1181,6 @@ class PGM_appraoch:
 
         return primal_solution, dual_exog, optimal_value
 
-    # def solve_with_pulp_ilp(self, jy_vars, all_con_names, lbCon, ubCon):
-    #     """Solves the problem as an Integer Linear Program (ILP) with binary decision variables."""
-        
-    #     # Step 1: Create a PuLP minimization problem
-    #     with TimeProfiler(self.time_profile, "pgm:construct ilp pulp problem"):
-    #         prob = pl.LpProblem(name="OptimizationProblem_ILP", sense=pl.LpMinimize)
-
-    #         # Step 2: Create PuLP variables (BINARY)
-    #         pulp_vars = {var.my_name: pl.LpVariable(name=str(var.my_name), cat='Binary') for var in jy_vars}
-
-    #         # Step 3: Define the Objective Function (Minimize Cost)
-    #         objective = pl.lpSum(var.my_cost * pulp_vars[var.my_name] for var in jy_vars)
-    #         prob += objective
-
-    #         # Step 4: Add Constraints
-    #         for con_name in all_con_names:
-    #             constraint_expr = pl.lpSum(var.my_contrib_dict.get(con_name, 0) * pulp_vars[var.my_name] for var in jy_vars)
-                
-    #             if con_name in lbCon:
-    #                 prob += (constraint_expr >= lbCon[con_name], f"LB_{con_name}")
-                    
-    #             if con_name in ubCon:
-    #                 prob += (constraint_expr <= ubCon[con_name], f"UB_{con_name}")
-
-    #     # Step 5: Solve the ILP
-    #     #print('Starting ILP call')
-    #     with TimeProfiler(self.time_profile, "pgm:ilp_solve"):
-    #         prob.solve(pl.PULP_CBC_CMD(msg=False))  # Using CBC solver for ILPs
-    #     #print('Done ILP call')
-    #     # Step 6: Extract primal solution (decision variables)
-    #     with TimeProfiler(self.time_profile, "pgm:extract pulp ilp solution"):
-    #         primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
-
-    #         # Get optimal objective value
-    #         optimal_value = pl.value(prob.objective)
-
-    #         # Validate that objective did not increase unexpectedly
-    #         #if hasattr(self, "lp_before_operations") and optimal_value > self.lp_before_operations + 0.0001:
-    #         #    input('Error: Objective function increased unexpectedly.')
-    #         #else:
-    #         #    self.lp_before_operations = optimal_value
-
-    #     return primal_solution,optimal_value
 
     def solve_with_pulp_ilp(self, jy_vars, all_con_names, lbCon, ubCon):
         """Solves the problem as an Integer Linear Program (ILP) with binary decision variables.
@@ -1266,7 +1229,12 @@ class PGM_appraoch:
         with TimeProfiler(self.time_profile, "pgm:ilp_solve"):
             # Use the same solving approach that's working
             prob.solve(pl.PULP_CBC_CMD(msg=False))
-        
+            if prob.status == pl.LpStatusInfeasible:
+                raise ValueError("LP problem is infeasible")
+            elif prob.status == pl.LpStatusUnbounded:
+                raise ValueError("LP problem is unbounded")
+            elif prob.status != pl.LpStatusOptimal:
+                raise ValueError(f"LP problem could not be solved optimally. Status code: {prob.status}")
         # Step 6: Extract primal solution (decision variables)
         with TimeProfiler(self.time_profile, "pgm:extract pulp ilp solution"):
             primal_solution = {var_name: pulp_var.value() for var_name, pulp_var in pulp_vars.items()}
@@ -1352,7 +1320,7 @@ class PGM_appraoch:
         
         # Solve the LP problem
         with TimeProfiler(self.time_profile, "pgm:lp_solve"):
-            prob.solve(pl.PULP_CBC_CMD(msg=False))
+            prob.solve(pl.PULP_CBC_CMD(msg=True))
         
         # Extract primal solution values in a single pass
         with TimeProfiler(self.time_profile, "pgm:extract pulp lp solution"):
@@ -1391,71 +1359,168 @@ class PGM_appraoch:
         
         return primal_solution, dual_solution, optimal_value
 
-    def construct_and_solve_lp(self, jy_vars, all_con_names, lbCon, ubCon):
+    def solve_with_xpress(self, jy_vars, all_con_names, lbCon, ubCon):
         """
         Constructs and solves an Xpress Linear Program (LP), returning primal and dual solutions.
         """
         import xpress as xp
         # Step 1: Initialize Xpress problem
         xp.init('C:/xpressmp/bin/xpauth.xpr')  # Ensure Xpress is initialized correctly
-        prob = xp.problem()
-
-        # Step 2: Create Xpress variables
-        xpress_vars = {}
-
-        for var in jy_vars:
-            var_name = var.my_name  # Ensure variable name is a string
-            xpress_vars[var_name] = xp.var(vartype=xp.continuous, name=str(var_name),lb=0,ub=float("inf"))  # Create variable
-        prob.addVariable(list(xpress_vars.values()))  # Add variables to the problem
-
-        # Step 3: Define the Objective Function (Minimize Cost)
-        objective = xp.Sum(var.my_cost * xpress_vars[var.my_name] for var in jy_vars)
-        prob.setObjective(objective, sense=xp.minimize)
-
-        # Step 4: Add Constraints
-        constraint_dict = {}  # Store constraint objects for dual values
-        for con_name in all_con_names:
-            # Compute constraint sum from contributions
-            constraint_expr = xp.Sum(var.my_contrib_dict.get(con_name, 0) * xpress_vars[var.my_name] for var in jy_vars)
-
-            # Apply lower and upper bounds if they exist
-            if con_name in lbCon:
-                constraint = xp.constraint(constraint_expr >= lbCon[con_name], name=f"LowerBound_{con_name}")
-                prob.addConstraint(constraint)
-                constraint_dict[f"LowerBound_{con_name}"] = constraint
-
-            if con_name in ubCon:
-                constraint = xp.constraint(constraint_expr <= ubCon[con_name], name=f"UpperBound_{con_name}")
-                prob.addConstraint(constraint)
-                constraint_dict[f"UpperBound_{con_name}"] = constraint
-
+        """Efficiently solves the LP problem using Xpress with optimized constraint construction."""
+        with TimeProfiler(self.time_profile, "pgm:construct lp xpress problem"):
+            # Create an Xpress problem
+            prob = xp.problem()
+            
+            # Pre-create all Xpress variables at once
+            var_names = [var.my_name for var in jy_vars]
+            pulp_vars = {}
+            # Create variables one by one with proper naming
+            xp_vars = []
+            for name in var_names:
+                var = prob.addVariable(lb=0, name=f"var_{hash(str(name))}")
+                xp_vars.append(var)
+                pulp_vars[name] = var
+            
+            # Build objective function - group by cost coefficient for efficiency
+            obj_coeffs = {}
+            for var in jy_vars:
+                if var.my_cost != 0:  # Skip zero-cost variables in objective
+                    obj_coeffs[var.my_name] = var.my_cost
+            
+            # Set objective function
+            prob.setObjective(xp.Sum(obj_coeffs[name] * pulp_vars[name] for name in obj_coeffs))
+            
+            # Pre-process constraint contributions for more efficient access
+            # Structure: {constraint_name: {var_name: coefficient}}
+            constraint_contribs = {con_name: {} for con_name in all_con_names}
+            
+            # First pass: collect all coefficients for each constraint
+            for var in jy_vars:
+                var_name = var.my_name
+                for con_name, coeff in var.my_contrib_dict.items():
+                    if coeff != 0 and con_name in constraint_contribs:  # Skip zero coefficients
+                        constraint_contribs[con_name][var_name] = coeff
+            
+            # Second pass: efficiently build and add constraints
+            constraint_dict = {}  # For dual values
+            constraint_mapping = {}
+            
+            # Process constraints in batches to amortize overhead
+            for i, con_name in enumerate(all_con_names):
+                # Only include variables with non-zero coefficients
+                vars_in_constraint = constraint_contribs[con_name]
+                if not vars_in_constraint:
+                    continue  # Skip constraints with no variables
+                    
+                # Build constraint expression more efficiently
+                constraint_expr = xp.Sum(vars_in_constraint[var_name] * pulp_vars[var_name] 
+                                        for var_name in vars_in_constraint)
+                
+                # Add lower bound constraint if needed
+                if con_name in lbCon:
+                    constraint_name = f"LB_{i}"
+                    # Create the constraint expression first
+                    lb_constraint = constraint_expr >= lbCon[con_name]
+                    # Add constraint without the name parameter
+                    constraint = prob.addConstraint(lb_constraint)
+                    # Set the name separately if the API supports it
+                    try:
+                        constraint.name = constraint_name
+                    except:
+                        pass  # If setting name isn't supported, continue without it
+                    constraint_dict[constraint_name] = constraint
+                    constraint_mapping[f"LowerBound_{con_name}"] = constraint_name
+                
+                # Add upper bound constraint if needed
+                if con_name in ubCon:
+                    constraint_name = f"UB_{i}"
+                    # Create the constraint expression first
+                    ub_constraint = constraint_expr <= ubCon[con_name]
+                    # Add constraint without the name parameter
+                    constraint = prob.addConstraint(ub_constraint)
+                    # Set the name separately if the API supports it
+                    try:
+                        constraint.name = constraint_name
+                    except:
+                        pass  # If setting name isn't supported, continue without it
+                    constraint_dict[constraint_name] = constraint
+                    constraint_mapping[f"UpperBound_{con_name}"] = constraint_name
         
-
-
-        prob.solve()
+        # Solve the LP problem
+        with TimeProfiler(self.time_profile, "pgm:lp_solve"):
+            prob.solve()
+            
+            # Check problem status
+            status = prob.getProbStatus()
+            print(f"Initial Xpress solver status: {status}")
+            
+            
         
-        primal_solution = {}
-
-        # Iterate through the xpress_vars dictionary
-        for var_name, xp_var in xpress_vars.items():
-            # Get the solution value for each variable
-            primal_solution[var_name] = prob.getSolution(xp_var)
-
-
-        dual_solution = {}
-
-        # Iterate through the constraint_dict dictionary
-        for con_name, constraint in constraint_dict.items():
-            # Get the dual value for each constraint
-            dual_solution[con_name] = prob.getDual(constraint)
-
-        dual_sol = np.array(list(dual_solution.values()))
-
-        optimal_value = prob.getObjVal()
-
-
-
-        return primal_solution, dual_sol, optimal_value
+        # Extract primal solution values in a single pass
+        with TimeProfiler(self.time_profile, "pgm:extract xpress lp solution"):
+            # Get solution status
+            status = prob.getProbStatus()
+            print(f"Xpress solver status for solution extraction: {status}")
+            
+            # Explicitly handle status 5 which we know means unbounded in this implementation
+            if status == 5:
+                print("Status 5 detected (unbounded problem) - returning empty solution")
+                primal_solution = {var_name: 0 for var_name in pulp_vars}
+                dual_solution = {original_name: 0 for original_name in constraint_mapping}
+                optimal_value = float('inf')  # Represent unbounded objective
+                return primal_solution, dual_solution, optimal_value
+            
+            # For other non-optimal statuses
+            if status != xp.SolStatus.OPTIMAL and status != 1:  # Status 1 typically means optimal
+                print(f"Problem not solved optimally. Status: {status}")
+                primal_solution = {var_name: 0 for var_name in pulp_vars}
+                dual_solution = {original_name: 0 for original_name in constraint_mapping}
+                optimal_value = None  # Indicate no valid objective
+                return primal_solution, dual_solution, optimal_value
+            # Get solution status
+             
+            # Handle case when problem is unbounded or infeasible
+            if status == xp.SolStatus.UNBOUNDED or status == 5:  # Check for both enum and raw status code
+                # Print status information for debugging
+                print(f"Problem status: {status} (xp.SolStatus.UNBOUNDED = {xp.SolStatus.UNBOUNDED})")
+                # Return empty solutions since the problem is unbounded
+                primal_solution = {var_name: 0 for var_name in pulp_vars}
+                dual_solution = {original_name: 0 for original_name in constraint_mapping}
+                optimal_value = float('inf')  # Represent unbounded objective
+                return primal_solution, dual_solution, optimal_value
+            
+            # Extract primal values
+            primal_solution = {var_name: prob.getSolution(pulp_vars[var_name]) for var_name in pulp_vars}
+            
+            # Extract dual values
+            dual_solution = {}
+            
+            if status == xp.SolStatus.OPTIMAL:  # If solved optimally
+                temp_duals = {}
+                # Get duals using the simplified constraint names
+                for simplified_name, constraint in constraint_dict.items():
+                    temp_duals[simplified_name] = prob.getDual(constraint)
+                
+                # Map back to original constraint names
+                for original_name, simplified_name in constraint_mapping.items():
+                    dual_solution[original_name] = temp_duals.get(simplified_name, 0)
+            else:
+                # Set all duals to 0 if not solved optimally
+                for original_name in constraint_mapping:
+                    dual_solution[original_name] = 0
+            
+            dual_sol = np.array(list(dual_solution.values()))
+            
+            # Get optimal objective value
+            optimal_value = prob.getObjVal()
+            
+            # Validate objective value
+            if optimal_value > self.lp_before_operations + 0.0001:
+                print("Warning: Objective function value increased unexpectedly.")
+            else:
+                self.lp_before_operations = optimal_value
+        
+        return primal_solution, dual_solution, optimal_value
 
  
     def print_pulp_formulation(self,prob):
@@ -1770,3 +1835,44 @@ class PGM_appraoch:
             print(f"{step}: {duration:.4f} seconds ({duration/sum(self.time_profile.values())*100:.1f}%)")
     def return_time_profile(self):
         return self.time_profile
+    def find_original_var_name(self,pulp_vars, target_var_id):
+        
+        # The target ID might not have the 'var_' prefix in some contexts
+        if not target_var_id.startswith('var_'):
+            target_var_id = f"var_{target_var_id}"
+        
+        # First try a direct search by variable name (if using hash-based naming)
+        for var_name, var in pulp_vars.items():
+            # Check if the variable object has a name attribute
+            var_id = None
+            if hasattr(var, 'name'):
+                var_id = var.name
+            # Fallback: use string representation which often contains the ID
+            else:
+                var_str = str(var)
+                # Extract the ID if it's in the format like "var_12345678"
+                import re
+                match = re.search(r'var_[-\d]+', var_str)
+                if match:
+                    var_id = match.group(0)
+            
+            if var_id == target_var_id:
+                return var_name
+        
+        # If not found, try a secondary approach - check if we can get something from hash
+        for var_name, var in pulp_vars.items():
+            # If our variable IDs are hashes of the original names
+            var_hash = f"var_{hash(str(var_name))}"
+            if var_hash == target_var_id:
+                return var_name
+        
+        # If still not found, just print all vars for debugging
+        print(f"Could not find variable with ID {target_var_id}")
+        print("Available variables:")
+        for var_name, var in pulp_vars.items():
+            if hasattr(var, 'name'):
+                print(f"{var_name}: {var.name}")
+            else:
+                print(f"{var_name}: {var}")
+        
+        return None
