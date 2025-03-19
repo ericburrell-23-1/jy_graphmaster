@@ -1,5 +1,8 @@
 
-
+from itertools import permutations
+import numpy as np
+from scipy.sparse import csr_matrix
+from src.common.state import State
 #jy_load_ai_state_generation
 
 class jy_make_load_ai_states():
@@ -10,6 +13,8 @@ class jy_make_load_ai_states():
         self.list_of_action_in_col_ordered=list_of_action_in_col_ordered
         self.list_of_states_in_col_ordered=list_of_states_in_col_ordered
         self.node_2_actions=node_2_actions
+        self.shawn_LoadAI_state_input = shawn_LoadAI_state_input
+        self.node_min_term_vec = shawn_LoadAI_state_input['node_min_term_vec']
         self.gen_all_states_naive()
     def return_solution(self):
         return self.all_states
@@ -17,14 +22,129 @@ class jy_make_load_ai_states():
 
     def confirm_if_state_possible(self,candid_state):
         print('hello world')
+        pickup_node = self.shawn_LoadAI_state_input['pick up node']
+        dropoff_node = self.shawn_LoadAI_state_input['drop off node']
+        s2 = candid_state
+        if s2.node in pickup_node:
+            if 0>0:
+                pick_up_vec = s2.state_vec[0,4:4+len(pickup_node)]
+                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                dense_array = pick_up_vec.toarray()[0]
+                zero_indices = np.where(dense_array == 0)[0]
+                drop_off_node_need_to_visit = []
+    
+                for n in zero_indices:
+                    if drop_off_vec[0,n] == 0:
+                        drop_off_node_need_to_visit.append(n+1+len(pickup_node))
+            else:
+                drop_off_node_need_to_visit = []
+                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                dense_array = drop_off_vec.toarray()[0]
+                zero_indices = np.where(dense_array == 0)[0]
+                for n in zero_indices:
+                    drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+            if len(drop_off_node_need_to_visit) >0:
+                permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
+            
+                valid = False
+    
+                for list_of_node in permutation_of_drop_off_node:
+                    pre_node = s2.node
+                    pre_state = s2
+                
+                    go_next_loop = False
+                    for this_node in list_of_node:
+                        a = self.actions[(pre_node,this_node)][0]
+                        new_state = a.get_head_state(pre_state,pre_state.l_id)
+                        if new_state == None:
+                            go_next_loop = True
+                            break
+                        pre_node = this_node
+                        pre_state = new_state
+                    if go_next_loop:
+                        continue
+                    if (pre_node,-2) not in self.actions:
+                        input('error here')
+                    a = self.actions[(pre_node,-2)][0]
+                
+                    new_state = a.get_head_state(pre_state,pre_state.l_id)
+                    if new_state != None:
+                        valid = True
+                        break
+            else:
+                valid = True
+            if valid == True:
+                return True
+            else:
+                return False
+        elif s2.node in dropoff_node:
+            if 0>0:
+                pick_up_vec = s2.state_vec[0,4:4+len(pickup_node)]
+                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                nonzero_indices = pick_up_vec.indices
+                nonzero_values = pick_up_vec.data
+                zero_indices = nonzero_indices[np.isclose(nonzero_values, 0)]
+                drop_off_node_need_to_visit = []
+                for n in zero_indices: # remove dropoff of current node
+                    if drop_off_vec[0,n] == 0 and n+1+len(pickup_node) != s2.node:
+                        drop_off_node_need_to_visit.append(n+1+len(pickup_node))
+            else:
+                drop_off_node_need_to_visit = []
+                drop_off_vec = s2.state_vec[0,4+len(pickup_node):]
+                dense_array = drop_off_vec.toarray()[0]
+                zero_indices = np.where(dense_array == 0)[0]
+                for n in zero_indices:
+                    if n+1+len(pickup_node) != s2.node:
+                        drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
+            if len(drop_off_node_need_to_visit) >0:
+                permutation_of_drop_off_node = list(permutations(drop_off_node_need_to_visit))
+            
+                valid = False
+    
+                for list_of_node in permutation_of_drop_off_node:
+                    pre_node = s2.node
+                    pre_state = s2
+                    go_next_loop = False
+                    for this_node in list_of_node:
+                        a = self.actions[(pre_node,this_node)][0]
+                        new_state = a.get_head_state(pre_state,pre_state.l_id)
+                        if new_state == None:
+                            go_next_loop= True
+                            break
+                        pre_node = this_node
+                        pre_state = new_state
+                    if go_next_loop:
+                        continue
+                    a = self.actions[(pre_node,-2)][0]
+                    new_state = a.get_head_state(pre_state,pre_state.l_id)
+                    if new_state != None:
+                        valid = True
+                        break
+            else:
+                a = self.actions[(s2.node,-2)][0]
+                new_state = a.get_head_state(s2,s2.l_id)
+                if new_state != None:
+                    valid = True
+            if valid == True:
+    
+                return True
+            else:
+                return False
+        else:
+            input('state is not pickup or drop off node')
         #checkign my permuations
         #self.SLAI is teh shawn state generation structure
         #if its valdi then return true otehrwise return fasle
     
     def apply_node_min_term(self,in_state):
         print('hellow orld')
-        #return the new state if it need
-        return projected_state
+        s = in_state
+        new_state_vec = self.elementwise_min_csr(s.state_vec, self.nodes_min_term_vec[s.node])
+        if np.sum(np.abs(new_state_vec-s.state_vec)) > .00001:
+            s2 = State(s.node, new_state_vec, s.l_id, s.is_source, s.is_sink)
+            return s2
+        else:
+            return s            
     def gen_all_states_naive(self):
 
         Q=self.SLAI
@@ -103,3 +223,39 @@ class jy_make_load_ai_states():
                 \EndWhile
             \end{algorithmic}
         \end{algorithm}
+    def elementwise_min_csr(self,vec1: csr_matrix, vec2: csr_matrix) -> csr_matrix:
+        """
+        Compute the elementwise minimum of two CSR matrices.
+        """
+        vec2 = vec2.reshape(1, -1)
+ 
+        if vec1.shape != vec2.shape:
+            raise ValueError(f"Matrices have incompatible shapes: {vec1.shape} vs {vec2.shape}")
+       
+        # Convert to COO format for easier manipulation
+        cx1 = vec1.tocoo()
+        cx2 = vec2.tocoo()
+       
+        # Create dictionaries for non-zero values
+        dict1 = {(i, j): v for i, j, v in zip(cx1.row, cx1.col, cx1.data)}
+        dict2 = {(i, j): v for i, j, v in zip(cx2.row, cx2.col, cx2.data)}
+       
+        # Combine keys
+        all_keys = set(dict1.keys()).union(set(dict2.keys()))
+       
+        # Create new data for the minimum values
+        rows, cols, data = [], [], []
+        for i, j in all_keys:
+            # Get values, with 0 as default (not infinity) for missing keys
+            val1 = dict1.get((i, j), 0)
+            val2 = dict2.get((i, j), 0)
+            min_val = min(val1, val2)
+           
+            # Only include non-zero values in the result
+            if min_val != 0:
+                rows.append(i)
+                cols.append(j)
+                data.append(min_val)
+       
+        # Create a new CSR matrix
+        return csr_matrix((data, (rows, cols)), shape=vec1.shape)
