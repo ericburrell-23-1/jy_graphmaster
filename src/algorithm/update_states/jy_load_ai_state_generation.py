@@ -160,12 +160,12 @@ class jy_make_load_ai_states:
         #return false if takign this action from theis state produces an ifeasible action
         #possibilites
         #possibility s_deestination is none
-        s_des = my_action.get_head_state(s_origin)
-        this_state_vec = s_des.state_vec
-        des_node = s_des.node
+        s_des = my_action.get_head_state(s_origin,s_origin.l_id)
         if s_des == None:
             return False
-        if  des_node in self.pickup_node and this_state_vec[self.resource_name_to_index[str(tuple('mayAvoidDropOff',des_node))]] == 1:
+        this_state_vec = s_des.state_vec
+        des_node = s_des.node
+        if  des_node in self.dropoff_node and this_state_vec[self.resource_name_to_index[str(('mayAvoidDropOff',des_node))]] == 1:
             return False
         #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it
         if self.confirm_if_state_possible(s_des) == False:
@@ -238,7 +238,7 @@ class jy_make_load_ai_states:
 
     def expand_state_given_action(self,s,my_act,orig_depth_s):
 
-        can_expand=self.jy_can_expand(my_act,s,self.option_do_min_term)
+        can_expand=self.jy_can_expand(s,my_act)
         if can_expand==False:
             return False,None,None
         #\State  $s_2\leftarrow GetHeadState(s\rightarrow a)$
