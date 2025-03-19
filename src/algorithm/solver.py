@@ -89,6 +89,9 @@ class GraphMaster:
         self.jy_options_user_defined['debug'] =True
         self.jy_options_user_defined['use_csr_exog'] =False
         self.jy_options_user_defined['use_load_ai_in_pgm'] =False
+        self.jy_opt['using_load_ai_lazy']=True
+        self.jy_opt['using_load_ai_lazy_num_pickups']=(len(nodes)-2)/3
+        self.jy_opt['using_load_ai_lazy_max_pickups']=3
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.LOAD_AI_setup()
         #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
