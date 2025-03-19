@@ -502,7 +502,9 @@ class loadAI(OptimizationProblem):
         dropoff_node = self.pickup_to_dropoff[pickup_node]
         pickup_dropoff_direct_distance = self._haversine_distance(pickup_node, dropoff_node)
         slack_coeff = max(0,pickup_dropoff_direct_distance - MIN_DISTANCE_SAVING)
-        return slack_coeff
+        if slack_coeff > 0:
+            return slack_coeff
+        return 0
         
 
     def _create_initial_res_actions(self):
