@@ -450,7 +450,7 @@ class loadAI(OptimizationProblem):
             destination_node = destination_node + 2 * self.number_of_customers
             action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
             self.actions[origin_node, destination_node] = [action]
-    
+               
         for origin_node in self.pickup_to_dropoff:
             destination_node = -2
             cost = 0
@@ -514,7 +514,7 @@ class loadAI(OptimizationProblem):
     def _create_initial_res_states(self):
         self.initial_res_states.add(State(-1, self._full_resource_vec(), 0, True, False))
 
-        for skip_node in self.nodes[(self.number_of_customers * 2):]:
+        for skip_node in self.nodes[(self.number_of_customers * 2)+1:]:
             self.initial_res_states.add(State(skip_node, self._full_resource_vec(), 0, False, False))
 
         self.initial_res_states.add(State(-2, self._empty_resource_vec(), 0, False, True))

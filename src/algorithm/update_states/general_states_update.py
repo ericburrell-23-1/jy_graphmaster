@@ -81,7 +81,7 @@ class General_state_update:
             #if nodes_min_term_vec[self.action_to_s1_s2[0]] >= a.min_resource_vec:
 
                 actions_from_node[a.node_tail].append(a)
-
+        
         
         # 25-42: Main loop for state expansion
  
