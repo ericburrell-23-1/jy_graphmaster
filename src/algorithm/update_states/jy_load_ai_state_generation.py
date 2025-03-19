@@ -149,6 +149,7 @@ class jy_make_load_ai_states():
 
         Q=self.SLAI
         option_do_min_term=True
+        my_sorted=SortedObjectList_2()
         #        \State $MaxDepth\leftarrow $ User
         MaxDepth=self.jy_options['max_pickups_in_a_route']#S.max_depth
         #        \State $DepthUsed(a)\leftarrow $User Defined 
@@ -177,13 +178,13 @@ class jy_make_load_ai_states():
                 #    \State $s_2\leftarrow myInitStates[j]$ 
                 #    \State $ActionsSubset\leftarrow ActionsSubset+AllActions(node(s_1)\rightarrow node(s_2))$
                 #\EndFor
-                Action_subset=Q.action_reasonable.copy()
+                self.Action_subset=Q.action_reasonable.copy()
                 for i_ind in range(0,len(self.list_of_states_in_col_ordered)):
                     for j_ind in range(i_ind+1,len(self.list_of_states_in_col_ordered)):
                         s1=    self.list_of_states_in_col_ordered[i_ind]
                         s2=    self.list_of_states_in_col_ordered[j_ind]
                         my_actions_n1_n2=Q.actions[s1.node,s2.node]
-                        Action_subset=Action_subset.union(my_actions_n1_n2)
+                        self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
                 self.states_can_expand=[]
                 if option_do_min_term==True:
                     tmp=[]
@@ -191,17 +192,33 @@ class jy_make_load_ai_states():
                         s2=self.apply_node_min_term(s)
                         tmp.append(s2)
                         self.states_can_expand.append(s2)
+                        my_sorted.insert(s2,MaxDepth)
+                        
                     self.list_of_states_in_col_ordered=tmp
                 #State $State2Depth(s)\leftarrow MaxDepth$ for all $s\in StatesCanExpand$
                 self.State2Depth=dict()
                 for s in self.states_can_expand:
-                    
-                \State $ActionsFromNode(n)\leftarrow \{ \}$ for all $n\in Nodes$
-                \For{$a \in ActionSubset$}
-                \If{$a.origin.NodeMinTermVec\geq a.minTermInput$}
-                \State $ActionsFromNode(a.origin)\leftarrow a$
-                \EndIf
-                \EndFor
+                    self.State2Depth[s]=MaxDepth
+                
+                #\State $ActionsFromNode(n)\leftarrow \{ \}$ for all $n\in Nodes$
+                #\For{$a \in ActionSubset$}
+                #\If{$a.origin.NodeMinTermVec\geq a.minTermInput$}
+                #\State $ActionsFromNode(a.origin)\leftarrow a$
+                #\EndIf
+                #\EndFor
+
+                self.actions_from_node=dict()
+                for n in Q.nodes:
+                    self.actions_from_node[n]=[]
+                for a in self.Action_subset:
+                    my_origin=a.node_tail
+                    if option_do_min_term:
+                        if np.min(a.origin.NodeMinTermVec- a.minTermInput>=-0.0001):
+                            self.actions_from_node[my_origin].append(a)
+                    else:
+                        self.actions_from_node[my_origin].append(a)
+                while len(StatesCanExpand>0):
+
                 \While{$|StatesCanExpand|>0$}
                     \State $s\leftarrow \mbox{arg} \max_{s\in StatesCanExpand}State2Depth(s)$
                     \State $StatesCanExpand\leftarrow StatesCanExpand-s$
@@ -259,3 +276,37 @@ class jy_make_load_ai_states():
        
         # Create a new CSR matrix
         return csr_matrix((data, (rows, cols)), shape=vec1.shape)
+
+
+class SortedObjectList_2:
+    """Maintains a sorted list of objects based on an associated scalar value."""
+    
+    def __init__(self):
+        self.values = []  # List of scalar values (used for sorting)
+        self.objects = []  # List of associated objects
+
+    def insert(self, obj, value):
+        """Inserts an object while keeping the list sorted by value."""
+        index = bisect.bisect_left(self.values, value)  # Find insertion index
+        self.values.insert(index, value)  # Insert value in sorted order
+        self.objects.insert(index, obj)  # Insert object in corresponding position
+
+    def pop(self):
+        """Removes and returns the object with the smallest value."""
+        if not self.objects:
+            raise IndexError("Pop from empty SortedObjectList")
+        self.values.pop(0)  # Remove first (smallest) value
+        return self.objects.pop(0)  # Remove and return first object
+
+    def pop_max(self):
+        """Removes and returns the object with the largest value."""
+        if not self.objects:
+            raise IndexError("Pop from empty SortedObjectList")
+        self.values.pop()  # Remove last (largest) value
+        return self.objects.pop()  # Remove and return last object
+
+    def __len__(self):
+        return len(self.objects)
+
+    def __repr__(self):
+        return str(list(zip(self.values, self.objects)))  # Show sorted pairs
