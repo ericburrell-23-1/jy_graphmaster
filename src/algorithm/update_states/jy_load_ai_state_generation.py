@@ -48,7 +48,8 @@ class jy_make_load_ai_states:
         self.jy_options=jy_options
         self.node_min_term_vec = shawn_LoadAI_state_input.node_min_vec_dict
         self.MaxDepth=self.jy_options['max_pickups_in_a_route']#S.max_depth
-        self.option_do_min_term=True
+        self.option_do_min_term=False
+        self.use_all_actions=True
         self.set_depth_used_by_action()
         self.update_action_subset_given_col()
         self.updeate_action_from_nodes_subset()
@@ -70,6 +71,11 @@ class jy_make_load_ai_states:
                 self.my_sorted.insert(s2,self.MaxDepth)
                 self.all_states.append(s2)
             self.list_of_states_in_col_ordered=tmp
+        else:
+            for s in self.list_of_states_in_col_ordered:
+                self.states_can_expand.append(s)
+                self.my_sorted.insert(s,self.MaxDepth)
+                self.all_states.append(s)
         self.State2Depth=dict()
         for s in self.states_can_expand:
             self.State2Depth[s]=self.MaxDepth
@@ -129,6 +135,7 @@ class jy_make_load_ai_states:
                     new_state = a.get_head_state(pre_state,pre_state.l_id)
                     if new_state != None:
                         return True
+                print('failing in confimr due to here')
                 return False
             else:
                 return True
@@ -162,6 +169,8 @@ class jy_make_load_ai_states:
                     new_state = a.get_head_state(pre_state,pre_state.l_id)
                     if new_state != None:
                         return True
+                print('123 failing in confimr due to here')
+
                 return False
             else:
                 a = self.actions[(s2.node,-2)][0]
@@ -169,6 +178,8 @@ class jy_make_load_ai_states:
                 if new_state != None:
                     return True
                 else:
+                    print('1112 failing in confimr due to here')
+
                     return False
         else:
             input('state is not pickup or drop off node')
@@ -191,19 +202,24 @@ class jy_make_load_ai_states:
         #possibility s_deestination is none
         s_des = my_action.get_head_state(s_origin,s_origin.l_id)
         if s_des == None:
+            print('failing here 1')
             return False
         this_state_vec = s_des.state_vec
         des_node = s_des.node
         if  des_node in self.dropoff_node and this_state_vec[self.resource_name_to_index[str(('mayAvoidDropOff',des_node))]] == 1:
+            print('failing here 2')
             return False
         #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it
         if self.confirm_if_state_possible(s_des) == False:
+            print('failing here 3')
             return False
         #possibility confirm_if_state_possible returns false
         pick_up_vec = s_des.state_vec[0,4:4+len(self.pickup_node)] #NO CONSTANTS IN THE CODE PLEASE
         dense_array = pick_up_vec.toarray()[0]
         num_pickup = len(np.where(dense_array == 0)[0])
-        if num_pickup > 3:# NO CONSTANTS IN THE CODE PLEASE
+        if num_pickup > self.MaxDepth:# NO CONSTANTS IN THE CODE PLEASE
+            print('failing here 4')
+
             return False
         #possibility:  there would be more than maxPickupsInstate pickups overall;
             #remember you have a reource for this. so this should be caught by get head state but do check
@@ -214,22 +230,27 @@ class jy_make_load_ai_states:
     
     def update_action_subset_given_col(self):
         Q=self.SLAI
-        self.Action_subset=Q.action_reasonable.copy()
-        for i_ind in range(0,len(self.list_of_states_in_col_ordered)):
-            for j_ind in range(i_ind+1,len(self.list_of_states_in_col_ordered)):
-                s1=    self.list_of_states_in_col_ordered[i_ind]
-                s2=    self.list_of_states_in_col_ordered[j_ind]
-                #print('type(s1)')
-                #print(type(s1))
-                #print('type(s2)')
-                ##print(type(s2))
-                #print('s1.node')
-                #print(s1.node)
-                #print('s2.node')
-                #print(s2.node)
-                if (s1.node,s2.node) in Q.actions:#[s1.node,s2.node]:
-                    my_actions_n1_n2=Q.actions[s1.node,s2.node]
-                    self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
+        if self.use_all_actions==False:
+            self.Action_subset=Q.action_reasonable.copy()
+            for i_ind in range(0,len(self.list_of_states_in_col_ordered)):
+                for j_ind in range(i_ind+1,len(self.list_of_states_in_col_ordered)):
+                    s1=    self.list_of_states_in_col_ordered[i_ind]
+                    s2=    self.list_of_states_in_col_ordered[j_ind]
+
+                    if (s1.node,s2.node) in Q.actions:#[s1.node,s2.node]:
+                        my_actions_n1_n2=Q.actions[s1.node,s2.node]
+                        self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
+        else:
+            self.Action_subset=[]
+            for (n1,n2) in self.actions:
+                if n1>len(self.pickup_node)*2 or n2>len(self.pickup_node)*2:
+                    continue
+                
+                for a in self.actions[n1,n2]:
+                    self.Action_subset.append(a)
+            print('len(Action_subset)')
+            print(len(self.Action_subset))
+            input('--')
     def updeate_action_from_nodes_subset(self):
         Q=self.SLAI
         self.actions_from_node_subset=dict()
@@ -291,9 +312,8 @@ class jy_make_load_ai_states:
                 my_head.pretty_print_state()
 
                 input('error here 2')
-        #print('my_new_depth')
-        #print(my_new_depth)
-        #input('my_new_depth')
+        if my_head==None and did_make_term==True:
+            input('error here 332')
         return did_make_term,my_head,my_new_depth
 
     def get_must_drop_off_including_current(self,s):
@@ -344,10 +364,29 @@ class jy_make_load_ai_states:
             orig_depth_s=self.State2Depth[s]
 
             actions_use=self.get_actions_from_node_subset(s)
+            print('working on state ')
+            s.pretty_print_state()
+            input('---')
+            print('actions above')
             for my_act in actions_use:
+                my_act.pretty_print_action()
+            input('showing actions')
+            for my_act in actions_use:
+                print('working on state ')
+                s.pretty_print_state()
+                my_act.pretty_print_action()
+
                 [did_make_new_state,my_head,my_new_depth]=self.expand_state_given_action(s,my_act,orig_depth_s)
-               
+                print('did_make_new_state')
+                print(did_make_new_state)
+                print('my_new_depth')
+                print(my_new_depth)
+                if did_make_new_state==True:
+                    my_head.pretty_print_state()
+                input('---')
+
                 if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
+                    print('doing addition ')
                     self.State2Depth[my_head]=my_new_depth
                     #print('my_new_depth')
                     #print(my_new_depth)
@@ -359,6 +398,13 @@ class jy_make_load_ai_states:
                     if my_head==None:
                         input('error here')
                     self.all_states.append(my_head)
+                else:
+                    print('not doing addition')
+                print('len(self.all_states)')
+                print(len(self.all_states))
+                print('len(self.my_sorted)')
+                print(len(self.my_sorted))
+                input('done iter')
         #print('at end of gen naive self.all_states')
         #print(self.all_states)
         #input('---')

@@ -737,7 +737,7 @@ class Full_Multi_Graph_Object_given_l:
         ]
         print('AFTER edge set size')
         print(len(self.my_rows_pgm_pricing))
-        #input('num states remove')
+        input('num states remove')
 
         #self.has_done_check_for_unreachable=True
     def construct_specific_pricing_pgm(self, action_2_red_cost,rezStates_minus_by_node):
