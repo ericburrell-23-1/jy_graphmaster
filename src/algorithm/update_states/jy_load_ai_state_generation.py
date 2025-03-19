@@ -216,16 +216,31 @@ class jy_make_load_ai_states:
                 my_actions_n1_n2=Q.actions[s1.node,s2.node]
                 self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
     def updeate_action_from_nodes_subset(self):
+        Q=self.SLAI
         self.actions_from_node_subset=dict()
+        #self.actions_from_node_subset_pickup=dict()
+        self.actions_from_node_subset_dest_dropoff=dict()
+        #self.actions_from_node_subset_sink=dict()
+        self.actions_from_node_subset_MINUS_dest_dropoff=dict()
         for n in Q.nodes:
             self.actions_from_node_subset[n]=[]
         for a in self.Action_subset:
             my_origin=a.node_tail
+            my_destination=a.node_head
+            do_add=False
             if self.option_do_min_term:
-                if np.min(a.origin.NodeMinTermVec- a.minTermInput>=-0.0001):
+                #shawn 
+                if np.min(a.origin.NodeMinTermVec.toarray()- a.minTermInput.toarray())>=-0.0001:
+                    do_add=True
                     self.actions_from_node_subset[my_origin].append(a)
             else:
+                do_add=True
+            if do_add==True:
                 self.actions_from_node_subset[my_origin].append(a)
+                if my_destination in Q.dropoff_nodes:
+                    self.actions_from_node_subset_dest_dropoff[my_origin].append(a)
+                else:
+                    self.actions_from_node_subset_MINUS_dest_dropoff[my_origin].append(a)
 
     def expand_state_given_action(self,s,my_act,orig_depth_s):
 
@@ -252,6 +267,27 @@ class jy_make_load_ai_states:
                 input('error here 2')
         return did_make_term,my_head,my_new_depth
 
+    def get_must_drop_off_including_current(s):
+        Q=self.SLAI
+        
+        must_drop_off=[]
+       
+        
+        may_avoid_dropoff=s.state_vec[4+self.num_pickups:]
+        must_dropoff=np.nonzero(may_avoid_dropoff<0.5)
+        must_dropoff=may_avoid_dropoff_list+self.num_pickups
+        if s.node in Q.pickup_nodes:
+            must_dropoff.append(s.node+self.num_pickups)
+        return must_dropoff
+    def actions_from_node_subset(self,s):
+
+        actions_use=actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
+        must_dropoff=self.get_must_drop_off_including_current(s)
+        for n in must_dropoff:
+            my_act_list=self.Q.node_2_actions[s.node,n.node]
+            for my_act in my_act_list:
+                actions_use.append(my_act)
+        return actions_use
     def gen_all_states_naive(self):
 
         Q=self.SLAI
@@ -263,7 +299,8 @@ class jy_make_load_ai_states:
             s=self.my_sorted.pop_max()
             orig_depth_s=self.State2Depth[s]
 
-            for my_act in self.actions_from_node_subset[s.node]:
+            actions_use=self.get_actions_use(s)
+            for my_act in actions_use:
                 [did_make_new_state,my_head,my_new_depth]=self.expand_state_given_action(s,my_act,orig_depth_s)
                
                 if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
