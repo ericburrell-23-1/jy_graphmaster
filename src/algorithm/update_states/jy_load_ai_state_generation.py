@@ -69,17 +69,18 @@ class jy_make_load_ai_states:
         self.resource_name_to_index = shawn_LoadAI_state_input.resource_name_to_index
         self.jy_options=jy_options
         self.node_min_term_vec = shawn_LoadAI_state_input.node_min_vec_dict
-        self.MaxDepth=3+self.jy_options['max_pickups_in_a_route']#S.max_depth
+        self.MaxDepth=2+self.jy_options['max_pickups_in_a_route']#S.max_depth
         self.option_do_min_term=True
-        self.use_all_actions=True
+        self.use_all_actions=False
         self.set_depth_used_by_action()
         self.update_action_subset_given_col()
         self.updeate_action_from_nodes_subset()
         self.init_states_project_and_depth()
         #assign depth used to all actions;  Feel free to remove this later
-        
+        print('starting naive state gen')
         self.gen_all_states_naive()
-    
+        print('done naive state gen')
+
     def init_states_project_and_depth(self):
         self.my_sorted=SortedObjectList()
  
@@ -111,7 +112,9 @@ class jy_make_load_ai_states:
         print(' in returing self.all_states')
         print(self.all_states)
         print('returning solution')
-
+        print('len(self.all_states)')
+        print(len(self.all_states))
+        input('---')
 
         for s in self.list_of_states_in_col_ordered:
             if s not in self.all_states:
@@ -354,7 +357,7 @@ class jy_make_load_ai_states:
         num_pickups_done=len(pickups_done)
         return  [num_remaining_to_do,num_pickups_done,dropoffs_without_pickup,dropoffs_need_done_pickup_coresp,pickups_done]
     def apply_node_min_term(self,in_state):
-        print('hellow orld')
+        #print('hellow orld')
         s = in_state
         new_state_vec = self.elementwise_min_csr(s.state_vec, self.node_min_term_vec[s.node])
         if np.sum(np.abs(new_state_vec-s.state_vec)) > .00001:
@@ -367,23 +370,23 @@ class jy_make_load_ai_states:
         #possibilites
         #possibility s_deestination is none
         [num_remaining_to_do,num_pickups_done,dropoffs_without_pickup,dropoffs_need_done_pickup_coresp,pickups_done]=self.given_state_how_many_pickups_dropoffs(s_origin)
-        print('num_remaining_to_do')
-        print(num_remaining_to_do)
-        print('num_pickups_done')
-        print(num_pickups_done)
+        #print('num_remaining_to_do')
+        #print(num_remaining_to_do)
+        #print('num_pickups_done')
+        #print(num_pickups_done)
         s_des = my_action.get_head_state(s_origin,s_origin.l_id)
         if s_des == None:
-            print('failing one ')
-            s_origin.pretty_print_state()
-            my_action.pretty_print_action()
-            print('failing here 1')
+            #print('failing one ')
+            #s_origin.pretty_print_state()
+            #my_action.pretty_print_action()
+            #print('failing here 1')
             #input('not wrong but look')
             return False
         this_state_vec = s_des.state_vec
         des_node = s_des.node
         try:
             if  des_node in self.dropoff_node and this_state_vec[0,self.resource_name_to_index[str(('may_avoid_dropoff',des_node))]] == 1:
-                print('failing here 2')
+                #print('failing here 2')
                 #input('not wrong but want to find out ')
                 return False
         except:
@@ -391,7 +394,7 @@ class jy_make_load_ai_states:
             input('ok this no good ')
         #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it
         if self.confirm_if_state_possible(s_des) == False:
-            print('failing here 3')
+            #print('failing here 3')
             #input('not wrong but want to find out 3')
             return False
         #possibility confirm_if_state_possible returns false
@@ -421,6 +424,35 @@ class jy_make_load_ai_states:
                     if (s1.node,s2.node) in Q.actions:#[s1.node,s2.node]:
                         my_actions_n1_n2=Q.actions[s1.node,s2.node]
                         self.Action_subset=self.Action_subset.union(my_actions_n1_n2)
+            print('len(Q.action_reasonable)')
+            print(len(Q.action_reasonable))
+            print('len(self.actions)')
+            print(len(self.actions))
+            my_count_pick_pick=0
+            my_count_drop_pick=0
+            my_count_pick_drop=0
+            my_count_drop_drop=0
+
+            for a in Q.action_reasonable:
+                if a.node_tail in self.pickup_node and a.node_head in self.pickup_node:
+                    my_count_pick_pick=my_count_pick_pick+1
+                if a.node_tail in self.dropoff_node and a.node_head in self.pickup_node:
+                    my_count_drop_pick=my_count_drop_pick+1
+                if a.node_tail in self.pickup_node and a.node_head in self.dropoff_node:
+                    my_count_pick_drop=my_count_pick_drop+1
+                if a.node_tail in self.dropoff_node and a.node_head in self.dropoff_node:
+                    my_count_drop_drop=my_count_drop_drop+1
+            
+            print('my_count_pick_pick')
+            print(my_count_pick_pick)
+            print('my_count_drop_pick')
+            print(my_count_drop_pick)
+            print('my_count_pick_drop')
+            print(my_count_pick_drop)
+            print('my_count_drop_drop')
+            print(my_count_drop_drop)
+
+            input('---')
         else:
             self.Action_subset=[]
             for (n1,n2) in self.actions:
@@ -595,8 +627,8 @@ class jy_make_load_ai_states:
                 
                 [did_make_new_state,my_head,my_new_depth,my_completion,term_not_added_do_2_presence]=self.expand_state_given_action_ez(s,my_act)
                 if debug_on==True and did_make_new_state==True:
-                    print('checkign for me')
-                    my_head.pretty_print_state()
+                    #print('checkign for me')
+                    #my_head.pretty_print_state()
                     self.DEBUG_verify_all_states_copletion(my_completion)
                 
                 if my_new_depth!=None and my_new_depth<-0.5:

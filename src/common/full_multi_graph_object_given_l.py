@@ -873,58 +873,64 @@ class Full_Multi_Graph_Object_given_l:
         print(len(self.my_rows_pgm_pricing))
         print('len(other_nodes)')
         print(len(other_nodes))
-        debug_on=True
-        if debug_on==True:
-            for sid in other_nodes:
-                s=self.state_id_to_state[sid]
-                s.pretty_print_state()
+        print('len_before_edge_set')
+        print(len_before_edge_set)
+        print('len_after_edge_set')
+        print(len_after_edge_set)
+        input('apres')
+        #debug_on=False
+        #if debug_on==True:
+       #     for sid in other_nodes:
+       #         s=self.state_id_to_state[sid]
+       #         s.pretty_print_state()
             #if other_nodes
-        if len_before_edge_set!=len_after_edge_set:
-            print('len_before_edge_set')
-            print(len_before_edge_set)
-            print('len_after_edge_set')
-            print(len_after_edge_set)
-            print('self.l_id')
-            print(self.l_id)
-            input('ok not in agreement If i expect this then no good')
+        #if 1==0:
+            #if len_before_edge_set!=len_after_edge_set:
+                #print('len_before_edge_set')
+                #print(len_before_edge_set)
+                #print('len_after_edge_set')
+                #print(len_after_edge_set)
+                #print('self.l_id')
+                #print(self.l_id)
+                #input('ok not in agreement If i expect this then no good')
 
-            if self.jy_option['using_load_ai_lazy']==True:
-                for sid in other_nodes:
-                    s=self.state_id_to_state[sid]
-                    print('start above no good')
-                    s.pretty_print_state()
-                    must_drop_off=self.LOAD_AI_get_must_drop_off_including_current(s)
+                #if self.jy_option['using_load_ai_lazy']==True:
+                    #for #sid in other_nodes:
+                        #s=self.state_id_to_state[sid]
+                        #print('start above no good')
+                        ##s.pretty_print_state()
+                        #must_drop_off=self.LOAD_AI_get_must_drop_off_including_current(s)
 
-                    if len(must_drop_off)==0:
-                        my_act=self.action_dict[s.node,-2][0]
-                        print('must_drop_off')
-                        print(must_drop_off)
-                        print('self.action_dict[s.node,-2][0]')
-                        print(self.action_dict[s.node,-2][0])
-                        my_act.pretty_print_action()
-                        new_head=my_act.get_head_state(s,s.l_id)
-                        print('new_head')
-                        print(new_head)
-                        new_head.pretty_print_state()
-                        is_valid_one=my_act.check_valid(s,new_head)
-                        is_valid_two=my_act.check_valid(s,self.sink_state)
-                        print('is_valid_one')
-                        print(is_valid_one)
-                        print('is_valid_two')
-                        print(is_valid_two)
-                        print('s in descendants')
-                        print(s in descendants)
-                        print('s in ancestors')
-                        print(s in ancestors)
-                        input('--state above is no good--')
-        else:
-            print('OK FINE sizes agree')
-            print('self.l_id')
-            print(self.l_id)
-            input('--')
-        #input('num states remove')
+                        #if len(must_drop_off)==0:
+                          #  my_act=self.action_dict[s.node,-2][0]
+                          #  print('must_drop_off')
+                          #  print(must_drop_off)
+                          #  print('self.action_dict[s.node,-2][0]')
+                          #  print(self.action_dict[s.node,-2][0])
+                          #  my_act.pretty_print_action()
+                          #  new_head=my_act.get_head_state(s,s.l_id)
+                          #  print('new_head')
+                          #  print(new_head)
+                          #  new_head.pretty_print_state()
+                          #  is_valid_one=my_act.check_valid(s,new_head)
+                          #  is_valid_two=my_act.check_valid(s,self.sink_state)
+                          #  print('is_valid_one')
+                          #  print(is_valid_one)
+                          #  print('is_valid_two')
+                          #  print(is_valid_two)
+                          #  print('s in descendants')
+                          #  print(s in descendants)
+                          #  print('s in ancestors')
+                          #  print(s in ancestors)
+                          #  input('--state above is no good--')
+            #else:
+            #    print('OK FINE sizes agree')
+            #    print('self.l_id')
+            #    print(self.l_id)
+            #    input('--')
+            #input('num states remove')
 
-        #self.has_done_check_for_unreachable=True
+            #self.has_done_check_for_unreachable=True
     def construct_specific_pricing_pgm(self, action_2_red_cost,rezStates_minus_by_node):
         """Constructs the PGM pricing graph, computes the shortest path, and extracts the ordered list of rows used."""
         with TimeProfiler(self.time_profile, "multi_graph:construct_specific_pricing_pgm"):
