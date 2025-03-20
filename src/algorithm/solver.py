@@ -188,7 +188,7 @@ class GraphMaster:
 
                 self.initial_res_states.remove(s)
 
-            my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined)
+            my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined, self.state_update_module)
             self.rez_states_minus:Set[State]=self.initial_res_states
             self.res_actions=self.initial_res_actions
             #l_id = 0
@@ -317,7 +317,7 @@ class GraphMaster:
                         print(reduced_cost)
                         
                     
-                    new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined)
+                    new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined,self.state_update_module)
 
 
                     new_multi_graph.initialize_system()

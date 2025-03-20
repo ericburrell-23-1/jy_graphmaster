@@ -17,7 +17,7 @@ from tqdm import tqdm
 class Full_Multi_Graph_Object_given_l:
  
     #Computed once multi-graph which is generated once
-    def __init__(self, l_id, res_states:set[State], all_actions: set[Action],action_dict, dom_actions_pairs,the_null_action,jy_option):
+    def __init__(self, l_id, res_states:set[State], all_actions: set[Action],action_dict, dom_actions_pairs,the_null_action,jy_option,input_data):
         """Initializes the object with states, actions, and null action setup."""
         self.l_id = l_id  # ID for the l ∈ Ω_R generating this
         self.rez_states = res_states  # set of all states
@@ -33,6 +33,7 @@ class Full_Multi_Graph_Object_given_l:
         #self.number_of_resources = number_of_resources
         #self.nullAction = self.make_null_action(size_rhs, number_of_resources)  # Create and assign null action
         self.time_profile = defaultdict(float)
+        self.data = input_data
         # Initialize dictionary grouping states by node
         with TimeProfiler(self.time_profile, "multi_graph:init_states_by_node"):
             self.resStates_by_node:DefaultDict[int,Set[State]] = defaultdict(set)
