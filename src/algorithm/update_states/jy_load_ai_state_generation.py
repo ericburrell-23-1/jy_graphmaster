@@ -78,7 +78,11 @@ class jy_make_load_ai_states:
                 self.all_states.append(s)
         self.State2Depth=dict()
         for s in self.states_can_expand:
-            self.State2Depth[s]=self.MaxDepth
+            if s.node != -2:
+                pick_up_vec = s.state_vec[0,4:4+len(self.pickup_node)]
+                dense_array = pick_up_vec.toarray()[0]
+                num_zeros = len(dense_array) - np.count_nonzero(dense_array)
+                self.State2Depth[s]=self.MaxDepth -num_zeros
         
     
     def return_solution(self):
@@ -522,6 +526,7 @@ class jy_make_load_ai_states:
                 pickup_done.append(n+1)
             pickup_done.sort()
             dropoff_left.sort()
+        print(f'-------state for node {s2.node}------')
         print('pick up done')
         print(pickup_done)
         print('num pick up done')
