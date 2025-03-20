@@ -90,7 +90,7 @@ class GraphMaster:
         self.jy_options_user_defined['allow_compression']=True
         self.jy_options_user_defined['debug'] =True
         self.jy_options_user_defined['use_csr_exog'] =False
-        self.jy_options_user_defined['use_load_ai_in_pgm'] =True
+        self.jy_options_user_defined['use_load_ai_in_pgm'] =False
         self.jy_options_user_defined['using_load_ai_lazy']=True
         self.jy_options_user_defined['using_load_ai_lazy_num_pickups']=(len(nodes)-2)/3
         self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=3

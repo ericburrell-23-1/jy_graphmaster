@@ -482,6 +482,41 @@ class Full_Multi_Graph_Object_given_l:
                     self.actions_ub_given_s1s2_2[key].add(a1)
                     self.action_ub_tail_head[a1][state_tail].add(candidate)
                     self.action_ub_head_tail[a1][candidate].add(state_tail)
+        debug_on=True
+        if debug_on==True:
+            self.debug_check_actions_ub()
+        
+
+    def debug_check_actions_ub(self):
+        self.BACKUP_actions_ub_given_s1s2_2 = defaultdict(set)
+        self.BACKUP_action_ub_tail_head = defaultdict(lambda: defaultdict(set))
+        self.BACKUP_action_ub_head_tail = defaultdict(lambda: defaultdict(set))
+    
+        for (node_tail,node_head)  in self.action_dict:
+            for my_act in self.action_dict[node_tail,node_head]:
+                for s1 in self.resStates_by_node[node_tail]:
+                    for s2 in self.resStates_by_node[node_head]:
+                        is_valid=my_act.check_valid(s1,s2)
+                        self.BACKUP_actions_ub_given_s1s2_2[(s1,s2)].append(my_act)
+                        self.BACKUP_action_ub_tail_head[my_act][s1].append(s2)
+                        self.BACKUP_action_ub_head_tail[my_act][s2].append(s1)
+                        
+                        if is_valid==True:
+                            if s2 not in self.action_ub_tail_head[my_act][s1]:
+                                input('error 1')
+                            if s1 not in self.action_ub_head_tail[my_act][s2]:
+                                input('error 2')
+                        else:
+                            if s2  in self.action_ub_tail_head[my_act][s1]:
+                                input('error 3')
+                            if s1  in self.action_ub_head_tail[my_act][s2]:
+                                input('error 4')
+        check_same_dict()
+        #is this the same 
+        #BACKUP_actions_ub_given_s1s2_2 vs  actions_ub_given_s1s2_2
+        #BACKUP_action_ub_tail_head vs action_ub_tail_head
+        #BACKUP_action_ub_head_tail vs action_ub_head_tail
+
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
         #state_2_dom_states_dict is a dictionary that when s is put in provdies all states taht s dominates
@@ -802,9 +837,29 @@ class Full_Multi_Graph_Object_given_l:
                     print('start above no good')
                     s.pretty_print_state()
                     must_drop_off=self.LOAD_AI_get_must_drop_off_including_current(s)
-                    print('must_drop_off')
-                    print(must_drop_off)
-                    input('--state above is no good--')
+
+                    if len(must_drop_off)==0:
+                        my_act=self.action_dict[s.node,-2][0]
+                        print('must_drop_off')
+                        print(must_drop_off)
+                        print('self.action_dict[s.node,-2][0]')
+                        print(self.action_dict[s.node,-2][0])
+                        my_act.pretty_print_action()
+                        new_head=my_act.get_head_state(s,s.l_id)
+                        print('new_head')
+                        print(new_head)
+                        new_head.pretty_print_state()
+                        is_valid_one=my_act.check_valid(s,new_head)
+                        is_valid_two=my_act.check_valid(s,self.sink_state)
+                        print('is_valid_one')
+                        print(is_valid_one)
+                        print('is_valid_two')
+                        print(is_valid_two)
+                        print('s in descendants')
+                        print(s in descendants)
+                        print('s in ancestors')
+                        print(s in ancestors)
+                        input('--state above is no good--')
         else:
             print('OK FINE sizes agree')
             print('self.l_id')
