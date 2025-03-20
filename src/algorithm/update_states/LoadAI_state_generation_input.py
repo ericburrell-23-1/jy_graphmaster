@@ -184,12 +184,10 @@ class LoadAI_state_input():
             reasonable_action_dict[(pickup_node,dropoff_node)] = this_action
         # action from dropoff to nearby pickup if it is neighbor
         for u in self.dropoff_node:
-            for v in self.neighbors[u]:
-                if v in self.pickup_node and (u,v) in self.actions.keys():
-                    
+            for v in set(self.neighbors[u]) & self.pickup_node:
+                if (u,v) in self.actions.keys():
                     reasonable_action.update(self.actions[(u,v)])
                     reasonable_action_dict[(u,v)] = self.actions[(u,v)]
- 
         #for drop_off_node in self.dropoff_to_pickup.items():
         #    for node in self.neighbors[drop_off_node]:
         #        if node in self.pickup_to_dropoff.keys():

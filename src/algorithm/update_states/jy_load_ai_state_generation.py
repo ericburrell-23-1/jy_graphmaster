@@ -101,6 +101,8 @@ class jy_make_load_ai_states:
         pickup_node = self.pickup_node
         dropoff_node = self.dropoff_node
         s2 = candid_state
+        self.return_pickup_dropoff_info(s2)
+        print('check here')
         if candid_state.node in {-1,-2}:
             return True
         if s2.node in pickup_node:
@@ -110,8 +112,6 @@ class jy_make_load_ai_states:
             zero_indices = np.where(dense_array == 0)[0]
             for n in zero_indices:
                 drop_off_node_need_to_visit.append(n+1+len(dropoff_node))
-            print('drop_off_node_need_to_visit')
-            print(drop_off_node_need_to_visit)
             if len(drop_off_node_need_to_visit)>self.MaxDepth:
                 return False
             if len(drop_off_node_need_to_visit) >0:
@@ -399,7 +399,7 @@ class jy_make_load_ai_states:
             must_dropoff=self.get_must_drop_off_including_current(s)
             print('must_dropoff')
             print(must_dropoff)
-            input('---')
+            #input('---')
             #print('actions above')
             for my_act in actions_use:
                 my_act.pretty_print_action()
@@ -437,6 +437,7 @@ class jy_make_load_ai_states:
                 print(len(self.all_states))
                 print('len(self.my_sorted)')
                 print(len(self.my_sorted))
+                print('check here')
                 #input('done iter')
         #print('at end of gen naive self.all_states')
         #print(self.all_states)
@@ -477,3 +478,44 @@ class jy_make_load_ai_states:
        
         # Create a new CSR matrix
         return csr_matrix((data, (rows, cols)), shape=vec1.shape)
+    def return_pickup_dropoff_info(self,s2):
+        pickup_done = []
+        dropoff_left = []
+        if s2.node in self.pickup_node:
+            drop_off_node_need_to_visit = [s2.node+len(self.pickup_node)]
+            drop_off_vec = s2.state_vec[0,4+len(self.pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node))
+            dropoff_left = drop_off_node_need_to_visit
+            pick_up_vec = s2.state_vec[0,4:4+len(self.pickup_node)]
+            dense_array = pick_up_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+            #pickup_done = zero_indices
+                pickup_done = np.append(n+1, s2.node)
+
+        elif s2.node in self.dropoff_node:
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s2.state_vec[0,4+len(self.pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                if n+1+len(self.pickup_node) != s2.node:
+                    drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node)) 
+            dropoff_left = drop_off_node_need_to_visit
+            pick_up_vec = s2.state_vec[0,4:4+len(self.pickup_node)]
+            dense_array = pick_up_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                pickup_done = np.append(n+1, s2.node)
+        print('pick up done')
+        print(pickup_done)
+        print('num pick up done')
+        print(len(pickup_done))
+        print('drop off left')
+        print(dropoff_left)
+        print('num drop off left')
+        print(len(dropoff_left))
+        

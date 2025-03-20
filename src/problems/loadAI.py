@@ -587,6 +587,6 @@ class loadAI(OptimizationProblem):
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
         nodes = self._create_travel_time()
-        neighbors_by_distance, neighbors = self._create_nearest_node(nodes,10)
+        neighbors_by_distance, neighbors = self._create_nearest_node(nodes,100)
         self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
     
