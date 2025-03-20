@@ -711,33 +711,61 @@ class Full_Multi_Graph_Object_given_l:
         action_2_red_cost = {a1: a1.comp_red_cost(dual_exog_vec) for a1 in self.all_actions}
         self.PGM_equiv_class_dual_2_low(action_2_red_cost)
         #find unrachable state 
+        len_before_edge_set=len(self.my_rows_pgm_pricing)
+
         UNR_rows_pgm_spec_pricing = [
-                    (row[1].state_id, row[0].state_id, eq_class, action_red_cost, action)
+                    (row[0].state_id, row[1].state_id, eq_class, action_red_cost, action)
                     for row in self.my_rows_pgm_pricing
                     for eq_class in [row[2]]  # Extract eq_class cleanly
                     for action, action_red_cost in [self.equiv_class_2_low_red_action[eq_class]]  # Unpack action tuple
                 ]
-        UNR_pgm_graph = nx.DiGraph()
+        G = nx.DiGraph()
         for tail, head, _, action_red_cost, action in UNR_rows_pgm_spec_pricing:
-            UNR_pgm_graph.add_edge(tail,head,  weight=action_red_cost, action=action)
+            G.add_edge(tail,head,  weight=action_red_cost, action=action)
         sink_state=self.sink_state.state_id
-        reachable_states = nx.descendants(UNR_pgm_graph, sink_state) | {sink_state}
-# Determine unreachable nodes by subtracting the reachable nodes from all nodes in the graph.
-        unreachable_states = set(UNR_pgm_graph.nodes()) - reachable_states
-        print('len(self.unreachable_nodes)')
-        print(len(unreachable_states))
-        print('before edge set size')
-        print(len(self.my_rows_pgm_pricing))
-        print('UNR_pgm_graph.nodes()')
-        print(len(UNR_pgm_graph.nodes()))
-        #input('---')
+        source_state=self.source_state.state_id
+        
+        descendants = nx.descendants(G, source_state)
+        #print('descendants')
+        #print(descendants)
+# Get all nodes that are ancestors of the sink
+        ancestors = nx.ancestors(G, sink_state)
+        #print('ancestors')
+        #print(ancestors)
+        common_nodes = descendants.intersection(ancestors)
+        common_nodes=common_nodes.union({source_state, sink_state})
+        other_nodes = set(G.nodes()) - common_nodes
+        # Find the intersection: nodes that are both descendants of the source and ancestors of the sink
+        
         self.my_rows_pgm_pricing = [
             row for row in self.my_rows_pgm_pricing
-            if row[0].state_id not in unreachable_states and row[1].state_id not in unreachable_states
+            if row[0].state_id  in common_nodes and row[1].state_id  in common_nodes
         ]
         print('AFTER edge set size')
+        len_after_edge_set=len(self.my_rows_pgm_pricing)
         print(len(self.my_rows_pgm_pricing))
-        input('num states remove')
+        print('len(other_nodes)')
+        print(len(other_nodes))
+        debug_on=True
+        if debug_on==True:
+            for sid in other_nodes:
+                s=self.state_id_to_state[sid]
+                s.pretty_print_state()
+            #if other_nodes
+        if len_before_edge_set!=len_after_edge_set:
+            print('len_before_edge_set')
+            print(len_before_edge_set)
+            print('len_after_edge_set')
+            print(len_after_edge_set)
+            print('self.l_id')
+            print(self.l_id)
+            input('ok not in agreement If i expect this then no good')
+        else:
+            print('OK FINE sizes agree')
+            print('self.l_id')
+            print(self.l_id)
+            input('--')
+        #input('num states remove')
 
         #self.has_done_check_for_unreachable=True
     def construct_specific_pricing_pgm(self, action_2_red_cost,rezStates_minus_by_node):
