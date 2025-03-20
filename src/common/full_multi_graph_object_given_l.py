@@ -392,7 +392,60 @@ class Full_Multi_Graph_Object_given_l:
        # print(node_destination)
        # input('hihi')
         return is_possible
+    
+    def compute_actions_ub_2(self):
+        """Computes upper bound actions for each (s1, s2) pair."""
+        
+        # Initialize defaultdicts properly
+        self.actions_ub_given_s1s2_2 = defaultdict(set)
+        self.action_tail_head = defaultdict(set)
+        self.actions_head_tail = defaultdict(set)
+        self.action_ub_tail_head = defaultdict(lambda: defaultdict(set))
+        self.action_ub_head_tail = defaultdict(lambda: defaultdict(set))
+ 
+        # Iterate over all actions
+        for a1 in self.all_actions:
+            node_tail, node_head = a1.node_tail, a1.node_head
+            
+            for state_tail in self.resStates_by_node[node_tail]:
+                head_ideal = a1.get_head_state(state_tail,self.l_id)
+                if head_ideal== None:
+                    continue
+                for state_head in self.resStates_by_node[node_head]:
+                    
+                    does_dom,does_equal=head_ideal.this_state_dominates_input_state(state_head)
+                    
+                    if does_dom or does_equal: #head_ideal.this_state_dominates_input_state(state_head): #check if the ideal head dominates the candidate
+                        key = (state_tail, state_head)
+ 
+                        # Store results efficiently
+                        self.actions_ub_given_s1s2_2[key].add(a1)
+                        self.action_ub_tail_head[a1][state_tail].add(state_head)
+                        self.action_ub_head_tail[a1][state_head].add(state_tail)
+                        a1.check_valid(state_tail, state_head)
+    
     def compute_actions_ub(self):
+        self.actions_ub_given_s1s2_2 = defaultdict(set)
+        self.action_ub_tail_head = defaultdict(lambda: defaultdict(set))
+        self.action_ub_head_tail = defaultdict(lambda: defaultdict(set))
+    
+        for (node_tail,node_head)  in self.action_dict:
+            for my_act in self.action_dict[node_tail,node_head]:
+                for s1 in self.resStates_by_node[node_tail]:
+                    for s2 in self.resStates_by_node[node_head]:
+                        #try:
+                        is_valid=my_act.check_valid(s1,s2)
+                        
+                        if is_valid==True:
+                            self.actions_ub_given_s1s2_2[(s1,s2)].add(my_act)
+                            self.action_ub_tail_head[my_act][s1].add(s2)
+                            self.action_ub_head_tail[my_act][s2].add(s1)
+                  
+                      
+
+
+
+    def compute_actions_ub_fast_not_working(self):
         """Computes upper bound actions for each (s1, s2) pair."""
         
         # Precompute dense representations for all states in self.resStates_by_node.
@@ -496,14 +549,13 @@ class Full_Multi_Graph_Object_given_l:
             for my_act in self.action_dict[node_tail,node_head]:
                 for s1 in self.resStates_by_node[node_tail]:
                     for s2 in self.resStates_by_node[node_head]:
-                        try:
-                            is_valid=my_act.check_valid(s1,s2)
-                        except:
-                            print(my_act.get_head_state(s1,s1.l_id))
-                            input('check here')
-                        self.BACKUP_actions_ub_given_s1s2_2[(s1,s2)].add(my_act)
-                        self.BACKUP_action_ub_tail_head[my_act][s1].add(s2)
-                        self.BACKUP_action_ub_head_tail[my_act][s2].add(s1)
+                        #try:
+                        is_valid=my_act.check_valid(s1,s2)
+                        
+                        if is_valid==True:
+                            self.BACKUP_actions_ub_given_s1s2_2[(s1,s2)].add(my_act)
+                            self.BACKUP_action_ub_tail_head[my_act][s1].add(s2)
+                            self.BACKUP_action_ub_head_tail[my_act][s2].add(s1)
                         
                         if is_valid==True:
                             if s2 not in self.action_ub_tail_head[my_act][s1]:
@@ -1023,6 +1075,13 @@ class Full_Multi_Graph_Object_given_l:
             if missing_in_backup:
                 message = f"Actions missing in BACKUP"
                 results["action_ub_tail_head"]["differences"].append(message)
+                print('current_actions')
+                for my_act in current_actions:
+                    my_act.pretty_print_action() 
+                print('backup_actions')
+                for my_act in backup_actions:
+                    my_act.pretty_print_action() 
+
                 input(f"Error detected: {message}")
             
             if missing_in_current:
