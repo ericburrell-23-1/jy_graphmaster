@@ -212,9 +212,12 @@ class jy_make_load_ai_states:
             return False
         this_state_vec = s_des.state_vec
         des_node = s_des.node
-        if  des_node in self.dropoff_node and this_state_vec[self.resource_name_to_index[str(('mayAvoidDropOff',des_node))]] == 1:
-            print('failing here 2')
-            return False
+        try:
+            if  des_node in self.dropoff_node and this_state_vec[0,self.resource_name_to_index[str(('may_avoid_dropoff',des_node))]] == 1:
+                print('failing here 2')
+                return False
+        except:
+            print('check here')
         #the my_action.node_head (meaning destination ) is a dropoff  and the MustAvoidDropOff is not active for it
         if self.confirm_if_state_possible(s_des) == False:
             print('failing here 3')
