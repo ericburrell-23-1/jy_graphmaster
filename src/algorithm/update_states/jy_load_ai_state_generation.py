@@ -212,7 +212,7 @@ class jy_make_load_ai_states:
             s_origin.pretty_print_state()
             my_action.pretty_print_action()
             print('failing here 1')
-            input('not wrong but look')
+            #input('not wrong but look')
             return False
         this_state_vec = s_des.state_vec
         des_node = s_des.node
@@ -403,7 +403,8 @@ class jy_make_load_ai_states:
             #print('actions above')
             for my_act in actions_use:
                 my_act.pretty_print_action()
-            input('showing actions')
+            self.return_pickup_dropoff_info(s)
+            print('showing actions')
             for my_act in actions_use:
                 #print('working on state ')
                 #s.pretty_print_state()
@@ -421,6 +422,7 @@ class jy_make_load_ai_states:
                 if did_make_new_state==True  and my_head not in self.State2Depth and my_new_depth>-0.5:
                     print('doing addition ')
                     self.State2Depth[my_head]=my_new_depth
+                    self.return_pickup_dropoff_info(my_head)
                     #print('my_new_depth')
                     #print(my_new_depth)
                     #print('type(my_new_depth)')
@@ -439,6 +441,11 @@ class jy_make_load_ai_states:
                 print(len(self.my_sorted))
                 print('check here')
                 #input('done iter')
+            # print('=========print state in state2Depth==========')
+            # for s_key in self.State2Depth.keys():
+                
+            #     self.return_pickup_dropoff_info(s_key)
+            # print('=========end of print state in state2Depth==========')
         #print('at end of gen naive self.all_states')
         #print(self.all_states)
         #input('---')
@@ -494,7 +501,10 @@ class jy_make_load_ai_states:
             zero_indices = np.where(dense_array == 0)[0]
             for n in zero_indices:
             #pickup_done = zero_indices
-                pickup_done = np.append(n+1, s2.node)
+                pickup_done.append(n+1)
+            pickup_done.append(s2.node)
+            pickup_done.sort()
+            dropoff_left.sort()
 
         elif s2.node in self.dropoff_node:
             drop_off_node_need_to_visit = []
@@ -509,7 +519,9 @@ class jy_make_load_ai_states:
             dense_array = pick_up_vec.toarray()[0]
             zero_indices = np.where(dense_array == 0)[0]
             for n in zero_indices:
-                pickup_done = np.append(n+1, s2.node)
+                pickup_done.append(n+1)
+            pickup_done.sort()
+            dropoff_left.sort()
         print('pick up done')
         print(pickup_done)
         print('num pick up done')
