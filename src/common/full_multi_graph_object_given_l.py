@@ -53,6 +53,40 @@ class Full_Multi_Graph_Object_given_l:
             self.sink_state=list(self.resStates_by_node[-2])[0]
             self.time_profile = defaultdict(int)
 
+
+    def LOAD_AI_get_must_drop_off_including_current(self,s):
+        NPK=self.jy_option['using_load_ai_lazy_num_pickups']
+        NPK=int(NPK)
+        self.pickup_node=range(1,NPK+1)
+        self.dropoff_node=range(1+NPK,2*NPK)
+        drop_off_node_need_to_visit=[]
+        if s.node in self.pickup_node:
+            #print('part one ')
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s.state_vec[0,4+len(self.pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node))
+            drop_off_node_need_to_visit.append(s.node+len(self.dropoff_node))
+        elif s.node in self.dropoff_node:
+            #print('part two ')
+
+            drop_off_node_need_to_visit = []
+            drop_off_vec = s.state_vec[0,4+len(self.pickup_node):]
+            dense_array = drop_off_vec.toarray()[0]
+            zero_indices = np.where(dense_array == 0)[0]
+            for n in zero_indices:
+                if n+1+len(self.pickup_node) != s.node:
+                    drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node))
+        
+        # may_avoid_dropoff=s.state_vec[4+self.num_pickups:]
+        # must_dropoff=np.nonzero(may_avoid_dropoff<0.5)
+        # must_dropoff=may_avoid_dropoff_list+self.num_pickups
+        # if s.node in Q.pickup_node:
+        #     must_dropoff.append(s.node+self.num_pickups)
+        return drop_off_node_need_to_visit
+
     def make_state_id_to_state(self):
         """Creates a mapping from state ID to state object."""
         with TimeProfiler(self.time_profile, "multi_graph:make_state_id_to_state"):
@@ -760,6 +794,16 @@ class Full_Multi_Graph_Object_given_l:
             print('self.l_id')
             print(self.l_id)
             input('ok not in agreement If i expect this then no good')
+
+            if self.jy_option['using_load_ai_lazy']==True:
+                for sid in other_nodes:
+                    s=self.state_id_to_state[sid]
+                    print('start above no good')
+                    s.pretty_print_state()
+                    must_drop_off=self.LOAD_AI_get_must_drop_off_including_current(s)
+                    print('must_drop_off')
+                    print(must_drop_off)
+                    input('--state above is no good--')
         else:
             print('OK FINE sizes agree')
             print('self.l_id')
