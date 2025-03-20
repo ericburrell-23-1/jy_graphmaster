@@ -268,8 +268,8 @@ class jy_make_load_ai_states:
             self.actions_from_node_subset[n]=[]
             self.actions_from_node_subset_MINUS_dest_dropoff[n]=[]
             self.actions_from_node_subset_dest_dropoff[n]=[]
-        print('actions_from_node_subset')
-        print(self.actions_from_node_subset)
+        #print('actions_from_node_subset')
+        #print(self.actions_from_node_subset)
         for a in self.Action_subset:
             my_origin=a.node_tail
             my_destination=a.node_head
@@ -282,16 +282,20 @@ class jy_make_load_ai_states:
             else:
                 do_add=True
             if do_add==True:
-                print('my_origin')
-                print(my_origin)
-                print('my_origin in Q.nodes')
-                print(my_origin in Q.nodes)
+                #print('my_origin')
+                #print(my_origin)
+                #print('my_origin in Q.nodes')
+                #print(my_origin in Q.nodes)
                 self.actions_from_node_subset[my_origin].append(a)
                 if my_destination in Q.dropoff_node:
                     self.actions_from_node_subset_dest_dropoff[my_origin].append(a)
+                    #print('hihih')
+                    #print('my_origin')
+                    #print(my_origin)
+                    #input('---')
                 else:
                     self.actions_from_node_subset_MINUS_dest_dropoff[my_origin].append(a)
-
+        
     def expand_state_given_action(self,s,my_act,orig_depth_s):
 
         can_expand=self.jy_can_expand(s,my_act)
@@ -324,17 +328,19 @@ class jy_make_load_ai_states:
 
     def get_must_drop_off_including_current(self,s):
         Q=self.SLAI
-        must_drop_off=[]
+        drop_off_node_need_to_visit=[]
         if s.node in self.pickup_node:
+            print('part one ')
             drop_off_node_need_to_visit = []
             drop_off_vec = s.state_vec[0,4+len(self.pickup_node):]
             dense_array = drop_off_vec.toarray()[0]
             zero_indices = np.where(dense_array == 0)[0]
             for n in zero_indices:
                 drop_off_node_need_to_visit.append(n+1+len(self.dropoff_node))
-        
+            drop_off_node_need_to_visit.append(s.node+len(self.dropoff_node))
         elif s.node in self.dropoff_node:
-            
+            print('part two ')
+
             drop_off_node_need_to_visit = []
             drop_off_vec = s.state_vec[0,4+len(self.pickup_node):]
             dense_array = drop_off_vec.toarray()[0]
@@ -348,13 +354,18 @@ class jy_make_load_ai_states:
         # must_dropoff=may_avoid_dropoff_list+self.num_pickups
         # if s.node in Q.pickup_node:
         #     must_dropoff.append(s.node+self.num_pickups)
-        return must_drop_off
+        return drop_off_node_need_to_visit
     def get_actions_from_node_subset(self,s):
-
+        Q=self.SLAI
         actions_use=self.actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
         must_dropoff=self.get_must_drop_off_including_current(s)
+        print('s is')
+        s.pretty_print_state()
+        print('must_dropoff')
+        print(must_dropoff)
+        input('---')
         for n in must_dropoff:
-            my_act_list=self.Q.actions[(s.node,n.node)]
+            my_act_list=Q.actions[(s.node,n)]
             for my_act in my_act_list:
                 actions_use.append(my_act)
         return actions_use
@@ -370,13 +381,13 @@ class jy_make_load_ai_states:
             orig_depth_s=self.State2Depth[s]
 
             actions_use=self.get_actions_from_node_subset(s)
-            #print('working on state ')
-            #s.pretty_print_state()
-            #input('---')
+            print('working on state ')
+            s.pretty_print_state()
+            input('---')
             #print('actions above')
             for my_act in actions_use:
                 my_act.pretty_print_action()
-            #input('showing actions')
+            input('showing actions')
             for my_act in actions_use:
                 #print('working on state ')
                 #s.pretty_print_state()
