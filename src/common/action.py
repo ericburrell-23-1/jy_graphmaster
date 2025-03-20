@@ -283,6 +283,8 @@ class Action:
             print('not valid due to node not agree')
             return is_valid
         ideal_head = self.get_head_state(state_tail, state_tail.l_id)
+        if ideal_head == None:
+            return False
         [is_dom, is_equal] = ideal_head.this_state_dominates_input_state(state_head)
         if is_equal == False and is_dom == False:
             state_head.pretty_print_state()

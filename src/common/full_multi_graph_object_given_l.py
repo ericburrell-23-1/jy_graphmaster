@@ -496,10 +496,14 @@ class Full_Multi_Graph_Object_given_l:
             for my_act in self.action_dict[node_tail,node_head]:
                 for s1 in self.resStates_by_node[node_tail]:
                     for s2 in self.resStates_by_node[node_head]:
-                        is_valid=my_act.check_valid(s1,s2)
-                        self.BACKUP_actions_ub_given_s1s2_2[(s1,s2)].append(my_act)
-                        self.BACKUP_action_ub_tail_head[my_act][s1].append(s2)
-                        self.BACKUP_action_ub_head_tail[my_act][s2].append(s1)
+                        try:
+                            is_valid=my_act.check_valid(s1,s2)
+                        except:
+                            print(my_act.get_head_state(s1,s1.l_id))
+                            input('check here')
+                        self.BACKUP_actions_ub_given_s1s2_2[(s1,s2)].add(my_act)
+                        self.BACKUP_action_ub_tail_head[my_act][s1].add(s2)
+                        self.BACKUP_action_ub_head_tail[my_act][s2].add(s1)
                         
                         if is_valid==True:
                             if s2 not in self.action_ub_tail_head[my_act][s1]:
@@ -511,11 +515,12 @@ class Full_Multi_Graph_Object_given_l:
                                 input('error 3')
                             if s1  in self.action_ub_head_tail[my_act][s2]:
                                 input('error 4')
-        check_same_dict()
+        self.compare_dictionaries()
+        print('check here')
         #is this the same 
-        #BACKUP_actions_ub_given_s1s2_2 vs  actions_ub_given_s1s2_2
-        #BACKUP_action_ub_tail_head vs action_ub_tail_head
-        #BACKUP_action_ub_head_tail vs action_ub_head_tail
+        #BACKUP_actions_ub_given_s1s2_2 vs  self.actions_ub_given_s1s2_2
+        #BACKUP_action_ub_tail_head vs self.action_ub_tail_head
+        #BACKUP_action_ub_head_tail vs self.action_ub_head_tail
 
     def compute_dom_states_by_node(self):
         #Creates two objects that will be key in the rest of the document
@@ -933,3 +938,198 @@ class Full_Multi_Graph_Object_given_l:
     def output_profile_time(self):
         for step, duration in sorted(self.time_profile.items(), key=lambda x: x[1], reverse=True):
             print(f"{step}: {duration:.4f} seconds ({duration/sum(self.time_profile.values())*100:.1f}%)")
+
+    def compare_dictionaries(self):
+        """
+        Compare if the following dictionary pairs are exactly the same:
+        1. self.BACKUP_actions_ub_given_s1s2_2 vs self.actions_ub_given_s1s2_2
+        2. self.BACKUP_action_ub_tail_head vs self.action_ub_tail_head
+        3. self.BACKUP_action_ub_head_tail vs self.action_ub_head_tail
+        
+        Returns:
+            dict: Dictionary with comparison results for each pair
+        """
+        results = {
+            "actions_ub_given_s1s2_2": {
+                "equal": True,
+                "differences": []
+            },
+            "action_ub_tail_head": {
+                "equal": True,
+                "differences": []
+            },
+            "action_ub_head_tail": {
+                "equal": True,
+                "differences": []
+            }
+        }
+        
+        # Compare self.BACKUP_actions_ub_given_s1s2_2 vs self.actions_ub_given_s1s2_2
+        # Keys are state pairs (s1, s2) and values are lists of actions
+        backup_keys = set(self.BACKUP_actions_ub_given_s1s2_2.keys())
+        current_keys = set(self.actions_ub_given_s1s2_2.keys())
+        
+        # Check if any keys are missing in either dictionary
+        if backup_keys != current_keys:
+            results["actions_ub_given_s1s2_2"]["equal"] = False
+            missing_in_backup = current_keys - backup_keys
+            missing_in_current = backup_keys - current_keys
+            
+            if missing_in_backup:
+                message = f"Keys missing in BACKUP"
+                results["actions_ub_given_s1s2_2"]["differences"].append(message)
+                input(f"Error detected: {message}")
+            
+            if missing_in_current:
+                message = f"Keys missing in current"
+                results["actions_ub_given_s1s2_2"]["differences"].append(message)
+                input(f"Error detected: {message}")
+        
+                # Check if values (action sets) match for all keys that exist in both
+        common_keys = backup_keys.intersection(current_keys)
+        for key in common_keys:
+            backup_actions = self.BACKUP_actions_ub_given_s1s2_2[key]
+            current_actions = self.actions_ub_given_s1s2_2[key]
+            
+            # The values should already be sets, so direct comparison should work
+            backup_actions_set = backup_actions
+            current_actions_set = current_actions
+            
+            if backup_actions_set != current_actions_set:
+                results["actions_ub_given_s1s2_2"]["equal"] = False
+                extra_in_backup = backup_actions_set - current_actions_set
+                extra_in_current = current_actions_set - backup_actions_set
+                
+                if extra_in_backup:
+                    message = f"For key {key}: Actions in BACKUP but not in current: {len(extra_in_backup)}"
+                    results["actions_ub_given_s1s2_2"]["differences"].append(message)
+                    input(f"Error detected: {message}")
+                
+                if extra_in_current:
+                    message = f"For key {key}: Actions in current but not in BACKUP: {len(extra_in_current)}"
+                    results["actions_ub_given_s1s2_2"]["differences"].append(message)
+                    input(f"Error detected: {message}")
+        
+        # Compare self.BACKUP_action_ub_tail_head vs self.action_ub_tail_head
+        # Keys are actions, second-level keys are tail states, values are sets of head states
+        backup_actions = set(self.BACKUP_action_ub_tail_head.keys())
+        current_actions = set(self.action_ub_tail_head.keys())
+        
+        if backup_actions != current_actions:
+            results["action_ub_tail_head"]["equal"] = False
+            missing_in_backup = current_actions - backup_actions
+            missing_in_current = backup_actions - current_actions
+            
+            if missing_in_backup:
+                message = f"Actions missing in BACKUP"
+                results["action_ub_tail_head"]["differences"].append(message)
+                input(f"Error detected: {message}")
+            
+            if missing_in_current:
+                message = f"Actions missing in current"
+                results["action_ub_tail_head"]["differences"].append(message)
+                input(f"Error detected: {message}")
+        
+        # For actions in both, compare tail states and corresponding head states
+        common_actions = backup_actions.intersection(current_actions)
+        for action in common_actions:
+            backup_tails = set(self.BACKUP_action_ub_tail_head[action].keys())
+            current_tails = set(self.action_ub_tail_head[action].keys())
+            
+            if backup_tails != current_tails:
+                results["action_ub_tail_head"]["equal"] = False
+                missing_tails_in_backup = current_tails - backup_tails
+                missing_tails_in_current = backup_tails - current_tails
+                
+                if missing_tails_in_backup:
+                    message = f"For action {action.action_id}: Tail states missing in BACKUP: {len(missing_tails_in_backup)}"
+                    results["action_ub_tail_head"]["differences"].append(message)
+                    input(f"Error detected: {message}")
+                
+                if missing_tails_in_current:
+                    message = f"For action {action.action_id}: Tail states missing in current: {len(missing_tails_in_current)}"
+                    results["action_ub_tail_head"]["differences"].append(message)
+                    input(f"Error detected: {message}")
+            
+            # For tail states in both dictionaries, compare the head states
+            common_tails = backup_tails.intersection(current_tails)
+            for tail in common_tails:
+                backup_heads = set(self.BACKUP_action_ub_tail_head[action][tail])
+                current_heads = set(self.action_ub_tail_head[action][tail])
+                
+                if backup_heads != current_heads:
+                    results["action_ub_tail_head"]["equal"] = False
+                    missing_heads_in_backup = current_heads - backup_heads
+                    missing_heads_in_current = backup_heads - current_heads
+                    
+                    if missing_heads_in_backup:
+                        message = f"For action {action.action_id}, tail {tail.state_id}: Head states missing in BACKUP: {len(missing_heads_in_backup)}"
+                        results["action_ub_tail_head"]["differences"].append(message)
+                        input(f"Error detected: {message}")
+                    
+                    if missing_heads_in_current:
+                        message = f"For action {action.action_id}, tail {tail.state_id}: Head states missing in current: {len(missing_heads_in_current)}"
+                        results["action_ub_tail_head"]["differences"].append(message)
+                        input(f"Error detected: {message}")
+        
+        # Compare self.BACKUP_action_ub_head_tail vs self.action_ub_head_tail
+        # Keys are actions, second-level keys are head states, values are sets of tail states
+        backup_actions = set(self.BACKUP_action_ub_head_tail.keys())
+        current_actions = set(self.action_ub_head_tail.keys())
+        
+        if backup_actions != current_actions:
+            results["action_ub_head_tail"]["equal"] = False
+            missing_in_backup = current_actions - backup_actions
+            missing_in_current = backup_actions - current_actions
+            
+            if missing_in_backup:
+                message = f"Actions missing in BACKUP: {missing_in_backup}"
+                results["action_ub_head_tail"]["differences"].append(message)
+                input(f"Error detected: {message}")
+            
+            if missing_in_current:
+                message = f"Actions missing in current: {missing_in_current}"
+                results["action_ub_head_tail"]["differences"].append(message)
+                input(f"Error detected: {message}")
+        
+        # For actions in both, compare head states and corresponding tail states
+        common_actions = backup_actions.intersection(current_actions)
+        for action in common_actions:
+            backup_heads = set(self.BACKUP_action_ub_head_tail[action].keys())
+            current_heads = set(self.action_ub_head_tail[action].keys())
+            
+            if backup_heads != current_heads:
+                results["action_ub_head_tail"]["equal"] = False
+                missing_heads_in_backup = current_heads - backup_heads
+                missing_heads_in_current = backup_heads - current_heads
+                
+                if missing_heads_in_backup:
+                    message = f"For action {action.action_id}: Head states missing in BACKUP: {len(missing_heads_in_backup)}"
+                    results["action_ub_head_tail"]["differences"].append(message)
+                    input(f"Error detected: {message}")
+                
+                if missing_heads_in_current:
+                    message = f"For action {action.action_id}: Head states missing in current: {len(missing_heads_in_current)}"
+                    results["action_ub_head_tail"]["differences"].append(message)
+                    input(f"Error detected: {message}")
+            
+            # For head states in both dictionaries, compare the tail states
+            common_heads = backup_heads.intersection(current_heads)
+            for head in common_heads:
+                backup_tails = set(self.BACKUP_action_ub_head_tail[action][head])
+                current_tails = set(self.action_ub_head_tail[action][head])
+                
+                if backup_tails != current_tails:
+                    results["action_ub_head_tail"]["equal"] = False
+                    missing_tails_in_backup = current_tails - backup_tails
+                    missing_tails_in_current = backup_tails - current_tails
+                    
+                    if missing_tails_in_backup:
+                        message = f"For action {action.action_id}, head {head.state_id}: Tail states missing in BACKUP: {len(missing_tails_in_backup)}"
+                        results["action_ub_head_tail"]["differences"].append(message)
+                        input(f"Error detected: {message}")
+                    
+                    if missing_tails_in_current:
+                        message = f"For action {action.action_id}, head {head.state_id}: Tail states missing in current: {len(missing_tails_in_current)}"
+                        results["action_ub_head_tail"]["differences"].append(message)
+                        input(f"Error detected: {message}")
