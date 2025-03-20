@@ -208,7 +208,11 @@ class jy_make_load_ai_states:
         #possibility s_deestination is none
         s_des = my_action.get_head_state(s_origin,s_origin.l_id)
         if s_des == None:
+            print('failing one ')
+            s_origin.pretty_print_state()
+            my_action.pretty_print_action()
             print('failing here 1')
+            input('not wrong but look')
             return False
         this_state_vec = s_des.state_vec
         des_node = s_des.node
@@ -318,8 +322,8 @@ class jy_make_load_ai_states:
                 my_head.pretty_print_state()
                 input('error here 1')
         #\State $s_2.stateVec\leftarrow ElementwiseMin(s_2.stateVec,s2.node.NodeMinTermVec)$
-
-        my_head=self.apply_node_min_term(my_head)
+        if self.option_do_min_term:
+            my_head=self.apply_node_min_term(my_head)
         if debug_on:
             if False==self.confirm_if_state_possible(my_head):
                 my_head.pretty_print_state()
@@ -327,6 +331,12 @@ class jy_make_load_ai_states:
                 input('error here 2')
         if my_head==None and did_make_term==True:
             input('error here 332')
+        if my_act.node_head==-2:
+
+            print('did_make_term')
+            print(did_make_term)
+            s.pretty_print_state()
+            input('-  at termination -2 node --')
         return did_make_term,my_head,my_new_depth
 
     def get_must_drop_off_including_current(self,s):
@@ -362,11 +372,11 @@ class jy_make_load_ai_states:
         Q=self.SLAI
         actions_use=self.actions_from_node_subset_MINUS_dest_dropoff[s.node].copy()
         must_dropoff=self.get_must_drop_off_including_current(s)
-        print('s is')
-        s.pretty_print_state()
-        print('must_dropoff')
-        print(must_dropoff)
-        input('---')
+        #print('s is')
+        #s.pretty_print_state()
+        #print('must_dropoff')
+        #print(must_dropoff)
+        #input('---')
         for n in must_dropoff:
             my_act_list=Q.actions[(s.node,n)]
             for my_act in my_act_list:
@@ -386,6 +396,9 @@ class jy_make_load_ai_states:
             actions_use=self.get_actions_from_node_subset(s)
             print('working on state ')
             s.pretty_print_state()
+            must_dropoff=self.get_must_drop_off_including_current(s)
+            print('must_dropoff')
+            print(must_dropoff)
             input('---')
             #print('actions above')
             for my_act in actions_use:
