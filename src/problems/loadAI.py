@@ -320,7 +320,7 @@ class loadAI(OptimizationProblem):
                 exog_contrib_vec = self._default_contribution_vector()
                 cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
                 exog_contrib_vec[cover_constraint_index] = 1
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node], 
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node], 
                                            "volume": self.volume_demands[origin_node] + self.volume_demands[destination_node],
                                            "weight": self.weight_demands[origin_node] + self.weight_demands[destination_node],
                                            "max_combined_loads": 1,
@@ -351,7 +351,7 @@ class loadAI(OptimizationProblem):
                 exog_contrib_vec = self._default_contribution_vector()
                 cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
                 exog_contrib_vec[cover_constraint_index] = 1
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node]}
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node]}
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_node],
                                            "weight": -self.weight_demands[origin_node],
@@ -380,7 +380,7 @@ class loadAI(OptimizationProblem):
                     continue
                 cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node], 
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node], 
                                            "volume": self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
                                            "weight": self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
                                            "max_combined_loads": 1,
@@ -411,7 +411,7 @@ class loadAI(OptimizationProblem):
                 origin_pickup_node = self.dropoff_to_pickup[origin_node]
                 cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.service_time[destination_node]}
+                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node]}
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_pickup_node],
                                            "weight": -self.weight_demands[origin_pickup_node],

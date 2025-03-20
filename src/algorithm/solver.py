@@ -259,6 +259,11 @@ class GraphMaster:
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
+                                # list_of_nodes_in_shortest_path = [-1,4,2,5,9,7,10,-2]
+                                # list_of_actions_used_in_col = []
+                                # for (n1,n2) in zip(list_of_nodes_in_shortest_path[:-1],list_of_nodes_in_shortest_path[1:]):
+
+                                #     list_of_actions_used_in_col.append(self.action_dict[(n1,n2)][0])
                         if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
                             
                             print('path')
