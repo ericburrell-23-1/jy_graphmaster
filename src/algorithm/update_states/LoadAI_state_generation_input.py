@@ -140,36 +140,9 @@ class LoadAI_state_input():
 
     def _generate_reasonalbe_actions(self):
         
-        num_pickups_keep=20
-        #map each node to its pickup actions
-        # node_2_pickup_actions=dict()
-        # for u in self.nodes:
-        #     node_2_pickup_actions[u]=[]
-        # for ai in self.actions:
-        #     aL=self.actions[ai]
-        #     for a in aL:
-        #         n_tail=a.node_tail
-        #         n_head=a.node_head
-        #         my_cost=a.cost
- 
-        #         if n_head in self.pickup_to_dropoff:
-                    
-        #             #chatGPT please add
-        #             node_2_pickup_actions[n_tail].append(tuple([a,my_cost]))
-        # for u in self.nodes:
-        #     if u>-0.5:
-        #         tmp=sorted(node_2_pickup_actions[n_tail], key=lambda x: x[1])
-        #         tmp=tmp[0:num_pickups_keep]
-        #         node_2_pickup_actions[n_tail]=tmp
-        #chat gpt please remove from node_2_pickup_actions[n] all actions that are not in the K lowest cost actions
-        #how do i get action from a sep
-        #ittera
-        #itterate over all actions and store for each action
- 
-        #comptue for each node the K nearest pickuop nodes
-        # action from source to pick up, from drop off to sink
         reasonable_action_dict = defaultdict()
         reasonable_action = set()
+        #every action evolve source or sink
         for u in self.pickup_node:
             reasonable_action.update(self.actions[(-1,u)])
             reasonable_action_dict[(-1,u)] = self.actions[(-1,u)]

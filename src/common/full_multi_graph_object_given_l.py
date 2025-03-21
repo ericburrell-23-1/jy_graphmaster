@@ -285,7 +285,7 @@ class Full_Multi_Graph_Object_given_l:
         self.make_state_id_to_state()
 
         #debug_check
-        self.verify_computation_methods()
+        #self.verify_computation_methods()
 
 
         # Step 2

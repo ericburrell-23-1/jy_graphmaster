@@ -568,14 +568,14 @@ class loadAI(OptimizationProblem):
         nodes.append(-1)
         nodes.append(-2)
         return nodes
-    def _create_nearest_node(self,nodes,k):
+    def _create_nearest_node(self,k):
         neighbors_by_distance = {
-            u: sorted(
-                [v for v in nodes if v != u and v not in {-1, -2}],
-                key=lambda v: self.travel_time[(u, v)]
-            )
-            for u in nodes if u not in {-1, -2}
-        }
+                        u: sorted(
+                            [v for v in self.nodes if v != u and v not in {-1, -2}],
+                            key=lambda v: self.actions[(u, v)][0].cost if (u, v) in self.actions else np.inf
+                        )
+                        for u in self.nodes if u not in {-1, -2}
+                    }
         k = min(k,len(self.nodes)-1)
         neighbors = {}
         for u, nodes in neighbors_by_distance.items():
@@ -587,8 +587,8 @@ class loadAI(OptimizationProblem):
         return neighbors_by_distance, neighbors
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        nodes = self._create_travel_time()
-        neighbors_by_distance, neighbors = self._create_nearest_node(nodes,10)
+        #nodes = self._create_travel_time()
+        neighbors_by_distance, neighbors = self._create_nearest_node(10)
         #self.plot_pickup_dropoff_locations()
         self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
     def plot_pickup_dropoff_locations(self):
