@@ -296,6 +296,7 @@ class GraphMaster:
                                         for idx in nonzero_indices:
                                             this_dual[idx] =0
                             else:
+                               
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
