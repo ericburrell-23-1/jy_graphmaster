@@ -237,7 +237,6 @@ class GraphMaster_cg:
                     sol = cg_solver.solve()
                     this_dual = sol['dual_values']
                     l_id += 1
-                    list_of_actions_used_in_col=set()
                     with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
                         jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
                         this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]

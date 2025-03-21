@@ -447,7 +447,7 @@ class PGM_appraoch:
                 if self.decoder_gid_2_fill[g_id][my_equiv][my_act_id]<-epsilon:
                     input('error here')
             tot_weight_rem=tot_weight_rem-min_val_in_path
-            my_new_route=route(this_path_s1_act_s2_repeat,min_val_in_path)
+            my_new_route=Route(this_path_s1_act_s2_repeat,min_val_in_path)
             self.complete_routes.append(my_new_route)
         #print('create route info done')
     
