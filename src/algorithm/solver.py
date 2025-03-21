@@ -19,6 +19,7 @@ from src.algorithm.jy_slow_pricing import jy_slow_general_pricing_solver
 import time
 import random
 from src.common.time_profile import TimeProfiler
+from src.algorithm.cg_rmp import CG_RMP
 class GraphMaster:
     """
     Entry point to the GraphMaster solver. Takes problem model and initial feasible solution from problem-specific module, and creates the general GraphMaster problem.
@@ -96,7 +97,7 @@ class GraphMaster:
         self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=3
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
         self.jy_options_user_defined['max_pickups_in_a_route']=3
-
+        self.jy_options_user_defined['use_cg'] = True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -213,26 +214,53 @@ class GraphMaster:
             
             cg_iteration_time =1
             path_added = set()
+            if self.jy_options_user_defined['use_cg'] == True:
+                actions_from_minus1 = {}  # Actions starting at node -1
+                actions_to_minus2 = {}  
+                list_of_action_list = []
+                for action in self.res_actions_minus:
+                    if action.node_tail == -1:
+                        # Store actions starting from -1 indexed by their destination
+                        actions_from_minus1[action.node_head] = action
+                    if action.node_head == -2:
+                        # Store actions ending at -2 indexed by their origin
+                        actions_to_minus2[action.node_tail] = action
+                
+                # Find intermediate nodes that appear in both dictionaries
+                common_nodes = set(actions_from_minus1.keys()).intersection(set(actions_to_minus2.keys()))
+
+                for node in common_nodes:
+                    first_action = actions_from_minus1[node]
+                    second_action = actions_to_minus2[node]
+                    list_of_action_list.append([first_action, second_action])
+
             with TimeProfiler(all_time_profile, "solve:iteration"):
                 while iteration < max_iterations:
                     time_profile = defaultdict(int)
                     #parameter for PGM
+                    if self.jy_options_user_defined['use_cg'] == True:
 
-                    pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,self.actions,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, self.jy_options_user_defined)
-                    pgm_solver.call_PGM()
-                    #this_visulizer = Visulizer(pgm_solver)
-                    #this_visulizer.plot_graph()
+                        cg_solver = CG_RMP(list_of_action_list,self.rhs_exog_vec)
+                        sol = cg_solver.solve()
+                        this_dual = sol['dual_values']
+                    else:
 
-                    pgm_solver.ilp_solve()
-                    self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
-                    #all_time_profile['total_pgm_time'] += (pgm_time_end-pgm_time_start)
-                    self.complete_routes=pgm_solver.complete_routes
-                    all_time_profile = Helper.merge_two_dict(all_time_profile,pgm_solver.time_profile)
+                        pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,self.actions,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, self.jy_options_user_defined)
+                        pgm_solver.call_PGM()
+                        #this_visulizer = Visulizer(pgm_solver)
+                        #this_visulizer.plot_graph()
 
-                    incombentLP = pgm_solver.cur_lp
-                    self.lp_before_operations=pgm_solver.cur_lp
-                    print('pgm_solver.cur_lp')
-                    print(pgm_solver.cur_lp)
+                        pgm_solver.ilp_solve()
+                        self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
+                        #all_time_profile['total_pgm_time'] += (pgm_time_end-pgm_time_start)
+                        self.complete_routes=pgm_solver.complete_routes
+                        all_time_profile = Helper.merge_two_dict(all_time_profile,pgm_solver.time_profile)
+
+                        incombentLP = pgm_solver.cur_lp
+                        self.lp_before_operations=pgm_solver.cur_lp
+                        print('pgm_solver.cur_lp')
+                        print(pgm_solver.cur_lp)
+                        this_dual = pgm_solver.dual_exog
                     #input('lp now')
                     l_id += 1
                     #all action used in specific column 
@@ -240,53 +268,62 @@ class GraphMaster:
                     new_states_describing_new_graph=[]
                     list_of_actions_used_in_col=set()
                     
-                    if do_pricing==False:
-                        #print('in pricing')
-                        #print('in pricing')
-                        beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function_cvrp.get_states_from_random_beta(self.nodes, l_id)
-                        reduced_cost = -np.inf
-                    else:
+                    # if do_pricing==False:
+                    #     #print('in pricing')
+                    #     #print('in pricing')
+                    #     beta_term, new_states_describing_new_graph,states_used_in_this_col = self.state_update_function_cvrp.get_states_from_random_beta(self.nodes, l_id)
+                    #     reduced_cost = -np.inf
+                    # else:
                         #print('in not  pricing')
-                        with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
-                        #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
-                            if 0>0:
-                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(pgm_solver.dual_exog)
-                            else:
-                                print('starting jy pricing ')
-                                jy_init_res_state=self.index_to_multi_graph[0].source_state
-                                #jy_max_actions_in_route=100
-                                #jy_pricing_on=True
-                                jy_pricer_my =jy_slow_general_pricing_solver(self.actions,pgm_solver.dual_exog,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
-                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
-                                print('done jy pricing ')
-                                # list_of_nodes_in_shortest_path = [-1,4,2,5,9,7,10,-2]
-                                # list_of_actions_used_in_col = []
-                                # for (n1,n2) in zip(list_of_nodes_in_shortest_path[:-1],list_of_nodes_in_shortest_path[1:]):
-
-                                #     list_of_actions_used_in_col.append(self.action_dict[(n1,n2)][0])
-                        if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
-                            
-                            print('path')
-                            print(list_of_nodes_in_shortest_path)
-                            print('reduce cost')
-                            print(reduced_cost)
-                            input('this path added before')
+                    with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
+                    #[list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost]= self.pricing_problem.generalized_absolute_pricing(pgm_solver.dual_exog)
+                        if 0>0:
+                            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(this_dual)
                         else:
-                            path_added.add(tuple(list_of_nodes_in_shortest_path))
-                        #input('check here')
-                        if reduced_cost >= -1e-3:
-                            for index, graph in self.index_to_multi_graph.items():
-                                all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
-                            #all_time_profile['all_time'] = iteration_end_time- current_time
-                            all_time_end = time.time()
-                            all_time_profile['all_time'] = all_time_end - all_time_start
-                            self.output_all_time_profile(all_time_profile)
+                            print('starting jy pricing ')
+                            jy_init_res_state=self.index_to_multi_graph[0].source_state
+                            #jy_max_actions_in_route=100
+                            #jy_pricing_on=True
+                            jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
+                            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
+                            print('done jy pricing ')
+                            # list_of_nodes_in_shortest_path = [-1,4,2,5,9,7,10,-2]
+                            # list_of_actions_used_in_col = []
+                            # for (n1,n2) in zip(list_of_nodes_in_shortest_path[:-1],list_of_nodes_in_shortest_path[1:]):
+
+                            #     list_of_actions_used_in_col.append(self.action_dict[(n1,n2)][0])
+                            list_of_action_list.append(list_of_actions_used_in_col)
+                    if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
+                        
+                        print('path')
+                        print(list_of_nodes_in_shortest_path)
+                        print('reduce cost')
+                        print(reduced_cost)
+                        input('this path added before')
+                    else:
+                        path_added.add(tuple(list_of_nodes_in_shortest_path))
+                    #input('check here')
+                    if reduced_cost >= -1e-3:
+                        for index, graph in self.index_to_multi_graph.items():
+                            all_time_profile = Helper.merge_two_dict(all_time_profile,graph.time_profile)
+                        #all_time_profile['all_time'] = iteration_end_time- current_time
+                        all_time_end = time.time()
+                        all_time_profile['all_time'] = all_time_end - all_time_start
+                        self.output_all_time_profile(all_time_profile)
+                        if self.jy_options_user_defined['use_cg'] == True:
+                            return {
+                                'status': 'optimal',
+                                'x': sol['variable_values'],
+                                'iterations': iteration,
+                            }
+                        else:
                             return {
                                 'status': 'optimal',
                                 'x': pgm_solver.primal_sol,
                                 'iterations': iteration,
                                 'graph': self.index_to_multi_graph.values()
                             }
+                    if self.jy_options_user_defined['use_cg'] == False:
                         with TimeProfiler(all_time_profile, "solve:get_new_states"):
                             trig = 0
                             # if trig==0:
@@ -315,44 +352,44 @@ class GraphMaster:
                         print(list_of_nodes_in_shortest_path)
                         print('shortest path reduce cost')
                         print(reduced_cost)
-                        
-                    
-                    new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined,self.state_update_module)
-
-
-                    new_multi_graph.initialize_system()
-                    #all_time_profile['multigraph total time'] += (multi_graph_end-multi_graph_start)
-
-                    #all_time_profile = Helper.merge_two_dict(all_time_profile,new_multi_graph.time_profile)
-
-
-                    self.index_to_multi_graph[l_id] = new_multi_graph
-                    if self.jy_options_user_defined['debug']==True:
-                        with TimeProfiler(all_time_profile, "debug"):
-                            if debug_init_all_actions==False:
-                                #self.res_actions_minus = self.res_actions_minus.union(list_of_actions_used_in_col)
-                                for my_action in   list_of_actions_used_in_col:
-                                    self.res_actions_minus.add(my_action)# = self.res_actions_minus.union(list_of_actions_used_in_col)
-                            else:
-                                self.res_actions_minus=set()
-                                for my_action in self.actions:
-                                    self.res_actions_minus.add(my_action)
                             
+                        
+                        new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined,self.state_update_module)
 
-                            if debug_init_all_states==True:
-                                self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
-                            else:
-                                #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
-                                #input('julian predicts that these states will be the ones foudn to incduce errors')
 
-                                for s in states_used_in_this_col:
-                                    self.rez_states_minus.add(s)
-                                    #s.pretty_print_state()
-                                    if s not in new_multi_graph.rez_states:
-                                        input('look this new state is not in the multigraph justadded ')
-                                #debug here 
-                                #input('-----')
-                                self.debug_check_duplicates(self.rez_states_minus)
+                        new_multi_graph.initialize_system()
+                        #all_time_profile['multigraph total time'] += (multi_graph_end-multi_graph_start)
+
+                        #all_time_profile = Helper.merge_two_dict(all_time_profile,new_multi_graph.time_profile)
+
+
+                        self.index_to_multi_graph[l_id] = new_multi_graph
+                        if self.jy_options_user_defined['debug']==True:
+                            with TimeProfiler(all_time_profile, "debug"):
+                                if debug_init_all_actions==False:
+                                    #self.res_actions_minus = self.res_actions_minus.union(list_of_actions_used_in_col)
+                                    for my_action in   list_of_actions_used_in_col:
+                                        self.res_actions_minus.add(my_action)# = self.res_actions_minus.union(list_of_actions_used_in_col)
+                                else:
+                                    self.res_actions_minus=set()
+                                    for my_action in self.actions:
+                                        self.res_actions_minus.add(my_action)
+                                
+
+                                if debug_init_all_states==True:
+                                    self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
+                                else:
+                                    #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
+                                    #input('julian predicts that these states will be the ones foudn to incduce errors')
+
+                                    for s in states_used_in_this_col:
+                                        self.rez_states_minus.add(s)
+                                        #s.pretty_print_state()
+                                        if s not in new_multi_graph.rez_states:
+                                            input('look this new state is not in the multigraph justadded ')
+                                    #debug here 
+                                    #input('-----')
+                                    self.debug_check_duplicates(self.rez_states_minus)
                     #all_time_profile['debug'] += (debug_end-debug_start)
                     iteration += 1
                     self.restricted_master_problem = 0
