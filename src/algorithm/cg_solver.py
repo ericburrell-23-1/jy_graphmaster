@@ -98,7 +98,7 @@ class GraphMaster:
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
         self.jy_options_user_defined['max_pickups_in_a_route']=3
         self.jy_options_user_defined['use_cg'] = True
-        self.jy_options_user_defined['complementary_col'] = 0
+        self.jy_options_user_defined['complementary_col'] = 5
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -190,15 +190,13 @@ class GraphMaster:
 
                 self.initial_res_states.remove(s)
 
-            my_init_graph=Full_Multi_Graph_Object_given_l(l_id, self.initial_res_states,self.actions, self.action_dict, self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined, self.state_update_module)
+            
             self.rez_states_minus:Set[State]=self.initial_res_states
             self.res_actions=self.initial_res_actions
             #l_id = 0
             #multi_graph = Full_Multi_Graph_Object_given_l(l_id,self.initial_res_states,self.initial_res_actions,self.dominate_actions)
-            my_init_graph.initialize_system()
-            all_time_profile = Helper.merge_two_dict(all_time_profile,my_init_graph.time_profile)
 
-            self.index_to_multi_graph[l_id] = my_init_graph
+
             iteration = 1
             incombentLP = np.inf
             do_pricing=True
@@ -239,29 +237,11 @@ class GraphMaster:
                 while iteration < max_iterations:
                     time_profile = defaultdict(int)
                     #parameter for PGM
-                    if self.jy_options_user_defined['use_cg'] == True:
 
-                        cg_solver = CG_RMP(list_of_action_list,self.rhs_exog_vec)
-                        sol = cg_solver.solve()
-                        this_dual = sol['dual_values']
-                    else:
-
-                        pgm_solver = PGM_appraoch(self.index_to_multi_graph,self.rhs_exog_vec, self.rez_states_minus,self.res_actions_minus,self.actions,incombentLP,self.dominate_actions,self.the_single_null_action,self.action_id_2_actions,self.lp_before_operations, self.jy_options_user_defined)
-                        pgm_solver.call_PGM()
-                        #this_visulizer = Visulizer(pgm_solver)
-                        #this_visulizer.plot_graph()
-
-                        pgm_solver.ilp_solve()
-                        self.rez_states_minus, self.res_actions = pgm_solver.return_rez_states_minus_and_res_actions()
-                        #all_time_profile['total_pgm_time'] += (pgm_time_end-pgm_time_start)
-                        self.complete_routes=pgm_solver.complete_routes
-                        all_time_profile = Helper.merge_two_dict(all_time_profile,pgm_solver.time_profile)
-
-                        incombentLP = pgm_solver.cur_lp
-                        self.lp_before_operations=pgm_solver.cur_lp
-                        print('pgm_solver.cur_lp')
-                        print(pgm_solver.cur_lp)
-                        this_dual = pgm_solver.dual_exog
+                    cg_solver = CG_RMP(list_of_action_list,self.rhs_exog_vec)
+                    sol = cg_solver.solve()
+                    this_dual = sol['dual_values']
+                
                     #input('lp now')
                     l_id += 1
                     #all action used in specific column 
@@ -317,86 +297,12 @@ class GraphMaster:
                         all_time_end = time.time()
                         all_time_profile['all_time'] = all_time_end - all_time_start
                         self.output_all_time_profile(all_time_profile)
-                        if self.jy_options_user_defined['use_cg'] == True:
-                            return {
-                                'status': 'optimal',
-                                'x': sol['variable_values'],
-                                'iterations': iteration,
-                            }
-                        else:
-                            return {
-                                'status': 'optimal',
-                                'x': pgm_solver.primal_sol,
-                                'iterations': iteration,
-                                'graph': self.index_to_multi_graph.values()
-                            }
-                    if self.jy_options_user_defined['use_cg'] == False:
-                        with TimeProfiler(all_time_profile, "solve:get_new_states"):
-                            trig = 0
-                            # if trig==0:
-                            print('===path before state generation')
-                            print(list_of_nodes_in_shortest_path)
-                            max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable, action_reasonable_dict,user_ignore_state_action,beta_info = self.state_update_module._get_input(list_of_nodes_in_shortest_path,list_of_actions_used_in_col, l_id, self.initial_resource_state)
-                            
-                            #new_states_describing_new_graph= self.general_state_update.state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,user_ignore_state_action)
-                            use_jy_state_gen = True
-                            if use_jy_state_gen == True:
-                                jy_state_gen = jy_make_load_ai_states(self.state_update_module,states_used_in_this_col,list_of_actions_used_in_col,self.jy_options_user_defined)
-                                print('before jy_state_gen.all_states')
-                                print(jy_state_gen.all_states)
-                                [new_states_describing_new_graph,states_used_in_this_col] = jy_state_gen.return_solution()
-                            else:
-                                new_states_describing_new_graph= self.general_state_update.load_ai_state_generation(max_depth, depth_used, states_used_in_this_col, node_min_vec_dict, action_reasonable,action_reasonable_dict,user_ignore_state_action,self.state_update_module)
-                            print('check states generated')
-                        #debug
-                        if self.jy_options_user_defined['debug'] == True:
-                            with TimeProfiler(all_time_profile, "debug"):
-                                for s1 in states_used_in_this_col:
-                                    if s1 not in new_states_describing_new_graph:
-                                        s1.pretty_print_state()
-                                        input('error here this is not correct')
-                        print('shortest path')
-                        print(list_of_nodes_in_shortest_path)
-                        print('shortest path reduce cost')
-                        print(reduced_cost)
-                            
-                        
-                        new_multi_graph = Full_Multi_Graph_Object_given_l(l_id,new_states_describing_new_graph,self.actions,self.action_dict,self.dominate_actions,self.the_single_null_action,self.jy_options_user_defined,self.state_update_module)
-
-
-                        new_multi_graph.initialize_system()
-                        #all_time_profile['multigraph total time'] += (multi_graph_end-multi_graph_start)
-
-                        #all_time_profile = Helper.merge_two_dict(all_time_profile,new_multi_graph.time_profile)
-
-
-                        self.index_to_multi_graph[l_id] = new_multi_graph
-                        if self.jy_options_user_defined['debug']==True:
-                            with TimeProfiler(all_time_profile, "debug"):
-                                if debug_init_all_actions==False:
-                                    #self.res_actions_minus = self.res_actions_minus.union(list_of_actions_used_in_col)
-                                    for my_action in   list_of_actions_used_in_col:
-                                        self.res_actions_minus.add(my_action)# = self.res_actions_minus.union(list_of_actions_used_in_col)
-                                else:
-                                    self.res_actions_minus=set()
-                                    for my_action in self.actions:
-                                        self.res_actions_minus.add(my_action)
-                                
-
-                                if debug_init_all_states==True:
-                                    self.rez_states_minus = self.rez_states_minus.union(new_states_describing_new_graph)
-                                else:
-                                    #self.res_states_minus = self.res_states_minus.union(states_used_in_this_col)
-                                    #input('julian predicts that these states will be the ones foudn to incduce errors')
-
-                                    for s in states_used_in_this_col:
-                                        self.rez_states_minus.add(s)
-                                        #s.pretty_print_state()
-                                        if s not in new_multi_graph.rez_states:
-                                            input('look this new state is not in the multigraph justadded ')
-                                    #debug here 
-                                    #input('-----')
-                                    self.debug_check_duplicates(self.rez_states_minus)
+                        return {
+                            'status': 'optimal',
+                            'x': sol['variable_values'],
+                            'iterations': iteration,
+                        }
+                    
                     #all_time_profile['debug'] += (debug_end-debug_start)
                     iteration += 1
                     self.restricted_master_problem = 0
