@@ -196,9 +196,9 @@ class LoadAI_state_input():
                         
                     """calculate cost_uuvv"""
 
-                    cost_uuvv = self.actions[(u,self.pickup_to_dropoff[u])][0].cost + \
-                        self.actions[(self.pickup_to_dropoff[u],v)][0].cost + self.actions[(v,self.pickup_to_dropoff[v])][0].cost
-                    route = [-1,u,self.pickup_to_dropoff[u],v,self.pickup_to_dropoff[v],-2]
+                    cost_uvvu = self.actions[(u,v)][0].cost + \
+                        self.actions[(v,self.pickup_to_dropoff[v])][0].cost + self.actions[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])][0].cost
+                    route = [-1,u,v,self.pickup_to_dropoff[v],self.pickup_to_dropoff[u],-2]
 
                     s = State(-1,self.initial_resource_vector,0,True,False)
                     for n1,n2 in zip(route[:-1],route[1:]):

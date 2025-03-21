@@ -409,7 +409,7 @@ class Full_Multi_Graph_Object_given_l:
                         self.action_ub_head_tail[a1][state_head].add(state_tail)
                         a1.check_valid(state_tail, state_head)
 
-        return  self.actions_ub_given_s1s2_2, self.action_tail_head,self.actions_head_tail
+        return  self.actions_ub_given_s1s2_2, self.action_ub_tail_head,self.action_ub_head_tail
     def compute_actions_ub(self):
         self.actions_ub_given_s1s2_2 = defaultdict(set)
         self.action_ub_tail_head = defaultdict(lambda: defaultdict(set))
@@ -427,7 +427,7 @@ class Full_Multi_Graph_Object_given_l:
                             self.action_ub_tail_head[my_act][s1].add(s2)
                             self.action_ub_head_tail[my_act][s2].add(s1)
                   
-        return  self.actions_ub_given_s1s2_2, self.action_tail_head,self.actions_head_tail
+        return  self.actions_ub_given_s1s2_2, self.action_ub_tail_head,self.action_ub_head_tail
 
 
 
