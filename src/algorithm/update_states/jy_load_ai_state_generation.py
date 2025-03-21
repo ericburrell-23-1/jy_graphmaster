@@ -71,7 +71,7 @@ class jy_make_load_ai_states:
         self.node_min_term_vec = shawn_LoadAI_state_input.node_min_vec_dict
         self.MaxDepth=2+self.jy_options['max_pickups_in_a_route']#S.max_depth
         self.option_do_min_term=True
-        self.use_all_actions=False
+        self.use_all_actions=True
         self.set_depth_used_by_action()
         self.update_action_subset_given_col()
         self.updeate_action_from_nodes_subset()
@@ -596,6 +596,10 @@ class jy_make_load_ai_states:
         #print('must_dropoff')
         #print(must_dropoff)
         #input('---')
+        if s.node!=-1 and len(must_dropoff)==0:
+            actions_use=[]
+            act_to_sink=self.actions[s.node,-2][0]
+            actions_use=[act_to_sink]
         for n in must_dropoff:
             my_act_list=Q.actions[(s.node,n)]
             for my_act in my_act_list:
