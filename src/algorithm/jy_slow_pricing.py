@@ -285,7 +285,10 @@ class jy_slow_general_pricing_solver:
         self.call_expansion_algorihtm_till()
     
     def return_solution(self):
-        my_states_ordered=self.my_final_label.my_states_ordered
+        try:
+            my_states_ordered=self.my_final_label.my_states_ordered
+        except:
+            print('check here')
         red_cost=self.my_final_label.red_cost
         list_of_nodes_in_shortest_path=[]
         list_of_actions_used_in_col=[]
