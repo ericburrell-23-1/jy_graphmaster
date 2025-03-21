@@ -237,7 +237,10 @@ class LoadAI_state_input():
                         s = new_s
 
                     min_of_two_cost = min(cost_uvuv,cost_uuvv)
-                    cost_uu_vv = self.actions[(u,self.pickup_to_dropoff[u])][0].cost + self.actions[(v,self.pickup_to_dropoff[v])][0].cost
+                    cost_uu_vv = self.actions[(-1,u+2*len(self.dropoff_node))][0].cost + \
+                        self.actions[(u+2*len(self.dropoff_node),-2)][0].cost + \
+                            self.actions[(-1,v+2*len(self.dropoff_node))][0].cost+\
+                                self.actions[(v+2*len(self.dropoff_node),-2)][0].cost
                     if min_of_two_cost < cost_uu_vv:
                         reasonable_action.update(self.actions[(u,v)])
                         reasonable_action_dict[(u,v)] = self.actions[(u,v)]

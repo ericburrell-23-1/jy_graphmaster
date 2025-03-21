@@ -589,7 +589,7 @@ class loadAI(OptimizationProblem):
         # ASSIGN STATE UPDATE MODULE HERE
         nodes = self._create_travel_time()
         neighbors_by_distance, neighbors = self._create_nearest_node(nodes,10)
-        self.plot_pickup_dropoff_locations()
+        #self.plot_pickup_dropoff_locations()
         self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
     def plot_pickup_dropoff_locations(self):
         """
