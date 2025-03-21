@@ -11,6 +11,7 @@ from math import hypot, radians, sin, cos, sqrt, asin
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+import matplotlib.pyplot as plt
 # CONSTANTS
 VOLUME_CAPACITY = 3000
 WEIGHT_CAPACITY = 45000
@@ -587,6 +588,60 @@ class loadAI(OptimizationProblem):
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
         nodes = self._create_travel_time()
-        neighbors_by_distance, neighbors = self._create_nearest_node(nodes,100)
+        neighbors_by_distance, neighbors = self._create_nearest_node(nodes,10)
+        self.plot_pickup_dropoff_locations()
         self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
-    
+    def plot_pickup_dropoff_locations(self):
+        """
+        Create a visualization of pickup and dropoff locations using different colors.
+        
+        Parameters:
+        - self: The class instance containing the required attributes
+        """
+        # Create a new figure
+        plt.figure(figsize=(12, 10))
+        
+        # Extract coordinates for pickup nodes
+        pickup_nodes = list(self.pickup_to_dropoff.keys())
+        pickup_lats = [self.coordinates[node][0] for node in pickup_nodes]
+        pickup_longs = [self.coordinates[node][1] for node in pickup_nodes]
+        
+        # Extract coordinates for dropoff nodes
+        dropoff_nodes = list(self.dropoff_to_pickup.keys())
+        dropoff_lats = [self.coordinates[node][0] for node in dropoff_nodes]
+        dropoff_longs = [self.coordinates[node][1] for node in dropoff_nodes]
+        
+        # Plot the points with different colors
+        plt.scatter(pickup_longs, pickup_lats, c='green', marker='o', s=100, 
+                    label='Pickup Nodes', alpha=0.8, edgecolors='darkgreen')
+        plt.scatter(dropoff_longs, dropoff_lats, c='red', marker='s', s=100, 
+                    label='Dropoff Nodes', alpha=0.8, edgecolors='darkred')
+        
+        # Add node labels
+        for node in pickup_nodes:
+            plt.annotate(str(node), (self.coordinates[node][1], self.coordinates[node][0]), 
+                        xytext=(5, 5), textcoords='offset points', fontsize=8)
+            
+        for node in dropoff_nodes:
+            plt.annotate(str(node), (self.coordinates[node][1], self.coordinates[node][0]), 
+                        xytext=(5, 5), textcoords='offset points', fontsize=8)
+        
+        # Add title and labels
+        plt.title('Pickup and Dropoff Locations', fontsize=16)
+        plt.xlabel('Longitude', fontsize=12)
+        plt.ylabel('Latitude', fontsize=12)
+        
+        # Add a legend
+        plt.legend(fontsize=12)
+        
+        # Add grid for better readability
+        plt.grid(True, linestyle='--', alpha=0.7)
+        
+        # Improve layout
+        plt.tight_layout()
+        
+        # Show the plot
+        #plt.savefig('pickup_dropoff_map.png', dpi=300, bbox_inches='tight')
+        plt.show()
+        
+        return plt

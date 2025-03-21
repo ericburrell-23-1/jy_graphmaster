@@ -287,8 +287,9 @@ class Full_Multi_Graph_Object_given_l:
         
         # Step 2
         with TimeProfiler(self.time_profile, "multi_graph:compute_actions_ub"):
+            #compare_ub_methods_all = self.compare_ub_methods_all()
             self.compute_actions_ub()
-
+            #self.compute_actions_ub_2()
         # Step 3
         with TimeProfiler(self.time_profile, "multi_graph:compute_dom_states_by_node"):
             self.compute_dom_states_by_node()
@@ -535,9 +536,9 @@ class Full_Multi_Graph_Object_given_l:
                     self.actions_ub_given_s1s2_2[key].add(a1)
                     self.action_ub_tail_head[a1][state_tail].add(candidate)
                     self.action_ub_head_tail[a1][candidate].add(state_tail)
-        debug_on=True
-        if debug_on==True:
-            self.debug_check_actions_ub()
+        # debug_on=True
+        # if debug_on==True:
+        #     self.debug_check_actions_ub()
         
 
     def debug_check_actions_ub(self):
@@ -997,204 +998,454 @@ class Full_Multi_Graph_Object_given_l:
         for step, duration in sorted(self.time_profile.items(), key=lambda x: x[1], reverse=True):
             print(f"{step}: {duration:.4f} seconds ({duration/sum(self.time_profile.values())*100:.1f}%)")
 
-    def compare_dictionaries(self):
+    def compare_ub_methods_all(self, methods_to_compare=None):
         """
-        Compare if the following dictionary pairs are exactly the same:
-        1. self.BACKUP_actions_ub_given_s1s2_2 vs self.actions_ub_given_s1s2_2
-        2. self.BACKUP_action_ub_tail_head vs self.action_ub_tail_head
-        3. self.BACKUP_action_ub_head_tail vs self.action_ub_head_tail
+        Compares the outputs of multiple ub computation methods
+        to determine if they produce the same dictionaries.
+        
+        Args:
+            methods_to_compare: List of method names to compare. 
+                            Default is ["compute_actions_ub", "compute_actions_ub_2", "compute_actions_ub_fast_not_working"]
         
         Returns:
-            dict: Dictionary with comparison results for each pair
+            dict: Dictionary with comparison results for each dictionary and method pair
         """
+        if methods_to_compare is None:
+            methods_to_compare = [
+                "compute_actions_ub",  # Baseline method
+                "compute_actions_ub_2",
+                "compute_actions_ub_fast_not_working"
+            ]
+        
+        # Store original dictionaries (if they exist)
+        original_actions_ub_given_s1s2_2 = getattr(self, 'actions_ub_given_s1s2_2', None)
+        original_action_ub_tail_head = getattr(self, 'action_ub_tail_head', None)
+        original_action_ub_head_tail = getattr(self, 'action_ub_head_tail', None)
+        
+        # Dictionary to store results from each method
+        method_results = {}
+        
+        # Run each method and store its results
+        for method_name in methods_to_compare:
+            if not hasattr(self, method_name):
+                print(f"Warning: Method {method_name} does not exist in this class. Skipping.")
+                continue
+            
+            # Reset dictionaries
+            self.actions_ub_given_s1s2_2 = defaultdict(set)
+            self.action_ub_tail_head = defaultdict(lambda: defaultdict(set))
+            self.action_ub_head_tail = defaultdict(lambda: defaultdict(set))
+            
+            print(f"Running method: {method_name}...")
+            try:
+                # Get the method and call it
+                method = getattr(self, method_name)
+                method()
+                
+                # Store results
+                method_results[method_name] = {
+                    "actions_ub_given_s1s2_2": self.actions_ub_given_s1s2_2.copy(),
+                    "action_ub_tail_head": self.action_ub_tail_head.copy(),
+                    "action_ub_head_tail": self.action_ub_head_tail.copy()
+                }
+                print(f"Successfully ran {method_name}")
+            except Exception as e:
+                print(f"Error running {method_name}: {str(e)}")
+        
+        # Restore original dictionaries if they existed
+        if original_actions_ub_given_s1s2_2 is not None:
+            self.actions_ub_given_s1s2_2 = original_actions_ub_given_s1s2_2
+        if original_action_ub_tail_head is not None:
+            self.action_ub_tail_head = original_action_ub_tail_head
+        if original_action_ub_head_tail is not None:
+            self.action_ub_head_tail = original_action_ub_head_tail
+        
+        # Skip comparison if fewer than 2 methods succeeded
+        if len(method_results) < 2:
+            print("Not enough methods ran successfully for comparison.")
+            return {}
+        
+        # Compare all methods against the baseline method (first one in the list)
+        baseline_method = methods_to_compare[0]
+        if baseline_method not in method_results:
+            # If baseline failed, use the first successful method as baseline
+            baseline_method = list(method_results.keys())[0]
+            print(f"Baseline method {methods_to_compare[0]} failed, using {baseline_method} as baseline instead")
+        
+        comparison_results = {}
+        for method_name in methods_to_compare:
+            if method_name == baseline_method or method_name not in method_results:
+                if method_name not in method_results and method_name != baseline_method:
+                    print(f"Skipping comparison with {method_name} as it did not execute successfully")
+                continue
+            
+            print(f"\nComparing {baseline_method} (baseline) vs {method_name}...")
+            comparison = self._compare_method_results(
+                baseline_method, method_results[baseline_method],
+                method_name, method_results[method_name]
+            )
+            comparison_results[f"{baseline_method}_vs_{method_name}"] = comparison
+        
+        return comparison_results
+
+    def _compare_method_results(self, method1_name, method1_results, method2_name, method2_results):
+        """
+        Helper method to compare the results of two methods.
+        
+        Args:
+            method1_name: Name of the first method
+            method1_results: Dictionary with results from the first method
+            method2_name: Name of the second method
+            method2_results: Dictionary with results from the second method
+        
+        Returns:
+            dict: Dictionary with comparison results for each dictionary
+        """
+        def state_summary(state):
+            """Create a readable summary of a State object"""
+            return f"State(node={state.node}, id={state.state_id[:8]}..., src={state.is_source}, sink={state.is_sink})"
+
+        def action_summary(action):
+            """Create a readable summary of an Action object"""
+            return f"Action(id={action.action_id[:8]}..., tail={action.node_tail}, head={action.node_head})"
+        
+        def summarize_diff(item_type, items, max_display=3):
+            """Create a readable summary of a difference"""
+            if not items:
+                return "None"
+            
+            result = []
+            for i, item in enumerate(items):
+                if i >= max_display:
+                    result.append(f"... and {len(items) - max_display} more")
+                    break
+                    
+                if item_type == "state":
+                    result.append(state_summary(item))
+                elif item_type == "action":
+                    result.append(action_summary(item))
+                elif item_type == "state_pair":
+                    result.append(f"({state_summary(item[0])}, {state_summary(item[1])})")
+                else:
+                    result.append(str(item))
+                    
+            return ", ".join(result)
+        
+        # Initialize summary counts for each dictionary
+        total_state_pairs = {}
+        total_actions = {}
+        total_tail_states = {}
+        total_head_states = {}
+        
+        # Detailed comparison results
         results = {
             "actions_ub_given_s1s2_2": {
                 "equal": True,
-                "differences": []
+                "differences": [],
+                "summary": {}
             },
             "action_ub_tail_head": {
                 "equal": True,
-                "differences": []
+                "differences": [],
+                "summary": {}
             },
             "action_ub_head_tail": {
                 "equal": True,
-                "differences": []
+                "differences": [],
+                "summary": {}
             }
         }
         
-        # Compare self.BACKUP_actions_ub_given_s1s2_2 vs self.actions_ub_given_s1s2_2
-        # Keys are state pairs (s1, s2) and values are lists of actions
-        backup_keys = set(self.BACKUP_actions_ub_given_s1s2_2.keys())
-        current_keys = set(self.actions_ub_given_s1s2_2.keys())
+        # 1. Compare actions_ub_given_s1s2_2
+        m1_results = method1_results["actions_ub_given_s1s2_2"]
+        m2_results = method2_results["actions_ub_given_s1s2_2"]
         
-        # Check if any keys are missing in either dictionary
-        if backup_keys != current_keys:
+        m1_keys = set(m1_results.keys())
+        m2_keys = set(m2_results.keys())
+        
+        # Track summary statistics
+        total_state_pairs[method1_name] = len(m1_keys)
+        total_state_pairs[method2_name] = len(m2_keys)
+        
+        common_keys = m1_keys.intersection(m2_keys)
+        missing_in_m1 = m2_keys - m1_keys
+        missing_in_m2 = m1_keys - m2_keys
+        
+        # Store summary statistics
+        results["actions_ub_given_s1s2_2"]["summary"] = {
+            "total_state_pairs": {
+                method1_name: len(m1_keys),
+                method2_name: len(m2_keys)
+            },
+            "common_state_pairs": len(common_keys),
+            "state_pairs_only_in_" + method1_name: len(missing_in_m2),
+            "state_pairs_only_in_" + method2_name: len(missing_in_m1)
+        }
+        
+        if m1_keys != m2_keys:
             results["actions_ub_given_s1s2_2"]["equal"] = False
-            missing_in_backup = current_keys - backup_keys
-            missing_in_current = backup_keys - current_keys
             
-            if missing_in_backup:
-                message = f"Keys missing in BACKUP"
+            if missing_in_m1:
+                message = f"State pairs in {method2_name} but missing in {method1_name}: {len(missing_in_m1)}"
+                if len(missing_in_m1) <= 10:
+                    message += f" - {summarize_diff('state_pair', missing_in_m1)}"
                 results["actions_ub_given_s1s2_2"]["differences"].append(message)
-                input(f"Error detected: {message}")
+                print(f"Difference detected: {message}")
             
-            if missing_in_current:
-                message = f"Keys missing in current"
+            if missing_in_m2:
+                message = f"State pairs in {method1_name} but missing in {method2_name}: {len(missing_in_m2)}"
+                if len(missing_in_m2) <= 10:
+                    message += f" - {summarize_diff('state_pair', missing_in_m2)}"
                 results["actions_ub_given_s1s2_2"]["differences"].append(message)
-                input(f"Error detected: {message}")
+                print(f"Difference detected: {message}")
         
-                # Check if values (action sets) match for all keys that exist in both
-        common_keys = backup_keys.intersection(current_keys)
+        # Track action differences for common keys
+        action_diff_count = 0
+        
+        # Check values for common keys
         for key in common_keys:
-            backup_actions = self.BACKUP_actions_ub_given_s1s2_2[key]
-            current_actions = self.actions_ub_given_s1s2_2[key]
+            m1_actions = m1_results[key]
+            m2_actions = m2_results[key]
             
-            # The values should already be sets, so direct comparison should work
-            backup_actions_set = backup_actions
-            current_actions_set = current_actions
-            
-            if backup_actions_set != current_actions_set:
+            if m1_actions != m2_actions:
                 results["actions_ub_given_s1s2_2"]["equal"] = False
-                extra_in_backup = backup_actions_set - current_actions_set
-                extra_in_current = current_actions_set - backup_actions_set
+                extra_in_m1 = m1_actions - m2_actions
+                extra_in_m2 = m2_actions - m1_actions
+                action_diff_count += 1
                 
-                if extra_in_backup:
-                    message = f"For key {key}: Actions in BACKUP but not in current: {len(extra_in_backup)}"
+                if extra_in_m1:
+                    message = f"For state pair ({state_summary(key[0])}, {state_summary(key[1])}): {len(extra_in_m1)} actions in {method1_name} but not in {method2_name}"
+                    if len(extra_in_m1) <= 5:
+                        message += f" - {summarize_diff('action', extra_in_m1)}"
                     results["actions_ub_given_s1s2_2"]["differences"].append(message)
-                    input(f"Error detected: {message}")
+                    print(f"Difference detected: {message}")
                 
-                if extra_in_current:
-                    message = f"For key {key}: Actions in current but not in BACKUP: {len(extra_in_current)}"
+                if extra_in_m2:
+                    message = f"For state pair ({state_summary(key[0])}, {state_summary(key[1])}): {len(extra_in_m2)} actions in {method2_name} but not in {method1_name}"
+                    if len(extra_in_m2) <= 5:
+                        message += f" - {summarize_diff('action', extra_in_m2)}"
                     results["actions_ub_given_s1s2_2"]["differences"].append(message)
-                    input(f"Error detected: {message}")
+                    print(f"Difference detected: {message}")
         
-        # Compare self.BACKUP_action_ub_tail_head vs self.action_ub_tail_head
-        # Keys are actions, second-level keys are tail states, values are sets of head states
-        backup_actions = set(self.BACKUP_action_ub_tail_head.keys())
-        current_actions = set(self.action_ub_tail_head.keys())
+        # Add summary of action differences
+        results["actions_ub_given_s1s2_2"]["summary"]["state_pairs_with_different_actions"] = action_diff_count
         
-        if backup_actions != current_actions:
+        # 2. Compare action_ub_tail_head
+        m1_results = method1_results["action_ub_tail_head"]
+        m2_results = method2_results["action_ub_tail_head"]
+        
+        m1_actions = set(m1_results.keys())
+        m2_actions = set(m2_results.keys())
+        
+        # Track summary statistics
+        total_actions[method1_name] = len(m1_actions)
+        total_actions[method2_name] = len(m2_actions)
+        
+        common_actions = m1_actions.intersection(m2_actions)
+        missing_in_m1 = m2_actions - m1_actions
+        missing_in_m2 = m1_actions - m2_actions
+        
+        # Store summary statistics
+        results["action_ub_tail_head"]["summary"] = {
+            "total_actions": {
+                method1_name: len(m1_actions),
+                method2_name: len(m2_actions)
+            },
+            "common_actions": len(common_actions),
+            "actions_only_in_" + method1_name: len(missing_in_m2),
+            "actions_only_in_" + method2_name: len(missing_in_m1)
+        }
+        
+        if m1_actions != m2_actions:
             results["action_ub_tail_head"]["equal"] = False
-            missing_in_backup = current_actions - backup_actions
-            missing_in_current = backup_actions - current_actions
             
-            if missing_in_backup:
-                message = f"Actions missing in BACKUP"
+            if missing_in_m1:
+                message = f"Actions in {method2_name} but missing in {method1_name}: {len(missing_in_m1)}"
+                if len(missing_in_m1) <= 5:
+                    message += f" - {summarize_diff('action', missing_in_m1)}"
                 results["action_ub_tail_head"]["differences"].append(message)
-                print('current_actions')
-                for my_act in current_actions:
-                    my_act.pretty_print_action() 
-                print('backup_actions')
-                for my_act in backup_actions:
-                    my_act.pretty_print_action() 
-
-                input(f"Error detected: {message}")
+                print(f"Difference detected: {message}")
             
-            if missing_in_current:
-                message = f"Actions missing in current"
+            if missing_in_m2:
+                message = f"Actions in {method1_name} but missing in {method2_name}: {len(missing_in_m2)}"
+                if len(missing_in_m2) <= 5:
+                    message += f" - {summarize_diff('action', missing_in_m2)}"
                 results["action_ub_tail_head"]["differences"].append(message)
-                input(f"Error detected: {message}")
+                print(f"Difference detected: {message}")
         
-        # For actions in both, compare tail states and corresponding head states
-        common_actions = backup_actions.intersection(current_actions)
+        # Track tail state differences
+        tail_diff_count = 0
+        head_diff_count = 0
+        
+        # Compare tail states for common actions
         for action in common_actions:
-            backup_tails = set(self.BACKUP_action_ub_tail_head[action].keys())
-            current_tails = set(self.action_ub_tail_head[action].keys())
+            m1_tails = set(m1_results[action].keys())
+            m2_tails = set(m2_results[action].keys())
             
-            if backup_tails != current_tails:
+            # Track summary statistics
+            if action not in total_tail_states:
+                total_tail_states[action] = {}
+            total_tail_states[action][method1_name] = len(m1_tails)
+            total_tail_states[action][method2_name] = len(m2_tails)
+            
+            if m1_tails != m2_tails:
                 results["action_ub_tail_head"]["equal"] = False
-                missing_tails_in_backup = current_tails - backup_tails
-                missing_tails_in_current = backup_tails - current_tails
+                missing_tails_in_m1 = m2_tails - m1_tails
+                missing_tails_in_m2 = m1_tails - m2_tails
+                tail_diff_count += 1
                 
-                if missing_tails_in_backup:
-                    message = f"For action {action.action_id}: Tail states missing in BACKUP: {len(missing_tails_in_backup)}"
+                if missing_tails_in_m1:
+                    message = f"For action {action_summary(action)}: {len(missing_tails_in_m1)} tail states in {method2_name} but missing in {method1_name}"
+                    if len(missing_tails_in_m1) <= 5:
+                        message += f" - {summarize_diff('state', missing_tails_in_m1)}"
                     results["action_ub_tail_head"]["differences"].append(message)
-                    input(f"Error detected: {message}")
+                    print(f"Difference detected: {message}")
                 
-                if missing_tails_in_current:
-                    message = f"For action {action.action_id}: Tail states missing in current: {len(missing_tails_in_current)}"
+                if missing_tails_in_m2:
+                    message = f"For action {action_summary(action)}: {len(missing_tails_in_m2)} tail states in {method1_name} but missing in {method2_name}"
+                    if len(missing_tails_in_m2) <= 5:
+                        message += f" - {summarize_diff('state', missing_tails_in_m2)}"
                     results["action_ub_tail_head"]["differences"].append(message)
-                    input(f"Error detected: {message}")
+                    print(f"Difference detected: {message}")
             
-            # For tail states in both dictionaries, compare the head states
-            common_tails = backup_tails.intersection(current_tails)
+            # Compare head states for each common tail state
+            common_tails = m1_tails.intersection(m2_tails)
             for tail in common_tails:
-                backup_heads = set(self.BACKUP_action_ub_tail_head[action][tail])
-                current_heads = set(self.action_ub_tail_head[action][tail])
+                m1_heads = m1_results[action][tail]
+                m2_heads = m2_results[action][tail]
                 
-                if backup_heads != current_heads:
+                if m1_heads != m2_heads:
                     results["action_ub_tail_head"]["equal"] = False
-                    missing_heads_in_backup = current_heads - backup_heads
-                    missing_heads_in_current = backup_heads - current_heads
+                    missing_heads_in_m1 = m2_heads - m1_heads
+                    missing_heads_in_m2 = m1_heads - m2_heads
+                    head_diff_count += 1
                     
-                    if missing_heads_in_backup:
-                        message = f"For action {action.action_id}, tail {tail.state_id}: Head states missing in BACKUP: {len(missing_heads_in_backup)}"
+                    if missing_heads_in_m1:
+                        message = f"For action {action_summary(action)}, tail {state_summary(tail)}: {len(missing_heads_in_m1)} head states in {method2_name} but missing in {method1_name}"
+                        if len(missing_heads_in_m1) <= 3:
+                            message += f" - {summarize_diff('state', missing_heads_in_m1)}"
                         results["action_ub_tail_head"]["differences"].append(message)
-                        input(f"Error detected: {message}")
+                        print(f"Difference detected: {message}")
                     
-                    if missing_heads_in_current:
-                        message = f"For action {action.action_id}, tail {tail.state_id}: Head states missing in current: {len(missing_heads_in_current)}"
+                    if missing_heads_in_m2:
+                        message = f"For action {action_summary(action)}, tail {state_summary(tail)}: {len(missing_heads_in_m2)} head states in {method1_name} but missing in {method2_name}"
+                        if len(missing_heads_in_m2) <= 3:
+                            message += f" - {summarize_diff('state', missing_heads_in_m2)}"
                         results["action_ub_tail_head"]["differences"].append(message)
-                        input(f"Error detected: {message}")
+                        print(f"Difference detected: {message}")
         
-        # Compare self.BACKUP_action_ub_head_tail vs self.action_ub_head_tail
-        # Keys are actions, second-level keys are head states, values are sets of tail states
-        backup_actions = set(self.BACKUP_action_ub_head_tail.keys())
-        current_actions = set(self.action_ub_head_tail.keys())
+        # Add summary of tail and head differences
+        results["action_ub_tail_head"]["summary"]["actions_with_different_tail_states"] = tail_diff_count
+        results["action_ub_tail_head"]["summary"]["tail_states_with_different_head_states"] = head_diff_count
         
-        if backup_actions != current_actions:
+        # 3. Compare action_ub_head_tail (similar to action_ub_tail_head but with head/tail swapped)
+        m1_results = method1_results["action_ub_head_tail"]
+        m2_results = method2_results["action_ub_head_tail"]
+        
+        m1_actions = set(m1_results.keys())
+        m2_actions = set(m2_results.keys())
+        
+        common_actions = m1_actions.intersection(m2_actions)
+        missing_in_m1 = m2_actions - m1_actions
+        missing_in_m2 = m1_actions - m2_actions
+        
+        # Store summary statistics
+        results["action_ub_head_tail"]["summary"] = {
+            "total_actions": {
+                method1_name: len(m1_actions),
+                method2_name: len(m2_actions)
+            },
+            "common_actions": len(common_actions),
+            "actions_only_in_" + method1_name: len(missing_in_m2),
+            "actions_only_in_" + method2_name: len(missing_in_m1)
+        }
+        
+        if m1_actions != m2_actions:
             results["action_ub_head_tail"]["equal"] = False
-            missing_in_backup = current_actions - backup_actions
-            missing_in_current = backup_actions - current_actions
-            
-            if missing_in_backup:
-                message = f"Actions missing in BACKUP: {missing_in_backup}"
-                results["action_ub_head_tail"]["differences"].append(message)
-                input(f"Error detected: {message}")
-            
-            if missing_in_current:
-                message = f"Actions missing in current: {missing_in_current}"
-                results["action_ub_head_tail"]["differences"].append(message)
-                input(f"Error detected: {message}")
+            # We don't need to log these differences again as they should be the same as for action_ub_tail_head
         
-        # For actions in both, compare head states and corresponding tail states
-        common_actions = backup_actions.intersection(current_actions)
+        # Track head state differences
+        head_diff_count = 0
+        tail_diff_count = 0
+        
+        # Compare head states for common actions
         for action in common_actions:
-            backup_heads = set(self.BACKUP_action_ub_head_tail[action].keys())
-            current_heads = set(self.action_ub_head_tail[action].keys())
+            m1_heads = set(m1_results[action].keys())
+            m2_heads = set(m2_results[action].keys())
             
-            if backup_heads != current_heads:
+            # Track summary statistics
+            if action not in total_head_states:
+                total_head_states[action] = {}
+            total_head_states[action][method1_name] = len(m1_heads)
+            total_head_states[action][method2_name] = len(m2_heads)
+            
+            if m1_heads != m2_heads:
                 results["action_ub_head_tail"]["equal"] = False
-                missing_heads_in_backup = current_heads - backup_heads
-                missing_heads_in_current = backup_heads - current_heads
+                missing_heads_in_m1 = m2_heads - m1_heads
+                missing_heads_in_m2 = m1_heads - m2_heads
+                head_diff_count += 1
                 
-                if missing_heads_in_backup:
-                    message = f"For action {action.action_id}: Head states missing in BACKUP: {len(missing_heads_in_backup)}"
+                if missing_heads_in_m1:
+                    message = f"For action {action_summary(action)}: {len(missing_heads_in_m1)} head states in {method2_name} but missing in {method1_name}"
+                    if len(missing_heads_in_m1) <= 5:
+                        message += f" - {summarize_diff('state', missing_heads_in_m1)}"
                     results["action_ub_head_tail"]["differences"].append(message)
-                    input(f"Error detected: {message}")
+                    print(f"Difference detected: {message}")
                 
-                if missing_heads_in_current:
-                    message = f"For action {action.action_id}: Head states missing in current: {len(missing_heads_in_current)}"
+                if missing_heads_in_m2:
+                    message = f"For action {action_summary(action)}: {len(missing_heads_in_m2)} head states in {method1_name} but missing in {method2_name}"
+                    if len(missing_heads_in_m2) <= 5:
+                        message += f" - {summarize_diff('state', missing_heads_in_m2)}"
                     results["action_ub_head_tail"]["differences"].append(message)
-                    input(f"Error detected: {message}")
+                    print(f"Difference detected: {message}")
             
-            # For head states in both dictionaries, compare the tail states
-            common_heads = backup_heads.intersection(current_heads)
+            # Compare tail states for each common head state
+            common_heads = m1_heads.intersection(m2_heads)
             for head in common_heads:
-                backup_tails = set(self.BACKUP_action_ub_head_tail[action][head])
-                current_tails = set(self.action_ub_head_tail[action][head])
+                m1_tails = m1_results[action][head]
+                m2_tails = m2_results[action][head]
                 
-                if backup_tails != current_tails:
+                if m1_tails != m2_tails:
                     results["action_ub_head_tail"]["equal"] = False
-                    missing_tails_in_backup = current_tails - backup_tails
-                    missing_tails_in_current = backup_tails - current_tails
+                    missing_tails_in_m1 = m2_tails - m1_tails
+                    missing_tails_in_m2 = m1_tails - m2_tails
+                    tail_diff_count += 1
                     
-                    if missing_tails_in_backup:
-                        message = f"For action {action.action_id}, head {head.state_id}: Tail states missing in BACKUP: {len(missing_tails_in_backup)}"
+                    if missing_tails_in_m1:
+                        message = f"For action {action_summary(action)}, head {state_summary(head)}: {len(missing_tails_in_m1)} tail states in {method2_name} but missing in {method1_name}"
+                        if len(missing_tails_in_m1) <= 3:
+                            message += f" - {summarize_diff('state', missing_tails_in_m1)}"
                         results["action_ub_head_tail"]["differences"].append(message)
-                        input(f"Error detected: {message}")
+                        print(f"Difference detected: {message}")
                     
-                    if missing_tails_in_current:
-                        message = f"For action {action.action_id}, head {head.state_id}: Tail states missing in current: {len(missing_tails_in_current)}"
+                    if missing_tails_in_m2:
+                        message = f"For action {action_summary(action)}, head {state_summary(head)}: {len(missing_tails_in_m2)} tail states in {method1_name} but missing in {method2_name}"
+                        if len(missing_tails_in_m2) <= 3:
+                            message += f" - {summarize_diff('state', missing_tails_in_m2)}"
                         results["action_ub_head_tail"]["differences"].append(message)
-                        input(f"Error detected: {message}")
+                        print(f"Difference detected: {message}")
+        
+        # Add summary of head and tail differences
+        results["action_ub_head_tail"]["summary"]["actions_with_different_head_states"] = head_diff_count
+        results["action_ub_head_tail"]["summary"]["head_states_with_different_tail_states"] = tail_diff_count
+        
+        # Generate summary
+        all_equal = all(results[key]["equal"] for key in results)
+        
+        print("\n===== Comparison Summary =====")
+        print(f"Comparing {method1_name} vs {method2_name}")
+        print(f"All dictionaries equal: {all_equal}")
+        for dict_name, result in results.items():
+            print(f"\n{dict_name}: {'Equal' if result['equal'] else 'Not Equal'}")
+            if not result['equal']:
+                print(f"  Summary of differences:")
+                for key, value in result["summary"].items():
+                    print(f"    {key}: {value}")
+                
+                print(f"  Found {len(result['differences'])} detailed differences")
+                for i, diff in enumerate(result['differences'][:5], 1):  # Show at most 5 differences
+                    print(f"    {i}. {diff}")
+                if len(result['differences']) > 5:
+                    print(f"    ... and {len(result['differences']) - 5} more differences")
+        
+        return results

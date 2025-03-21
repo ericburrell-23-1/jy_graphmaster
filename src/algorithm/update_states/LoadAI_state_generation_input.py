@@ -177,11 +177,23 @@ class LoadAI_state_input():
             reasonable_action.update(self.actions[(v,-2)])
             reasonable_action_dict[(v,-2)] = self.actions[(v,-2)]
         # action from pickup to dropoff
-        for pickup_node,dropoff_node in self.pickup_to_dropoff.items():
+        for pickup_node in self.pickup_node:
 
-            this_action = self.actions[(pickup_node,dropoff_node)]
-            reasonable_action.update(this_action)
-            reasonable_action_dict[(pickup_node,dropoff_node)] = this_action
+            for dropoff_node in self.dropoff_node:
+                if (pickup_node,dropoff_node) in self.actions.keys():
+
+                    this_action = self.actions[(pickup_node,dropoff_node)]
+                    reasonable_action.update(this_action)
+                    reasonable_action_dict[(pickup_node,dropoff_node)] = this_action
+        # action from dropoff to dropoff
+        for dropoff_node_1 in self.dropoff_node:
+            for dropoff_node_2 in self.dropoff_node:
+                if (dropoff_node_1,dropoff_node_2) in self.actions.keys() and dropoff_node_1 != dropoff_node_2:
+
+                    this_action = self.actions[(dropoff_node_1,dropoff_node_2)]
+                    reasonable_action.update(this_action)
+                    reasonable_action_dict[(dropoff_node_1,dropoff_node_2)] = this_action
+
         # action from dropoff to nearby pickup if it is neighbor
         for u in self.dropoff_node:
             for v in set(self.neighbors[u]) & self.pickup_node:
@@ -192,18 +204,41 @@ class LoadAI_state_input():
         #    for node in self.neighbors[drop_off_node]:
         #        if node in self.pickup_to_dropoff.keys():
         #            reasonable_action.update(self.actions[pickup_node,dropoff_node])
+
         for u in self.pickup_node:
             for v in self.pickup_node:
                 if u!=v:
                     """calculate cost_uvuv"""
-                    cost_uvuv = self.travel_time[(u,v)] + \
-                        self.travel_time[(v,self.pickup_to_dropoff[u])]+ self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
-                    
+                    cost_uvuv = self.actions[(u,v)][0].cost + \
+                        self.actions[(v,self.pickup_to_dropoff[u])][0].cost+ self.actions[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])][0].cost
+                    route = [-1,u,v,self.pickup_to_dropoff[u],self.pickup_to_dropoff[v],-2]
+                    s = State(-1,self.initial_resource_vector,0,True,False)
+                    for n1,n2 in zip(route[:-1],route[1:]):
+                        a = self.actions[(n1,n2)][0]
+                        new_s = a.get_head_state(s,1)
+                        if new_s == None:
+                            cost_uvuv = np.inf
+                            break
+                        s = new_s
+                        
                     """calculate cost_uuvv"""
- 
-                    cost_uuvv = self.travel_time[(u,self.pickup_to_dropoff[u])] + \
-                        self.travel_time[(self.pickup_to_dropoff[u],v)] + self.travel_time[(v,self.pickup_to_dropoff[v])]
-                    if cost_uvuv < cost_uuvv:
+
+                    cost_uuvv = self.actions[(u,self.pickup_to_dropoff[u])][0].cost + \
+                        self.actions[(self.pickup_to_dropoff[u],v)][0].cost + self.actions[(v,self.pickup_to_dropoff[v])][0].cost
+                    route = [-1,u,self.pickup_to_dropoff[u],v,self.pickup_to_dropoff[v],-2]
+
+                    s = State(-1,self.initial_resource_vector,0,True,False)
+                    for n1,n2 in zip(route[:-1],route[1:]):
+                        a = self.actions[(n1,n2)][0]
+                        new_s = a.get_head_state(s,1)
+                        if new_s == None:
+                            cost_uuvv = np.inf
+                            break
+                        s = new_s
+
+                    min_of_two_cost = min(cost_uvuv,cost_uuvv)
+                    cost_uu_vv = self.actions[(u,self.pickup_to_dropoff[u])][0].cost + self.actions[(v,self.pickup_to_dropoff[v])][0].cost
+                    if min_of_two_cost < cost_uu_vv:
                         reasonable_action.update(self.actions[(u,v)])
                         reasonable_action_dict[(u,v)] = self.actions[(u,v)]
         #print('return reasonable action')
