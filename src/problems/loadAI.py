@@ -642,6 +642,6 @@ class loadAI(OptimizationProblem):
         
         # Show the plot
         #plt.savefig('pickup_dropoff_map.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        #plt.show()
         
         return plt

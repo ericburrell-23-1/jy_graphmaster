@@ -71,7 +71,7 @@ class jy_make_load_ai_states:
         self.node_min_term_vec = shawn_LoadAI_state_input.node_min_vec_dict
         self.MaxDepth=2+self.jy_options['max_pickups_in_a_route']#S.max_depth
         self.option_do_min_term=True
-        self.use_all_actions=True
+        self.use_all_actions=False
         self.set_depth_used_by_action()
         self.update_action_subset_given_col()
         self.updeate_action_from_nodes_subset()
@@ -178,22 +178,6 @@ class jy_make_load_ai_states:
                 my_action_list_given_perm.append(my_action)
             if is_good_perm==True:
                 my_dedug_completion=debug_completion(candid_state,orig_depth,list_depths,list_states,my_action_list_given_perm,True)
-                #self.state_2_completion[candid_state]=my_dedug_completion
-                #print('my_action_list_given_perm')
-                #print(my_action_list_given_perm)
-                #print('list_states')
-                #print(list_states)
-                #print('my_dedug_completion.next_action')
-                #print(my_dedug_completion.next_action)
-                #print('my_dedug_completion.next_state')
-                #print(my_dedug_completion.next_state)
-                #print('my_perm')
-                #print(my_perm)
-                #print('my_dedug_completion.is_sink')
-                #print(my_dedug_completion.is_sink)
-                #print('my_dedug_completion.is_feas')
-                #print(my_dedug_completion.is_feas)
-                #input('-- checking -')
                 found_good_perm=True
                 break
         if found_good_perm==False:
@@ -630,10 +614,10 @@ class jy_make_load_ai_states:
             for my_act in actions_use:
                 
                 [did_make_new_state,my_head,my_new_depth,my_completion,term_not_added_do_2_presence]=self.expand_state_given_action_ez(s,my_act)
-                if debug_on==True and did_make_new_state==True:
+                #if debug_on==True and did_make_new_state==True:
                     #print('checkign for me')
                     #my_head.pretty_print_state()
-                    self.DEBUG_verify_all_states_copletion(my_completion)
+                #    self.DEBUG_verify_all_states_copletion(my_completion)
                 
                 if my_new_depth!=None and my_new_depth<-0.5:
                     input('ok in teh current formulation this does not make sense to occur')
