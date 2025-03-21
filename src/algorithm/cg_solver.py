@@ -287,11 +287,7 @@ class GraphMaster_cg:
                                         state_action_list.append(list_of_actions_used_in_col[idx])
                                     state_action_list.append(state_in_ordered[-1])
                                     this_route = Route(state_action_list,1)
-                                    list_of_action_list.append(this_route)
-
-                                    nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
-                                    for idx in nonzero_indices:
-                                        this_dual[idx] =0
+                                    list_of_routes.append(this_route)
                                     if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
                                         print('path')
                                         print(list_of_nodes_in_shortest_path)
@@ -300,6 +296,10 @@ class GraphMaster_cg:
                                         input('this path added before')
                                     else:
                                         path_added.add(tuple(list_of_nodes_in_shortest_path))
+                                    nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
+                                    for idx in nonzero_indices:
+                                        this_dual[idx] =0
+                                    
                             else:
                                 this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
