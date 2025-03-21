@@ -99,7 +99,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
         self.jy_options_user_defined['max_pickups_in_a_route']=3
         self.jy_options_user_defined['use_cg'] = True
-        self.jy_options_user_defined['complementary_col'] = 0
+        self.jy_options_user_defined['complementary_col'] = 5
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -276,6 +276,7 @@ class GraphMaster_cg:
                             #jy_max_actions_in_route=100
                             #jy_pricing_on=True
                             if self.jy_options_user_defined['complementary_col'] >0.5:
+                                this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
                                 for i in range(self.jy_options_user_defined['complementary_col']):
                                     jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                                     [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
@@ -291,7 +292,16 @@ class GraphMaster_cg:
                                     nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
                                     for idx in nonzero_indices:
                                         this_dual[idx] =0
+                                    if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
+                                        print('path')
+                                        print(list_of_nodes_in_shortest_path)
+                                        print('reduce cost')
+                                        print(reduced_cost)
+                                        input('this path added before')
+                                    else:
+                                        path_added.add(tuple(list_of_nodes_in_shortest_path))
                             else:
+                                this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                                 [list_of_nodes_in_shortest_path, list_of_actions_used_in_col,state_in_ordered, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
@@ -302,15 +312,15 @@ class GraphMaster_cg:
                                 state_action_list.append(state_in_ordered[-1])
                                 this_route = Route(state_action_list,1)
                                 list_of_routes.append(this_route)
-                    if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
-                        
-                        print('path')
-                        print(list_of_nodes_in_shortest_path)
-                        print('reduce cost')
-                        print(reduced_cost)
-                        input('this path added before')
-                    else:
-                        path_added.add(tuple(list_of_nodes_in_shortest_path))
+                                if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
+                                    
+                                    print('path')
+                                    print(list_of_nodes_in_shortest_path)
+                                    print('reduce cost')
+                                    print(reduced_cost)
+                                    input('this path added before')
+                                else:
+                                    path_added.add(tuple(list_of_nodes_in_shortest_path))
                     #input('check here')
                     if reduced_cost >= -1e-3:
                         for index, graph in self.index_to_multi_graph.items():
