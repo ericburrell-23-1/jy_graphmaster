@@ -7,6 +7,7 @@ from src.algorithm.update_states.state_update_function import StateUpdateFunctio
 from src.common.full_multi_graph_object_given_l import Full_Multi_Graph_Object_given_l
 from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
+from src.common.pgm_approach import Route
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
 from src.algorithm.gwo_pricing_solver_LoadAI import GWOPricingSolverLoadAI
@@ -20,7 +21,7 @@ import time
 import random
 from src.common.time_profile import TimeProfiler
 from src.algorithm.cg_rmp import CG_RMP
-class GraphMaster:
+class GraphMaster_cg:
     """
     Entry point to the GraphMaster solver. Takes problem model and initial feasible solution from problem-specific module, and creates the general GraphMaster problem.
     This module will handle the main algorithm, and will make calls to the pricing problem and the restricted master problem. It will also make calls to state update function.
@@ -98,7 +99,7 @@ class GraphMaster:
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
         self.jy_options_user_defined['max_pickups_in_a_route']=3
         self.jy_options_user_defined['use_cg'] = True
-        self.jy_options_user_defined['complementary_col'] = 5
+        self.jy_options_user_defined['complementary_col'] = 0
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -213,32 +214,40 @@ class GraphMaster:
             
             cg_iteration_time =1
             path_added = set()
-            if self.jy_options_user_defined['use_cg'] == True:
-                actions_from_minus1 = {}  # Actions starting at node -1
-                actions_to_minus2 = {}  
-                list_of_action_list = []
-                for action in self.res_actions_minus:
-                    if action.node_tail == -1:
-                        # Store actions starting from -1 indexed by their destination
-                        actions_from_minus1[action.node_head] = action
-                    if action.node_head == -2:
-                        # Store actions ending at -2 indexed by their origin
-                        actions_to_minus2[action.node_tail] = action
-                
-                # Find intermediate nodes that appear in both dictionaries
-                common_nodes = set(actions_from_minus1.keys()).intersection(set(actions_to_minus2.keys()))
-
-                for node in common_nodes:
-                    first_action = actions_from_minus1[node]
-                    second_action = actions_to_minus2[node]
-                    list_of_action_list.append([first_action, second_action])
+            actions_from_minus1 = {}  # Actions starting at node -1
+            actions_to_minus2 = {}  
+            list_of_action_list = []
+            for action in self.res_actions_minus:
+                if action.node_tail == -1:
+                    # Store actions starting from -1 indexed by their destination
+                    actions_from_minus1[action.node_head] = action
+                if action.node_head == -2:
+                    # Store actions ending at -2 indexed by their origin
+                    actions_to_minus2[action.node_tail] = action
+            
+            # Find intermediate nodes that appear in both dictionaries
+            common_nodes = set(actions_from_minus1.keys()).intersection(set(actions_to_minus2.keys()))
+            list_of_routes = []
+            for node in common_nodes:
+                source_state = State(-1,self.initial_resource_vector,l_id,True,False)
+                state_action = [source_state]
+                first_action = actions_from_minus1[node]
+                state_action.append(first_action)
+                this_state = first_action.get_head_state(source_state,source_state.l_id)
+                state_action.append(this_state)
+                second_action = actions_to_minus2[node]
+                state_action.append(second_action)
+                this_state = second_action.get_head_state(this_state,source_state.l_id)
+                state_action.append(this_state)
+                route = Route(state_action,1)
+                list_of_routes.append(route)
 
             with TimeProfiler(all_time_profile, "solve:iteration"):
                 while iteration < max_iterations:
                     time_profile = defaultdict(int)
                     #parameter for PGM
 
-                    cg_solver = CG_RMP(list_of_action_list,self.rhs_exog_vec)
+                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec)
                     sol = cg_solver.solve()
                     this_dual = sol['dual_values']
                 
@@ -262,24 +271,37 @@ class GraphMaster:
                             [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost] = self.gwo_pricing_solver_loadAI.call_gwo_pricing(this_dual)
                         else:
                             print('starting jy pricing ')
-                            jy_init_res_state=self.index_to_multi_graph[0].source_state
+                            #jy_init_res_state=self.index_to_multi_graph[0].source_state
+                            jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
                             #jy_max_actions_in_route=100
                             #jy_pricing_on=True
                             if self.jy_options_user_defined['complementary_col'] >0.5:
                                 for i in range(self.jy_options_user_defined['complementary_col']):
                                     jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
-                                    [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
+                                    [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                     print('done jy pricing ')
-                                    list_of_action_list.append(list_of_actions_used_in_col)
-                                    for a in list_of_actions_used_in_col:
-                                        nonzero_indices = np.nonzero(a.Exog_vec)[0]
-                                        for idx in nonzero_indices:
-                                            this_dual[idx] =0
+                                    state_action_list =[]
+                                    for idx in range(len(list_of_actions_used_in_col)):
+                                        state_action_list.append(state_in_ordered[idx])
+                                        state_action_list.append(list_of_actions_used_in_col[idx])
+                                    state_action_list.append(state_in_ordered[-1])
+                                    this_route = Route(state_action_list,1)
+                                    list_of_action_list.append(this_route)
+
+                                    nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
+                                    for idx in nonzero_indices:
+                                        this_dual[idx] =0
                             else:
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
-                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
+                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col,state_in_ordered, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                 print('done jy pricing ')
-                                list_of_action_list.append(list_of_actions_used_in_col)
+                                state_action_list =[]
+                                for idx in range(len(list_of_actions_used_in_col)):
+                                    state_action_list.append(state_in_ordered[idx])
+                                    state_action_list.append(list_of_actions_used_in_col[idx])
+                                state_action_list.append(state_in_ordered[-1])
+                                this_route = Route(state_action_list,1)
+                                list_of_routes.append(this_route)
                     if tuple(list_of_nodes_in_shortest_path) in path_added and reduced_cost<-.001:
                         
                         print('path')

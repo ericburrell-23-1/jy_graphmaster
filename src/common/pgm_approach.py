@@ -17,7 +17,7 @@ import time
 from src.common.helper import Helper
 from src.common.time_profile import TimeProfiler
 from scipy.sparse import csr_matrix
-class route:
+class Route:
     def __init__(self,state_action_alt_repeat,weight):
 
         #for i in range(0,len(state_action_alt_repeat)):
@@ -124,6 +124,7 @@ class route:
         
         if flag==False:
             input('error here ')
+    
 class PGM_appraoch:
     #This will do the enitre RMP. 
 

@@ -1,10 +1,14 @@
 import numpy as np
 from collections import defaultdict
 import pulp
+from src.common.pgm_approach import Route
+
 
 class CG_RMP:
-    def __init__(self, list_of_action_list, rhs_exog_vec):
-        self.list_of_action_list = list_of_action_list
+    def __init__(self, list_of_route:list[Route], rhs_exog_vec):
+        self.list_of_route = list_of_route
+        self.list_of_action_list = []
+
         self.rhs_exog_vec = rhs_exog_vec
         self.var_to_obj_coef = defaultdict()
         self.var_to_col_coef = defaultdict()
@@ -15,14 +19,9 @@ class CG_RMP:
 
     def _geenrate_col_coeff(self):
         var_index = 0
-        for pi in range(len(self.list_of_action_list)):
-            this_cover = np.zeros(len(self.rhs_exog_vec))
-            this_obj_coef = 0
-            for a in self.list_of_action_list[pi]:
-                this_cover += a.Exog_vec
-                this_obj_coef += a.cost
-            self.var_to_obj_coef[var_index] = this_obj_coef
-            self.var_to_col_coef[var_index] = this_cover
+        for pi in self.list_of_route:
+            self.var_to_obj_coef[var_index] = pi.cost
+            self.var_to_col_coef[var_index] = pi.Exog_vec
             var_index += 1
             
     def _build_master_problem(self):

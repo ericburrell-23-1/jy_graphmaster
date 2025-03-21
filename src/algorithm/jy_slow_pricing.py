@@ -305,7 +305,7 @@ class jy_slow_general_pricing_solver:
             #input('---')
         else :
             print('DONE NO NEG REDUCED COST FOUND')
-        return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, red_cost,self.actions_of_node]
+        return [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, my_states_ordered, red_cost,self.actions_of_node]
     def call_expansion_algorihtm_till(self):
 
         my_final_label=None

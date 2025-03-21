@@ -97,7 +97,7 @@ class GraphMaster:
         self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=3
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
         self.jy_options_user_defined['max_pickups_in_a_route']=3
-        self.jy_options_user_defined['use_cg'] = True
+        self.jy_options_user_defined['use_cg'] = False
         self.jy_options_user_defined['complementary_col'] = 0
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
@@ -288,7 +288,7 @@ class GraphMaster:
                             if self.jy_options_user_defined['complementary_col'] >0.5:
                                 for i in range(self.jy_options_user_defined['complementary_col']):
                                     jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
-                                    [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
+                                    [list_of_nodes_in_shortest_path, list_of_actions_used_in_col,state_in_ordered, reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
                                     print('done jy pricing ')
                                     list_of_action_list.append(list_of_actions_used_in_col)
                                     for a in list_of_actions_used_in_col:
