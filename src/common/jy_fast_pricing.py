@@ -146,6 +146,7 @@ class jy_fast_pricing():
             lowest_action_contrib_red_cost=self.lowest_action_contrib_red_cost,
             action_2_red_cost_dict=self.action_2_red_cost_dict,
             actions_of_node=self.actions_of_node,
+            action_dict = self.action_dict,
             jy_opt=self.jy_opt,
             pickup_nodes=self.pickup_node,
             dropoff_nodes=self.dropoff_node
@@ -170,7 +171,9 @@ class jy_fast_pricing():
         self._compute_action_reduced_costs()
         debug_on=True
         for my_label in self.expandable_labels.objects:
-            my_label.calculate_red_cost_given_dual(self.dual_vec,self.lowest_action_contrib_red_cost)
+            my_label.calculate_red_cost_given_dual(self.dual_vec)
+            #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+            my_label.calculate_better_lb(self.dual_vec)
             tmp=set(my_label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
             if len(tmp)>0.5:
                 my_label.red_cost=np.inf

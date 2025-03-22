@@ -10,10 +10,11 @@ from src.common.state import State
 from src.common.action import Action
 import numpy as np
 from src.common.pgm_approach import Route
+from itertools import combinations
 
 class jy_label:
 #     
-    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,action_2_red_cost_dict,actions_of_node,jy_opt,pickup_nodes,dropoff_nodes):
+    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,action_2_red_cost_dict,actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         self.my_states_ordered=my_states_ordered
@@ -26,6 +27,7 @@ class jy_label:
         self.lowest_action_contrib_red_cost=lowest_action_contrib_red_cost
         self.action_2_red_cost_dict=action_2_red_cost_dict
         self.actions_of_node=actions_of_node
+        self.action_dict = action_dict
         self.lb=self.red_cost+(max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
         self.pickup_nodes=pickup_nodes
         self.dropoff_nodes=dropoff_nodes
@@ -34,23 +36,68 @@ class jy_label:
         self.all_nodes_ordered=[]
         self.num_dropoffs_in_route=0
         self.num_pickups_in_route=0
+        self.nodes_picked_up = []
+        self.nodes_dropped_off = []
+        self.node_wait_to_drop_off = []
         for s in self.my_states_ordered:
             self.all_nodes_ordered.append(s.node)
             if s.node  in self.pickup_nodes:
                 self.num_pickups_in_route=self.num_pickups_in_route+1
+                self.nodes_picked_up.append(s.node)
+                self.node_wait_to_drop_off.append(s.node)
             if s.node  in self.dropoff_nodes:
                 self.num_dropoffs_in_route=self.num_dropoffs_in_route+1
+                self.nodes_dropped_off.append(s.node)
+                self.node_wait_to_drop_off.remove(s.node-len(self.pickup_nodes))
         self.num_dropoffs_needed=self.num_pickups_in_route-self.num_dropoffs_in_route
             #if self.jy_opt['using_load_ai_lazy'] and s.node>=-0.5 and s.node<=self.jy_opt['using_load_ai_lazy_num_pickups']:
             #    self.jy_num_pickups=self.jy_num_pickups+1
         
         self.DEBUG_check_label_correct()
-    def calculate_red_cost_given_dual(self,dual,lowest_action_contrib_red_cost):
+    def calculate_red_cost_given_dual(self,dual):
         red_cost =0
         for a in self.my_actions_ordered:
             red_cost += (a.cost - a.Exog_vec @ dual)
         self.red_cost = red_cost
+        
+    def calculate_lb_given_lowest_action_contrib_red_cost(self,lowest_action_contrib_red_cost):
         self.lb = self.red_cost+(self.max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
+    def calculate_better_lb(self, dual):
+        q = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
+        D = self.node_wait_to_drop_off
+        V = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
+        F = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
+        def get_base_gain():
+            base_gain =0
+            for d in D:
+                
+                coef =1
+                if d-len(self.pickup_nodes) == self.node:
+                    coef +=1
+                pi_d = self.dual_vec[0,d-len(self.pickup_nodes)-1]
+                this_gain = pi_d*coef*-1/2 + self.action_dict[(self.node,d)].cost
+                base_gain += this_gain
+            return base_gain
+
+        def get_tot_gain(k_minus_D):
+            tot_tain = 0
+            poss_drop_off = list(combinations(F,k_minus_D))
+            for drop_off_nodes in poss_drop_off:
+                for f in drop_off_nodes:
+                    gain_f = self.action_dict[(f,f+len(self.pickup_nodes ))]
+                    tot_tain += gain_f
+            return tot_tain
+        
+        base_gain = get_base_gain()
+        min_lb = np.inf
+        for k in range(len(D),len(D)+V):
+            tot_gain = get_tot_gain(k-len(D))
+            this_lb = (base_gain+tot_gain)/(min(k,V))
+            if this_lb < min_lb:
+                min_lb = this_lb
+        LB = self.calculate_red_cost_given_dual(dual) + min_lb
+        self.lb =  LB
+        
     def this_label_dominates_input(self,candid_label):
         
         my_flag=True
