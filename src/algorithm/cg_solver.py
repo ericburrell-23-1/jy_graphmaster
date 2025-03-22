@@ -17,6 +17,7 @@ from src.common.visulizer import Visulizer
 from collections import defaultdict
 from src.common.helper import Helper
 from src.algorithm.jy_slow_pricing import jy_slow_general_pricing_solver
+from src.common.jy_fast_pricing import jy_fast_pricing
 import time
 import random
 from src.common.time_profile import TimeProfiler
@@ -99,6 +100,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['max_pickups_in_a_route']=3
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
+        self.jy_options_user_defined['use_fast_pricing'] = True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -208,7 +210,9 @@ class GraphMaster_cg:
     def solve(self):
         all_time_profile = defaultdict(float)
         all_time_start = time.time()
-        jy_actions_node=None
+        jy_actions_node=defaultdict(list)
+        for (n1,n2),a_list in self.action_dict.items():
+            jy_actions_node[n1].append(a_list[0])
 
         with TimeProfiler(all_time_profile, "all_time"):
             
@@ -240,21 +244,29 @@ class GraphMaster_cg:
                     with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
                         jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
                         this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
-                        for i in range(self.jy_options_user_defined['complementary_col']):
-                            jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
-                            [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
-                            print('done jy pricing ')
-                            state_action_list =[]
-                            for idx in range(len(list_of_actions_used_in_col)):
-                                state_action_list.append(state_in_ordered[idx])
-                                state_action_list.append(list_of_actions_used_in_col[idx])
-                            state_action_list.append(state_in_ordered[-1])
-                            this_route = Route(state_action_list,1)
-                            list_of_routes.append(this_route)
-                            self._check_path_duplicate(list_of_nodes_in_shortest_path,reduced_cost)
-                            nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
-                            for idx in nonzero_indices:
-                                this_dual[idx] =0
+                        if self.jy_options_user_defined['use_fast_pricing'] == True:
+                            jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
+                            routes= jy_fast_pricer.run()
+                            reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
+                            reduced_cost = min(reduced_cost_list)
+                            list_of_routes.extend(routes)
+                        else:
+                            for i in range(self.jy_options_user_defined['complementary_col']):
+                                jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
+                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
+                                print('done jy pricing ')
+                                state_action_list =[]
+                                for idx in range(len(list_of_actions_used_in_col)):
+                                    state_action_list.append(state_in_ordered[idx])
+                                    state_action_list.append(list_of_actions_used_in_col[idx])
+                                state_action_list.append(state_in_ordered[-1])
+                                this_route = Route(state_action_list,1)
+                                list_of_routes.append(this_route)
+                                self._check_path_duplicate(list_of_nodes_in_shortest_path,reduced_cost)
+                                nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
+                                for idx in nonzero_indices:
+                                    this_dual[idx] =0
+                        
                     if reduced_cost >= -1e-3:
                         all_time_end = time.time()
                         all_time_profile['all_time'] = all_time_end - all_time_start

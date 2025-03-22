@@ -38,6 +38,12 @@ class jy_label:
                 self.jy_num_pickups=self.jy_num_pickups+1
         
         self.DEBUG_check_label_correct()
+    def calculate_red_cost_given_dual(self,dual,lowest_action_contrib_red_cost):
+        red_cost =0
+        for a in self.my_actions_ordered:
+            red_cost += (a.cost - a.Exog_vec @ dual)
+        self.red_cost = red_cost
+        self.lb = self.red_cost+(self.max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
     def this_label_dominates_input(self,candid_label):
         
         my_flag=True
@@ -114,7 +120,7 @@ class jy_label:
         return NEW_label
     
     def convert_2_route(self):
-        if self.my_states_ordered[-1].node==-2:
+        if self.my_states_ordered[-1].node!=-2:
             input('this route is not done')
             input('---')
         state_action_alt_repeat=[self.my_states_ordered[0]]

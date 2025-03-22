@@ -56,7 +56,8 @@ class Route:
         self.generate_all_node_pairs_ordered()
         self.generate_cost_exog_vector()
         self.verify_feasibility()
-
+    def get_red_cost(self,dual):
+        return self.cost - self.Exog_vec @ dual
     def clean_state_action_alt_repeat_by_removing_null(self):
         new_state_action_alt_repeat=[self.state_action_alt_repeat[0]]
         for act_ind in range(1,len(self.state_action_alt_repeat),2):
