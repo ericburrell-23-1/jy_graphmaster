@@ -26,7 +26,7 @@ HOS_REST_TIME = 9 * 60
 AVERAGE_SPEED = 55 / 60
 MIN_DISTANCE_SAVING = 100
 STANDARD_SERVICE_TIME = 2 * 60
-
+JY_OPT_SPLIT=1
 class loadAI_cg:
     def __init__(self, problem_instance_file_name, file_type: str = "Standard_Form"):
         
@@ -334,6 +334,16 @@ class loadAI_cg:
             destination_node = -2  # Sink
             cost = 0
             exog_contrib_vec = self._default_contribution_vector()
+            if JY_OPT_SPLIT==1:
+                cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
+                exog_contrib_vec[cover_constraint_index] = 0.5
+                #print('cover_constraint_index')
+                #print(cover_constraint_index)
+                #print('origin_node')
+                #print(origin_node)
+                #print('self.dropoff_to_pickup[origin_node]')
+                #print(self.dropoff_to_pickup[origin_node])
+                #input('----')
             partial_trans_min_input = {}
             partial_trans_term_vec = {}
             partial_trans_term_min = {}
@@ -366,6 +376,9 @@ class loadAI_cg:
                 exog_contrib_vec = self._default_contribution_vector()
                 cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
                 exog_contrib_vec[cover_constraint_index] = 1
+                if JY_OPT_SPLIT==1:
+                    exog_contrib_vec[cover_constraint_index] = 0.5
+
                 partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node], 
                                            "volume": self.volume_demands[origin_node] + self.volume_demands[destination_node],
                                            "weight": self.weight_demands[origin_node] + self.weight_demands[destination_node],
@@ -397,6 +410,9 @@ class loadAI_cg:
                 exog_contrib_vec = self._default_contribution_vector()
                 cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
                 exog_contrib_vec[cover_constraint_index] = 1
+                if JY_OPT_SPLIT==1:
+                    exog_contrib_vec[cover_constraint_index] = 0.5
+
                 partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node]}
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_node],
@@ -426,6 +442,9 @@ class loadAI_cg:
                     continue
                 cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
+                if JY_OPT_SPLIT==1:
+                    cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
+                    exog_contrib_vec[cover_constraint_index] = 0.5
                 partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node], 
                                            "volume": self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
                                            "weight": self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
@@ -457,6 +476,9 @@ class loadAI_cg:
                 origin_pickup_node = self.dropoff_to_pickup[origin_node]
                 cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
+                if JY_OPT_SPLIT==1:
+                    cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
+                    exog_contrib_vec[cover_constraint_index] = 0.5
                 partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node]}
                 partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
                                            "volume": -self.volume_demands[origin_pickup_node],
