@@ -168,9 +168,22 @@ class jy_fast_pricing():
         #print(np.sum(self.dual_vec))
         #input('self.dual_vec')
         self._compute_action_reduced_costs()
+        debug_on=True
         for my_label in self.expandable_labels.objects:
             my_label.calculate_red_cost_given_dual(self.dual_vec,self.lowest_action_contrib_red_cost)
-            
+            tmp=set(my_label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
+            if len(tmp)>0.5:
+                my_label.red_cost=np.inf
+                my_label.lb=np.inf
+            #if debug_on==True:
+            #    if len(tmp)>0.5 and my_label.red_cost<100:
+            #        print('my_label.red_cost')
+            #        print(my_label.red_cost)
+                  #  print('tmp')
+                  #  print(tmp)
+                  #  print('self.dual_vec')
+                  ##  print(self.dual_vec)
+                  #  input('error here')
 
     def find_min_reduced_cost_path(self):
         """
@@ -218,8 +231,11 @@ class jy_fast_pricing():
                 break
             
             # Inner loop to process expandable labels
+            #input('starting inner')
+            num_expanded_this_round=0
             while len(self.expandable_labels) > 0:
                 num_expansion_in=num_expansion_in+1
+                num_expanded_this_round=num_expanded_this_round+1
                 #print('num_expansion_out,num_expansion_in')
                 #print([num_expansion_out,num_expansion_in])
                 # Pop label with minimum current reduced cost
@@ -229,7 +245,11 @@ class jy_fast_pricing():
                 #print('curr_label.LB')
                 #print(curr_label.lb)
                 #print('len(curr_label.my_states_ordered)')
-                ##print(len(curr_label.my_states_ordered))
+                #print(len(curr_label.my_states_ordered))
+                #print('curr_label.all_nodes_ordered')
+                #print(curr_label.all_nodes_ordered)
+                #print('self.forbidden_nodes')
+                #print(self.forbidden_nodes)
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
                 poss_actions  = self.get_actions_from_label(curr_label)
@@ -252,41 +272,21 @@ class jy_fast_pricing():
                         print('new_label.all_nodes_ordered')
                         print('new_label.red_cost')
                         print(new_label.red_cost)
-                        # Update dual values for customers in the route
-                        
-                        # This part would depend on how you update dual values
-                        # The pseudocode shows: πu ← πu − α ∗ (u ∈ cust(NewLabel))
-                        # Since we don't have implementation details, leaving as placeholder
-                        #print('BEFORE')
-                        #print(self.dual_vec)
-                        self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
-                        #print('AFTER')
-                        #print(self.dual_vec)
-                        #input('----')
-                        #update LB and CurRed
-                        #self._compute_action_reduced_costs()
-                        #new_update_expandable_labels = jy_sortedObject_list()
-                        #for label in self.expandable_labels.objects:  # Use .objects to access the list of objects
-                        #    label.calculate_red_cost_given_dual(self.dual_vec, self.lowest_action_contrib_red_cost)
-                        #    new_tuple=self.label_2_tuple(label)
 
-                       #     new_update_expandable_labels.insert(label, new_tuple)
-                            #instead of going by reduced cost we are going to go by reduced
-                        #self.expandable_labels = new_update_expandable_labels
+                        self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
+                        
                         did_gen_neg_red_cost=True
 
 
                     elif not new_label.is_complete_route:
-                        # Add to expandable labels if not a complete route
-                        #self.expandable_labels.insert(new_label, new_label.red_cost)
-                        #new_tuple=tuple([-len(new_label.my_states_ordered),new_label.red_cost])
-                        #print('new_tuple')
-                        #print(new_tuple)
+                        
                         new_tuple=self.label_2_tuple(new_label)
 
                         self.expandable_labels.insert(new_label,new_tuple )
                 if did_gen_neg_red_cost==True:
                     break
+            print('num_expanded_this_round')
+            print(num_expanded_this_round)
         
         #print('DOEN T the CG process')
         #input('----')
@@ -312,10 +312,13 @@ class jy_fast_pricing():
         Remove expandable labels with lower bound > 0.
         """
         new_expandable_labels = jy_sortedObject_list()
-        
+        debug_on=True
         for i, label in enumerate(self.expandable_labels.objects):
             if label.lb <= -0.0001:
-
+                if debug_on==True:
+                    tmp=set(label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
+                    if len(tmp)>0.5:
+                        input('errorr')
                 #my_tup=tuple([-len(label.my_states_ordered),label.red_cost,my_noise])
                 new_tuple=self.label_2_tuple(label)
 
