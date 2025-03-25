@@ -14,7 +14,10 @@ from itertools import combinations
 
 class jy_label:
 #     
-    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,action_2_red_cost_dict,actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes):
+    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
+                 dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
+                 action_2_red_cost_dict,actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
+                 rcp_u_partial, rcp_d_partial):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         self.my_states_ordered=my_states_ordered
@@ -39,6 +42,8 @@ class jy_label:
         self.nodes_picked_up = []
         self.nodes_dropped_off = []
         self.node_wait_to_drop_off = []
+        self.rcp_u_partial = rcp_u_partial
+        self.rcp_d_partial = rcp_d_partial
         for s in self.my_states_ordered:
             self.all_nodes_ordered.append(s.node)
             if s.node  in self.pickup_nodes:
@@ -62,41 +67,44 @@ class jy_label:
         
     def calculate_lb_given_lowest_action_contrib_red_cost(self,lowest_action_contrib_red_cost):
         self.lb = self.red_cost+(self.max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
-    def calculate_better_lb(self, dual):
-        q = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
-        D = self.node_wait_to_drop_off
-        V = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
-        F = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
-        def get_base_gain():
-            base_gain =0
-            for d in D:
-                
-                coef =1
-                if d-len(self.pickup_nodes) == self.node:
-                    coef +=1
-                pi_d = self.dual_vec[0,d-len(self.pickup_nodes)-1]
-                this_gain = pi_d*coef*-1/2 + self.action_dict[(self.node,d)].cost
-                base_gain += this_gain
-            return base_gain
+    def calculate_rcp_with_dual(self,dual):
+        self.rcp = defaultdict()
+        node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
+        for u in node_not_picked_up:
+            self.rcp[u] = -dual[u-1] + self.rcp_u_partial[u]
+        for dropoff in self.node_wait_to_drop_off:
+            d = dropoff
+            if d == self.node:
+                self.rcp[d] = -dual[d-1] + self.rcp_u_partial[d]
+            else:
+                try:
+                    self.rcp[d] = -dual[d-1]/2 + self.rcp_u_partial[d]
+                except:
+                    print('check here')
+    def calculate_better_lb(self,dual):
+        self.calculate_rcp_with_dual(dual)
+        if self.node ==-1:
+            self.lb = -np.inf
+        else:
+            #q = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
+            D = self.node_wait_to_drop_off
+            V = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
+            #F = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
+            
+            lb = self.red_cost
+            for d in self.node_wait_to_drop_off:
+                lb  += self.rcp_d_partial[self.node][d]
+            max_rcp_u = -np.inf
+            this_rcp_u = 0
+            key_list = list(self.rcp_u_partial.keys())
 
-        def get_tot_gain(k_minus_D):
-            tot_tain = 0
-            poss_drop_off = list(combinations(F,k_minus_D))
-            for drop_off_nodes in poss_drop_off:
-                for f in drop_off_nodes:
-                    gain_f = self.action_dict[(f,f+len(self.pickup_nodes ))]
-                    tot_tain += gain_f
-            return tot_tain
-        
-        base_gain = get_base_gain()
-        min_lb = np.inf
-        for k in range(len(D),len(D)+V):
-            tot_gain = get_tot_gain(k-len(D))
-            this_lb = (base_gain+tot_gain)/(min(k,V))
-            if this_lb < min_lb:
-                min_lb = this_lb
-        LB = self.calculate_red_cost_given_dual(dual) + min_lb
-        self.lb =  LB
+            for k in range(len(D),len(D)+V):
+                this_rcp_u += self.rcp_u_partial[key_list[k]]
+                if this_rcp_u > max_rcp_u:
+                    max_rcp_u = this_rcp_u
+            lb += max_rcp_u
+            
+            self.lb =  lb
         
     def this_label_dominates_input(self,candid_label):
         
@@ -170,7 +178,7 @@ class jy_label:
             NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.jy_opt,self.pickup_nodes,self.dropoff_nodes)
+            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial)
         return NEW_label
     
     def convert_2_route(self):

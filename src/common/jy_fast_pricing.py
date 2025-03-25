@@ -55,7 +55,9 @@ class jy_fast_pricing():
         self.option_do_min_term = False
         self.lowest_action_contrib_red_cost = float('inf')
         self.pre_process__partition_actions()
-        #print('initialization')
+        self.initiate_RCP_d()
+        self.initiate_RCP_u()
+        print('initialization')
 
     def label_2_tuple(self,my_lab):
         
@@ -130,6 +132,25 @@ class jy_fast_pricing():
         #print('self.action_2_red_cost_dict')
         #print(self.action_2_red_cost_dict)
         #input('hi')
+
+    def initiate_RCP_d(self):
+        max_width = self.jy_opt['max_pickups_in_a_route']
+        self.rcp_d_partial = defaultdict()
+        for cur_loc in self.all_nodes:
+            this_rcp = defaultdict()
+            for d in self.pickup_node:
+                drop_off = d + len(self.pickup_node)
+                if (cur_loc,drop_off) in self.action_dict.keys():
+                    this_rcp[d] = self.action_dict[(cur_loc,drop_off)][0].cost/max_width
+            self.rcp_d_partial[cur_loc] = this_rcp
+    def initiate_RCP_u(self):
+        max_width = self.jy_opt['max_pickups_in_a_route']
+        self.rcp_u_partial = defaultdict()
+        for u in self.pickup_node:
+            self.rcp_u_partial[u] = self.action_dict[(u,u+len(self.pickup_node))][0].cost/max_width
+        self.rcp_u_partial = dict(sorted(self.rcp_u_partial.items(), key=lambda item: item[1], reverse=True))
+
+         
     def initialize_source_label(self):
         """
         Initialize the label at the source node.
@@ -149,7 +170,9 @@ class jy_fast_pricing():
             action_dict = self.action_dict,
             jy_opt=self.jy_opt,
             pickup_nodes=self.pickup_node,
-            dropoff_nodes=self.dropoff_node
+            dropoff_nodes=self.dropoff_node,
+            rcp_u_partial = self.rcp_u_partial,
+            rcp_d_partial = self.rcp_d_partial
         )
 
         new_tuple=self.label_2_tuple(source_label)
@@ -282,10 +305,10 @@ class jy_fast_pricing():
 
 
                     elif not new_label.is_complete_route:
-                        
+                        #new_label.calculate_better_lb(self.dual_vec)
                         new_tuple=self.label_2_tuple(new_label)
 
-                        self.expandable_labels.insert(new_label,new_tuple )
+                        self.expandable_labels.insert(new_label,new_tuple)
                 if did_gen_neg_red_cost==True:
                     break
             print('num_expanded_this_round')

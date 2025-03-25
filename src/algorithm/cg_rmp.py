@@ -5,7 +5,7 @@ from src.common.pgm_approach import Route
 
 
 class CG_RMP:
-    def __init__(self, list_of_route:list[Route], rhs_exog_vec):
+    def __init__(self, list_of_route:list[Route], rhs_exog_vec,data):
         self.list_of_route = list_of_route
         self.list_of_action_list = []
 
@@ -13,16 +13,40 @@ class CG_RMP:
         self.var_to_obj_coef = defaultdict()
         self.var_to_col_coef = defaultdict()
         self.variables = {}
-        self.model = None
+        self.actions = data.actions
+        self.pickup_node = data.pickup_node
+        self.dropoff_node = data.dropoff_node
+        self.neighbors = data.neighbors
+        self.rho = self._generate_rho()
         self._geenrate_col_coeff()
+        
         self._build_master_problem()
 
+
+    def _generate_rho(self):
+        this_rho = defaultdict()
+        for u in self.pickup_node:
+            for v in self.pickup_node:
+                if u!= v:
+
+                    this_rho[(u,v)] = 2*self.actions[(u,v)][0].cost + 2*self.actions[(u+len(self.pickup_node),v+len(self.pickup_node))][0].cost
+
+        return this_rho
     def _geenrate_col_coeff(self):
         var_index = 0
         for pi in self.list_of_route:
             self.var_to_obj_coef[var_index] = pi.cost
             self.var_to_col_coef[var_index] = pi.Exog_vec
             var_index += 1
+        for u in self.pickup_node:
+            for v in set(self.neighbors[u]) & set(self.pickup_node):
+                self.var_to_obj_coef[var_index] = self.rho[(u,v)]
+                vec = np.zeros(len(self.pickup_node))
+                vec[u-1] = -1
+                vec[v-1] = 1
+                self.var_to_col_coef[var_index] = vec
+                var_index += 1
+
             
     def _build_master_problem(self):
         """Construct the master problem with the generated columns."""

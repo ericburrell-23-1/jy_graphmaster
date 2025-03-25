@@ -98,12 +98,15 @@ class Route:
         
     def generate_all_node_pairs_ordered(self):
         self.all_node_pairs_ordered=set([])
+        self.node_in_ordered = []
         for i in range(0,len(self.just_states_ordered)):
             s1=self.just_states_ordered[i]
+            self.node_in_ordered.append(s1.node)
             self.all_node_pairs_ordered.add((s1.node,s1.node))
             for j in range(i+1,len(self.just_states_ordered)):
                 s2=self.just_states_ordered[j]
                 self.all_node_pairs_ordered.add((s1.node,s2.node))
+    
     def verify_feasibility(self):
 
         #verify that hte route is feasible

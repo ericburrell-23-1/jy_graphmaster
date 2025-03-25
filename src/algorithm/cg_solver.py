@@ -237,7 +237,7 @@ class GraphMaster_cg:
             list_of_routes = self._initial_routes()
             with TimeProfiler(all_time_profile, "solve:iteration"):
                 while iteration < max_iterations:
-                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec)
+                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module)
                     sol = cg_solver.solve()
                     this_dual = sol['dual_values']
                     l_id += 1
