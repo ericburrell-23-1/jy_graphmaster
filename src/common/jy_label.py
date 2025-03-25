@@ -79,7 +79,8 @@ class jy_label:
 
         for u in node_not_picked_up:
             self.tot_gain[u] = -dual[u-1] + self.rcp_u_partial[u]
-        self.tot_gain = dict(sorted(self.tot_gain.items(), key=lambda item: item[1], reverse=True))
+        self.tot_gain = dict(sorted(self.tot_gain.items(), key=lambda item: item[1]))
+        print('check here')
     def calculate_better_lb(self,dual):
         self.calculate_rcp_with_dual(dual)
         if self.node ==-1:
