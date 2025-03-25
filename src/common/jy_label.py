@@ -68,19 +68,18 @@ class jy_label:
     def calculate_lb_given_lowest_action_contrib_red_cost(self,lowest_action_contrib_red_cost):
         self.lb = self.red_cost+(self.max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
     def calculate_rcp_with_dual(self,dual):
-        self.rcp = defaultdict()
+        self.base_gain = defaultdict()
+        self.tot_gain = defaultdict()
         node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
-        for u in node_not_picked_up:
-            self.rcp[u] = -dual[u-1] + self.rcp_u_partial[u]
-        for dropoff in self.node_wait_to_drop_off:
-            d = dropoff
+        for d in self.node_wait_to_drop_off:
             if d == self.node:
-                self.rcp[d] = -dual[d-1] + self.rcp_u_partial[d]
+                self.base_gain[d] = -dual[d-1] + self.rcp_d_partial[(self.node,d)]
             else:
-                try:
-                    self.rcp[d] = -dual[d-1]/2 + self.rcp_u_partial[d]
-                except:
-                    print('check here')
+                self.base_gain[d] = -dual[d-1]/2 + self.rcp_d_partial[(self.node,d)]
+
+        for u in node_not_picked_up:
+            self.tot_gain[u] = -dual[u-1] + self.rcp_u_partial[u]
+        self.tot_gain = dict(sorted(self.tot_gain.items(), key=lambda item: item[1], reverse=True))
     def calculate_better_lb(self,dual):
         self.calculate_rcp_with_dual(dual)
         if self.node ==-1:
@@ -95,7 +94,7 @@ class jy_label:
             print(' step 1lb')
             print(lb)
             for d in self.node_wait_to_drop_off:
-                lb  += self.rcp_d_partial[self.node][d]
+                lb  += self.base_gain[d]
                 print(' step 2')
                 print('d')
                 print(d)
@@ -103,19 +102,21 @@ class jy_label:
                 print(lb)
             print(' step 3lb')
             print(lb)
-            max_rcp_u = -np.inf
+            min_rcp_u = np.inf
             this_rcp_u = 0
-            key_list = list(self.rcp_u_partial.keys())
+            key_list = list(self.tot_gain.keys())
 
             print('self.rcp_u_partial')
-            print(self.rcp_u_partial)
+            print(self.tot_gain)
             for k in range(len(D),len(D)+V):
-                this_rcp_u += self.rcp_u_partial[key_list[k]]
-                if this_rcp_u > max_rcp_u:
-                    max_rcp_u = this_rcp_u
-            lb += max_rcp_u
+                this_rcp_u += self.tot_gain[key_list[k]]
+                if this_rcp_u < min_rcp_u:
+                    min_rcp_u = this_rcp_u
+            lb += min_rcp_u
             
             self.lb =  lb
+            print('lb')
+            print(lb)
             input('----')
         
     def this_label_dominates_input(self,candid_label):
