@@ -234,6 +234,7 @@ class jy_fast_pricing():
         alpha = self.jy_opt.get('alpha', 1.0)  # Default to 1.0 or maybe 0.5
         #print('starting the CG process')
         #input('----')
+        debug_on=True
         while True:
             # Re-compute bounds based on dual values
             # Remove expandable labels with LB > 0
@@ -279,6 +280,12 @@ class jy_fast_pricing():
                 print(self.forbidden_nodes)
                 print('len(self.expandable_labels)')
                 print(len(self.expandable_labels))
+                if debug_on==True:
+                    #check the lower bound
+                    old_lb=curr_label.lb
+                    curr_label.calculate_better_lb(self.dual_vec)
+                    if abs(curr_label.lb-old_lb)>.001:
+                        input('error here')
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
                 poss_actions  = self.get_actions_from_label(curr_label)
@@ -294,12 +301,23 @@ class jy_fast_pricing():
                 print('------')
                 for my_act in poss_actions:
                     new_label = curr_label.expand_given_action(my_act)
+                    new_label.calculate_better_lb(self.dual_vec)
+
                     if new_label!=None:
                         print('my_act')
                         my_act.pretty_print_action()
                         print('new_label.lb')
                         print(new_label.lb)
-                    
+                    #if debug_on==True:
+                        #check the lower bound
+                    #    old_lb=new_label.lb
+                     #   #new_label.calculate_better_lb(self.dual_vec)
+                     #   if abs(new_label.lb-old_lb)>.001:
+                     #       print('old_lb')
+                     #       print(old_lb)
+                     #       print('new_label.lb')
+                     ##       print(new_label.lb)
+                     #       input('error here 2 ')
                     if new_label == None:
                         continue
                     can_complete=self.jy_get_compelition(new_label)
