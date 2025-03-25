@@ -10,6 +10,7 @@ from src.common.pgm_approach import Route
 from src.common.jy_label import jy_label
 from src.common.jy_eff_fronteir import jy_efficient_frontier
 from src.common.jy_sortedObject_list import jy_sortedObject_list
+from itertools import permutations
 
 class jy_fast_pricing():
     """
@@ -266,27 +267,48 @@ class jy_fast_pricing():
                 #print([num_expansion_out,num_expansion_in])
                 # Pop label with minimum current reduced cost
                 curr_label = self.expandable_labels.pop()
-                #print('curr_label.red_cost')
-                #print(curr_label.red_cost)
-                #print('curr_label.LB')
-                #print(curr_label.lb)
-                #print('len(curr_label.my_states_ordered)')
-                #print(len(curr_label.my_states_ordered))
-                #print('curr_label.all_nodes_ordered')
-                #print(curr_label.all_nodes_ordered)
-                #print('self.forbidden_nodes')
-                #print(self.forbidden_nodes)
+                print('curr_label.red_cost')
+                print(curr_label.red_cost)
+                print('curr_label.LB')
+                print(curr_label.lb)
+                print('len(curr_label.my_states_ordered)')
+                print(len(curr_label.my_states_ordered))
+                print('curr_label.all_nodes_ordered')
+                print(curr_label.all_nodes_ordered)
+                print('self.forbidden_nodes')
+                print(self.forbidden_nodes)
+                print('len(self.expandable_labels)')
+                print(len(self.expandable_labels))
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
                 poss_actions  = self.get_actions_from_label(curr_label)
+                print('len(poss_actions)')
+                print(len(poss_actions))
                 did_gen_neg_red_cost=False
-
+                did_gen_possible_expansion=False
                 # Process each expanded label
+                print('------')
+                print('------')
+                print('------')
+                print('------')
+                print('------')
                 for my_act in poss_actions:
                     new_label = curr_label.expand_given_action(my_act)
+                    if new_label!=None:
+                        print('my_act')
+                        my_act.pretty_print_action()
+                        print('new_label.lb')
+                        print(new_label.lb)
+                    
                     if new_label == None:
                         continue
-                    if new_label.lb>0:
+                    can_complete=self.jy_get_compelition(new_label)
+                    if can_complete==False:
+                        continue
+                    if my_act.node_tail in self.dropoff_node:
+                        did_gen_possible_expansion=True
+
+                    if new_label.lb>5:
                         continue
                     self.efficient_frontier.alter_fronteir_given_new_element(new_label)
                     if new_label.is_complete_route and new_label.red_cost < new_label.lb/10:
@@ -313,11 +335,12 @@ class jy_fast_pricing():
                     break
             print('num_expanded_this_round')
             print(num_expanded_this_round)
-        
+            if did_gen_possible_expansion==False:
+                input('big error here')
         #print('DOEN T the CG process')
         #input('----')
         return self.all_routes
-
+    
     
     def _get_dual_index_for_customer(self, customer):
         """
@@ -430,3 +453,51 @@ class jy_fast_pricing():
         # if s.node in Q.pickup_node:
         #     must_dropoff.append(s.node+self.num_pickups)
         return drop_off_node_need_to_visit
+    
+    def jy_get_compelition(self,candid_label):
+        
+        if len(candid_label.all_nodes_ordered)==1:
+            return True
+        drop_off_needed=self.get_must_drop_off_including_current(candid_label.my_states_ordered[-1])
+        if len(drop_off_needed)==0:
+            return True
+        #drop_off_needed=candid_label.node_wait_to_drop_off
+        if len(drop_off_needed)>self.jy_opt['max_pickups_in_a_route']:
+            return False
+        permutation_of_drop_off_node = list(permutations(drop_off_needed))
+        found_good_perm=False
+
+        for my_perm_in in permutation_of_drop_off_node: 
+            my_action_list_given_perm=[]
+            
+            my_perm=list(my_perm_in)
+            #print('candid_label.all_nodes_ordered')
+            #print(candid_label.all_nodes_ordered)
+            #print('my_perm_in')
+            #print(my_perm_in)
+            my_perm=candid_label.all_nodes_ordered+my_perm+[-2]
+            #print('my_perm')
+            #print(my_perm)
+            list_states=[candid_label.my_states_ordered[0]]
+            is_good_perm=True
+
+            for i in range(0,len(my_perm)-1):# in my_perm:
+                pre_node = my_perm[i]
+                post_node = my_perm[i+1]
+                my_action=self.action_dict[(pre_node,post_node)][0]
+                next_state=my_action.get_head_state(list_states[-1],list_states[-1].l_id)
+                if next_state==None:
+                    is_good_perm=False
+                    break
+                list_states.append(next_state)
+                my_action_list_given_perm.append(my_action)
+            if is_good_perm==True:
+               # my_dedug_completion=jy_pricing_debug_completion(candid_state,orig_depth,list_depths,list_states,my_action_list_given_perm,True)
+                found_good_perm=True
+                break
+        #if found_good_perm==False:
+            #my_dedug_completion=jy_pricing_debug_completion(candid_state,orig_depth,None,None,None,False)
+            #self.state_2_completion[candid_state]=my_dedug_completion
+        
+        return found_good_perm#self.state_2_completion[candid_state]
+       
