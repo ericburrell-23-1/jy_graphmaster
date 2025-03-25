@@ -235,6 +235,7 @@ class jy_fast_pricing():
         #print('starting the CG process')
         #input('----')
         debug_on=True
+        lowest_so_far=np.inf
         while True:
             # Re-compute bounds based on dual values
             # Remove expandable labels with LB > 0
@@ -261,6 +262,8 @@ class jy_fast_pricing():
             # Inner loop to process expandable labels
             #input('starting inner')
             num_expanded_this_round=0
+            incumbant_lb=-np.inf
+
             while len(self.expandable_labels) > 0:
                 num_expansion_in=num_expansion_in+1
                 num_expanded_this_round=num_expanded_this_round+1
@@ -268,6 +271,10 @@ class jy_fast_pricing():
                 #print([num_expansion_out,num_expansion_in])
                 # Pop label with minimum current reduced cost
                 curr_label = self.expandable_labels.pop()
+                if debug_on==True:
+                    self.jy_get_compelition(curr_label)
+                
+
                 print('curr_label.red_cost')
                 print(curr_label.red_cost)
                 print('curr_label.LB')
@@ -289,25 +296,26 @@ class jy_fast_pricing():
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
                 poss_actions  = self.get_actions_from_label(curr_label)
-                print('len(poss_actions)')
-                print(len(poss_actions))
+                #print('len(poss_actions)')
+                #print(len(poss_actions))
                 did_gen_neg_red_cost=False
                 did_gen_possible_expansion=False
                 # Process each expanded label
-                print('------')
-                print('------')
-                print('------')
-                print('------')
-                print('------')
+                #print('------')
+                #print('------')
+                #print('------')
+                #print('------')
+                #print('------')
                 for my_act in poss_actions:
                     new_label = curr_label.expand_given_action(my_act)
-                    new_label.calculate_better_lb(self.dual_vec)
 
-                    if new_label!=None:
-                        print('my_act')
-                        my_act.pretty_print_action()
-                        print('new_label.lb')
-                        print(new_label.lb)
+                    #if new_label!=None:
+                    #    print('my_act')
+                    #    my_act.pretty_print_action()
+                    #    print('new_label.lb')
+                    #    print(new_label.lb)
+                    #    print('did_gen_possible_expansion')
+                    #    print(did_gen_possible_expansion)
                     #if debug_on==True:
                         #check the lower bound
                     #    old_lb=new_label.lb
@@ -319,17 +327,30 @@ class jy_fast_pricing():
                      ##       print(new_label.lb)
                      #       input('error here 2 ')
                     if new_label == None:
+                        print('doing none')
                         continue
+                    new_label.calculate_better_lb(self.dual_vec)
+                    #print('t1')
                     can_complete=self.jy_get_compelition(new_label)
-                    if can_complete==False:
-                        continue
-                    if my_act.node_tail in self.dropoff_node:
-                        did_gen_possible_expansion=True
+                    #print('t2')
 
+                    if can_complete==False:
+                        print('no completion')
+                        continue
+                    #print('t3')
+                    if my_act.node_head in self.dropoff_node or my_act.node_head==-2:
+                        #print('OKY GOOD ')
+                        did_gen_possible_expansion=True
+                    #print('t4')
                     if new_label.lb>5:
                         continue
+                    #print('t5')
+                    #print('try ing add fronteir')
                     self.efficient_frontier.alter_fronteir_given_new_element(new_label)
-                    if new_label.is_complete_route and new_label.red_cost < new_label.lb/10:
+                    if new_label.is_complete_route:
+                        lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
+                    if new_label.is_complete_route  and new_label.red_cost<0: #< new_label.lb/10:
+                        #input('making route')
                         route = new_label.convert_2_route()
                         self.all_routes.append(route)
                         print('route made')
@@ -351,12 +372,30 @@ class jy_fast_pricing():
                         self.expandable_labels.insert(new_label,new_tuple)
                 if did_gen_neg_red_cost==True:
                     break
-            print('num_expanded_this_round')
-            print(num_expanded_this_round)
+            #print('num_expanded_this_round')
+            #print(num_expanded_this_round)
             if did_gen_possible_expansion==False:
+                print('********')
+                print('********')
+                print('********')
+                print('********')
+                print('curr_label.red_cost')
+                print(curr_label.red_cost)
+                print('curr_label.LB')
+                print(curr_label.lb)
+                print('len(curr_label.my_states_ordered)')
+                print(len(curr_label.my_states_ordered))
+                print('curr_label.all_nodes_ordered')
+                print(curr_label.all_nodes_ordered)
+                print('self.forbidden_nodes')
+                print(self.forbidden_nodes)
+                print('len(self.expandable_labels)')
+                print(len(self.expandable_labels))
                 input('big error here')
-        #print('DOEN T the CG process')
-        #input('----')
+        print('DOEN T the CG process')
+        #print('lowest_so_far')
+        #print(lowest_so_far)
+        ##input('----')
         return self.all_routes
     
     
@@ -512,6 +551,9 @@ class jy_fast_pricing():
             if is_good_perm==True:
                # my_dedug_completion=jy_pricing_debug_completion(candid_state,orig_depth,list_depths,list_states,my_action_list_given_perm,True)
                 found_good_perm=True
+                print('GOOD PERM IS')
+                print(my_perm)
+                print('----')
                 break
         #if found_good_perm==False:
             #my_dedug_completion=jy_pricing_debug_completion(candid_state,orig_depth,None,None,None,False)

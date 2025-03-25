@@ -92,23 +92,23 @@ class jy_label:
             #F = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
             
             lb = self.red_cost
-            print(' step 1lb')
-            print(lb)
+            #print(' step 1lb')
+            #print(lb)
             for d in self.node_wait_to_drop_off:
                 lb  += self.base_gain[d]
-                print(' step 2')
-                print('d')
-                print(d)
-                print('lb')
-                print(lb)
-            print(' step 3lb')
-            print(lb)
+            #    print(' step 2')
+            #    print('d')
+            #    print(d)
+            #    print('lb')
+            #    print(lb)
+            #print(' step 3lb')
+            #print(lb)
             min_rcp_u = np.inf
             this_rcp_u = 0
             key_list = list(self.tot_gain.keys())
 
-            print('self.rcp_u_partial')
-            print(self.tot_gain)
+            #print('self.rcp_u_partial')
+            #print(self.tot_gain)
             for k in range(len(D),len(D)+V):
                 this_rcp_u += self.tot_gain[key_list[k]]
                 if this_rcp_u < min_rcp_u:
@@ -116,9 +116,9 @@ class jy_label:
             lb += min_rcp_u
             
             self.lb =  lb
-            print('lb')
-            print(lb)
-            input('----')
+            #print('lb')
+            #print(lb)
+            #input('----')
         
     def this_label_dominates_input(self,candid_label):
         
