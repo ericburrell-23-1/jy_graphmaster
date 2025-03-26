@@ -236,13 +236,25 @@ class GraphMaster_cg:
             self.path_added = set()
             list_of_routes = self._initial_routes()
             forbidden_omega = []
+            node_sequence_of_routes = []
+            for route in list_of_routes:
+                node_sequence_of_routes.append(route.node_in_ordered)
             with TimeProfiler(all_time_profile, "solve:iteration"):
 
                     
                 while iteration < max_iterations:
                     cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
-                    sol = cg_solver.solve()
-                    this_dual = sol['dual_values']
+                    output = cg_solver.solve()
+                    this_sol = output['variable_values']
+                    this_dual = output['dual_values']
+                    for index, route_index in cg_solver.var_index_to_route_index.items():
+                        value = this_sol[index]
+                        if value > 0.0001:
+                            this_route = list_of_routes[route_index]
+                            red_cost = this_route.get_red_cost(this_dual)
+                            if red_cost <-1:
+                                input('error here')
+                            print(f'value:{value}, red_cost:{red_cost}')
                     l_id += 1
                     with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
                         jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
@@ -252,7 +264,46 @@ class GraphMaster_cg:
                             routes= jy_fast_pricer.run()
                             reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
                             reduced_cost = min(reduced_cost_list)
-                            list_of_routes.extend(routes)
+                            if reduced_cost >= -1e-3:
+                                this_forbidden_omega = cg_solver.get_forbidden_omega()
+                                if len(this_forbidden_omega)<0.5:
+                                    ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
+                                    sol = ilp_cg_solver.solve_ilp()
+                                    all_time_end = time.time()
+                                    all_time_profile['all_time'] = all_time_end - all_time_start
+                                    self.output_all_time_profile(all_time_profile)
+                                    used_routes = sol['used_routes']
+                                    variable_to_value = sol['variable_values']
+                                    print('route generated')
+                                    for route in list_of_routes:
+                                        print(route.node_in_ordered)
+                                    print('route used')
+                                    for route in used_routes:
+                                        print(route.node_in_ordered)
+                                    input('over here')
+                                    return {
+                                        'status': 'optimal',
+                                        'x': sol['variable_values'],
+                                        'iterations': iteration,
+                                    }
+                                else:
+                                    forbidden_omega.extend(this_forbidden_omega)
+                            #list_of_routes.extend(routes)
+                            for route in routes:
+                                red_cost = route.get_red_cost(this_dual)
+                                if route.node_in_ordered in node_sequence_of_routes and red_cost<-1:
+                                    print('node_in_ordered')
+                                    print(route.node_in_ordered)
+                                    print('red_cost')
+                                    print(red_cost)
+                                    input('error here: route added has negative red cost')
+                                if red_cost<-1e-3:
+                                    print('route added')
+                                    print(route.node_in_ordered)
+                                    node_sequence_of_routes.append(route.node_in_ordered)
+                                    list_of_routes.append(route)
+                            
+                            print('======route check here======')
                         else:
                             for i in range(self.jy_options_user_defined['complementary_col']):
                                 jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
@@ -270,26 +321,7 @@ class GraphMaster_cg:
                                 for idx in nonzero_indices:
                                     this_dual[idx] =0
                         
-                    if reduced_cost >= -1e-3:
-                        this_forbidden_omega = cg_solver.get_forbidden_omega()
-                        if len(this_forbidden_omega)<0.5:
-                            ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
-                            sol = ilp_cg_solver.solve_ilp()
-                            all_time_end = time.time()
-                            all_time_profile['all_time'] = all_time_end - all_time_start
-                            self.output_all_time_profile(all_time_profile)
-                            used_routes = sol['used_routes']
-                            variable_to_value = sol['variable_values']
-                            for route in used_routes:
-                                print(route.node_in_ordered)
-                            input('over here')
-                            return {
-                                'status': 'optimal',
-                                'x': sol['variable_values'],
-                                'iterations': iteration,
-                            }
-                        else:
-                            forbidden_omega.extend(this_forbidden_omega)
+                    
                     iteration += 1
                     print(f'========= cg iteration: {cg_iteration_time} =========')
                     cg_iteration_time+=1

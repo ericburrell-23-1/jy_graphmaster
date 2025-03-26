@@ -331,6 +331,8 @@ class jy_fast_pricing():
                 #print('------')
                 #print('------')
                 #print('------')
+                if curr_label.all_nodes_ordered ==[-1,4,9]:
+                    print('check here')
                 for my_act in poss_actions:
                     if my_act.node_head in self.skip_node:
                         continue

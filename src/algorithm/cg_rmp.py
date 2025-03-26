@@ -47,9 +47,10 @@ class CG_RMP:
         self.omega_name_to_index = defaultdict()
         self.index_to_omega_name = defaultdict()
         self.var_index_to_route_index = defaultdict()
-        for pi in self.list_of_route:
-            self.var_to_obj_coef[var_index] = pi.cost
-            self.var_to_col_coef[var_index] = pi.Exog_vec
+        for pi in range(len(self.list_of_route)):
+            route = self.list_of_route[pi]
+            self.var_to_obj_coef[var_index] = route.cost
+            self.var_to_col_coef[var_index] = route.Exog_vec
             self.var_index_to_route_index[var_index] = pi
             var_index += 1
         for u in self.pickup_node:
