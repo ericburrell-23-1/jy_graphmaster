@@ -45,7 +45,7 @@ class jy_fast_pricing():
         self.num_cus = int((len(self.all_nodes)-2)/3)
         self.pickup_node = self.all_nodes[1:self.num_cus+1]
         self.dropoff_node = self.all_nodes[self.num_cus+1:2*self.num_cus+1]
-        
+        self.skip_node = self.all_nodes[2*self.num_cus+1:-1]
         # Initialize additional attributes needed for the algorithm
         self.all_routes = []
         self.expandable_labels = jy_sortedObject_list()
@@ -307,6 +307,8 @@ class jy_fast_pricing():
                 #print('------')
                 #print('------')
                 for my_act in poss_actions:
+                    if my_act.node_head in self.skip_node:
+                        continue
                     new_label = curr_label.expand_given_action(my_act)
 
                     #if new_label!=None:

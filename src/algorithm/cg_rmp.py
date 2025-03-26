@@ -33,6 +33,7 @@ class CG_RMP:
                     this_rho[(u,v)] = 2*self.actions[(u,v)][0].cost + 2*self.actions[(u+len(self.pickup_node),v+len(self.pickup_node))][0].cost
 
         return this_rho
+
     def get_forbidden_omega(self):
         forbidden = []
         for var_index, omega_name in self.index_to_omega_name.items():
@@ -45,9 +46,11 @@ class CG_RMP:
         var_index = 0
         self.omega_name_to_index = defaultdict()
         self.index_to_omega_name = defaultdict()
+        self.var_index_to_route_index = defaultdict()
         for pi in self.list_of_route:
             self.var_to_obj_coef[var_index] = pi.cost
             self.var_to_col_coef[var_index] = pi.Exog_vec
+            self.var_index_to_route_index[var_index] = pi
             var_index += 1
         for u in self.pickup_node:
             for v in set(self.neighbors[u]) & set(self.pickup_node):
@@ -127,7 +130,70 @@ class CG_RMP:
             'variable_values': self.var_values,
             'dual_values': dual_values
         }
+    def solve_ilp(self):
+
+        var_index_to_route_index = defaultdict()
+        var_to_obj_coef =defaultdict()
+        var_to_col_coef = defaultdict()
+        var_index = 0
+        for pi in range(len(self.list_of_route)):
+            this_path = self.list_of_route[pi]
+            var_to_obj_coef[var_index] = this_path.cost
+            var_to_col_coef[var_index] = this_path.Exog_vec
+            var_index_to_route_index[var_index] = pi
+            var_index += 1
+
+        model = pulp.LpProblem("Column_Generation_RMP", pulp.LpMinimize)
+        variables = {}
+        # Create decision variables
+        for var_idx in var_to_obj_coef.keys():
+            variables[var_idx] = pulp.LpVariable(f"x_{var_idx}", lowBound=0,cat=pulp.LpInteger)
         
+        #print(f"Created {len(self.variables)} variables")
+        
+        # Set the objective function - explicitly using Python floats
+        obj_expr = 0
+        for var_idx, var in variables.items():
+            obj_expr += float(var_to_obj_coef[var_idx]) * var
+        
+        model += obj_expr
+        
+        # Add constraints - keep the default PuLP naming to ensure compatibility
+        constraint_count = 0
+        for i in range(len(self.rhs_exog_vec)):
+            # Let PuLP handle constraint naming (usually _C1, _C2, etc.)
+            model += (
+                pulp.lpSum([float(var_to_col_coef[var_idx][i]) * variables[var_idx] 
+                           for var_idx in variables.keys()]) >= float(self.rhs_exog_vec[i])
+            )
+            constraint_count += 1
+        solver = pulp.PULP_CBC_CMD(msg=True, presolve=True)
+        model.solve(solver)
+
+        status = pulp.LpStatus[model.status]
+        objective_value = pulp.value(model.objective)
+        
+        # Get variable values and print them for debugging
+        var_values = {}
+        route_used = []
+        if model.status == pulp.LpStatusOptimal:
+            #print("Solution:")
+            for var_idx, var in variables.items():
+                var_value = pulp.value(var)
+                var_values[var_idx] = var_value
+                if var_value > 0.1:
+                    route_used.append(self.list_of_route[var_index_to_route_index[var_idx]])
+                #print(f"Variable {var_idx}: {var_value}")
+        else:
+            print(model.status)
+            input('problem not solve')
+        
+        return {
+            'status': status,
+            'objective_value': objective_value,
+            'variable_values': var_values,
+            'used_routes':route_used
+        }
     def _get_dual_values(self):
         """Extract dual values from the solved model."""
         if self.model.status != pulp.LpStatusOptimal:

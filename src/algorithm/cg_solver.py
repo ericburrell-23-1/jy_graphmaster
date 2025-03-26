@@ -273,11 +273,16 @@ class GraphMaster_cg:
                     if reduced_cost >= -1e-3:
                         this_forbidden_omega = cg_solver.get_forbidden_omega()
                         if len(this_forbidden_omega)<0.5:
+                            ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
+                            sol = ilp_cg_solver.solve_ilp()
                             all_time_end = time.time()
                             all_time_profile['all_time'] = all_time_end - all_time_start
                             self.output_all_time_profile(all_time_profile)
-                            
-                            
+                            used_routes = sol['used_routes']
+                            variable_to_value = sol['variable_values']
+                            for route in used_routes:
+                                print(route.node_in_ordered)
+                            input('over here')
                             return {
                                 'status': 'optimal',
                                 'x': sol['variable_values'],
@@ -290,7 +295,7 @@ class GraphMaster_cg:
                     cg_iteration_time+=1
                 return {'status': 'max_iterations', 'iterations': iteration}     
 
-                
+
         
     
 
