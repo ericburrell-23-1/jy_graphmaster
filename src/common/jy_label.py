@@ -76,7 +76,9 @@ class jy_label:
                 self.base_gain[d] = -dual[d-1] + self.rcp_d_partial[(self.node,d)]
             else:
                 self.base_gain[d] = -dual[d-1]/2 + self.rcp_d_partial[(self.node,d)]
-
+            drop_off_d = d + len(self.pickup_nodes)
+            if drop_off_d == self.node:
+                self.base_gain[d] = -dual[d-1]/2
         for u in node_not_picked_up:
             self.tot_gain[u] = -dual[u-1] + self.rcp_u_partial[u]
         self.tot_gain = dict(sorted(self.tot_gain.items(), key=lambda item: item[1]))
