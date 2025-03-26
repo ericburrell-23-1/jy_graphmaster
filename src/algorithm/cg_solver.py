@@ -235,9 +235,12 @@ class GraphMaster_cg:
             cg_iteration_time =1
             self.path_added = set()
             list_of_routes = self._initial_routes()
+            forbidden_omega = []
             with TimeProfiler(all_time_profile, "solve:iteration"):
+
+                    
                 while iteration < max_iterations:
-                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module)
+                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
                     sol = cg_solver.solve()
                     this_dual = sol['dual_values']
                     l_id += 1
@@ -268,18 +271,26 @@ class GraphMaster_cg:
                                     this_dual[idx] =0
                         
                     if reduced_cost >= -1e-3:
-                        all_time_end = time.time()
-                        all_time_profile['all_time'] = all_time_end - all_time_start
-                        self.output_all_time_profile(all_time_profile)
-                        return {
-                            'status': 'optimal',
-                            'x': sol['variable_values'],
-                            'iterations': iteration,
-                        }
+                        this_forbidden_omega = cg_solver.get_forbidden_omega()
+                        if len(this_forbidden_omega)<0.5:
+                            all_time_end = time.time()
+                            all_time_profile['all_time'] = all_time_end - all_time_start
+                            self.output_all_time_profile(all_time_profile)
+                            
+                            
+                            return {
+                                'status': 'optimal',
+                                'x': sol['variable_values'],
+                                'iterations': iteration,
+                            }
+                        else:
+                            forbidden_omega.extend(this_forbidden_omega)
                     iteration += 1
                     print(f'========= cg iteration: {cg_iteration_time} =========')
                     cg_iteration_time+=1
-                return {'status': 'max_iterations', 'iterations': iteration}      
+                return {'status': 'max_iterations', 'iterations': iteration}     
+
+                
         
     
 
