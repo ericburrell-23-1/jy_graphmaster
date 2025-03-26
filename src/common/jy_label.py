@@ -74,8 +74,16 @@ class jy_label:
         self.base_gain = defaultdict()
         self.tot_gain = defaultdict()
         node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
+        print('self.all_nodes')
+        print(self.all_nodes_ordered)
+        print('node_wait_to_drop_off')
+        print(self.node_wait_to_drop_off)
+        #input('--')
         for d in self.node_wait_to_drop_off:
             if d == self.node:
+                print('in here')
+                print(d)
+                print('in here')
                 self.base_gain[d] = -dual[d-1] + self.rcp_d_partial[(self.node,d)]
             else:
                 self.base_gain[d] = -dual[d-1]/2 + self.rcp_d_partial[(self.node,d)]
@@ -106,6 +114,12 @@ class jy_label:
             print(lb)
             for d in self.node_wait_to_drop_off:
                 lb  += self.base_gain[d]
+                print('d')
+                print(d)
+                print('self.base_gain[d]')
+                print(self.base_gain[d])
+                print('self.dual_vec[d-1]')
+                print(self.dual_vec[d-1])
                 print(' step 2')
             #    print('d')
             #    print(d)
@@ -221,6 +235,26 @@ class jy_label:
                 print(dual_vec[0])
                 print('self.my_actions_ordered[1].cost')
                 print(self.my_actions_ordered[1].cost)
+                print('gap is ')
+                print('NEW_label.lb-self.lb')
+                print(NEW_label.lb-self.lb)
+                offset_pickup=1
+                offset_dropoff=6
+                print('dual_vec[4-1]')
+
+                print(dual_vec[4-offset_pickup])
+                print('dual_vec[2-1]')
+                print(dual_vec[2-offset_pickup])
+                print('dual_vec[9-1]')
+                print(dual_vec[9-offset_dropoff])
+                print('dual_vec[7-1]')
+                print(dual_vec[7-offset_dropoff])
+                print('self.action_dict[4,2][0].cost')
+                print(self.action_dict[4,2][0].cost)
+                print('self.action_dict[2,9][0].cost')
+                print(self.action_dict[2,9][0].cost)
+                print('self.action_dict[9,7][0].cost')
+                print(self.action_dict[9,7][0].cost)
                 input('error here the lb went down')
         return NEW_label
     
