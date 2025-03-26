@@ -141,8 +141,10 @@ class jy_fast_pricing():
             this_rcp = defaultdict()
             for d in self.pickup_node:
                 drop_off = d + len(self.pickup_node)
+                if (cur_loc,drop_off) == (5,10):
+                    print('check here')
                 if (cur_loc,drop_off) in self.action_dict.keys():
-                    self.rcp_d_partial[(cur_loc,d)] = self.action_dict[(cur_loc,drop_off)][0].cost/max_width
+                    self.rcp_d_partial[(cur_loc,drop_off)] = self.action_dict[(cur_loc,drop_off)][0].cost/max_width
 
     def initiate_RCP_u(self):
         max_width = self.jy_opt['max_pickups_in_a_route']

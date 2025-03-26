@@ -79,15 +79,18 @@ class jy_label:
         print('node_wait_to_drop_off')
         print(self.node_wait_to_drop_off)
         #input('--')
+        if self.all_nodes_ordered == [-1, 4, 2, 9]:
+                print('check here')
         for d in self.node_wait_to_drop_off:
+            drop_off_d = d + len(self.pickup_nodes)
             if d == self.node:
                 print('in here')
                 print(d)
                 print('in here')
-                self.base_gain[d] = -dual[d-1] + self.rcp_d_partial[(self.node,d)]
+                self.base_gain[d] = -dual[d-1] + self.rcp_d_partial[(self.node,drop_off_d)]
             else:
-                self.base_gain[d] = -dual[d-1]/2 + self.rcp_d_partial[(self.node,d)]
-            drop_off_d = d + len(self.pickup_nodes)
+                self.base_gain[d] = -dual[d-1]/2 + self.rcp_d_partial[(self.node,drop_off_d)]
+            
             if drop_off_d == self.node:
                 self.base_gain[d] = -dual[d-1]/2
         for u in node_not_picked_up:
@@ -99,6 +102,8 @@ class jy_label:
         if self.node ==-1:
             self.lb = -np.inf
         else:
+            if self.all_nodes_ordered == [-1, 4, 2, 9,7]:
+                print('check here')
             #q = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
             D = self.node_wait_to_drop_off
             V = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
@@ -134,7 +139,7 @@ class jy_label:
             #print('self.rcp_u_partial')
             #print(self.tot_gain)
             for k in range(len(D),len(D)+V):
-                this_rcp_u += self.tot_gain[key_list[k]]
+                this_rcp_u += self.tot_gain[key_list[k-len(D)]]
                 if this_rcp_u < min_rcp_u:
                     min_rcp_u = this_rcp_u
             lb += min_rcp_u
