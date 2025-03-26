@@ -22,6 +22,15 @@ class jy_efficient_frontier:
             return True
         return False
 
+    def get_lowest_lb(self):
+        lowest_lb=np.inf
+        for my_node in self.all_nodes:
+            for input_label in self.node_2_eff_fronteir[my_node]:
+                if lowest_lb>input_label.lb:
+                    lowest_lb=input_label.lb
+                #lowest_lb=np.min(lowest_lb,)
+                #self.node_2_eff_fronteir[my_node]
+        return lowest_lb
     def alter_fronteir_given_new_element(self,new_label):
 
         is_in_frontier=True

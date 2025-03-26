@@ -212,6 +212,15 @@ class jy_fast_pricing():
                   ##  print(self.dual_vec)
                   #  input('error here')
 
+    def get_lowest_lb(self):
+        lowest_lb=np.inf
+        for input_label in self.expandable_labels.objects:
+            if lowest_lb>input_label.lb:
+                lowest_lb=input_label.lb
+            #lowest_lb=np.min(lowest_lb,)
+            #self.node_2_eff_fronteir[my_node]
+        return lowest_lb
+
     def find_min_reduced_cost_path(self):
         """
         Main method to find the minimum reduced cost path following the algorithm in the PDF.
@@ -270,11 +279,25 @@ class jy_fast_pricing():
                 #print('num_expansion_out,num_expansion_in')
                 #print([num_expansion_out,num_expansion_in])
                 # Pop label with minimum current reduced cost
+                if debug_on==True:  
+                    my_lb=self.get_lowest_lb()
+                    print('my_lb')
+                    print(my_lb)
+                    #input('my_lb')
+                    if my_lb<incumbant_lb:
+                        print('incumbant_lb')
+                        print(incumbant_lb)
+                        print('my_lb')
+                        print(my_lb)
+                        input('error here')
+                    else:
+                        incumbant_lb=my_lb
                 curr_label = self.expandable_labels.pop()
                 if debug_on==True:
                     self.jy_get_compelition(curr_label)
                 
-
+                print('incumbant_lb')
+                print(incumbant_lb)
                 print('curr_label.red_cost')
                 print(curr_label.red_cost)
                 print('curr_label.LB')
@@ -309,7 +332,7 @@ class jy_fast_pricing():
                 for my_act in poss_actions:
                     if my_act.node_head in self.skip_node:
                         continue
-                    new_label = curr_label.expand_given_action(my_act)
+                    new_label = curr_label.expand_given_action(my_act,self.dual_vec)
 
                     #if new_label!=None:
                     #    print('my_act')
@@ -329,7 +352,7 @@ class jy_fast_pricing():
                      ##       print(new_label.lb)
                      #       input('error here 2 ')
                     if new_label == None:
-                        print('doing none')
+                        #print('doing none')
                         continue
                     new_label.calculate_better_lb(self.dual_vec)
                     #print('t1')
@@ -337,7 +360,7 @@ class jy_fast_pricing():
                     #print('t2')
 
                     if can_complete==False:
-                        print('no completion')
+                        #print('no completion')
                         continue
                     #print('t3')
                     if my_act.node_head in self.dropoff_node or my_act.node_head==-2:
@@ -553,9 +576,9 @@ class jy_fast_pricing():
             if is_good_perm==True:
                # my_dedug_completion=jy_pricing_debug_completion(candid_state,orig_depth,list_depths,list_states,my_action_list_given_perm,True)
                 found_good_perm=True
-                print('GOOD PERM IS')
-                print(my_perm)
-                print('----')
+                #print('GOOD PERM IS')
+                #print(my_perm)
+                #print('----')
                 break
         #if found_good_perm==False:
             #my_dedug_completion=jy_pricing_debug_completion(candid_state,orig_depth,None,None,None,False)

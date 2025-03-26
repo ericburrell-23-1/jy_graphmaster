@@ -80,7 +80,7 @@ class jy_label:
         for u in node_not_picked_up:
             self.tot_gain[u] = -dual[u-1] + self.rcp_u_partial[u]
         self.tot_gain = dict(sorted(self.tot_gain.items(), key=lambda item: item[1]))
-        print('check here')
+        #print('check here')
     def calculate_better_lb(self,dual):
         self.calculate_rcp_with_dual(dual)
         if self.node ==-1:
@@ -176,7 +176,7 @@ class jy_label:
                 all_labels_out.append(new_label)
 
         return all_labels_out
-    def expand_given_action(self,my_action):
+    def expand_given_action(self,my_action,dual_vec):
         NEW_label=None
         last_state=self.my_states_ordered[-1]
         new_head=my_action.get_head_state(last_state,last_state.l_id)
@@ -193,6 +193,25 @@ class jy_label:
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
             NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial)
+            NEW_label.calculate_better_lb(dual_vec)
+            if self.lb>NEW_label.lb+.001:
+                print('self.lb')
+                print(self.lb)
+                print('NEW_label.lb')
+                print(NEW_label.lb)
+                print('self.all_nodes_ordered')
+                print(self.all_nodes_ordered)
+                print('NEW_label.all_nodes_ordered')
+                print(NEW_label.all_nodes_ordered)
+                print('self.red_cost')
+                print(self.red_cost)
+                print('NEW_label.red_cost')
+                print(NEW_label.red_cost)
+                print('dual_vec[0]')
+                print(dual_vec[0])
+                print('self.my_actions_ordered[1].cost')
+                print(self.my_actions_ordered[1].cost)
+                input('error here the lb went down')
         return NEW_label
     
     def convert_2_route(self):
