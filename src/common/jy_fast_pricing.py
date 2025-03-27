@@ -248,6 +248,7 @@ class jy_fast_pricing():
         debug_on=False
         lowest_so_far=np.inf
         route_gen_count=0
+        use_completion_on=False
         while True:
             # Re-compute bounds based on dual values
             # Remove expandable labels with LB > 0
@@ -366,12 +367,13 @@ class jy_fast_pricing():
                         continue
                     new_label.calculate_better_lb(self.dual_vec)
                     #print('t1')
-                    can_complete=self.jy_get_compelition(new_label)
-                    #print('t2')
+                    if use_completion_on:
+                        can_complete=self.jy_get_compelition(new_label)
+                        #print('t2')
 
-                    if can_complete==False:
-                        #print('no completion')
-                        continue
+                        if can_complete==False:
+                            #print('no completion')
+                            continue
                     #print('t3')
                     if my_act.node_head in self.dropoff_node or my_act.node_head==-2:
                         #print('OKY GOOD ')

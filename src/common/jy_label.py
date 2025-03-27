@@ -61,7 +61,7 @@ class jy_label:
         #print(self.all_nodes_ordered)
         #print('self.node_wait_to_drop_off')
         #print(self.node_wait_to_drop_off)
-        self.DEBUG_check_label_correct()
+        #self.DEBUG_check_label_correct()
     def calculate_red_cost_given_dual(self,dual):
         red_cost =0
         for a in self.my_actions_ordered:
