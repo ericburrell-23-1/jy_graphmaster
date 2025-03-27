@@ -267,9 +267,17 @@ class GraphMaster_cg:
                             reduced_cost=0
                             if len(reduced_cost_list)>0:
                                 reduced_cost = min(reduced_cost_list)
+                            print('reduced_cost')
+                            print(reduced_cost)
+                            print('reduced_cost_list')
+                            print(reduced_cost_list)
+                            input('----')
 
                             if reduced_cost >= -1e-3:
                                 this_forbidden_omega = cg_solver.get_forbidden_omega()
+                                print('this_forbidden_omega')
+                                print(this_forbidden_omega)
+                                input('----')
                                 if len(this_forbidden_omega)<0.5:
                                     ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
                                     sol = ilp_cg_solver.solve_ilp()

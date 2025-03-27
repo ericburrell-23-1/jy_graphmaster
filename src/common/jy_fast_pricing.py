@@ -247,6 +247,7 @@ class jy_fast_pricing():
         #input('----')
         debug_on=False
         lowest_so_far=np.inf
+        route_gen_count=0
         while True:
             # Re-compute bounds based on dual values
             # Remove expandable labels with LB > 0
@@ -395,7 +396,7 @@ class jy_fast_pricing():
                         print(new_label.red_cost)
                         #input('paused')
                         self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
-                        
+                        route_gen_count=route_gen_count+1
                         did_gen_neg_red_cost=True
                         #if alpha>.99:
                         #    continue
@@ -431,8 +432,11 @@ class jy_fast_pricing():
         #print('lowest_so_far')
         #print(lowest_so_far)
         #input('----')
+        print('len(self.all_routes)')
+        print(len(self.all_routes))
+        print('route_gen_count')
+        print(route_gen_count)
         return self.all_routes
-    
     
     def _get_dual_index_for_customer(self, customer):
         """
