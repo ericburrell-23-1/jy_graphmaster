@@ -61,7 +61,7 @@ class jy_fast_pricing():
         print('initialization')
 
     def label_2_tuple(self,my_lab):
-        
+        #order of expansion 
         f1=my_lab.num_dropoffs_needed
         f2=my_lab.red_cost
         f3=-len(my_lab.all_nodes_ordered)
@@ -245,7 +245,7 @@ class jy_fast_pricing():
         alpha = self.jy_opt.get('alpha', 1.0)  # Default to 1.0 or maybe 0.5
         #print('starting the CG process')
         #input('----')
-        debug_on=True
+        debug_on=False
         lowest_so_far=np.inf
         while True:
             # Re-compute bounds based on dual values
@@ -283,8 +283,8 @@ class jy_fast_pricing():
                 # Pop label with minimum current reduced cost
                 if debug_on==True:  
                     my_lb=self.get_lowest_lb()
-                    print('my_lb')
-                    print(my_lb)
+                    #print('my_lb')
+                    #print(my_lb)
                     #input('my_lb')
                     if my_lb<incumbant_lb:
                         print('incumbant_lb')
@@ -297,21 +297,26 @@ class jy_fast_pricing():
                 curr_label = self.expandable_labels.pop()
                 if debug_on==True:
                     self.jy_get_compelition(curr_label)
-                
-                print('incumbant_lb')
-                print(incumbant_lb)
-                print('curr_label.red_cost')
-                print(curr_label.red_cost)
-                print('curr_label.LB')
-                print(curr_label.lb)
-                print('len(curr_label.my_states_ordered)')
-                print(len(curr_label.my_states_ordered))
-                print('curr_label.all_nodes_ordered')
-                print(curr_label.all_nodes_ordered)
-                print('self.forbidden_nodes')
-                print(self.forbidden_nodes)
-                print('len(self.expandable_labels)')
-                print(len(self.expandable_labels))
+                verbose=True
+                if verbose==True and num_expansion_in % 100==0:
+                    print('incumbant_lb')
+                    print(incumbant_lb)
+                    print('curr_label.red_cost')
+                    print(curr_label.red_cost)
+                    print('curr_label.LB')
+                    print(curr_label.lb)
+                    print('len(curr_label.my_states_ordered)')
+                    print(len(curr_label.my_states_ordered))
+                    print('curr_label.all_nodes_ordered')
+                    print(curr_label.all_nodes_ordered)
+                    print('self.forbidden_nodes')
+                    print(self.forbidden_nodes)
+                    print('len(self.expandable_labels)')
+                    print(len(self.expandable_labels))
+                    print('num_expansion_in')
+                    print(num_expansion_in)
+                    print('num_expansion_out')
+                    print(num_expansion_out)
                 if debug_on==True:
                     #check the lower bound
                     old_lb=curr_label.lb
@@ -331,8 +336,8 @@ class jy_fast_pricing():
                 #print('------')
                 #print('------')
                 #print('------')
-                if curr_label.all_nodes_ordered ==[-1,4,9]:
-                    print('check here')
+                #if curr_label.all_nodes_ordered ==[-1,4,9]:
+                #    print('check here')
                 for my_act in poss_actions:
                     if my_act.node_head in self.skip_node:
                         continue
@@ -378,7 +383,7 @@ class jy_fast_pricing():
                     self.efficient_frontier.alter_fronteir_given_new_element(new_label)
                     if new_label.is_complete_route:
                         lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
-                    if new_label.is_complete_route  and new_label.red_cost<0: #< new_label.lb/10:
+                    if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
                         #input('making route')
                         route = new_label.convert_2_route()
                         self.all_routes.append(route)
@@ -388,11 +393,12 @@ class jy_fast_pricing():
                         print('new_label.all_nodes_ordered')
                         print('new_label.red_cost')
                         print(new_label.red_cost)
-
+                        #input('paused')
                         self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
                         
                         did_gen_neg_red_cost=True
-
+                        #if alpha>.99:
+                        #    continue
 
                     elif not new_label.is_complete_route:
                         #new_label.calculate_better_lb(self.dual_vec)
@@ -421,10 +427,10 @@ class jy_fast_pricing():
                 print('len(self.expandable_labels)')
                 print(len(self.expandable_labels))
                 input('big error here')
-        print('DOEN T the CG process')
+        #print('DOEN T the CG process')
         #print('lowest_so_far')
         #print(lowest_so_far)
-        ##input('----')
+        #input('----')
         return self.all_routes
     
     

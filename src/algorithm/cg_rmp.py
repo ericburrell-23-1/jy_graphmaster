@@ -33,7 +33,7 @@ class CG_RMP:
                 if u!= v :
 
                     this_rho[(u,v)] = 2*self.actions[(u,v)][0].cost + 2*self.actions[(u+len(self.pickup_node),v+len(self.pickup_node))][0].cost
-
+                    this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
         return this_rho
 
     def get_forbidden_omega(self):

@@ -57,10 +57,10 @@ class jy_label:
         self.num_dropoffs_needed=self.num_pickups_in_route-self.num_dropoffs_in_route
             #if self.jy_opt['using_load_ai_lazy'] and s.node>=-0.5 and s.node<=self.jy_opt['using_load_ai_lazy_num_pickups']:
             #    self.jy_num_pickups=self.jy_num_pickups+1
-        print('self.all_nodes_ordered')
-        print(self.all_nodes_ordered)
-        print('self.node_wait_to_drop_off')
-        print(self.node_wait_to_drop_off)
+        #print('self.all_nodes_ordered')
+        #print(self.all_nodes_ordered)
+        #print('self.node_wait_to_drop_off')
+        #print(self.node_wait_to_drop_off)
         self.DEBUG_check_label_correct()
     def calculate_red_cost_given_dual(self,dual):
         red_cost =0
@@ -74,19 +74,19 @@ class jy_label:
         self.base_gain = defaultdict()
         self.tot_gain = defaultdict()
         node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
-        print('self.all_nodes')
-        print(self.all_nodes_ordered)
-        print('node_wait_to_drop_off')
-        print(self.node_wait_to_drop_off)
+        #print('self.all_nodes')
+        #print(self.all_nodes_ordered)
+        #print('node_wait_to_drop_off')
+        #print(self.node_wait_to_drop_off)
         #input('--')
-        if self.all_nodes_ordered == [-1, 4, 2, 9]:
-                print('check here')
+        #if self.all_nodes_ordered == [-1, 4, 2, 9]:
+                #print('check here')
         for d in self.node_wait_to_drop_off:
             drop_off_d = d + len(self.pickup_nodes)
             if d == self.node:
-                print('in here')
-                print(d)
-                print('in here')
+               # print('in here')
+               # print(d)
+               # print('in here')
                 self.base_gain[d] = -dual[d-1] + self.rcp_d_partial[(self.node,drop_off_d)]
             else:
                 self.base_gain[d] = -dual[d-1]/2 + self.rcp_d_partial[(self.node,drop_off_d)]
@@ -102,8 +102,8 @@ class jy_label:
         if self.node ==-1:
             self.lb = -np.inf
         else:
-            if self.all_nodes_ordered == [-1, 4, 2, 9,7]:
-                print('check here')
+            #if self.all_nodes_ordered == [-1, 4, 2, 9,7]:
+            #    print('check here')
             #q = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
             D = self.node_wait_to_drop_off
             V = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
@@ -115,17 +115,17 @@ class jy_label:
                 coresp_pickup=cur_dropoff-len(self.pickup_nodes)
                 pickup_index=coresp_pickup-1
                 lb=lb-(dual[pickup_index]/2)
-            print(' step 1lb')
-            print(lb)
+            #print(' step 1lb')
+            #print(lb)
             for d in self.node_wait_to_drop_off:
                 lb  += self.base_gain[d]
-                print('d')
-                print(d)
-                print('self.base_gain[d]')
-                print(self.base_gain[d])
-                print('self.dual_vec[d-1]')
-                print(self.dual_vec[d-1])
-                print(' step 2')
+                #print('d')
+                #print(d)
+                #print('self.base_gain[d]')
+                #print(self.base_gain[d])
+                #print('self.dual_vec[d-1]')
+                #print(self.dual_vec[d-1])
+                #print(' step 2')
             #    print('d')
             #    print(d)
             #    print('lb')

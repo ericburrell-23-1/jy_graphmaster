@@ -264,7 +264,9 @@ class GraphMaster_cg:
                             jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                             routes= jy_fast_pricer.run()
                             reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
-                            reduced_cost = min(reduced_cost_list)
+                            reduced_cost=0
+                            if len(reduced_cost_list)>0:
+                                reduced_cost = min(reduced_cost_list)
 
                             if reduced_cost >= -1e-3:
                                 this_forbidden_omega = cg_solver.get_forbidden_omega()
