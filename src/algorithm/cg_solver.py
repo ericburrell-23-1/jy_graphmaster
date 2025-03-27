@@ -22,6 +22,7 @@ import time
 import random
 from src.common.time_profile import TimeProfiler
 from src.algorithm.cg_rmp import CG_RMP
+import random
 class GraphMaster_cg:
     """
     Entry point to the GraphMaster solver. Takes problem model and initial feasible solution from problem-specific module, and creates the general GraphMaster problem.
@@ -243,7 +244,7 @@ class GraphMaster_cg:
 
                     
                 while iteration < max_iterations:
-                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
+                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                     output = cg_solver.solve()
                     this_sol = output['variable_values']
                     this_dual = output['dual_values']
@@ -264,6 +265,7 @@ class GraphMaster_cg:
                             routes= jy_fast_pricer.run()
                             reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
                             reduced_cost = min(reduced_cost_list)
+
                             if reduced_cost >= -1e-3:
                                 this_forbidden_omega = cg_solver.get_forbidden_omega()
                                 if len(this_forbidden_omega)<0.5:
@@ -278,16 +280,22 @@ class GraphMaster_cg:
                                     for route in list_of_routes:
                                         print(route.node_in_ordered)
                                     print('route used')
+                                    
                                     for route in used_routes:
                                         print(route.node_in_ordered)
-                                    input('over here')
+                                        valid = self.validate_route(route)
+                                        if valid == False:
+                                            input('invalid route here')
+
                                     return {
                                         'status': 'optimal',
                                         'x': sol['variable_values'],
                                         'iterations': iteration,
+                                        'used_routes':used_routes
                                     }
                                 else:
                                     forbidden_omega.extend(this_forbidden_omega)
+
                             #list_of_routes.extend(routes)
                             for route in routes:
                                 red_cost = route.get_red_cost(this_dual)
@@ -326,9 +334,41 @@ class GraphMaster_cg:
                     print(f'========= cg iteration: {cg_iteration_time} =========')
                     cg_iteration_time+=1
                 return {'status': 'max_iterations', 'iterations': iteration}     
-
-
-        
+    def validate_route(self,route):
+        return route.verify_feasibility()
+    def post_procssing(self, routes):
+        routes_no_over_cover = routes[:]
+        rhs_sum = np.zeros(len(self.rhs_exog_vec))
+        node_to_routes = defaultdict(list)
+        for route in routes:
+            rhs_sum += route.Exog_vec
+            non_zero_indices = np.nonzero(route.Exog_vec)[0]
+            for node in non_zero_indices:
+                node_to_routes[node+1].append(route)
+        over_cover = rhs_sum - np.ones(self.rhs_exog_vec)
+        over_cover_indices = np.nonzero(over_cover)[0]
+        for idx in over_cover_indices:
+            over_cover_num = over_cover_indices[idx]
+            over_cover_node = idx+1
+            random_route_remove = random.sample(node_to_routes[over_cover_node],over_cover_num)
+            
+            for route in random_route_remove:
+                state_action_alt_repeat = []
+                node_in_ordered = route.node_in_ordered
+                node_in_ordered.remove(over_cover_node)
+                node_in_ordered.remove(over_cover_node+len(self.pickup_node))
+                cur_state = State(-1,self.initial_resource_vector,0,True,False)
+                for (tail,head) in zip(node_in_ordered[:-1],node_in_ordered[1:]):
+                    this_act = self.actions[(tail,head)][0]
+                    state_action_alt_repeat.append(this_act)
+                    next_state = this_act.get_head_state(cur_state)
+                    if next_state == None:
+                        input('error here: none state generated from given column')
+                    state_action_alt_repeat.append(next_state)
+                    cur_state = next_state
+                this_route = Route(state_action_alt_repeat,1)
+                routes_no_over_cover.remove(route)
+                routes_no_over_cover.append(this_route)
     
 
     

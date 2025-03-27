@@ -74,7 +74,24 @@ class loadAI_cg:
             self.the_single_null_action,
             #node_to_list
         )
-        self.solver.solve()
+        output = self.solver.solve()
+
+        variable_to_values = output['x']
+        routes = output['used_routes']
+        route_num = 1
+        for route in routes:
+            print(f'=========route {route_num}============')
+            print('node in route ordered')
+            print(route.node_in_ordered)
+            print('time remaining')
+            print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
+            print('weight remain')
+            print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
+            print('volume remain')
+            print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
+            route_num+=1
+        input('out put here')
+
     
     def _load_data_from_file(self):
         """Parses data from file. Handles different types of files depending on `file_type` property."""

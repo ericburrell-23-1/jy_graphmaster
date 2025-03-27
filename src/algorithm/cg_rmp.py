@@ -2,10 +2,11 @@ import numpy as np
 from collections import defaultdict
 import pulp
 from src.common.pgm_approach import Route
-
+import itertools
+from src.common.state import State
 
 class CG_RMP:
-    def __init__(self, list_of_route:list[Route], rhs_exog_vec,data, forbidden = []):
+    def __init__(self, list_of_route:list[Route], rhs_exog_vec,data, forbidden = [],initial_resource_vector=None):
         self.list_of_route = list_of_route
         self.list_of_action_list = []
 
@@ -18,6 +19,7 @@ class CG_RMP:
         self.dropoff_node = data.dropoff_node
         self.neighbors = data.neighbors
         self.forbidden = forbidden
+        self.initial_resource_vector = initial_resource_vector
         self.rho = self._generate_rho()
         self._geenrate_col_coeff()
         
@@ -131,6 +133,38 @@ class CG_RMP:
             'variable_values': self.var_values,
             'dual_values': dual_values
         }
+    def generate_subset_of_routes(self):
+        sub_set_routes = []
+        for route in self.list_of_route:
+
+            node_in_ordered = route.node_in_ordered
+            pickup_nodes_in_route = [node for node in route.node_in_ordered 
+                                    if node in self.pickup_node]
+            if len(pickup_nodes_in_route) <=2:
+                continue
+            for size in range(2, len(pickup_nodes_in_route) + 1):
+                for pickup_subset in itertools.combinations(pickup_nodes_in_route, size):
+                    # Check if this subset forms a valid route
+                    if self.is_valid_pickup_subset(pickup_subset, route):
+                        # Create a new route
+                        new_route = self.create_subset_route(pickup_subset, route)
+                        sub_set_routes.append(new_route)
+        for route in sub_set_routes:
+            state_action_alt_repeat = []
+            source_state = State(-1,self.initial_resource_vector,0,True,False)
+            state_action_alt_repeat.append(source_state)
+            cur_state = source_state
+            for (tail,head) in zip(route[:-1],route[1:]):
+                this_act = self.actions[(tail,head)][0]
+                state_action_alt_repeat.append(this_act)
+                next_state = this_act.get_head_state(cur_state)
+                if next_state == None:
+                    input('error here: none state generated from given column')
+                state_action_alt_repeat.append(next_state)
+                cur_state = next_state
+            this_route = Route(state_action_alt_repeat,1)
+            self.list_of_route.append(this_route)
+    
     def solve_ilp(self):
 
         var_index_to_route_index = defaultdict()
