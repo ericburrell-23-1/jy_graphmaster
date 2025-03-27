@@ -213,7 +213,6 @@ class jy_label:
             new_head=my_action.get_head_state(last_state,last_state.l_id)
         else:
             new_head=my_action.get_head_state_fast_load_ai(last_state,last_state.l_id)
-
         if self.max_actions_in_route<len(self.my_actions_ordered) :
             input('errror here not posible')
         if self.max_actions_in_route==len(self.my_actions_ordered) and my_action.node_head!=-2:

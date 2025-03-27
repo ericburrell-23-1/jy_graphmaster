@@ -198,6 +198,17 @@ class Action:
         else:
             head_state = State(self.node_head, head_state_vec, l_id, is_source=False, is_sink=False)
 
+        do_debug=False
+        if do_debug==True:
+            backup_head=self.get_head_state(state_tail,state_tail.l_id)
+            if (backup_head==None)!=(head_state==None):
+                input('error here ')
+            if False==backup_head.equals_minus_id(head_state):
+                print('error ')
+                backup_head.pretty_print_state()
+                backup_head.pretty_print_state()
+                input('error here ')
+            input('GOOD')
         return head_state
 
 

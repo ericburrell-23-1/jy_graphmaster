@@ -271,7 +271,7 @@ class GraphMaster_cg:
                             print(reduced_cost)
                             print('reduced_cost_list')
                             print(reduced_cost_list)
-                            input('----')
+                            #input('----')
 
                             if reduced_cost >= -1e-3:
                                 this_forbidden_omega = cg_solver.get_forbidden_omega()
