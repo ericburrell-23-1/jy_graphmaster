@@ -42,6 +42,7 @@ class jy_fast_pricing():
         self.actions_of_node = actions_of_node
         self.all_nodes = all_nodes
         self.jy_opt = jy_opt
+        self.jy_opt['use_load_ai_fast']=True
         self.num_cus = int((len(self.all_nodes)-2)/3)
         self.pickup_node = self.all_nodes[1:self.num_cus+1]
         self.dropoff_node = self.all_nodes[self.num_cus+1:2*self.num_cus+1]
@@ -412,7 +413,7 @@ class jy_fast_pricing():
                     break
             #print('num_expanded_this_round')
             #print(num_expanded_this_round)
-            if did_gen_possible_expansion==False:
+            if use_completion_on and did_gen_possible_expansion==False:
                 print('********')
                 print('********')
                 print('********')
@@ -429,6 +430,9 @@ class jy_fast_pricing():
                 print(self.forbidden_nodes)
                 print('len(self.expandable_labels)')
                 print(len(self.expandable_labels))
+                can_complete=self.jy_get_compelition(new_label)
+                print('can_complete')
+                print(can_complete)
                 input('big error here')
         #print('DOEN T the CG process')
         #print('lowest_so_far')
@@ -583,7 +587,12 @@ class jy_fast_pricing():
                 pre_node = my_perm[i]
                 post_node = my_perm[i+1]
                 my_action=self.action_dict[(pre_node,post_node)][0]
-                next_state=my_action.get_head_state(list_states[-1],list_states[-1].l_id)
+                next_state=[]
+                if self.jy_opt['use_load_ai_fast']==False:
+                    next_state=my_action.get_head_state(list_states[-1],list_states[-1].l_id)
+                else:
+                    next_state=my_action.get_head_state_fast_load_ai(list_states[-1],list_states[-1].l_id)
+
                 if next_state==None:
                     is_good_perm=False
                     break

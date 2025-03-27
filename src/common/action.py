@@ -165,7 +165,43 @@ class Action:
             #Action._head_state_cache[cache_key] = (head_state_vec, False, False)
         
         return head_state
-            
+    
+
+    def get_head_state_fast_load_ai(self, state_tail: State, l_id):
+        """
+        Fast version to compute head state from tail state and resource consumption.
+        """
+
+        # 1. Early rejection using sparse comparison (fast & memory efficient)
+        diff_data = state_tail.state_vec - self.min_resource_vec
+        if diff_data.nnz > 0 and (diff_data.data < 0).any():
+            return None
+
+        # 2. Compute tentative head state vector
+        head_state_vec = state_tail.state_vec + self.resource_consumption_vec
+
+        if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
+            return None
+
+        # 3. Apply max_resource cap (only on indices of interest)
+        if len(self.indices_non_zero_max)>0:
+            head_state_vec = head_state_vec.tocsr(copy=True)  # Ensure CSR format and not a view
+            for j in self.indices_non_zero_max:
+                max_val = int(self.max_resource_vec[0, j])
+                current_val = head_state_vec[0, j]
+                if current_val > max_val:
+                    head_state_vec[0, j] = max_val
+
+        # 4. Create the final State object
+        if self.node_head == -2:
+            head_state = State(self.node_head, self.empty_resource_vec, l_id, is_source=False, is_sink=True)
+        else:
+            head_state = State(self.node_head, head_state_vec, l_id, is_source=False, is_sink=False)
+
+        return head_state
+
+
+
     def get_tail_state(self, state_head: State, l_id):
         """
         Optimized version of get_tail_state with caching for performance.
