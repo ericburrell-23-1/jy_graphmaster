@@ -102,52 +102,58 @@ class jy_label:
     
     def calculate_better_lb(self,dual):
         self.calculate_rcp_with_dual(dual)
-        if self.node ==-1:
-            self.lb = -np.inf
+        if self.node == -1:
+            self.lb =  -np.inf
+            return self.lb
+        elif self.node == -2:
+            self.lb = self.red_cost
+            return self.lb
         else:
-            #if self.all_nodes_ordered == [-1, 4, 2, 9,7]:
-            #    print('check here')
-            #q = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
             D = self.must_drop_off
             V = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
             #F = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
-            
-            lb = self.red_cost
-            if self.all_nodes_ordered[-1] in self.dropoff_nodes:
-                cur_dropoff=self.all_nodes_ordered[-1]
-                coresp_pickup=cur_dropoff-len(self.pickup_nodes)
-                pickup_index=coresp_pickup-1
-                lb=lb-(dual[pickup_index]/2)
-            #print(' step 1lb')
-            #print(lb)
-            for d in self.must_drop_off:
-                lb  += self.base_gain[d]
-                #print('d')
-                #print(d)
-                #print('self.base_gain[d]')
-                #print(self.base_gain[d])
-                #print('self.dual_vec[d-1]')
-                #print(self.dual_vec[d-1])
-                #print(' step 2')
-            #    print('d')
-            #    print(d)
-            #    print('lb')
-            #    print(lb)
-            #print(' step 3lb')
-            #print(lb)
-            min_rcp_u = np.inf
-            this_rcp_u = 0
-            key_list = list(self.tot_gain.keys())
+            D = self.must_drop_off[:]
+            if self.node in self.dropoff_nodes:
+                D.append(self.node-len(self.pickup_nodes))
 
-            #print('self.rcp_u_partial')
-            #print(self.tot_gain)
-            for k in range(len(D),len(D)+V):
-                this_rcp_u += self.tot_gain[key_list[k-len(D)]]
-                if this_rcp_u < min_rcp_u:
-                    min_rcp_u = this_rcp_u
-            lb += min_rcp_u
+            tot_benefit_dropoff_dual = 0
+            tot_benefit_droppoff_cost =0
+            for d in D:
+                drop_off_of_d = d +len(self.pickup_nodes)
+                if drop_off_of_d == self.node:
+                    tot_benefit_dropoff_dual -= dual[d-1]/2
+                elif d == self.node:
+                    tot_benefit_dropoff_dual -= dual[d-1]
+                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
+                else:
+                    tot_benefit_dropoff_dual -= dual[d-1]/2
+                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
+            tot_benefit_dropoff_pickup_dual = 0
+            tot_benefit_dropoff_pickup_cost = 0
+            extra_customer_can_pick_up = self.jy_opt['max_pickups_in_a_route']-self.num_pickups_in_route
+            # not picking new customer as first lowest red cost
+            if self.num_pickups_in_route > 0.5:
+                lowest_red_cost = self.red_cost+tot_benefit_dropoff_dual + tot_benefit_droppoff_cost/self.num_pickups_in_route
+            else:
+                lowest_red_cost = np.inf
             
-            self.lb =  lb
+            for k in range(0,extra_customer_can_pick_up):
+                sorted_key = list(self.tot_gain.keys())
+                tot_benefit_dropoff_pickup_dual = 0
+                tot_benefit_dropoff_pickup_cost = 0
+                myDenom = self.jy_opt['max_pickups_in_a_route']
+                for node in sorted_key[:k+1]:
+                    tot_benefit_dropoff_pickup_dual -= dual[node-1]
+                    tot_benefit_dropoff_pickup_cost += self.action_dict[(node,node+len(self.pickup_nodes))][0].cost
+                this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
+                # myDenom = k + self.num_pickups_in_route+1
+                # tot_benefit_dropoff_pickup_dual -= dual[sorted_key[k]-1]
+                # tot_benefit_dropoff_pickup_cost += self.action_dict[(sorted_key[k],sorted_key[k]+len(self.pickup_nodes))][0].cost
+                # this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
+                if this_red_cost < lowest_red_cost:
+                    lowest_red_cost = this_red_cost
+            self.lb = lowest_red_cost
+            return self.lb
             #print('lb')
             #print(lb)
             #input('----')
@@ -156,8 +162,10 @@ class jy_label:
         
         if self.node == -1:
             self.lb =  -np.inf
+            return self.lb
         elif self.node == -2:
             self.lb = self.red_cost
+            return self.lb
         else:
             self.tot_gain = defaultdict()
             node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
@@ -211,6 +219,7 @@ class jy_label:
                     lowest_red_cost = this_red_cost
             
             self.lb = lowest_red_cost
+            return self.lb
     def this_label_dominates_input(self,candid_label):
         
         my_flag=True
@@ -295,6 +304,13 @@ class jy_label:
                 NEW_label.calculate_better_lb(dual_vec)
             elif self.jy_opt['lb_option'] == 0:
                 NEW_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+            elif self.jy_opt['lb_option'] == 'check':
+                lb1 = NEW_label.calculate_better_lb(dual_vec)
+                lb2 = NEW_label.calculate_better_lb_2(dual_vec)
+                if lb1<lb2:
+                    input('lb error here')
+            else:
+                input('no lb option used')
             if self.lb>NEW_label.lb+.001:
                 print('self.lb')
                 print(self.lb)
