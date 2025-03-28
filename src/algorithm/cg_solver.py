@@ -249,6 +249,7 @@ class GraphMaster_cg:
                     output = cg_solver.solve()
                     this_sol = output['variable_values']
                     this_dual = output['dual_values']
+                    this_lp_objective = output['objective_value']
                     for index, route_index in cg_solver.var_index_to_route_index.items():
                         value = this_sol[index]
                         if value > 0.0001:
@@ -280,6 +281,8 @@ class GraphMaster_cg:
                                 print(this_forbidden_omega)
                                 input('----')
                                 if len(this_forbidden_omega)<0.5:
+                                    print('----final lp----')
+                                    print(this_lp_objective)
                                     ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
                                     sol = ilp_cg_solver.solve_ilp()
                                     all_time_end = time.time()
