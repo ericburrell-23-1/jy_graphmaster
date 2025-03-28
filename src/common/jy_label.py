@@ -289,7 +289,12 @@ class jy_label:
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
             NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2)
-            NEW_label.calculate_better_lb_2(dual_vec)
+            if self.jy_opt['lb'] == 2:
+                NEW_label.calculate_better_lb_2(dual_vec)
+            elif self.jy_opt['lb'] == 1:
+                NEW_label.calculate_better_lb(dual_vec)
+            elif self.jy_opt['lb'] == 0:
+                NEW_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
             if self.lb>NEW_label.lb+.001:
                 print('self.lb')
                 print(self.lb)

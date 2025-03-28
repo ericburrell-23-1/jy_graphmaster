@@ -207,7 +207,12 @@ class jy_fast_pricing():
         for my_label in self.expandable_labels.objects:
             my_label.calculate_red_cost_given_dual(self.dual_vec)
             #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-            my_label.calculate_better_lb_2(self.dual_vec)
+            if self.jy_opt['lb'] == 2:
+                my_label.calculate_better_lb_2(self.dual_vec)
+            elif self.jy_opt['lb'] == 1:
+                my_label.calculate_better_lb(self.dual_vec)
+            elif self.jy_opt['lb'] == 0:
+                my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
             tmp=set(my_label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
             if len(tmp)>0.5:
                 my_label.red_cost=np.inf
@@ -330,7 +335,12 @@ class jy_fast_pricing():
                 if debug_on==True:
                     #check the lower bound
                     old_lb=curr_label.lb
-                    curr_label.calculate_better_lb_2(self.dual_vec)
+                    if self.jy_opt['lb'] == 2:
+                        curr_label.calculate_better_lb_2(self.dual_vec)
+                    elif self.jy_opt['lb'] == 1:
+                        curr_label.calculate_better_lb(self.dual_vec)
+                    elif self.jy_opt['lb'] == 0:
+                        curr_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
                     if abs(curr_label.lb-old_lb)>.001:
                         input('error here')
                 # Generate all possible expansions for this label
@@ -373,7 +383,12 @@ class jy_fast_pricing():
                     if new_label == None:
                         #print('doing none')
                         continue
-                    new_label.calculate_better_lb_2(self.dual_vec)
+                    if self.jy_opt['lb'] == 2:
+                        new_label.calculate_better_lb_2(self.dual_vec)
+                    elif self.jy_opt['lb'] == 1:
+                        new_label.calculate_better_lb(self.dual_vec)
+                    elif self.jy_opt['lb'] == 0:
+                        new_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
                     #print('t1')
                     if use_completion_on:
                         can_complete=self.jy_get_compelition(new_label)
