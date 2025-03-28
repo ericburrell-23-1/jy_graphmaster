@@ -49,12 +49,15 @@ class CG_RMP:
         self.omega_name_to_index = defaultdict()
         self.index_to_omega_name = defaultdict()
         self.var_index_to_route_index = defaultdict()
+        self.col_of_path = 0
+        self.col_of_omega = 0
         for pi in range(len(self.list_of_route)):
             route = self.list_of_route[pi]
             self.var_to_obj_coef[var_index] = route.cost
             self.var_to_col_coef[var_index] = route.Exog_vec
             self.var_index_to_route_index[var_index] = pi
             var_index += 1
+            self.col_of_path += 1
         for u in self.pickup_node:
             for v in set(self.neighbors[u]) & set(self.pickup_node):
                 if (u,v) not in self.forbidden:
@@ -66,6 +69,7 @@ class CG_RMP:
                     self.omega_name_to_index[('omega',u,v)] = var_index
                     self.index_to_omega_name[var_index] = ('omega',u,v)
                     var_index += 1
+                    self.col_of_omega +=1
 
             
     def _build_master_problem(self):
@@ -110,7 +114,7 @@ class CG_RMP:
         
         # Return the solution status and objective value
         status = pulp.LpStatus[self.model.status]
-        objective_value = pulp.value(self.model.objective)
+        objective_value = float(pulp.value(self.model.objective))
         
         # Get variable values and print them for debugging
         self.var_values = {}

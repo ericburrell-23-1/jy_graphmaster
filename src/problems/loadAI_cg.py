@@ -95,7 +95,6 @@ class loadAI_cg:
             print('volume remain')
             print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
             route_num+=1
-        input('out put here')
 
     
     def _load_data_from_file(self):

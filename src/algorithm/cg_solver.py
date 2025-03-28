@@ -102,7 +102,8 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
-        self.jy_options_user_defined['lb'] =1
+        self.jy_options_user_defined['lb_option'] =1
+        self.jy_options_user_defined['information_for_iteration'] =True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -239,17 +240,26 @@ class GraphMaster_cg:
             list_of_routes = self._initial_routes()
             forbidden_omega = []
             node_sequence_of_routes = []
+            all_reduce_cost_list = []
+            all_min_reduce_cost = []
+            num_path_col_in_rmp = []
+            num_omega_col_in_rmp = []
+            path_col_generated = []
             for route in list_of_routes:
                 node_sequence_of_routes.append(route.node_in_ordered)
             with TimeProfiler(all_time_profile, "solve:iteration"):
 
-                    
+                lp_objective_list = []
+                omega_term_list = []
                 while iteration < max_iterations:
                     cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                     output = cg_solver.solve()
+                    num_path_col_in_rmp.append(cg_solver.col_of_path)
+                    num_omega_col_in_rmp.append(cg_solver.col_of_omega)
                     this_sol = output['variable_values']
                     this_dual = output['dual_values']
                     this_lp_objective = output['objective_value']
+                    lp_objective_list.append(this_lp_objective)
                     for index, route_index in cg_solver.var_index_to_route_index.items():
                         value = this_sol[index]
                         if value > 0.0001:
@@ -266,9 +276,11 @@ class GraphMaster_cg:
                             jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                             routes= jy_fast_pricer.run()
                             reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
+                            all_reduce_cost_list.append(reduced_cost_list)
                             reduced_cost=0
                             if len(reduced_cost_list)>0:
                                 reduced_cost = min(reduced_cost_list)
+                                all_min_reduce_cost.append(reduced_cost)
                             print('reduced_cost')
                             print(reduced_cost)
                             print('reduced_cost_list')
@@ -279,17 +291,35 @@ class GraphMaster_cg:
                                 this_forbidden_omega = cg_solver.get_forbidden_omega()
                                 print('this_forbidden_omega')
                                 print(this_forbidden_omega)
-                                input('----')
+                                omega_term_list.append(len(this_forbidden_omega))
                                 if len(this_forbidden_omega)<0.5:
-                                    print('----final lp----')
-                                    print(this_lp_objective)
+                                    if self.jy_options_user_defined['information_for_iteration'] == True:
+                                        print('----list of lp----')
+                                        print(lp_objective_list)
+                                        print('number of positive omega terms (for each iteration)')
+                                        print(omega_term_list)
+                                        print('the sum of the omega terms (all positive omega)')
+                                        print(forbidden_omega)
+                                        print('the total number of forbidden omega terms')
+                                        print(len(forbidden_omega))
+                                        print('sum of the reduced cost term (reduce cost of all path each iteration)')
+                                        print(all_reduce_cost_list)
+                                        print('minimum reduced cost term (for each iteration)')
+                                        print(all_min_reduce_cost)
+                                        print('number of col (path) in rmp (for each iteraiton)')
+                                        print(num_path_col_in_rmp)
+                                        print('number of col (omega) in rmp (for each iteraiton)')
+                                        print(num_omega_col_in_rmp)
+                                        print('number of col generated (path added for each iteration)')
+                                        print(path_col_generated)
+                                        input('----')
                                     ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
                                     sol = ilp_cg_solver.solve_ilp()
                                     all_time_end = time.time()
                                     all_time_profile['all_time'] = all_time_end - all_time_start
                                     self.output_all_time_profile(all_time_profile)
                                     used_routes = sol['used_routes']
-                                    variable_to_value = sol['variable_values']
+                                    #variable_to_value = sol['variable_values']
                                     print('route generated')
                                     for route in list_of_routes:
                                         print(route.node_in_ordered)
@@ -311,6 +341,7 @@ class GraphMaster_cg:
                                     forbidden_omega.extend(this_forbidden_omega)
 
                             #list_of_routes.extend(routes)
+                            add_route_num = 0
                             for route in routes:
                                 red_cost = route.get_red_cost(this_dual)
                                 if route.node_in_ordered in node_sequence_of_routes and red_cost<-1:
@@ -324,6 +355,8 @@ class GraphMaster_cg:
                                     print(route.node_in_ordered)
                                     node_sequence_of_routes.append(route.node_in_ordered)
                                     list_of_routes.append(route)
+                                    add_route_num += 1
+                            path_col_generated.append(add_route_num)
                             
                             print('======route check here======')
                         else:
