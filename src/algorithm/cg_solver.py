@@ -102,7 +102,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
-        self.jy_options_user_defined['lb_option'] =1
+        self.jy_options_user_defined['lb_option'] =2
         self.jy_options_user_defined['information_for_iteration'] =True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
@@ -292,27 +292,19 @@ class GraphMaster_cg:
                                 print('this_forbidden_omega')
                                 print(this_forbidden_omega)
                                 omega_term_list.append(len(this_forbidden_omega))
+                                output_info = defaultdict()
                                 if len(this_forbidden_omega)<0.5:
                                     if self.jy_options_user_defined['information_for_iteration'] == True:
-                                        print('----list of lp----')
-                                        print(lp_objective_list)
-                                        print('number of positive omega terms (for each iteration)')
-                                        print(omega_term_list)
-                                        print('the sum of the omega terms (all positive omega)')
-                                        print(forbidden_omega)
-                                        print('the total number of forbidden omega terms')
-                                        print(len(forbidden_omega))
-                                        print('sum of the reduced cost term (reduce cost of all path each iteration)')
-                                        print(all_reduce_cost_list)
-                                        print('minimum reduced cost term (for each iteration)')
-                                        print(all_min_reduce_cost)
-                                        print('number of col (path) in rmp (for each iteraiton)')
-                                        print(num_path_col_in_rmp)
-                                        print('number of col (omega) in rmp (for each iteraiton)')
-                                        print(num_omega_col_in_rmp)
-                                        print('number of col generated (path added for each iteration)')
-                                        print(path_col_generated)
-                                        input('----')
+                                        output_info['list of lp'] = lp_objective_list
+                                        output_info['list number of positive omega terms (for each iteration lp'] = omega_term_list
+                                        output_info['the sum of the omega terms (all positive omega)'] = forbidden_omega
+                                        output_info['the total number of forbidden omega terms'] = len(forbidden_omega)
+                                        output_info['sum of the reduced cost term (reduce cost of all path each iteration)'] = all_reduce_cost_list
+                                        output_info['minimum reduced cost term (for each iteration)'] = all_min_reduce_cost
+                                        output_info['number of col (path) in rmp (for each iteraiton)'] = num_path_col_in_rmp
+                                        output_info['number of col (omega) in rmp (for each iteraiton)'] = num_omega_col_in_rmp
+                                        output_info['number of col generated (path added for each iteration)'] = path_col_generated
+                                        
                                     ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
                                     sol = ilp_cg_solver.solve_ilp()
                                     all_time_end = time.time()
@@ -335,7 +327,8 @@ class GraphMaster_cg:
                                         'status': 'optimal',
                                         'x': sol['variable_values'],
                                         'iterations': iteration,
-                                        'used_routes':used_routes
+                                        'used_routes':used_routes,
+                                        'output_info':output_info
                                     }
                                 else:
                                     forbidden_omega.extend(this_forbidden_omega)

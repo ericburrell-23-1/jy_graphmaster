@@ -78,6 +78,7 @@ class loadAI_cg:
 
         variable_to_values = output['x']
         routes = output['used_routes']
+        output_info = output['output_info']
         route_num = 1
         for route in routes:
             print(f'=========route {route_num}============')
@@ -95,6 +96,13 @@ class loadAI_cg:
             print('volume remain')
             print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
             route_num+=1
+        print('=======output info=======')
+        for name,value in output_info.items():
+            print(' ')
+            print(name)
+            print(value)
+            
+
 
     
     def _load_data_from_file(self):
