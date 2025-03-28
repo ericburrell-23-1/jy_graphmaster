@@ -59,6 +59,7 @@ class jy_fast_pricing():
         self.pre_process__partition_actions()
         self.initiate_RCP_d()
         self.initiate_RCP_u()
+        self.initiate_RCP_u_2()
         print('initialization')
 
     def label_2_tuple(self,my_lab):
@@ -154,7 +155,12 @@ class jy_fast_pricing():
             self.rcp_u_partial[u] = self.action_dict[(u,u+len(self.pickup_node))][0].cost/max_width
         self.rcp_u_partial = dict(sorted(self.rcp_u_partial.items(), key=lambda item: item[1], reverse=True))
 
-         
+    def initiate_RCP_u_2(self):
+        self.rcp_u_partial_2 = defaultdict()
+        for k in range(1,self.jy_opt['max_pickups_in_a_route']+1):
+            for u in self.pickup_node:
+                self.rcp_u_partial_2[(k,u)] = self.action_dict[(u,u+len(self.pickup_node))][0].cost/k
+            
     def initialize_source_label(self):
         """
         Initialize the label at the source node.
@@ -176,7 +182,8 @@ class jy_fast_pricing():
             pickup_nodes=self.pickup_node,
             dropoff_nodes=self.dropoff_node,
             rcp_u_partial = self.rcp_u_partial,
-            rcp_d_partial = self.rcp_d_partial
+            rcp_d_partial = self.rcp_d_partial,
+            rcp_u_partial_2 = self.rcp_u_partial_2
         )
 
         new_tuple=self.label_2_tuple(source_label)
@@ -512,9 +519,12 @@ class jy_fast_pricing():
                     self.actions_from_node_MINUS_dest_dropoff[my_origin].append(a)
         
     
-    def get_actions_from_label(self,my_label):
+    def get_actions_from_label(self,my_label:jy_label):
         s=my_label.my_states_ordered[-1]
-        actions_use=self.actions_from_node_MINUS_dest_dropoff[s.node].copy()
+        if len(my_label.nodes_picked_up) < self.jy_opt['max_pickups_in_a_route']:
+            actions_use=self.actions_from_node_MINUS_dest_dropoff[s.node].copy()
+        else:
+            actions_use = []
         must_dropoff=self.get_must_drop_off_including_current(s)
     
         if s.node!=-1 and len(must_dropoff)==0:

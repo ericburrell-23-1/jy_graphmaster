@@ -17,7 +17,7 @@ class jy_label:
     def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
                  dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
                  action_2_red_cost_dict,actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
-                 rcp_u_partial, rcp_d_partial):
+                 rcp_u_partial, rcp_d_partial,rcp_u_partial_2):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         self.my_states_ordered=my_states_ordered
@@ -44,6 +44,8 @@ class jy_label:
         self.must_drop_off = []
         self.rcp_u_partial = rcp_u_partial
         self.rcp_d_partial = rcp_d_partial
+        self.rcp_u_partial_2 = rcp_u_partial_2
+        
         for s in self.my_states_ordered:
             self.all_nodes_ordered.append(s.node)
             if s.node  in self.pickup_nodes:
@@ -97,77 +99,7 @@ class jy_label:
             self.tot_gain[u] = -dual[u-1] + self.rcp_u_partial[u]
         self.tot_gain = dict(sorted(self.tot_gain.items(), key=lambda item: item[1]))
         #print('check here')
-    def calculate_better_lb_2(self,dual):
-        self.calculate_red_cost_given_dual(dual)
-        
-        if self.node == -1:
-            self.lb =  -np.inf
-        elif self.node == -2:
-            self.lb = self.red_cost
-        else:
-            if self.all_nodes_ordered == [-1, 2]:
-                print('check here')
-            self.tot_gain = defaultdict()
-            node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
-            
-            D = self.must_drop_off
-            tot_benefit_dropoff_dual = 0
-            tot_benefit_droppoff_cost =0
-            for d in D:
-                drop_off_of_d = d +len(self.pickup_nodes)
-                if drop_off_of_d == self.node:
-                    tot_benefit_dropoff_dual -= dual[d-1]/2
-                elif d == self.node:
-                    tot_benefit_dropoff_dual -= dual[d-1]
-                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
-                else:
-                    tot_benefit_dropoff_dual -= dual[d-1]/2
-                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
-            tot_benefit_dropoff_pickup_dual = 0
-            tot_benefit_dropoff_pickup_cost = 0
-            extra_customer_can_pick_up = self.jy_opt['max_pickups_in_a_route']-self.num_pickups_in_route
-            # not picking new customer as first lowest red cost
-            if self.num_pickups_in_route > 0.5:
-                lowest_red_cost = self.red_cost+tot_benefit_dropoff_dual + tot_benefit_droppoff_cost/self.num_pickups_in_route
-            else:
-                lowest_red_cost = np.inf
-            
-            sorted_node_with_k = defaultdict()
-            for k in range(0,extra_customer_can_pick_up):
-                tot_gain = defaultdict()
-                for u in node_not_picked_up:
-                    tot_gain[u] = -dual[u-1] + self.action_dict[(u,u+len(self.pickup_nodes))][0].cost/(1+k)
-                tot_gain = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
-                sorted_node_with_k[k] = tot_gain
-
-            for k in range(0,extra_customer_can_pick_up):
-                sorted_key = list(sorted_node_with_k[k].keys())
-                tot_benefit_dropoff_pickup_dual = 0
-                tot_benefit_dropoff_pickup_cost = 0
-                for node in sorted_key[:k+1]:
-                    myDenom = k + self.num_pickups_in_route+1
-                    tot_benefit_dropoff_pickup_dual -= dual[sorted_key[k]-1]
-                    tot_benefit_dropoff_pickup_cost += self.action_dict[(sorted_key[k],sorted_key[k]+len(self.pickup_nodes))][0].cost
-                this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
-                # myDenom = k + self.num_pickups_in_route+1
-                # tot_benefit_dropoff_pickup_dual -= dual[sorted_key[k]-1]
-                # tot_benefit_dropoff_pickup_cost += self.action_dict[(sorted_key[k],sorted_key[k]+len(self.pickup_nodes))][0].cost
-                # this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
-                if this_red_cost < lowest_red_cost:
-                    lowest_red_cost = this_red_cost
-            
-            self.lb = lowest_red_cost
-        if self.parent_label != None:
-            if self.lb < self.parent_label.lb-1:
-                print('self.parent_label.lb')
-                print(self.parent_label.lb)
-                print('parents node')
-                print(self.parent_label.all_nodes_ordered)
-                print('self.lb')
-                print(self.lb)
-                print('this node')
-                print(self.all_nodes_ordered)            
-                input('error here')
+    
     def calculate_better_lb(self,dual):
         self.calculate_rcp_with_dual(dual)
         if self.node ==-1:
@@ -219,15 +151,76 @@ class jy_label:
             #print('lb')
             #print(lb)
             #input('----')
+    def calculate_better_lb_2(self,dual):
+        self.calculate_red_cost_given_dual(dual)
         
+        if self.node == -1:
+            self.lb =  -np.inf
+        elif self.node == -2:
+            self.lb = self.red_cost
+        else:
+            self.tot_gain = defaultdict()
+            node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
+            
+            D = self.must_drop_off[:]
+            if self.node in self.dropoff_nodes:
+                D.append(self.node-len(self.pickup_nodes))
+            tot_benefit_dropoff_dual = 0
+            tot_benefit_droppoff_cost =0
+            for d in D:
+                drop_off_of_d = d +len(self.pickup_nodes)
+                if drop_off_of_d == self.node:
+                    tot_benefit_dropoff_dual -= dual[d-1]/2
+                elif d == self.node:
+                    tot_benefit_dropoff_dual -= dual[d-1]
+                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
+                else:
+                    tot_benefit_dropoff_dual -= dual[d-1]/2
+                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
+            tot_benefit_dropoff_pickup_dual = 0
+            tot_benefit_dropoff_pickup_cost = 0
+            extra_customer_can_pick_up = self.jy_opt['max_pickups_in_a_route']-self.num_pickups_in_route
+            # not picking new customer as first lowest red cost
+            if self.num_pickups_in_route > 0.5:
+                lowest_red_cost = self.red_cost+tot_benefit_dropoff_dual + tot_benefit_droppoff_cost/self.num_pickups_in_route
+            else:
+                lowest_red_cost = np.inf
+            
+            sorted_node_with_k = defaultdict()
+            for k in range(0,extra_customer_can_pick_up):
+                tot_gain = defaultdict()
+                for u in node_not_picked_up:
+                    tot_gain[u] = -dual[u-1] + self.rcp_u_partial_2[(1+k+self.num_pickups_in_route,u)]#self.action_dict[(u,u+len(self.pickup_nodes))][0].cost/(1+k+self.num_pickups_in_route)
+                tot_gain = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
+                sorted_node_with_k[k] = tot_gain
+
+            for k in range(0,extra_customer_can_pick_up):
+                sorted_key = list(sorted_node_with_k[k].keys())
+                tot_benefit_dropoff_pickup_dual = 0
+                tot_benefit_dropoff_pickup_cost = 0
+                myDenom = k + self.num_pickups_in_route+1
+                for node in sorted_key[:k+1]:
+                    tot_benefit_dropoff_pickup_dual -= dual[node-1]
+                    tot_benefit_dropoff_pickup_cost += self.action_dict[(node,node+len(self.pickup_nodes))][0].cost
+                this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
+                # myDenom = k + self.num_pickups_in_route+1
+                # tot_benefit_dropoff_pickup_dual -= dual[sorted_key[k]-1]
+                # tot_benefit_dropoff_pickup_cost += self.action_dict[(sorted_key[k],sorted_key[k]+len(self.pickup_nodes))][0].cost
+                # this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
+                if this_red_cost < lowest_red_cost:
+                    lowest_red_cost = this_red_cost
+            
+            self.lb = lowest_red_cost
     def this_label_dominates_input(self,candid_label):
         
         my_flag=True
         is_identical=True
         if self.red_cost>candid_label.red_cost:
             my_flag=False
+            return[my_flag, is_identical]
         if self.lb>candid_label.lb:
             my_flag=False
+            return[my_flag, is_identical]
         state_does_dom, state_does_equal=self.my_states_ordered[-1].this_state_dominates_input_state(candid_label.my_states_ordered[-1])
         if state_does_dom==False and state_does_equal==False:
             my_flag=False
@@ -295,7 +288,7 @@ class jy_label:
             NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial)
+            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2)
             NEW_label.calculate_better_lb_2(dual_vec)
             if self.lb>NEW_label.lb+.001:
                 print('self.lb')

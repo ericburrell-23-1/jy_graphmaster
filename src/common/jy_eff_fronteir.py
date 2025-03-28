@@ -34,7 +34,6 @@ class jy_efficient_frontier:
     def alter_fronteir_given_new_element(self,new_label):
 
         is_in_frontier=True
-
         for old_label in self.node_2_eff_fronteir[new_label.node]:
             does_dom,does_equal = old_label.this_label_dominates_input(new_label)
             if does_dom==True or does_equal==True :

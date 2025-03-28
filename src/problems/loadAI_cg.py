@@ -85,7 +85,12 @@ class loadAI_cg:
             print(route.node_in_ordered)
             print('time remaining')
             print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
-            print('weight remain')
+            # if len(route.just_states_ordered) >3:
+            #     print('time window start')
+            #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
+            #     print('time window end')
+            #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
+            #     print('weight remain')
             print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
             print('volume remain')
             print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
