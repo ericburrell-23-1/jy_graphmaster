@@ -11,7 +11,7 @@ from src.common.action import Action
 import numpy as np
 from src.common.pgm_approach import Route
 from itertools import combinations
-
+import time
 class jy_label:
 #     
     def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
@@ -20,6 +20,40 @@ class jy_label:
                  rcp_u_partial, rcp_d_partial,rcp_u_partial_2):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
+        if not my_actions_ordered:
+        # Handle empty list case
+            self.my_actions_ordered = []
+            self.Exog_vec = np.array([])  # Empty array
+            self.red_cost_non_zero_cal_indices = np.array([], dtype=int)
+            self.red_cost_non_zero_cal_vals = np.array([])
+        else:
+            self.Exog_vec = np.zeros_like(my_actions_ordered[0].Exog_vec)
+
+            # Track non-zero indices directly during addition to avoid scanning the whole array later
+            self.red_cost_non_zero_cal_indices = set()
+            self.red_cost_non_zero_cal_vals = []
+            indices_to_pos = {}
+            # Process only actions with non-zero elements
+            for a in my_actions_ordered:
+                if len(a.red_cost_non_zero_cal_indices) > 0:
+                    for i, idx in enumerate(a.red_cost_non_zero_cal_indices):
+                        self.Exog_vec[idx] += a.Exog_vec[idx]
+                        if self.Exog_vec[idx] != 0:
+                            if idx not in self.red_cost_non_zero_cal_indices:
+                                self.red_cost_non_zero_cal_indices.add(idx)
+                                indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
+                                self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
+                            else:
+                                # Update existing value
+                                self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
+
+            self.red_cost_non_zero_cal_indices = np.array(sorted(self.red_cost_non_zero_cal_indices))
+            sorted_vals = np.zeros(len(self.red_cost_non_zero_cal_indices))
+            for i, idx in enumerate(self.red_cost_non_zero_cal_indices):
+                pos = indices_to_pos[idx]
+                sorted_vals[i] = self.red_cost_non_zero_cal_vals[pos]
+            self.red_cost_non_zero_cal_vals = sorted_vals
+
         self.my_states_ordered=my_states_ordered
         self.parent_label=parent_label
         self.red_cost=red_cost
@@ -65,10 +99,20 @@ class jy_label:
         #print(self.node_wait_to_drop_off)
         #self.DEBUG_check_label_correct()
     def calculate_red_cost_given_dual(self,dual):
-        red_cost =0
-        for a in self.my_actions_ordered:
-            red_cost += (a.cost - a.Exog_vec @ dual)
-        self.red_cost = red_cost
+        if not self.my_actions_ordered:
+            self.red_cost = 0
+            return 0
+        total_cost = sum(a.cost for a in self.my_actions_ordered)
+    
+        # Use pre-computed values and indices for dot product
+        if len(self.red_cost_non_zero_cal_indices) > 0:
+            dot_product = np.dot(self.red_cost_non_zero_cal_vals, 
+                                dual[self.red_cost_non_zero_cal_indices])
+        else:
+            dot_product = 0
+        
+        self.red_cost = total_cost - dot_product
+        return self.red_cost
         
     def calculate_lb_given_lowest_action_contrib_red_cost(self,lowest_action_contrib_red_cost):
         self.lb = self.red_cost+(self.max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
@@ -157,66 +201,97 @@ class jy_label:
             #print('lb')
             #print(lb)
             #input('----')
-    def calculate_better_lb_2(self,dual):
+    def calculate_better_lb_2(self, dual):
         self.calculate_red_cost_given_dual(dual)
         
         if self.node == -1:
-            self.lb =  -np.inf
+            self.lb = -np.inf
             return self.lb
         elif self.node == -2:
             self.lb = self.red_cost
             return self.lb
         else:
-            self.tot_gain = defaultdict()
-            node_not_picked_up = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
+            # Optimize by pre-computing sets
+            pickup_nodes_set = set(self.pickup_nodes)
+            nodes_picked_up_set = set(self.nodes_picked_up)
+            node_not_picked_up = list(pickup_nodes_set - nodes_picked_up_set)
             
-            D = self.must_drop_off[:]
-            if self.node in self.dropoff_nodes:
-                D.append(self.node-len(self.pickup_nodes))
+            D = self.must_drop_off.copy()  # Use .copy() instead of [:] for clarity
+            
+            # Check if node is in dropoff nodes once
+            is_node_in_dropoff = self.node in self.dropoff_nodes
+            pickup_nodes_len = len(self.pickup_nodes)
+            
+            if is_node_in_dropoff:
+                D.append(self.node - pickup_nodes_len)
+            
+            # Consolidate loops and calculations
             tot_benefit_dropoff_dual = 0
-            tot_benefit_droppoff_cost =0
+            tot_benefit_droppoff_cost = 0
+            
             for d in D:
-                drop_off_of_d = d +len(self.pickup_nodes)
+                drop_off_of_d = d + pickup_nodes_len
                 if drop_off_of_d == self.node:
-                    tot_benefit_dropoff_dual -= dual[d-1]/2
+                    tot_benefit_dropoff_dual -= dual[d-1] / 2
                 elif d == self.node:
                     tot_benefit_dropoff_dual -= dual[d-1]
-                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
+                    tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
                 else:
-                    tot_benefit_dropoff_dual -= dual[d-1]/2
-                    tot_benefit_droppoff_cost += self.action_dict[(self.node,drop_off_of_d)][0].cost
-            tot_benefit_dropoff_pickup_dual = 0
-            tot_benefit_dropoff_pickup_cost = 0
-            extra_customer_can_pick_up = self.jy_opt['max_pickups_in_a_route']-self.num_pickups_in_route
-            # not picking new customer as first lowest red cost
-            if self.num_pickups_in_route > 0.5:
-                lowest_red_cost = self.red_cost+tot_benefit_dropoff_dual + tot_benefit_droppoff_cost/self.num_pickups_in_route
-            else:
-                lowest_red_cost = np.inf
+                    tot_benefit_dropoff_dual -= dual[d-1] / 2
+                    tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
             
-            sorted_node_with_k = defaultdict()
-            for k in range(0,extra_customer_can_pick_up):
-                tot_gain = defaultdict()
-                for u in node_not_picked_up:
-                    tot_gain[u] = -dual[u-1] + self.rcp_u_partial_2[(1+k+self.num_pickups_in_route,u)]#self.action_dict[(u,u+len(self.pickup_nodes))][0].cost/(1+k+self.num_pickups_in_route)
-                tot_gain = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
-                sorted_node_with_k[k] = tot_gain
-
-            for k in range(0,extra_customer_can_pick_up):
+            # Pre-calculate constants
+            extra_customer_can_pick_up = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
+            
+            # Initialize lowest_red_cost once
+            if self.num_pickups_in_route > 0.5:
+                lowest_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_droppoff_cost / self.num_pickups_in_route
+            else:
+                lowest_red_cost = float('inf')  # Use float('inf') instead of np.inf for better performance
+            
+            # Optimize the sorting and calculation of sorted_node_with_k
+            sorted_node_with_k = {}
+            for k in range(extra_customer_can_pick_up):
+                num_pickups = 1 + k + self.num_pickups_in_route
+                # Calculate tot_gain for all nodes at once
+                tot_gain = {
+                    u: -dual[u-1] + self.rcp_u_partial_2[(num_pickups, u)]
+                    for u in node_not_picked_up
+                }
+                # Sort once and store the sorted items
+                sorted_node_with_k[k] = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
+            
+            # Optimize the final loop to calculate the best lower bound
+            for k in range(extra_customer_can_pick_up):
                 sorted_key = list(sorted_node_with_k[k].keys())
-                tot_benefit_dropoff_pickup_dual = 0
-                tot_benefit_dropoff_pickup_cost = 0
-                myDenom = k + self.num_pickups_in_route+1
-                for node in sorted_key[:k+1]:
-                    tot_benefit_dropoff_pickup_dual -= dual[node-1]
-                    tot_benefit_dropoff_pickup_cost += self.action_dict[(node,node+len(self.pickup_nodes))][0].cost
-                this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
-                # myDenom = k + self.num_pickups_in_route+1
-                # tot_benefit_dropoff_pickup_dual -= dual[sorted_key[k]-1]
-                # tot_benefit_dropoff_pickup_cost += self.action_dict[(sorted_key[k],sorted_key[k]+len(self.pickup_nodes))][0].cost
-                # this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
-                if this_red_cost < lowest_red_cost:
-                    lowest_red_cost = this_red_cost
+                
+                # Skip unnecessary computation if there are no keys
+                if not sorted_key:
+                    continue
+                    
+                # Only take as many keys as are available or needed
+                nodes_to_use = sorted_key[:k+1]
+                
+                # Only calculate if we have enough nodes
+                if len(nodes_to_use) == k+1:
+                    myDenom = k + self.num_pickups_in_route + 1
+                    
+                    # Calculate total benefit in one pass
+                    tot_benefit_dropoff_pickup_dual = -sum(dual[node-1] for node in nodes_to_use)
+                    tot_benefit_dropoff_pickup_cost = sum(
+                        self.action_dict[(node, node+pickup_nodes_len)][0].cost 
+                        for node in nodes_to_use
+                    )
+                    
+                    this_red_cost = (
+                        self.red_cost + 
+                        tot_benefit_dropoff_dual + 
+                        tot_benefit_dropoff_pickup_dual + 
+                        (tot_benefit_droppoff_cost + tot_benefit_dropoff_pickup_cost) / myDenom
+                    )
+                    
+                    if this_red_cost < lowest_red_cost:
+                        lowest_red_cost = this_red_cost
             
             self.lb = lowest_red_cost
             return self.lb
@@ -273,15 +348,17 @@ class jy_label:
             #print('my_act.node_head')
             #print(my_act.node_head)
             #input('--')
-            new_label=self.expand_given_action(my_act)
+            new_label, get_head_state_time, cal_lb_time=self.expand_given_action(my_act)
             if new_label!=None:
                 all_labels_out.append(new_label)
 
         return all_labels_out
-    def expand_given_action(self,my_action,dual_vec):
+    def expand_given_action(self,my_action):
+        time0 = time.time()
         NEW_label=None
         last_state=self.my_states_ordered[-1]
         new_head=[]
+        time1 = time.time()
         if self.jy_opt['use_load_ai_fast']==False:
             new_head=my_action.get_head_state(last_state,last_state.l_id)
         else:
@@ -290,7 +367,8 @@ class jy_label:
             input('errror here not posible')
         if self.max_actions_in_route==len(self.my_actions_ordered) and my_action.node_head!=-2:
             input('errror here not posible 2')
-
+        time2 = time.time()
+        #print(f'time for get head state {time2-time1}')
         if new_head!=None:
             NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
             NEW_my_states_ordered=self.my_states_ordered+[new_head]
@@ -298,58 +376,62 @@ class jy_label:
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
             NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2)
-            if self.jy_opt['lb_option'] == 2:
-                NEW_label.calculate_better_lb_2(dual_vec)
-            elif self.jy_opt['lb_option'] == 1:
-                NEW_label.calculate_better_lb(dual_vec)
-            elif self.jy_opt['lb_option'] == 0:
-                NEW_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-            elif self.jy_opt['lb_option'] == 'check':
-                lb1 = NEW_label.calculate_better_lb(dual_vec)
-                lb2 = NEW_label.calculate_better_lb_2(dual_vec)
-                if lb1<lb2:
-                    input('lb error here')
-            else:
-                input('no lb option used')
-            if self.lb>NEW_label.lb+.001:
-                print('self.lb')
-                print(self.lb)
-                print('NEW_label.lb')
-                print(NEW_label.lb)
-                print('self.all_nodes_ordered')
-                print(self.all_nodes_ordered)
-                print('NEW_label.all_nodes_ordered')
-                print(NEW_label.all_nodes_ordered)
-                print('self.red_cost')
-                print(self.red_cost)
-                print('NEW_label.red_cost')
-                print(NEW_label.red_cost)
-                print('dual_vec[0]')
-                print(dual_vec[0])
-                print('self.my_actions_ordered[1].cost')
-                print(self.my_actions_ordered[1].cost)
-                print('gap is ')
-                print('NEW_label.lb-self.lb')
-                print(NEW_label.lb-self.lb)
-                offset_pickup=1
-                offset_dropoff=6
-                print('dual_vec[4-1]')
+        #     if self.jy_opt['lb_option'] == 2:
+        #         NEW_label.calculate_better_lb_2(dual_vec)
+        #     elif self.jy_opt['lb_option'] == 1:
+        #         NEW_label.calculate_better_lb(dual_vec)
+        #     elif self.jy_opt['lb_option'] == 0:
+        #         NEW_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+        #     elif self.jy_opt['lb_option'] == 'check':
+        #         lb1 = NEW_label.calculate_better_lb(dual_vec)
+        #         lb2 = NEW_label.calculate_better_lb_2(dual_vec)
+        #         if lb1<lb2:
+        #             input('lb error here')
+        #     else:
+        #         input('no lb option used')
+        #     if self.lb>NEW_label.lb+.001:
+        #         print('self.lb')
+        #         print(self.lb)
+        #         print('NEW_label.lb')
+        #         print(NEW_label.lb)
+        #         print('self.all_nodes_ordered')
+        #         print(self.all_nodes_ordered)
+        #         print('NEW_label.all_nodes_ordered')
+        #         print(NEW_label.all_nodes_ordered)
+        #         print('self.red_cost')
+        #         print(self.red_cost)
+        #         print('NEW_label.red_cost')
+        #         print(NEW_label.red_cost)
+        #         print('dual_vec[0]')
+        #         print(dual_vec[0])
+        #         print('self.my_actions_ordered[1].cost')
+        #         print(self.my_actions_ordered[1].cost)
+        #         print('gap is ')
+        #         print('NEW_label.lb-self.lb')
+        #         print(NEW_label.lb-self.lb)
+        #         offset_pickup=1
+        #         offset_dropoff=6
+        #         print('dual_vec[4-1]')
 
-                print(dual_vec[4-offset_pickup])
-                print('dual_vec[2-1]')
-                print(dual_vec[2-offset_pickup])
-                print('dual_vec[9-1]')
-                print(dual_vec[9-offset_dropoff])
-                print('dual_vec[7-1]')
-                print(dual_vec[7-offset_dropoff])
-                print('self.action_dict[4,2][0].cost')
-                print(self.action_dict[4,2][0].cost)
-                print('self.action_dict[2,9][0].cost')
-                print(self.action_dict[2,9][0].cost)
-                print('self.action_dict[9,7][0].cost')
-                print(self.action_dict[9,7][0].cost)
-                input('error here the lb went down')
-        return NEW_label
+        #         print(dual_vec[4-offset_pickup])
+        #         print('dual_vec[2-1]')
+        #         print(dual_vec[2-offset_pickup])
+        #         print('dual_vec[9-1]')
+        #         print(dual_vec[9-offset_dropoff])
+        #         print('dual_vec[7-1]')
+        #         print(dual_vec[7-offset_dropoff])
+        #         print('self.action_dict[4,2][0].cost')
+        #         print(self.action_dict[4,2][0].cost)
+        #         print('self.action_dict[2,9][0].cost')
+        #         print(self.action_dict[2,9][0].cost)
+        #         print('self.action_dict[9,7][0].cost')
+        #         print(self.action_dict[9,7][0].cost)
+        #         input('error here the lb went down')
+        time3 = time.time()
+        #print(f'rest of time {time3-time2}')
+
+        #print('check here')
+        return NEW_label, time1-time0,time2-time1, time3-time2, time3-time0
     
     def convert_2_route(self):
         if self.my_states_ordered[-1].node!=-2:

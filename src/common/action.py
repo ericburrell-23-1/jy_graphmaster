@@ -7,7 +7,7 @@ from src.common.helper import Helper
 from src.common.state import State
 from scipy.sparse import csr_matrix
 import scipy.sparse as sp
-
+import time
 class Action:
     """
     Represents an action in the graph.
@@ -39,13 +39,22 @@ class Action:
         self.Exog_vec_csr = csr_matrix(Exog_vec)
         self.cost = cost
         self.min_resource_vec = min_resource_vec
+        if isinstance(self.min_resource_vec, np.ndarray):
+            # Reshape to row vector if it's 1D
+            self.min_resource_vec = self.min_resource_vec.reshape(1, -1)
+            self.min_resource_vec=csr_matrix(self.min_resource_vec)
+        self.min_resource_vec_indices = self.min_resource_vec.indices
+        self.min_resource_vec_data = self.min_resource_vec.data
         self.resource_consumption_vec = resource_consumption_vec
         self.indices_non_zero_max = indices_non_zero_max
         self.max_resource_vec = max_resource_vec
         self.non_zero_indices_exog = np.nonzero(self.Exog_vec)[0]
         self.full_resource_vec = full_resource_vec
         self.empty_resource_vec = empty_resource_vec
-        
+        self.max_vals = {j: int(self.max_resource_vec[0, j]) for j in self.indices_non_zero_max}
+        self.red_cost_non_zero_cal_vals = self.Exog_vec_csr.data
+        self.red_cost_non_zero_cal_indices = self.Exog_vec_csr.indices
+        self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
         # Generate a deterministic hash based on the action's properties
         # Convert numpy arrays to bytes for hashing
         exog_bytes = self.Exog_vec.tobytes() if hasattr(self.Exog_vec, 'tobytes') else str(self.Exog_vec).encode()
@@ -72,17 +81,19 @@ class Action:
         if self.node_tail is None:
             self.mark_of_null_action = True
 
-    def comp_red_cost(self, dual_vec):
-        """Computes the reduced cost by multiplying the dual vector times the exogenous."""
-        # this_red_cost = 0
-        # if len(self.non_zero_indices_exog) > 0:
-        #     this_red_cost =  self.cost - np.dot(self.Exog_vec[self.non_zero_indices_exog], 
-        #                             dual_vec[self.non_zero_indices_exog])
-        # else:
-        #     this_red_cost =  self.cost
-        this_red_cost_2 =  self.cost - np.sum(self.Exog_vec * dual_vec)
+    # def comp_red_cost(self, dual_vec):
+    #     """Computes the reduced cost by multiplying the dual vector times the exogenous."""
+    #     # this_red_cost = 0
+    #     # if len(self.non_zero_indices_exog) > 0:
+    #     #     this_red_cost =  self.cost - np.dot(self.Exog_vec[self.non_zero_indices_exog], 
+    #     #                             dual_vec[self.non_zero_indices_exog])
+    #     # else:
+    #     #     this_red_cost =  self.cost
+    #     this_red_cost_2 =  self.cost - np.sum(self.Exog_vec * dual_vec)
 
-        return this_red_cost_2
+    #     return this_red_cost_2
+    def comp_red_cost(self, dual_vec):
+        return self.cost - np.dot(self.red_cost_non_zero_cal_vals, dual_vec[self.red_cost_non_zero_cal_indices])
     
     def _get_state_cache_key(self, state_tail: State) -> int:
         """
@@ -173,31 +184,72 @@ class Action:
         """
 
         # 1. Early rejection using sparse comparison (fast & memory efficient)
+        time1 = time.time()
         diff_data = state_tail.state_vec - self.min_resource_vec
-        if diff_data.nnz > 0 and (diff_data.data < 0).any():
-            return None
-
+        time1_1 = time.time()
+        if self.violates_min_resources(state_tail.state_vec)==True:
+                return None
+        # if diff_data.nnz > 0 and (diff_data.data < 0).any():
+        #     return None
+        time2 = time.time()
         # 2. Compute tentative head state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption_vec
-
+        time2_1 = time.time()
         if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
             return None
-
+        time3 = time.time()
         # 3. Apply max_resource cap (only on indices of interest)
-        if len(self.indices_non_zero_max)>0:
-            head_state_vec = head_state_vec.tocsr(copy=True)  # Ensure CSR format and not a view
-            for j in self.indices_non_zero_max:
-                max_val = int(self.max_resource_vec[0, j])
-                current_val = head_state_vec[0, j]
-                if current_val > max_val:
-                    head_state_vec[0, j] = max_val
-
+        head_state_vec = self.fast_max_res_apply(head_state_vec)
+        # if len(self.indices_non_zero_max)>0:
+        #     head_state_vec = head_state_vec.tocsr(copy=True)  # Ensure CSR format and not a view
+        #     for j in self.indices_non_zero_max:
+        #         max_val = int(self.max_resource_vec[0, j])
+        #         current_val = head_state_vec[0, j]
+        #         if current_val > max_val:
+        #             head_state_vec[0, j] = max_val
+        time4 = time.time()
         # 4. Create the final State object
         if self.node_head == -2:
             head_state = State(self.node_head, self.empty_resource_vec, l_id, is_source=False, is_sink=True)
         else:
             head_state = State(self.node_head, head_state_vec, l_id, is_source=False, is_sink=False)
+        time5 = time.time()
 
+        
+        #Handle the case where times are too small to measure
+        #print('self.indices_non_zero_max')
+        #print(len(self.indices_non_zero_max))
+        if 0>0:
+            first_part_time = time2 - time1
+            second_part_time = time3 - time2
+            third_part_time = time4 - time3
+            forth_part_time = time5-time4
+            total_time = time5 - time1
+            com1 = time2 - time1_1
+            com2 = time3 - time2_1
+            if total_time == 0:
+                print("Operations executed too quickly to measure timing accurately")
+                print(f"First part time: {first_part_time:.9f} seconds")
+                print(f"Second part time: {second_part_time:.9f} seconds")
+                print(f"Third part time: {third_part_time:.9f} seconds")
+                print(f"Fourth part time: {forth_part_time:.9f} seconds")
+                print(f'comparison 1: {com1:.9f} seconds')
+                print(f'comparison 2: {com2:.9f} seconds')
+                print(f"Total time: {total_time:.9f} seconds")
+            else:
+                first_part_percentage = (first_part_time / total_time) * 100
+                second_part_percentage = (second_part_time / total_time) * 100
+                third_part_percentage = (third_part_time / total_time) * 100
+                fourth_part_percentage = (forth_part_time/total_time) *100
+                com1_part_percentage = (com1/total_time) *100
+                com2_part_percentage = (com2/total_time) *100
+                print(f"First part time: {first_part_time:.9f} seconds ({first_part_percentage:.2f}%)")
+                print(f"Second part time: {second_part_time:.9f} seconds ({second_part_percentage:.2f}%)")
+                print(f"Third part time: {third_part_time:.9f} seconds ({third_part_percentage:.2f}%)")
+                print(f"Fourth part time: {forth_part_time:.9f} seconds ({fourth_part_percentage:.2f}%)")
+                print(f'com1 part time: {com1:.9f} seconds ({com1_part_percentage:.2f}%) ')
+                print(f'com1 part time: {com2:.9f} seconds ({com2_part_percentage:.2f}%) ')
+                print(f"Total time: {total_time:.9f} seconds")
         do_debug=False
         if do_debug==True:
             backup_head=self.get_head_state(state_tail,state_tail.l_id)
@@ -276,7 +328,20 @@ class Action:
             this_dominates_input = True #set the domination to true
 
         return this_dominates_input #return the domination property
-    
+    def violates_min_resources(self, tail_vec):
+        """Returns True if state_tail violates any min_resource constraint."""
+ 
+ 
+        # Only check non-zero entries in min_resource_vec
+        indices = self.min_resource_vec_indices
+        tail_data = tail_vec[0, indices].toarray().flatten()
+        min_data = self.min_resource_vec_data
+ 
+        # Check if tail_data < min_data at any index
+        if np.any(tail_data < min_data):
+            return True
+ 
+        return False
     def is_null_action(self):
         """
         identifies if current action is a null action
@@ -301,6 +366,23 @@ class Action:
            self.Exog_vec        == other.Exog_vec        and
            self.cost            == other.cost
         )
+    def fast_max_res_apply(self, head_state_vec):
+        #head_state_vec = head_state_vec_input.tocsr(copy=Fase)
+ 
+        data = head_state_vec.data
+        indices = head_state_vec.indices
+        max_vals = self.max_vals  # Local alias for speed
+ 
+        # Build a mapping from column index j to data index i
+        col_to_pos = dict(zip(indices, range(len(indices))))  # No filtering
+ 
+        # Only loop over the small set of keys in self.max_vals
+        for j, max_val in max_vals.items():
+            i = col_to_pos.get(j, None)
+            if i is not None and data[i] > max_val:
+                data[i] = max_val
+ 
+        return head_state_vec
 
     def __hash__(self):
        """

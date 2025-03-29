@@ -102,7 +102,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
-        self.jy_options_user_defined['lb_option'] =1
+        self.jy_options_user_defined['lb_option'] =2
         self.jy_options_user_defined['information_for_iteration'] =True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)

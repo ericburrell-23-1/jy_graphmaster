@@ -11,7 +11,7 @@ from src.common.jy_label import jy_label
 from src.common.jy_eff_fronteir import jy_efficient_frontier
 from src.common.jy_sortedObject_list import jy_sortedObject_list
 from itertools import permutations
-
+import time
 class jy_fast_pricing():
     """
     Class implementing a label-setting algorithm for finding minimum reduced cost paths
@@ -99,9 +99,14 @@ class jy_fast_pricing():
         #forbidden_nodes=[]
         print('dual_vec')
         print(self.dual_vec)
+
         #print('type(self.dual_vec)')
         #print(type(self.dual_vec))
+        if isinstance(self.dual_vec,list):
+            self.dual_vec = np.array(self.dual_vec,dtype=float)
         ignore_vals=np.nonzero(np.array(self.dual_vec)<0.0001)[0]
+        time1 = time.time()
+        comp_action_red_cost = 0
         if len(ignore_vals)>0:
             pickup_forget=ignore_vals+1
             dropoff_forget=len(self.pickup_node)+pickup_forget
@@ -122,7 +127,10 @@ class jy_fast_pricing():
             #input('all_forget')
         bigVal=999999999999
         for action in self.all_actions:
+            time2 = time.time()
             red_cost = action.comp_red_cost(self.dual_vec)
+            time3 = time.time()
+            comp_action_red_cost += (time3-time2)
             if action.node_head in self.forbidden_nodes or action.node_tail in self.forbidden_nodes:
                 red_cost=bigVal
                 #input('hihihi')
@@ -135,7 +143,9 @@ class jy_fast_pricing():
         #print('self.action_2_red_cost_dict')
         #print(self.action_2_red_cost_dict)
         #input('hi')
-
+        time4 = time.time()
+        print(f'compute red cost take:{comp_action_red_cost}, total time {time4-time1}, percent :{comp_action_red_cost/(time4-time1)}')
+        print('check here 1')
     def initiate_RCP_d(self):
         max_width = self.jy_opt['max_pickups_in_a_route']
         self.rcp_d_partial = defaultdict()
@@ -200,11 +210,20 @@ class jy_fast_pricing():
         #print('np.sum(self.dual_vec)')
         #print(np.sum(self.dual_vec))
         #input('self.dual_vec')
+        time1 = time.time()
         self._compute_action_reduced_costs()
+        time2 = time.time()
+        time_calculate_red_cost_given_dual=0
+        time_for_calculate_lb = 0
+        time_for_intersec = 0
         debug_on=True
         for my_label in self.expandable_labels.objects:
+            time1_1 = time.time()
             my_label.calculate_red_cost_given_dual(self.dual_vec)
+            time1_2 = time.time()
+            time_calculate_red_cost_given_dual += (time1_2-time1_1)
             #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+            time2_1 = time.time()
             if self.jy_opt['lb_option'] == 2:
                 my_label.calculate_better_lb_2(self.dual_vec)
             elif self.jy_opt['lb_option'] == 1:
@@ -218,20 +237,43 @@ class jy_fast_pricing():
                     input('lb error here')
             else:
                 input('no lb option used')
+            time2_2 = time.time()
+            time_for_calculate_lb += (time2_2-time2_1)
+            time3_1 = time.time()
             tmp=set(my_label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
+            time3_2 = time.time()
+            time_for_intersec += (time3_2-time3_1)
             if len(tmp)>0.5:
                 my_label.red_cost=np.inf
                 my_label.lb=np.inf
-            #if debug_on==True:
-            #    if len(tmp)>0.5 and my_label.red_cost<100:
-            #        print('my_label.red_cost')
-            #        print(my_label.red_cost)
-                  #  print('tmp')
-                  #  print(tmp)
-                  #  print('self.dual_vec')
-                  ##  print(self.dual_vec)
-                  #  input('error here')
+        time3 = time.time()
+        first_part_time = time2 - time1
+        second_part_time = time3 - time2
+        total_time = time3 - time1
 
+        # Handle the case where times are too small to measure
+        if 1>0:
+            if total_time == 0:
+                print("Operations executed too quickly to measure timing accurately")
+                print(f"First part (compute action reduced costs): {first_part_time:.9f} seconds")
+                print(f"Second part (label processing): {second_part_time:.9f} seconds")
+                print(f'time_calculate_red_cost_given_dual: {time_calculate_red_cost_given_dual}')
+                print(f'time_for_calculate_lb: {time_for_calculate_lb}')
+                print(f'time_for_intersec: {time_for_intersec}')
+                print(f"Total time: {total_time:.9f} seconds")
+            else:
+                first_part_percentage = (first_part_time / total_time) * 100
+                second_part_percentage = (second_part_time / total_time) * 100
+                time_calculate_red_cost_given_dual_percentage = (time_calculate_red_cost_given_dual/total_time) * 100
+                time_for_calculate_lb_percentage = (time_for_calculate_lb/total_time) * 100
+                time_for_intersec_percentage = (time_for_intersec/total_time) * 100
+                print(f"First part (compute action reduced costs): {first_part_time:.9f} seconds ({first_part_percentage:.2f}%)")
+                print(f"Second part (label processing): {second_part_time:.9f} seconds ({second_part_percentage:.2f}%)")
+                print(f"time_calculate_red_cost_given_dual: {time_calculate_red_cost_given_dual:.9f} seconds ({time_calculate_red_cost_given_dual_percentage:.2f}%)")
+                print(f"time_for_calculate_lb: {time_for_calculate_lb:.9f} seconds ({time_for_calculate_lb_percentage:.2f}%)")
+                print(f"time_for_intersec: {time_for_intersec:.9f} seconds ({time_for_intersec_percentage:.2f}%)")
+                print(f"Total time: {total_time:.9f} seconds")
+            print('check time here')
     def get_lowest_lb(self):
         lowest_lb=np.inf
         for input_label in self.expandable_labels.objects:
@@ -278,10 +320,16 @@ class jy_fast_pricing():
             self._remove_labels_with_positive_lb()
 
             # Update efficient frontier with current set of expandable labels
+            time_e_1 = time.time()
+            print()
             for label in self.expandable_labels.objects:
                 self.efficient_frontier.alter_fronteir_given_new_element(label)
-            
+            time_e_2 = time.time()
+            print(f'alter_fronteir_given_new_element: {time_e_2-time_e_1}')
+            print('chekc here')
+            time_e_3 = time.time()
             # Check if we can terminate
+        
             min_lb = float('inf')
             for label in self.expandable_labels.objects:
                 if label.lb < min_lb:
@@ -294,8 +342,22 @@ class jy_fast_pricing():
             #input('starting inner')
             num_expanded_this_round=0
             incumbant_lb=-np.inf
-
+            time_e_4 = time.time()
+            print(f'time before while loop : {time_e_4-time_e_3}')
+            print('check here')
+            time_e_5 = time.time()
+            time_before_action_add=0
+            time_action_add = 0
+            time_expand_action = 0
+            time_cal_lb = 0
+            time_get_completion = 0
+            time_alter_frontier = 0
+            time_get_head_state=0
+            time_if = 0
+            time_clip_time = 0
+            rest_time = 0
             while len(self.expandable_labels) > 0:
+                time_i_1 = time.time()
                 num_expansion_in=num_expansion_in+1
                 num_expanded_this_round=num_expanded_this_round+1
                 #print('num_expansion_out,num_expansion_in')
@@ -370,28 +432,41 @@ class jy_fast_pricing():
                 #print('------')
                 #if curr_label.all_nodes_ordered ==[-1,4,9]:
                 #    print('check here')
+                time_i_2 = time.time()
+                time_before_action_add += (time_i_2-time_i_1)
                 for my_act in poss_actions:
+                    time_m_1 = time.time()
                     if my_act.node_head in self.skip_node:
                         continue
-                    new_label = curr_label.expand_given_action(my_act,self.dual_vec)
-
-                    #if new_label!=None:
-                    #    print('my_act')
-                    #    my_act.pretty_print_action()
-                    #    print('new_label.lb')
-                    #    print(new_label.lb)
-                    #    print('did_gen_possible_expansion')
-                    #    print(did_gen_possible_expansion)
-                    #if debug_on==True:
-                        #check the lower bound
-                    #    old_lb=new_label.lb
-                     #   #new_label.calculate_better_lb(self.dual_vec)
-                     #   if abs(new_label.lb-old_lb)>.001:
-                     #       print('old_lb')
-                     #       print(old_lb)
-                     #       print('new_label.lb')
-                     ##       print(new_label.lb)
-                     #       input('error here 2 ')
+                    time_m_1_5 = time.time()
+                    time_if += (time_m_1_5-time_m_1)
+                    new_label,clip_time,get_head_state_time,get_lb_time, get_expand_tot_time = curr_label.expand_given_action(my_act)
+                    time_m_2 = time.time()
+                    time_clip_time += clip_time
+                    time_get_head_state += get_head_state_time
+                    time_cal_lb += get_lb_time
+                    
+                    this_time_expand_action = time_m_2-time_m_1_5
+                    time_expand_action += this_time_expand_action
+                    
+                    if abs(get_expand_tot_time-clip_time-get_head_state_time-get_lb_time)>0.00001:
+                        print('get_expand_tot_time')
+                        print(get_expand_tot_time)
+                        print('clip_time+get_head_state_time+get_lb_time')
+                        print(clip_time+get_head_state_time+get_lb_time)
+                        print('error 1')
+                    if abs(this_time_expand_action-get_expand_tot_time)>0.00001:
+                        print('this_time_expand_action')
+                        print(this_time_expand_action)
+                        print('get_expand_tot_time')
+                        print(get_expand_tot_time)
+                        print('error 2')
+                    if abs(this_time_expand_action-clip_time-get_head_state_time-get_lb_time)>0.00001:
+                        print('this_time_expand_action')
+                        print(this_time_expand_action)
+                        print('clip_time+get_head_state_time+get_lb_time')
+                        print(clip_time+get_head_state_time+get_lb_time)
+                        print('error here')
                     if new_label == None:
                         #print('doing none')
                         continue
@@ -409,6 +484,8 @@ class jy_fast_pricing():
                     else:
                         input('no lb option used')
                     #print('t1')
+                    time_m_3 = time.time()
+                    
                     if use_completion_on:
                         can_complete=self.jy_get_compelition(new_label)
                         #print('t2')
@@ -423,9 +500,13 @@ class jy_fast_pricing():
                     #print('t4')
                     if new_label.lb>5:
                         continue
+                    time_m_4 = time.time()
+                    time_get_completion += (time_m_4-time_m_3)
                     #print('t5')
                     #print('try ing add fronteir')
                     self.efficient_frontier.alter_fronteir_given_new_element(new_label)
+                    time_m_5 = time.time()
+                    time_alter_frontier += (time_m_5 - time_m_4)
                     if new_label.is_complete_route:
                         lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
                     if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
@@ -450,6 +531,10 @@ class jy_fast_pricing():
                         new_tuple=self.label_2_tuple(new_label)
 
                         self.expandable_labels.insert(new_label,new_tuple)
+                    time_m_6 = time.time()
+                    rest_time += (time_m_6-time_m_5)
+                time_i_3 = time.time()
+                time_action_add += (time_i_3 - time_i_2)
                 if did_gen_neg_red_cost==True:
                     break
             #print('num_expanded_this_round')
@@ -475,11 +560,23 @@ class jy_fast_pricing():
                 print('can_complete')
                 print(can_complete)
                 input('big error here')
+            time_e_6 = time.time()
+            print(f'time_before_action_add: {time_before_action_add}')
+            print(f'time_action_add: {time_action_add}')
+            print(f'time_expand_action:{time_expand_action}, percent:{(time_expand_action/time_action_add)*100} %')
+            print(f'time_clip_time:{time_clip_time}, percent:{(time_clip_time/time_action_add)*100} %')
+            print(f'get_head_state_time:{get_head_state_time}, percent:{(get_head_state_time/time_action_add)*100} %')
+            print(f'time_cal_lb:{time_cal_lb}, percent:{(time_cal_lb/time_action_add)*100} %')
+            print(f'time_if:{time_if}, percent:{(time_if/time_action_add)*100} %')
+            print(f'time_get_completion:{time_get_completion}, percent:{(time_get_completion/time_action_add)*100} %')
+            print(f'time_alter_frontier:{time_alter_frontier}, percent:{(time_alter_frontier/time_action_add)*100} %')
+            print(f'rest_time:{rest_time}, percent:{(rest_time/time_action_add)*100} %')
+            print(f'time for while {time_e_6-time_e_5}')
+            print('check here')
         #print('DOEN T the CG process')
         #print('lowest_so_far')
         #print(lowest_so_far)
-        #input('----')
-        print('len(self.all_routes)')
+        #input('----')time_expand_action
         print(len(self.all_routes))
         print('route_gen_count')
         print(route_gen_count)
