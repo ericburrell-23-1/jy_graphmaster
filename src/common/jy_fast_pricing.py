@@ -18,7 +18,16 @@ class jy_fast_pricing():
     with a given dual value.
     """
 
-    def __init__(self, all_actions, action_dict, dual_vec, init_res_state, max_actions_in_route, actions_of_node, all_nodes, jy_opt):
+    def __init__(self, 
+                 all_actions, 
+                 action_dict, 
+                 dual_vec, 
+                 init_res_state, 
+                 max_actions_in_route, 
+                 actions_of_node, 
+                 all_nodes,
+                 neighbors,
+                 jy_opt):
         """
         Initialize the jy_fast_pricing algorithm.
         
@@ -34,13 +43,13 @@ class jy_fast_pricing():
         self.all_actions = all_actions
         self.action_dict = action_dict
         self.forbidden_nodes=[]
-
         self.dual_vec = dual_vec.copy()
         self.dual_vec_orig = dual_vec.copy()
         self.init_res_state = init_res_state
         self.max_actions_in_route = max_actions_in_route
         self.actions_of_node = actions_of_node
         self.all_nodes = all_nodes
+        self.neighbors = neighbors
         self.jy_opt = jy_opt
         self.jy_opt['use_load_ai_fast']=True
         self.num_cus = int((len(self.all_nodes)-2)/3)
@@ -97,8 +106,8 @@ class jy_fast_pricing():
         Compute reduced costs for all actions and identify the lowest reduced cost.
         """
         #forbidden_nodes=[]
-        print('dual_vec')
-        print(self.dual_vec)
+        # print('dual_vec')
+        # print(self.dual_vec)
 
         #print('type(self.dual_vec)')
         #print(type(self.dual_vec))
@@ -144,8 +153,8 @@ class jy_fast_pricing():
         #print(self.action_2_red_cost_dict)
         #input('hi')
         time4 = time.time()
-        print(f'compute red cost take:{comp_action_red_cost}, total time {time4-time1}, percent :{comp_action_red_cost/(time4-time1)}')
-        print('check here 1')
+        #print(f'compute red cost take:{comp_action_red_cost}, total time {time4-time1}, percent :{comp_action_red_cost/(time4-time1)}')
+        #print('check here 1')
     def initiate_RCP_d(self):
         max_width = self.jy_opt['max_pickups_in_a_route']
         self.rcp_d_partial = defaultdict()
@@ -348,14 +357,7 @@ class jy_fast_pricing():
             time_e_5 = time.time()
             time_before_action_add=0
             time_action_add = 0
-            time_expand_action = 0
-            time_cal_lb = 0
-            time_get_completion = 0
-            time_alter_frontier = 0
-            time_get_head_state=0
-            time_if = 0
-            time_clip_time = 0
-            rest_time = 0
+            
             while len(self.expandable_labels) > 0:
                 time_i_1 = time.time()
                 num_expansion_in=num_expansion_in+1
@@ -419,7 +421,13 @@ class jy_fast_pricing():
                         input('error here')
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
-                poss_actions  = self.get_actions_from_label(curr_label)
+                # poss_actions  = self.get_actions_from_label(curr_label)
+                poss_actions = self.get_actions_from_label_2(curr_label)
+                # print('old label num')
+                # print(len(poss_actions))
+                # print('new label num')
+                # print(len(poss_actions_2))
+                # print('check ')
                 #print('len(poss_actions)')
                 #print(len(poss_actions))
                 did_gen_neg_red_cost=False
@@ -434,42 +442,33 @@ class jy_fast_pricing():
                 #    print('check here')
                 time_i_2 = time.time()
                 time_before_action_add += (time_i_2-time_i_1)
+                time_expand_action = 0
+                time_cal_lb = 0
+                time_get_completion = 0
+                time_alter_frontier = 0
+                time_get_head_state=0
+                time_if = 0
+                time_clip_time = 0
+                time_create_label_time = 0
+                rest_time = 0
                 for my_act in poss_actions:
                     time_m_1 = time.time()
                     if my_act.node_head in self.skip_node:
                         continue
                     time_m_1_5 = time.time()
                     time_if += (time_m_1_5-time_m_1)
-                    new_label,clip_time,get_head_state_time,get_lb_time, get_expand_tot_time = curr_label.expand_given_action(my_act)
+                    new_label,clip_time,get_head_state_time,create_label_time, get_expand_tot_time = curr_label.expand_given_action(my_act)
                     time_m_2 = time.time()
                     time_clip_time += clip_time
                     time_get_head_state += get_head_state_time
-                    time_cal_lb += get_lb_time
+                    time_create_label_time += create_label_time
                     
                     this_time_expand_action = time_m_2-time_m_1_5
                     time_expand_action += this_time_expand_action
-                    
-                    if abs(get_expand_tot_time-clip_time-get_head_state_time-get_lb_time)>0.00001:
-                        print('get_expand_tot_time')
-                        print(get_expand_tot_time)
-                        print('clip_time+get_head_state_time+get_lb_time')
-                        print(clip_time+get_head_state_time+get_lb_time)
-                        print('error 1')
-                    if abs(this_time_expand_action-get_expand_tot_time)>0.00001:
-                        print('this_time_expand_action')
-                        print(this_time_expand_action)
-                        print('get_expand_tot_time')
-                        print(get_expand_tot_time)
-                        print('error 2')
-                    if abs(this_time_expand_action-clip_time-get_head_state_time-get_lb_time)>0.00001:
-                        print('this_time_expand_action')
-                        print(this_time_expand_action)
-                        print('clip_time+get_head_state_time+get_lb_time')
-                        print(clip_time+get_head_state_time+get_lb_time)
-                        print('error here')
                     if new_label == None:
                         #print('doing none')
                         continue
+                    time_m_2_1 = time.time()
                     if self.jy_opt['lb_option'] == 2:
                         new_label.calculate_better_lb_2(self.dual_vec)
                     elif self.jy_opt['lb_option'] == 1:
@@ -485,11 +484,12 @@ class jy_fast_pricing():
                         input('no lb option used')
                     #print('t1')
                     time_m_3 = time.time()
-                    
+                    time_cal_lb += (time_m_3-time_m_2_1)
                     if use_completion_on:
                         can_complete=self.jy_get_compelition(new_label)
                         #print('t2')
-
+                        time_m_4 = time.time()
+                        time_get_completion += (time_m_4-time_m_3)
                         if can_complete==False:
                             #print('no completion')
                             continue
@@ -500,13 +500,13 @@ class jy_fast_pricing():
                     #print('t4')
                     if new_label.lb>5:
                         continue
-                    time_m_4 = time.time()
-                    time_get_completion += (time_m_4-time_m_3)
+                    
                     #print('t5')
                     #print('try ing add fronteir')
+                    time_m_4_1 = time.time()
                     self.efficient_frontier.alter_fronteir_given_new_element(new_label)
                     time_m_5 = time.time()
-                    time_alter_frontier += (time_m_5 - time_m_4)
+                    time_alter_frontier += (time_m_5 - time_m_4_1)
                     if new_label.is_complete_route:
                         lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
                     if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
@@ -535,6 +535,24 @@ class jy_fast_pricing():
                     rest_time += (time_m_6-time_m_5)
                 time_i_3 = time.time()
                 time_action_add += (time_i_3 - time_i_2)
+                # print('======check for each action expand while loop=======')
+                # print(f'time_action_add: {time_action_add}')
+                # print(f'time_expand_action:{time_expand_action}, percent:{(time_expand_action/time_action_add)*100} %')
+                # print(f'time_create_label_time:{time_create_label_time}, percent:{(time_create_label_time/time_action_add)*100} %')
+                # print(f'get_head_state_time:{time_get_head_state}, percent:{(time_get_head_state/time_action_add)*100} %')
+                # print(f'time_clip_time:{time_clip_time}, percent:{(time_clip_time/time_action_add)*100} %')
+                # print(f'time_cal_lb:{time_cal_lb}, percent:{(time_cal_lb/time_action_add)*100} %')
+                # print(f'time_if:{time_if}, percent:{(time_if/time_action_add)*100} %')
+                # print(f'time_get_completion:{time_get_completion}, percent:{(time_get_completion/time_action_add)*100} %')
+                # print(f'time_alter_frontier:{time_alter_frontier}, percent:{(time_alter_frontier/time_action_add)*100} %')
+                # print(f'rest_time:{rest_time}, percent:{(rest_time/time_action_add)*100} %')
+                # total_component_time = (time_if + time_expand_action + time_cal_lb + 
+                #         time_get_completion + time_alter_frontier + 
+                #         time_clip_time + time_get_head_state + 
+                #         time_create_label_time + rest_time)
+
+                # print(f'Sum of all components: {total_component_time}, percent: {(total_component_time/time_action_add)*100:.2f}%')
+                # print('check for each action expand while loop')
                 if did_gen_neg_red_cost==True:
                     break
             #print('num_expanded_this_round')
@@ -562,15 +580,6 @@ class jy_fast_pricing():
                 input('big error here')
             time_e_6 = time.time()
             print(f'time_before_action_add: {time_before_action_add}')
-            print(f'time_action_add: {time_action_add}')
-            print(f'time_expand_action:{time_expand_action}, percent:{(time_expand_action/time_action_add)*100} %')
-            print(f'time_clip_time:{time_clip_time}, percent:{(time_clip_time/time_action_add)*100} %')
-            print(f'get_head_state_time:{get_head_state_time}, percent:{(get_head_state_time/time_action_add)*100} %')
-            print(f'time_cal_lb:{time_cal_lb}, percent:{(time_cal_lb/time_action_add)*100} %')
-            print(f'time_if:{time_if}, percent:{(time_if/time_action_add)*100} %')
-            print(f'time_get_completion:{time_get_completion}, percent:{(time_get_completion/time_action_add)*100} %')
-            print(f'time_alter_frontier:{time_alter_frontier}, percent:{(time_alter_frontier/time_action_add)*100} %')
-            print(f'rest_time:{rest_time}, percent:{(rest_time/time_action_add)*100} %')
             print(f'time for while {time_e_6-time_e_5}')
             print('check here')
         #print('DOEN T the CG process')
@@ -649,8 +658,36 @@ class jy_fast_pricing():
                 else:
                     self.actions_from_node_MINUS_dest_dropoff[my_origin].append(a)
         
-    
+    def get_actions_from_label_2(self,my_label:jy_label):
+        if my_label.node == -1:
+            actions_use = []
+            for n in self.pickup_node:
+                actions_use.append(self.action_dict[(my_label.node,n)][0])
+            return actions_use
+        if len(my_label.must_drop_off) ==0:
+            actions_use = []
+            actions_use.append(self.action_dict[(my_label.node,-2)][0])
+            return actions_use
+        if len(my_label.nodes_picked_up) >= self.jy_opt['max_pickups_in_a_route']:
+            actions_use = []
+            for n2 in my_label.must_drop_off:
+                actions_use.append(self.action_dict[(my_label.node,n2+len(self.pickup_node))][0])
+            return actions_use
+        actions_use = set()
+        for n in my_label.must_drop_off:
+
+            actions_use.add(self.action_dict[(my_label.node,n+len(self.pickup_node))][0])
+
+            for n2 in self.neighbors[n+len(self.pickup_node)]:
+                if n2 in self.pickup_node and n2 not in my_label.nodes_picked_up:
+                    actions_use.add(self.action_dict[(my_label.node,n2)][0])
+        for n in self.neighbors[my_label.node]:
+            if n in self.pickup_node and n not in my_label.nodes_picked_up:
+                actions_use.add(self.action_dict[(my_label.node,n)][0])
+        return list(actions_use)
     def get_actions_from_label(self,my_label:jy_label):
+        
+        
         s=my_label.my_states_ordered[-1]
         if len(my_label.nodes_picked_up) < self.jy_opt['max_pickups_in_a_route']:
             actions_use=self.actions_from_node_MINUS_dest_dropoff[s.node].copy()

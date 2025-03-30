@@ -54,7 +54,7 @@ class loadAI_cg:
         self._create_initial_res_states()
         self._create_initial_res_actions()
         self._define_state_update_module()
-        
+        #self.plot_pickup_dropoff_locations()
     def solve(self):
         """Creates a GraphMasterSolver instance from problem data and calls its solve() method"""
         #node_to_list = self._group_states_by_node_l(self.initial_res_states)
@@ -72,6 +72,7 @@ class loadAI_cg:
             self.resource_name_to_index,
             self.number_of_resources,
             self.the_single_null_action,
+            self.neighbors
             #node_to_list
         )
         output = self.solver.solve()
@@ -674,6 +675,7 @@ class loadAI_cg:
                     }
         k = min(k,len(self.nodes)-1)
         neighbors = {}
+
         for u, nodes in neighbors_by_distance.items():
             neighbors[u] = nodes[:k]
             if u == -1:
@@ -713,9 +715,11 @@ class loadAI_cg:
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
         nodes = self._create_travel_time()
-        neighbors_by_distance, neighbors = self._create_nearest_node(10)
+        self.neighbors_by_distance, self.neighbors = self._create_nearest_node(10)
         #self.plot_pickup_dropoff_locations()
-        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
+        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, self.neighbors_by_distance, self.neighbors , self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
+
+
     def plot_pickup_dropoff_locations(self):
         """
         Create a visualization of pickup and dropoff locations using different colors.
@@ -767,6 +771,6 @@ class loadAI_cg:
         
         # Show the plot
         #plt.savefig('pickup_dropoff_map.png', dpi=300, bbox_inches='tight')
-        #plt.show()
+        plt.show()
         
         return plt

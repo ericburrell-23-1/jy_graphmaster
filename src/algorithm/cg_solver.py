@@ -61,7 +61,8 @@ class GraphMaster_cg:
                  initial_dominate_actions:Set[Action],
                  resource_name_to_index: Dict[str, int],
                  number_of_resources: int,
-                 the_single_null_action: Action
+                 the_single_null_action: Action,
+                 neighbors
                  #node_to_list
                  ):
         
@@ -81,6 +82,7 @@ class GraphMaster_cg:
         self.resource_name_to_index = resource_name_to_index
         self.number_of_resources = number_of_resources
         self.the_single_null_action=the_single_null_action
+        self.neighbors = neighbors
         #self.node_to_list = node_to_list
         self.graph_to_index = {}
         self.rez_states_minus = initial_res_states
@@ -102,7 +104,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
-        self.jy_options_user_defined['lb_option'] =2
+        self.jy_options_user_defined['lb_option'] =0
         self.jy_options_user_defined['information_for_iteration'] =True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
@@ -110,7 +112,6 @@ class GraphMaster_cg:
         #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
         self.gwo_pricing_solver_loadAI = GWOPricingSolverLoadAI(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined,self.state_update_module)
         random.seed(1000)
-
     def LOAD_AI_setup(self):
         load_ai_dict=dict()
         NC=(len(self.nodes)-2)/3
@@ -273,7 +274,7 @@ class GraphMaster_cg:
                         jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
                         this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
                         if self.jy_options_user_defined['use_fast_pricing'] == True:
-                            jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
+                            jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors,self.jy_options_user_defined)
                             routes= jy_fast_pricer.run()
                             reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
                             all_reduce_cost_list.append(reduced_cost_list)
