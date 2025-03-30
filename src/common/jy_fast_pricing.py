@@ -675,9 +675,7 @@ class jy_fast_pricing():
             return actions_use
         actions_use = set()
         for n in my_label.must_drop_off:
-
             actions_use.add(self.action_dict[(my_label.node,n+len(self.pickup_node))][0])
-
             for n2 in self.neighbors[n+len(self.pickup_node)]:
                 if n2 in self.pickup_node and n2 not in my_label.nodes_picked_up:
                     actions_use.add(self.action_dict[(my_label.node,n2)][0])

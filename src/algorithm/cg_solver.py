@@ -104,7 +104,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
-        self.jy_options_user_defined['lb_option'] =0
+        self.jy_options_user_defined['lb_option'] =2
         self.jy_options_user_defined['information_for_iteration'] =True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
@@ -201,7 +201,7 @@ class GraphMaster_cg:
             state_action.append(second_action)
             this_state = second_action.get_head_state(this_state,source_state.l_id)
             state_action.append(this_state)
-            route = Route(state_action,1)
+            route = Route(state_action,1,self.state_update_module.pickup_node)
             list_of_routes.append(route)
         return list_of_routes
     
@@ -246,6 +246,7 @@ class GraphMaster_cg:
             num_path_col_in_rmp = []
             num_omega_col_in_rmp = []
             path_col_generated = []
+            path_added = []
             for route in list_of_routes:
                 node_sequence_of_routes.append(route.node_in_ordered)
             with TimeProfiler(all_time_profile, "solve:iteration"):
@@ -344,11 +345,30 @@ class GraphMaster_cg:
                                     print('red_cost')
                                     print(red_cost)
                                     input('error here: route added has negative red cost')
-                                if red_cost<-1e-3:
+                                if red_cost<-1e-3 :
                                     print('route added')
                                     print(route.node_in_ordered)
                                     node_sequence_of_routes.append(route.node_in_ordered)
                                     list_of_routes.append(route)
+                                    if len(route.node_in_ordered)>=8:
+                                        subset_of_routes = route.generate_subset_routes()
+                                        for subset_route in subset_of_routes:
+                                            if subset_route not in node_sequence_of_routes:
+                                                cur_state = State(-1,self.initial_resource_vector,1,True,False)
+                                                state_action_alt_repeat=[cur_state]
+                                                for o,d in zip(subset_route[:-1],subset_route[1:]):
+                                                    this_a:Action = self.action_dict[(o,d)][0]
+                                                    state_action_alt_repeat.append(this_a)
+                                                    try:
+                                                        new_state = this_a.get_head_state_fast_load_ai(cur_state,1)
+                                                    except:
+                                                        print('check here')
+                                                    state_action_alt_repeat.append(new_state)
+                                                    cur_state = new_state
+                                                
+                                                this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
+                                                list_of_routes.append(this_sub_route)
+                                                node_sequence_of_routes.append(this_sub_route.node_in_ordered)
                                     add_route_num += 1
                             path_col_generated.append(add_route_num)
                             
@@ -363,7 +383,7 @@ class GraphMaster_cg:
                                     state_action_list.append(state_in_ordered[idx])
                                     state_action_list.append(list_of_actions_used_in_col[idx])
                                 state_action_list.append(state_in_ordered[-1])
-                                this_route = Route(state_action_list,1)
+                                this_route = Route(state_action_list,1,self.state_update_module.pickup_node)
                                 list_of_routes.append(this_route)
                                 self._check_path_duplicate(list_of_nodes_in_shortest_path,reduced_cost)
                                 nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
@@ -407,7 +427,7 @@ class GraphMaster_cg:
                         input('error here: none state generated from given column')
                     state_action_alt_repeat.append(next_state)
                     cur_state = next_state
-                this_route = Route(state_action_alt_repeat,1)
+                this_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
                 routes_no_over_cover.remove(route)
                 routes_no_over_cover.append(this_route)
     

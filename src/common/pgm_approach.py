@@ -18,7 +18,7 @@ from src.common.helper import Helper
 from src.common.time_profile import TimeProfiler
 from scipy.sparse import csr_matrix
 class Route:
-    def __init__(self,state_action_alt_repeat,weight):
+    def __init__(self,state_action_alt_repeat,weight,pickup_node):
 
         #for i in range(0,len(state_action_alt_repeat)):
          #   tmp=state_action_alt_repeat[i]
@@ -37,7 +37,7 @@ class Route:
         ##        print('******')
         #input('---')
         self.state_action_alt_repeat=state_action_alt_repeat #input is states and actions alternating
-        
+        self.pickup_node = pickup_node
         self.clean_state_action_alt_repeat_by_removing_null()
 
         self.weight=weight #what is the corresponding amounf of this in the solution
@@ -95,6 +95,43 @@ class Route:
         #print(len(self.just_actions_ordered))
         #input('---')
         #generate all node pairs
+    def generate_subset_routes(self):
+        route = self.node_in_ordered
+        start_depot = route[0]
+        end_depot = route[-1]
+        
+        # Extract pickup nodes from the route
+        pickup_nodes = []
+        
+        for node in route[1:-1]:  # Skip start/end depot
+            if node in self.pickup_node:
+                pickup_nodes.append(node)
+        
+        # If fewer than 2 pickups, return empty list
+        if len(pickup_nodes) < 2:
+            return []
+        
+        # Generate all combinations of 2 pickup nodes
+        valid_routes = []
+        from itertools import combinations
+        
+        for pickup_combo in combinations(pickup_nodes, 2):
+            # Calculate corresponding dropoffs
+            dropoff_combo = tuple(p + len(self.pickup_node) for p in pickup_combo)
+            
+            # Create the new route - convert tuples to sets for union
+            nodes_to_include = set(pickup_combo).union(set(dropoff_combo))
+            
+            # Add nodes in the original order
+            new_route = [start_depot]
+            for node in route[1:-1]:
+                if node in nodes_to_include:
+                    new_route.append(node)
+            new_route.append(end_depot)
+            
+            valid_routes.append(new_route)
+        
+        return valid_routes
         
     def generate_all_node_pairs_ordered(self):
         self.all_node_pairs_ordered=set([])

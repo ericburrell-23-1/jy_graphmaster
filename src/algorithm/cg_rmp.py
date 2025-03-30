@@ -166,7 +166,7 @@ class CG_RMP:
                     input('error here: none state generated from given column')
                 state_action_alt_repeat.append(next_state)
                 cur_state = next_state
-            this_route = Route(state_action_alt_repeat,1)
+            this_route = Route(state_action_alt_repeat,1,self.pickup_node)
             self.list_of_route.append(this_route)
     
     def solve_ilp(self):
