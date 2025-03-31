@@ -16,7 +16,7 @@ class jy_label:
 #     
     def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
                  dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
-                 action_2_red_cost_dict,actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
+                 actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
                  rcp_u_partial, rcp_d_partial,rcp_u_partial_2):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
@@ -62,7 +62,7 @@ class jy_label:
         self.node=self.my_states_ordered[-1].node
         self.max_actions_in_route=max_actions_in_route
         self.lowest_action_contrib_red_cost=lowest_action_contrib_red_cost
-        self.action_2_red_cost_dict=action_2_red_cost_dict
+        #self.action_2_red_cost_dict=action_2_red_cost_dict
         self.actions_of_node=actions_of_node
         self.action_dict = action_dict
         self.lb=self.red_cost+(max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
@@ -353,12 +353,12 @@ class jy_label:
                 all_labels_out.append(new_label)
 
         return all_labels_out
-    def expand_given_action(self,my_action):
-        time0 = time.time()
+    def expand_given_action(self,my_action,dual,forbidden_nodes):
+
         NEW_label=None
         last_state=self.my_states_ordered[-1]
         new_head=[]
-        time1 = time.time()
+
         if self.jy_opt['use_load_ai_fast']==False:
             new_head=my_action.get_head_state(last_state,last_state.l_id)
         else:
@@ -367,15 +367,19 @@ class jy_label:
             input('errror here not posible')
         if self.max_actions_in_route==len(self.my_actions_ordered) and my_action.node_head!=-2:
             input('errror here not posible 2')
-        time2 = time.time()
+        bigVal=999999999999
         #print(f'time for get head state {time2-time1}')
         if new_head!=None:
             NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
             NEW_my_states_ordered=self.my_states_ordered+[new_head]
-            NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
+            if my_action.node_head in forbidden_nodes or my_action.node_tail in forbidden_nodes:
+                NEW_red_cost = bigVal
+            else:
+                NEW_red_cost = self.red_cost + my_action.comp_red_cost(dual)
+            #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.action_2_red_cost_dict,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2)
+            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2)
         #     if self.jy_opt['lb_option'] == 2:
         #         NEW_label.calculate_better_lb_2(dual_vec)
         #     elif self.jy_opt['lb_option'] == 1:
@@ -427,11 +431,11 @@ class jy_label:
         #         print('self.action_dict[9,7][0].cost')
         #         print(self.action_dict[9,7][0].cost)
         #         input('error here the lb went down')
-        time3 = time.time()
+
         #print(f'rest of time {time3-time2}')
 
         #print('check here')
-        return NEW_label, time1-time0,time2-time1, time3-time2, time3-time0
+        return NEW_label
     
     def convert_2_route(self):
         if self.my_states_ordered[-1].node!=-2:

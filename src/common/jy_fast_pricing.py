@@ -136,18 +136,18 @@ class jy_fast_pricing():
             #print(type(dropoff_forget))
             #input('all_forget')
         bigVal=999999999999
-        for action in self.all_actions:
-            time2 = time.time()
-            red_cost = action.comp_red_cost(self.dual_vec)
-            time3 = time.time()
-            comp_action_red_cost += (time3-time2)
-            if action.node_head in self.forbidden_nodes or action.node_tail in self.forbidden_nodes:
-                red_cost=bigVal
-                #input('hihihi')
-            self.action_2_red_cost_dict[action] = red_cost
+        # for action in self.all_actions:
+        #     time2 = time.time()
+        #     red_cost = action.comp_red_cost(self.dual_vec)
+        #     time3 = time.time()
+        #     comp_action_red_cost += (time3-time2)
+        #     if action.node_head in self.forbidden_nodes or action.node_tail in self.forbidden_nodes:
+        #         red_cost=bigVal
+        #         #input('hihihi')
+        #     self.action_2_red_cost_dict[action] = red_cost
             
-            if red_cost < self.lowest_action_contrib_red_cost:
-                self.lowest_action_contrib_red_cost = red_cost
+        #     if red_cost < self.lowest_action_contrib_red_cost:
+        #         self.lowest_action_contrib_red_cost = red_cost
             #if action.node_head in self.forbidden_nodes or action.node_tail in self.forbidden_nodes:
             #    self.lowest_action_contrib_red_cost=bigVal
         #print('self.action_2_red_cost_dict')
@@ -193,7 +193,6 @@ class jy_fast_pricing():
             dual_vec=self.dual_vec,
             max_actions_in_route=self.max_actions_in_route,
             lowest_action_contrib_red_cost=self.lowest_action_contrib_red_cost,
-            action_2_red_cost_dict=self.action_2_red_cost_dict,
             actions_of_node=self.actions_of_node,
             action_dict = self.action_dict,
             jy_opt=self.jy_opt,
@@ -458,11 +457,9 @@ class jy_fast_pricing():
                         continue
                     time_m_1_5 = time.time()
                     time_if += (time_m_1_5-time_m_1)
-                    new_label,clip_time,get_head_state_time,create_label_time, get_expand_tot_time = curr_label.expand_given_action(my_act)
+                    new_label= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
                     time_m_2 = time.time()
-                    time_clip_time += clip_time
-                    time_get_head_state += get_head_state_time
-                    time_create_label_time += create_label_time
+
                     
                     this_time_expand_action = time_m_2-time_m_1_5
                     time_expand_action += this_time_expand_action
