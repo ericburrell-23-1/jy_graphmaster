@@ -289,7 +289,7 @@ class GraphMaster_cg:
                             print(reduced_cost_list)
                             #input('----')
 
-                            if reduced_cost >= -1e-3:
+                            if reduced_cost >= -1.1:
                                 this_forbidden_omega = cg_solver.get_forbidden_omega()
                                 print('this_forbidden_omega')
                                 print(this_forbidden_omega)
@@ -337,8 +337,10 @@ class GraphMaster_cg:
 
                             #list_of_routes.extend(routes)
                             add_route_num = 0
-                            for route in routes:
-                                red_cost = route.get_red_cost(this_dual)
+                            for idx in range(len(routes)):
+                                route = routes[idx]
+                                #red_cost = route.get_red_cost(this_dual)
+                                red_cost = reduced_cost_list[idx]
                                 if route.node_in_ordered in node_sequence_of_routes and red_cost<-1:
                                     print('node_in_ordered')
                                     print(route.node_in_ordered)
@@ -350,7 +352,7 @@ class GraphMaster_cg:
                                     print(route.node_in_ordered)
                                     node_sequence_of_routes.append(route.node_in_ordered)
                                     list_of_routes.append(route)
-                                    if len(route.node_in_ordered)>=8:
+                                    if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
                                         subset_of_routes = route.generate_subset_routes()
                                         for subset_route in subset_of_routes:
                                             if subset_route not in node_sequence_of_routes:

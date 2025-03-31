@@ -11,6 +11,7 @@ from src.common.jy_label import jy_label
 from src.common.jy_eff_fronteir import jy_efficient_frontier
 from src.common.jy_sortedObject_list import jy_sortedObject_list
 from itertools import permutations
+from tqdm import tqdm
 import time
 class jy_fast_pricing():
     """
@@ -330,7 +331,6 @@ class jy_fast_pricing():
 
             # Update efficient frontier with current set of expandable labels
             time_e_1 = time.time()
-            print()
             for label in self.expandable_labels.objects:
                 self.efficient_frontier.alter_fronteir_given_new_element(label)
             time_e_2 = time.time()
@@ -343,7 +343,8 @@ class jy_fast_pricing():
             for label in self.expandable_labels.objects:
                 if label.lb < min_lb:
                     min_lb = label.lb
-            
+            print('min_lb')
+            print(min_lb)
             if min_lb >= 0 or len(self.expandable_labels) == 0:
                 break
             
@@ -523,6 +524,7 @@ class jy_fast_pricing():
                         self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
                         route_gen_count=route_gen_count+1
                         did_gen_neg_red_cost=True
+                        break
                         #if alpha>.99:
                         #    continue
 
@@ -554,6 +556,7 @@ class jy_fast_pricing():
                 # print(f'Sum of all components: {total_component_time}, percent: {(total_component_time/time_action_add)*100:.2f}%')
                 # print('check for each action expand while loop')
                 if did_gen_neg_red_cost==True:
+                    print('found complete path with this dual')
                     break
             #print('num_expanded_this_round')
             #print(num_expanded_this_round)
@@ -673,15 +676,28 @@ class jy_fast_pricing():
             for n2 in my_label.must_drop_off:
                 actions_use.append(self.action_dict[(my_label.node,n2+len(self.pickup_node))][0])
             return actions_use
+        # actions_use = set()
+        # for n in my_label.must_drop_off:
+        #     actions_use.add(self.action_dict[(my_label.node,n+len(self.pickup_node))][0])
+        #     for n2 in self.neighbors[n+len(self.pickup_node)]:
+        #         if n2 in self.pickup_node and n2 not in my_label.nodes_picked_up:
+        #             actions_use.add(self.action_dict[(my_label.node,n2)][0])
+        # for n in self.neighbors[my_label.node]:
+        #     if n in self.pickup_node and n not in my_label.nodes_picked_up:
+        #         actions_use.add(self.action_dict[(my_label.node,n)][0])
         actions_use = set()
-        for n in my_label.must_drop_off:
-            actions_use.add(self.action_dict[(my_label.node,n+len(self.pickup_node))][0])
-            for n2 in self.neighbors[n+len(self.pickup_node)]:
-                if n2 in self.pickup_node and n2 not in my_label.nodes_picked_up:
-                    actions_use.add(self.action_dict[(my_label.node,n2)][0])
-        for n in self.neighbors[my_label.node]:
-            if n in self.pickup_node and n not in my_label.nodes_picked_up:
-                actions_use.add(self.action_dict[(my_label.node,n)][0])
+
+        # Part 1: Actions for drop-offs
+        drop_off_nodes = [n+len(self.pickup_node) for n in my_label.must_drop_off]
+        actions_use.update(self.action_dict[(my_label.node, node)][0] for node in drop_off_nodes)
+
+        # Get all relevant neighbors (from drop-offs and current node)
+        all_drop_off_neighbors = set().union(*(self.neighbors[node] for node in drop_off_nodes))
+        all_neighbors_to_check = all_drop_off_neighbors.union(self.neighbors[my_label.node])
+
+        # Find all valid pickup nodes at once
+        valid_pickups = all_neighbors_to_check.intersection(self.pickup_node).difference(my_label.nodes_picked_up)
+        actions_use.update(self.action_dict[(my_label.node, node)][0] for node in valid_pickups)
         return list(actions_use)
     def get_actions_from_label(self,my_label:jy_label):
         
