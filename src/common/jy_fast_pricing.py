@@ -421,8 +421,12 @@ class jy_fast_pricing():
                         input('error here')
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
-                # poss_actions  = self.get_actions_from_label(curr_label)
-                poss_actions = self.get_actions_from_label_2(curr_label)
+                if self.jy_opt['poss_action'] == 1:
+                    poss_actions  = self.get_actions_from_label(curr_label)
+                elif self.jy_opt['poss_action'] == 2:
+                    poss_actions = self.get_actions_from_label_2(curr_label)
+                else:
+                    input('error')
                 # print('old label num')
                 # print(len(poss_actions))
                 # print('new label num')
