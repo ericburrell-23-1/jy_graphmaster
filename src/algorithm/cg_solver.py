@@ -265,12 +265,12 @@ class GraphMaster_cg:
                     cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                     if self.jy_options_user_defined['new_rmp'] == True:
                         
-                        output = cg_solver.solve()
-                        input('before')
+                        #output = cg_solver.solve()
+                        #input('before')
                         output,node_sequence_of_routes = cg_solver.solve_2()
-                        input('during')
-                        output = cg_solver.solve()
-                        input('after')
+                        #input('during')
+                        #output = cg_solver.solve()
+                        #input('after')
 
                     else:
                         output = cg_solver.solve()
