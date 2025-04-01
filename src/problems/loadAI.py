@@ -591,14 +591,7 @@ class loadAI(OptimizationProblem):
         neighbors_by_distance, neighbors = self._create_nearest_node(10)
         #self.plot_pickup_dropoff_locations()
         self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, neighbors_by_distance, neighbors, self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
-    def plot_pickup_dropoff_locations(self):
-        """
-        Create a visualization of pickup and dropoff locations using different colors.
-        
-        Parameters:
-        - self: The class instance containing the required attributes
-        """
-        # Create a new figure
+    def plot_pickup_dropoff_with_clusters(self, threshold=0.1):
         plt.figure(figsize=(12, 10))
         
         # Extract coordinates for pickup nodes
@@ -617,7 +610,41 @@ class loadAI(OptimizationProblem):
         plt.scatter(dropoff_longs, dropoff_lats, c='red', marker='s', s=100, 
                     label='Dropoff Nodes', alpha=0.8, edgecolors='darkred')
         
-        # Add node labels
+        # Find clusters of nearby points
+        clusters = {}
+        assigned = set()
+        cluster_id = 0
+        
+        # Combine all nodes
+        all_nodes = pickup_nodes + dropoff_nodes
+        
+        for node in all_nodes:
+            if node in assigned:
+                continue
+                
+            # Start a new cluster
+            cluster = [node]
+            assigned.add(node)
+            
+            # Find all points close to this node
+            for other in all_nodes:
+                if other in assigned or other == node:
+                    continue
+                    
+                # Calculate Euclidean distance
+                lat1, long1 = self.coordinates[node]
+                lat2, long2 = self.coordinates[other]
+                distance = ((lat1 - lat2) ** 2 + (long1 - long2) ** 2) ** 0.5
+                
+                if distance <= threshold:
+                    cluster.append(other)
+                    assigned.add(other)
+            
+            if len(cluster) > 1:
+                clusters[cluster_id] = cluster
+            cluster_id += 1
+        
+        # Add node labels with special handling for clustered nodes
         for node in pickup_nodes:
             plt.annotate(str(node), (self.coordinates[node][1], self.coordinates[node][0]), 
                         xytext=(5, 5), textcoords='offset points', fontsize=8)
@@ -625,6 +652,23 @@ class loadAI(OptimizationProblem):
         for node in dropoff_nodes:
             plt.annotate(str(node), (self.coordinates[node][1], self.coordinates[node][0]), 
                         xytext=(5, 5), textcoords='offset points', fontsize=8)
+        
+        # Print clusters as tuples
+        cluster_info = []
+        for cluster_id, nodes in clusters.items():
+            pickup_in_cluster = [n for n in nodes if n in pickup_nodes]
+            dropoff_in_cluster = [n for n in nodes if n in dropoff_nodes]
+            
+            if pickup_in_cluster and dropoff_in_cluster:
+                cluster_str = f"Cluster {cluster_id}: Pickups {tuple(pickup_in_cluster)}, Dropoffs {tuple(dropoff_in_cluster)}"
+                cluster_info.append(cluster_str)
+                
+                # Optionally, highlight clusters on the plot
+                center_lat = sum(self.coordinates[n][0] for n in nodes) / len(nodes)
+                center_long = sum(self.coordinates[n][1] for n in nodes) / len(nodes)
+                plt.annotate(f"Cluster {cluster_id}", (center_long, center_lat), 
+                            fontsize=10, color='blue', fontweight='bold',
+                            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="blue", alpha=0.7))
         
         # Add title and labels
         plt.title('Pickup and Dropoff Locations', fontsize=16)
@@ -640,8 +684,5 @@ class loadAI(OptimizationProblem):
         # Improve layout
         plt.tight_layout()
         
-        # Show the plot
-        #plt.savefig('pickup_dropoff_map.png', dpi=300, bbox_inches='tight')
-        #plt.show()
-        
-        return plt
+        # Return cluster information
+        return cluster_info, plt

@@ -28,6 +28,8 @@ class jy_fast_pricing():
                  actions_of_node, 
                  all_nodes,
                  neighbors,
+                 benefit_group,
+                 benefit_group_cost,
                  jy_opt):
         """
         Initialize the jy_fast_pricing algorithm.
@@ -51,6 +53,8 @@ class jy_fast_pricing():
         self.actions_of_node = actions_of_node
         self.all_nodes = all_nodes
         self.neighbors = neighbors
+        self.benefit_group = benefit_group
+        self.benefit_group_cost = benefit_group_cost
         self.jy_opt = jy_opt
         self.jy_opt['use_load_ai_fast']=True
         self.num_cus = int((len(self.all_nodes)-2)/3)
@@ -66,6 +70,12 @@ class jy_fast_pricing():
         self.action_2_red_cost_dict = {}
         self.option_do_min_term = False
         self.lowest_action_contrib_red_cost = float('inf')
+        for u, benefit_group in self.benefit_group.items():
+            updated_benefits = {}
+            if len(benefit_group) > self.jy_opt['k_benefit_group']:
+                for v, value in benefit_group.items():
+                    updated_benefits[v] = self.benefit_group_cost[u][v] - self.dual_vec[u-1] - self.dual_vec[v-1]
+                self.benefit_group[u] = dict(sorted(updated_benefits.items(), key=lambda item: item[1]))
         self.pre_process__partition_actions()
         self.initiate_RCP_d()
         self.initiate_RCP_u()
@@ -663,6 +673,7 @@ class jy_fast_pricing():
                     self.actions_from_node_MINUS_dest_dropoff[my_origin].append(a)
         
     def get_actions_from_label_2(self,my_label:jy_label):
+
         if my_label.node == -1:
             actions_use = []
             for n in self.pickup_node:
@@ -693,9 +704,15 @@ class jy_fast_pricing():
         actions_use.update(self.action_dict[(my_label.node, node)][0] for node in drop_off_nodes)
 
         # Get all relevant neighbors (from drop-offs and current node)
-        all_drop_off_neighbors = set().union(*(self.neighbors[node] for node in drop_off_nodes))
-        all_neighbors_to_check = all_drop_off_neighbors.union(self.neighbors[my_label.node])
-
+        #neighbor for must drop off (drop off)
+        must_drop_off_neighbors_drop_off_node = set().union(*(self.neighbors[node] for node in drop_off_nodes))
+        #neighbor for current node
+        neighbor_for_this_node = set(self.neighbors[my_label.node])
+        #neighbor for must drop off (pick up)
+        k= self.jy_opt['k_benefit_group']
+        must_drop_off_neighbors_pick_up_node = set().union(*(list(self.benefit_group[node].keys())[:k] for node in my_label.must_drop_off))
+        
+        all_neighbors_to_check = must_drop_off_neighbors_drop_off_node | neighbor_for_this_node | must_drop_off_neighbors_pick_up_node
         # Find all valid pickup nodes at once
         valid_pickups = all_neighbors_to_check.intersection(self.pickup_node).difference(my_label.nodes_picked_up)
         actions_use.update(self.action_dict[(my_label.node, node)][0] for node in valid_pickups)

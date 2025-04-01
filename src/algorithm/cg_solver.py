@@ -62,7 +62,9 @@ class GraphMaster_cg:
                  resource_name_to_index: Dict[str, int],
                  number_of_resources: int,
                  the_single_null_action: Action,
-                 neighbors
+                 neighbors,
+                 benefit_group,
+                 benefit_group_cost
                  #node_to_list
                  ):
         
@@ -83,6 +85,8 @@ class GraphMaster_cg:
         self.number_of_resources = number_of_resources
         self.the_single_null_action=the_single_null_action
         self.neighbors = neighbors
+        self.benefit_group = benefit_group
+        self.benefit_group_cost = benefit_group_cost
         #self.node_to_list = node_to_list
         self.graph_to_index = {}
         self.rez_states_minus = initial_res_states
@@ -105,8 +109,10 @@ class GraphMaster_cg:
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
         self.jy_options_user_defined['lb_option'] =2
-        self.jy_options_user_defined['poss_action'] = 1
+        self.jy_options_user_defined['poss_action'] = 2
+        self.jy_options_user_defined['k_benefit_group'] = 10
         self.jy_options_user_defined['information_for_iteration'] =True
+        self.jy_options_user_defined['new_rmp'] =False
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -255,8 +261,12 @@ class GraphMaster_cg:
                 lp_objective_list = []
                 omega_term_list = []
                 while iteration < max_iterations:
-                    cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
-                    output = cg_solver.solve()
+                    print(type(self.state_update_module.actions))
+                    cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+                    if self.jy_options_user_defined['new_rmp'] == True:
+                        output,node_sequence_of_routes = cg_solver.solve_2()
+                    else:
+                        output = cg_solver.solve()
                     num_path_col_in_rmp.append(cg_solver.col_of_path)
                     num_omega_col_in_rmp.append(cg_solver.col_of_omega)
                     this_sol = output['variable_values']
@@ -276,7 +286,7 @@ class GraphMaster_cg:
                         jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
                         this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
                         if self.jy_options_user_defined['use_fast_pricing'] == True:
-                            jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors,self.jy_options_user_defined)
+                            jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
                             routes= jy_fast_pricer.run()
                             reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
                             all_reduce_cost_list.append(reduced_cost_list)
@@ -308,7 +318,7 @@ class GraphMaster_cg:
                                         output_info['number of col (omega) in rmp (for each iteraiton)'] = num_omega_col_in_rmp
                                         output_info['number of col generated (path added for each iteration)'] = path_col_generated
                                         
-                                    ilp_cg_solver = CG_RMP(list_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega)
+                                    ilp_cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                                     sol = ilp_cg_solver.solve_ilp()
                                     all_time_end = time.time()
                                     all_time_profile['all_time'] = all_time_end - all_time_start
@@ -325,7 +335,23 @@ class GraphMaster_cg:
                                         valid = self.validate_route(route)
                                         if valid == False:
                                             input('invalid route here')
-
+                                    route_num = 1
+                                    for route in used_routes:
+                                        print(f'=========route {route_num}============')
+                                        print('node in route ordered')
+                                        print(route.node_in_ordered)
+                                        print('time remaining')
+                                        print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
+                                        # if len(route.just_states_ordered) >3:
+                                        #     print('time window start')
+                                        #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
+                                        #     print('time window end')
+                                        #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
+                                        #     print('weight remain')
+                                        print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
+                                        print('volume remain')
+                                        print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
+                                        route_num+=1
                                     return {
                                         'status': 'optimal',
                                         'x': sol['variable_values'],

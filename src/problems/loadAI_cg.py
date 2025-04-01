@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from src.algorithm.update_states.state_update_function import StateUpdateFunction
 from itertools import permutations
 from src.algorithm.cg_solver import GraphMaster_cg
+import random
 # CONSTANTS
 VOLUME_CAPACITY = 3000
 WEIGHT_CAPACITY = 45000
@@ -54,7 +55,8 @@ class loadAI_cg:
         self._create_initial_res_states()
         self._create_initial_res_actions()
         self._define_state_update_module()
-        #self.plot_pickup_dropoff_locations()
+        self._get_benefit_group()
+        #self.plot_pickup_dropoff_with_clusters()
     def solve(self):
         """Creates a GraphMasterSolver instance from problem data and calls its solve() method"""
         #node_to_list = self._group_states_by_node_l(self.initial_res_states)
@@ -72,7 +74,9 @@ class loadAI_cg:
             self.resource_name_to_index,
             self.number_of_resources,
             self.the_single_null_action,
-            self.neighbors
+            self.neighbors,
+            self.benefit_group,
+            self.benefit_group_cost
             #node_to_list
         )
         output = self.solver.solve()
@@ -80,23 +84,7 @@ class loadAI_cg:
         variable_to_values = output['x']
         routes = output['used_routes']
         output_info = output['output_info']
-        route_num = 1
-        for route in routes:
-            print(f'=========route {route_num}============')
-            print('node in route ordered')
-            print(route.node_in_ordered)
-            print('time remaining')
-            print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
-            # if len(route.just_states_ordered) >3:
-            #     print('time window start')
-            #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
-            #     print('time window end')
-            #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
-            #     print('weight remain')
-            print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
-            print('volume remain')
-            print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
-            route_num+=1
+        
         print('=======output info=======')
         for name,value in output_info.items():
             print(' ')
@@ -712,6 +700,28 @@ class loadAI_cg:
                 raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")
     
         return dict_l_node_2_list
+    def _get_benefit_group(self):
+
+        self.benefit_group = defaultdict()
+        self.benefit_group_cost = defaultdict()
+        for u in self.pickup_to_dropoff.keys():
+            this_benefit_group = defaultdict()
+            this_benefit_group_cost = defaultdict()
+            for v in self.pickup_to_dropoff.keys():
+                if u != v:
+                    cost_1 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[u])][0].cost+\
+                    +self.actions[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])][0].cost + self.actions[(self.pickup_to_dropoff[v],-2)][0].cost
+                    cost_2 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[v])][0].cost+\
+                    +self.actions[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])][0].cost + self.actions[(self.pickup_to_dropoff[u],-2)][0].cost
+                    #min_cost[(u,v)] = min(cost_1,cost_2)
+                    this_benefit=  min(cost_1,cost_2)- self._slack(u)-self._slack(v) + random.uniform(-1e-6, 1e-6)
+                    if this_benefit <-0.0001:
+                        this_benefit_group[v] = this_benefit
+                        this_benefit_group_cost[v] = this_benefit
+            this_benefit_group = dict(sorted(this_benefit_group.items(), key=lambda item: item[1])) 
+            self.benefit_group[u] =   this_benefit_group
+            self.benefit_group_cost[u] = this_benefit_group_cost
+        print('finish benefit group')
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
         nodes = self._create_travel_time()
@@ -720,14 +730,7 @@ class loadAI_cg:
         self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, self.neighbors_by_distance, self.neighbors , self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
 
 
-    def plot_pickup_dropoff_locations(self):
-        """
-        Create a visualization of pickup and dropoff locations using different colors.
-        
-        Parameters:
-        - self: The class instance containing the required attributes
-        """
-        # Create a new figure
+    def plot_pickup_dropoff_with_clusters(self, threshold=0.1):
         plt.figure(figsize=(12, 10))
         
         # Extract coordinates for pickup nodes
@@ -739,14 +742,47 @@ class loadAI_cg:
         dropoff_nodes = list(self.dropoff_to_pickup.keys())
         dropoff_lats = [self.coordinates[node][0] for node in dropoff_nodes]
         dropoff_longs = [self.coordinates[node][1] for node in dropoff_nodes]
-        
         # Plot the points with different colors
         plt.scatter(pickup_longs, pickup_lats, c='green', marker='o', s=100, 
                     label='Pickup Nodes', alpha=0.8, edgecolors='darkgreen')
         plt.scatter(dropoff_longs, dropoff_lats, c='red', marker='s', s=100, 
                     label='Dropoff Nodes', alpha=0.8, edgecolors='darkred')
         
-        # Add node labels
+        # Find clusters of nearby points
+        clusters = {}
+        assigned = set()
+        cluster_id = 0
+        
+        # Combine all nodes
+        all_nodes = pickup_nodes + dropoff_nodes
+        
+        for node in all_nodes:
+            if node in assigned:
+                continue
+                
+            # Start a new cluster
+            cluster = [node]
+            assigned.add(node)
+            
+            # Find all points close to this node
+            for other in all_nodes:
+                if other in assigned or other == node:
+                    continue
+                    
+                # Calculate Euclidean distance
+                lat1, long1 = self.coordinates[node]
+                lat2, long2 = self.coordinates[other]
+                distance = ((lat1 - lat2) ** 2 + (long1 - long2) ** 2) ** 0.5
+                
+                if distance <= threshold:
+                    cluster.append(other)
+                    assigned.add(other)
+            
+            if len(cluster) > 1:
+                clusters[cluster_id] = cluster
+            cluster_id += 1
+        
+        # Add node labels with special handling for clustered nodes
         for node in pickup_nodes:
             plt.annotate(str(node), (self.coordinates[node][1], self.coordinates[node][0]), 
                         xytext=(5, 5), textcoords='offset points', fontsize=8)
@@ -754,6 +790,23 @@ class loadAI_cg:
         for node in dropoff_nodes:
             plt.annotate(str(node), (self.coordinates[node][1], self.coordinates[node][0]), 
                         xytext=(5, 5), textcoords='offset points', fontsize=8)
+        
+        # Print clusters as tuples
+        cluster_info = []
+        for cluster_id, nodes in clusters.items():
+            pickup_in_cluster = [n for n in nodes if n in pickup_nodes]
+            dropoff_in_cluster = [n for n in nodes if n in dropoff_nodes]
+            
+            if pickup_in_cluster and dropoff_in_cluster:
+                cluster_str = f"Cluster {cluster_id}: Pickups {tuple(pickup_in_cluster)}, Dropoffs {tuple(dropoff_in_cluster)}"
+                cluster_info.append(cluster_str)
+                
+                # Optionally, highlight clusters on the plot
+                center_lat = sum(self.coordinates[n][0] for n in nodes) / len(nodes)
+                center_long = sum(self.coordinates[n][1] for n in nodes) / len(nodes)
+                plt.annotate(f"Cluster {cluster_id}", (center_long, center_lat), 
+                            fontsize=10, color='blue', fontweight='bold',
+                            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="blue", alpha=0.7))
         
         # Add title and labels
         plt.title('Pickup and Dropoff Locations', fontsize=16)
@@ -768,9 +821,6 @@ class loadAI_cg:
         
         # Improve layout
         plt.tight_layout()
-        
-        # Show the plot
-        #plt.savefig('pickup_dropoff_map.png', dpi=300, bbox_inches='tight')
         plt.show()
-        
-        return plt
+        # Return cluster information
+        return cluster_info, plt

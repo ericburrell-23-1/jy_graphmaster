@@ -6,22 +6,25 @@ import itertools
 from src.common.state import State
 
 class CG_RMP:
-    def __init__(self, list_of_route:list[Route], rhs_exog_vec,data, forbidden = [],initial_resource_vector=None):
+    def __init__(self, list_of_route:list[Route],node_sequence_of_routes, rhs_exog_vec,data, forbidden = [],initial_resource_vector=None):
         self.list_of_route = list_of_route
         self.list_of_action_list = []
-
+        self.node_sequence_of_routes = node_sequence_of_routes
         self.rhs_exog_vec = rhs_exog_vec
         self.var_to_obj_coef = defaultdict()
         self.var_to_col_coef = defaultdict()
         self.variables = {}
-        self.actions = data.actions
+        try:
+            self.actions = data.actions
+        except:
+            print('error here')
         self.pickup_node = data.pickup_node
         self.dropoff_node = data.dropoff_node
         self.neighbors = data.neighbors
         self.forbidden = forbidden
         self.initial_resource_vector = initial_resource_vector
         self.rho = self._generate_rho()
-        self._geenrate_col_coeff()
+        self._generate_col_coeff()
         
         self._build_master_problem()
 
@@ -44,7 +47,7 @@ class CG_RMP:
                 v = omega_name[2]
                 forbidden.append((u,v))
         return forbidden
-    def _geenrate_col_coeff(self):
+    def _generate_col_coeff(self):
         var_index = 0
         self.omega_name_to_index = defaultdict()
         self.index_to_omega_name = defaultdict()
@@ -102,7 +105,7 @@ class CG_RMP:
         
         #print(f"Created {constraint_count} constraints")
         #print(f"Constraint names: {list(self.model.constraints.keys())}")
-                                     
+    
     def solve(self):
         """Solve the current master problem."""
         if not self.model:
@@ -267,6 +270,7 @@ class CG_RMP:
         return dual_values
         
     def add_column(self, column_coef, obj_coef):
+
         """Add a new column to the master problem."""
         var_idx = max(self.var_to_obj_coef.keys()) + 1 if self.var_to_obj_coef else 0
         
@@ -287,5 +291,200 @@ class CG_RMP:
             if i < len(constraint_names):
                 constraint_name = constraint_names[i]
                 self.model.constraints[constraint_name] += float(column_coef[i]) * var
+        
+        return var_idx
+    def solve_2(self, max_iter=5, max_add=10):
+        """
+        Solve the RMP problem iteratively according to Algorithm 2.
+        
+        Parameters:
+        max_iter (int): Maximum number of iterations (default: 5)
+        max_add (int): Maximum number of columns to add in each iteration
+        
+        Returns:
+        dict: Solution information including status, objective value, variable values
+        """
+        num_iter_left = max_iter
+        #my_routes = set()  # Keep track of routes we've already added
+         
+        # Repeat until no more columns to add or max iterations reached
+        while num_iter_left > 0:
+            # Step 3: Solve current RMP
+            solution = self.solve()
+            
+
+            x_values = solution['variable_values']
+            
+            # If solution is not optimal, break
+            if solution['status'] != 'Optimal':
+                break
+            this_forbidden_omega = self.get_forbidden_omega()
+            if not this_forbidden_omega:
+                break
+                
+            # Step 4: Compute mutation scores for all relevant (l,u,v) triples
+            all_mut_scores = []
+            
+            # For each route l with x_l > 0
+            for var_idx, x_val in x_values.items():
+                if var_idx in self.var_index_to_route_index and x_val > 0.00001:
+                    route_idx = self.var_index_to_route_index[var_idx]
+                    route = self.list_of_route[route_idx]
+                    if len(route.node_in_ordered) <4:
+                        continue
+                    route_nodes = [node for node in route.node_in_ordered if node in self.pickup_node]
+                    
+                    # For each u in l
+                    for u in route_nodes:
+                        # For each v not in l where omega_uv > 0
+                        for v in self.pickup_node:
+                            if v not in route_nodes:
+                                # Check if omega_uv > 0
+                                if ('omega', u, v) in self.omega_name_to_index:
+                                    omega_idx = self.omega_name_to_index[('omega', u, v)]
+                                    omega_val = x_values.get(omega_idx, 0)
+                                    
+                                    if omega_val > 0.00001:
+                                        # Calculate mutation score
+                                        l_hat = self._swap(route, u, v)  # Create new route by swapping u with v
+                                        if l_hat:
+                                            # Calculate cost difference
+                                            cost_l_hat = l_hat.cost
+                                            cost_l = route.cost
+                                            rho_uv = self.rho[(u, v)]
+                                            
+                                            mut_score = cost_l_hat - cost_l + rho_uv
+                                            
+                                            # Add to all mutation scores
+                                            all_mut_scores.append((mut_score, l_hat, route_idx))
+            
+            # Step 5: Select columns with negative mutation scores
+            cols_to_add = [(score, route, orig_idx) for score, route, orig_idx in all_mut_scores if score <= 0]
+            
+            # Step 6: Remove routes that are already in my_routes
+            for score, route, orig_idx in cols_to_add:
+                if route.node_in_ordered in self.node_sequence_of_routes:
+                    input('error here for self.node_sequence_of_routes')
+            # cols_to_add = [(score, route, orig_idx) for score, route, orig_idx in cols_to_add 
+            #             if self._route_to_tuple(route) not in my_routes]
+            
+            # Step 7: Take subset with smallest scores, up to max_add columns
+            cols_to_add.sort(key=lambda x: x[0])  # Sort by mutation score (smallest first)
+            cols_to_add = cols_to_add[:max_add]
+            
+            # If no columns to add, break
+            if not cols_to_add:
+                break
+                
+            # Step 8: Add selected columns to my_routes and to the problem
+            for _, route, _ in cols_to_add:
+                # Add route to my_routes set
+                self.node_sequence_of_routes.add(self._route_to_tuple(route))
+                
+                # Add route to the problem
+                var_idx = self._add_route(route)
+            
+            # Step 9: Decrement iterations counter
+            num_iter_left -= 1
+        
+        # Solve one final time with all the added columns
+        final_solution = self.solve()
+        
+        return final_solution, self.node_sequence_of_routes
+
+    def _swap(self, route, u, v):
+        """
+        Create a new route by swapping node u with node v.
+        
+        Parameters:
+        route (Route): Original route
+        u (int): Node to remove
+        v (int): Node to add
+        
+        Returns:
+        Route: New route with u replaced by v, or None if not valid
+        """
+        # Get the node sequence
+        nodes = route.node_in_ordered.copy()
+        u_dropoff = u + len(self.pickup_node)
+        v_dropoff = v + len(self.pickup_node)
+        # Find the position of u
+        if u not in nodes or u_dropoff not in nodes:
+            return None
+        
+        u_pos = nodes.index(u)
+        u_dropoff_pos = nodes.index(u_dropoff)
+        
+        # Create new node sequence
+        new_nodes = nodes.copy()
+        new_nodes[u_pos] = v
+        new_nodes[u_dropoff_pos] = v_dropoff
+        
+        if new_nodes in self.node_sequence_of_routes:
+            return None
+        # Create a valid route
+        try:
+            # Create state-action sequence for the new route
+            state_action_alt_repeat = []
+            source_state = State(-1, self.initial_resource_vector, 0, True, False)
+            state_action_alt_repeat.append(source_state)
+            cur_state = source_state
+            
+            for (tail, head) in zip(new_nodes[:-1], new_nodes[1:]):
+                this_act = self.actions[(tail, head)][0]
+                state_action_alt_repeat.append(this_act)
+                next_state = this_act.get_head_state(cur_state)
+                if next_state is None:
+                    # Not a valid route
+                    return None
+                state_action_alt_repeat.append(next_state)
+                cur_state = next_state
+            
+            # Create and return the new route
+            new_route = Route(state_action_alt_repeat, 1, self.pickup_node)
+            return new_route
+        except:
+            # In case of any error, return None
+            return None
+
+    def _route_to_tuple(self, route):
+        """Convert a route to a hashable tuple for checking if already added."""
+        return tuple(route.node_in_ordered)
+
+    def _add_route(self, route):
+        """
+        Add a new route to the problem.
+        
+        Parameters:
+        route (Route): Route to add
+        
+        Returns:
+        int: Index of the new variable
+        """
+        # Add route to list_of_route
+        route_idx = len(self.list_of_route)
+        self.list_of_route.append(route)
+        
+        # Create new variable
+        var_idx = max(self.var_to_obj_coef.keys()) + 1 if self.var_to_obj_coef else 0
+        
+        # Add column coefficients and objective coefficient
+        self.var_to_obj_coef[var_idx] = route.cost
+        self.var_to_col_coef[var_idx] = route.Exog_vec
+        self.var_index_to_route_index[var_idx] = route_idx
+        
+        # Create new variable
+        self.variables[var_idx] = pulp.LpVariable(f"x_{var_idx}", lowBound=0)
+        var = self.variables[var_idx]
+        
+        # Update the objective function
+        self.model += float(route.cost) * var
+        
+        # Update the constraints
+        constraint_names = list(self.model.constraints.keys())
+        for i in range(len(self.rhs_exog_vec)):
+            if i < len(constraint_names):
+                constraint_name = constraint_names[i]
+                self.model.constraints[constraint_name] += float(route.Exog_vec[i]) * var
         
         return var_idx
