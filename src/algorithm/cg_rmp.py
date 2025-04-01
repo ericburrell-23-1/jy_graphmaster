@@ -436,6 +436,8 @@ class CG_RMP:
                 print(var_idx)
                 print('self.var_to_obj_coef[var_idx]')
                 print(self.var_to_obj_coef[var_idx])
+                print('route.just_nodes_ordered')
+                print(route.just_nodes_ordered)
                 col_added +=1
                 #input('did ad route')
             # Step 9: Decrement iterations counter
