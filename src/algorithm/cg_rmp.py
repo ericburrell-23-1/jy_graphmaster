@@ -308,6 +308,7 @@ class CG_RMP:
         #my_routes = set()  # Keep track of routes we've already added
          
         # Repeat until no more columns to add or max iterations reached
+        col_added = 0
         while num_iter_left > 0:
             # Step 3: Solve current RMP
             solution = self.solve()
@@ -383,13 +384,14 @@ class CG_RMP:
                 
                 # Add route to the problem
                 var_idx = self._add_route(route)
-            
+                col_added +=1
             # Step 9: Decrement iterations counter
             num_iter_left -= 1
         
         # Solve one final time with all the added columns
         final_solution = self.solve()
-        
+        print('----col added----')
+        print(col_added)
         return final_solution, self.node_sequence_of_routes
 
     def _swap(self, route, u, v):
