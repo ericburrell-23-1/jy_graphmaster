@@ -112,7 +112,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['poss_action'] = 2
         self.jy_options_user_defined['k_benefit_group'] = 60
         self.jy_options_user_defined['information_for_iteration'] =True
-        self.jy_options_user_defined['new_rmp'] =True
+        self.jy_options_user_defined['new_rmp'] =False
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
