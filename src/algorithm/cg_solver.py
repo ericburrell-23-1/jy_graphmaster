@@ -113,6 +113,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['k_benefit_group'] = 10
         self.jy_options_user_defined['information_for_iteration'] =True
         self.jy_options_user_defined['new_rmp'] =True
+        self.jy_options_user_defined['subset_route'] = True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -386,25 +387,26 @@ class GraphMaster_cg:
                                     print(route.node_in_ordered)
                                     node_sequence_of_routes.append(route.node_in_ordered)
                                     list_of_routes.append(route)
-                                    if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
-                                        subset_of_routes = route.generate_subset_routes()
-                                        for subset_route in subset_of_routes:
-                                            if subset_route not in node_sequence_of_routes:
-                                                cur_state = State(-1,self.initial_resource_vector,1,True,False)
-                                                state_action_alt_repeat=[cur_state]
-                                                for o,d in zip(subset_route[:-1],subset_route[1:]):
-                                                    this_a:Action = self.action_dict[(o,d)][0]
-                                                    state_action_alt_repeat.append(this_a)
-                                                    try:
-                                                        new_state = this_a.get_head_state_fast_load_ai(cur_state,1)
-                                                    except:
-                                                        print('check here')
-                                                    state_action_alt_repeat.append(new_state)
-                                                    cur_state = new_state
-                                                
-                                                this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
-                                                list_of_routes.append(this_sub_route)
-                                                node_sequence_of_routes.append(this_sub_route.node_in_ordered)
+                                    if self.jy_options_user_defined['subset_route'] == True:
+                                        if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
+                                            subset_of_routes = route.generate_subset_routes()
+                                            for subset_route in subset_of_routes:
+                                                if subset_route not in node_sequence_of_routes:
+                                                    cur_state = State(-1,self.initial_resource_vector,1,True,False)
+                                                    state_action_alt_repeat=[cur_state]
+                                                    for o,d in zip(subset_route[:-1],subset_route[1:]):
+                                                        this_a:Action = self.action_dict[(o,d)][0]
+                                                        state_action_alt_repeat.append(this_a)
+                                                        try:
+                                                            new_state = this_a.get_head_state_fast_load_ai(cur_state,1)
+                                                        except:
+                                                            print('check here')
+                                                        state_action_alt_repeat.append(new_state)
+                                                        cur_state = new_state
+                                                    
+                                                    this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
+                                                    list_of_routes.append(this_sub_route)
+                                                    node_sequence_of_routes.append(this_sub_route.node_in_ordered)
                                     add_route_num += 1
                             path_col_generated.append(add_route_num)
                             

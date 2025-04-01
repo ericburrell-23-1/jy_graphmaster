@@ -14,10 +14,9 @@ class CG_RMP:
         self.var_to_obj_coef = defaultdict()
         self.var_to_col_coef = defaultdict()
         self.variables = {}
-        try:
-            self.actions = data.actions
-        except:
-            print('error here')
+
+        self.actions = data.actions
+
         self.pickup_node = data.pickup_node
         self.dropoff_node = data.dropoff_node
         self.neighbors = data.neighbors
@@ -34,7 +33,6 @@ class CG_RMP:
         for u in self.pickup_node:
             for v in self.pickup_node:
                 if u!= v :
-
                     this_rho[(u,v)] = 2*self.actions[(u,v)][0].cost + 2*self.actions[(u+len(self.pickup_node),v+len(self.pickup_node))][0].cost
                     this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
         return this_rho
@@ -49,16 +47,18 @@ class CG_RMP:
         return forbidden
     def _generate_col_coeff(self):
         var_index = 0
+        self.col_of_path = 0
+        self.col_of_omega = 0
         self.omega_name_to_index = defaultdict()
         self.index_to_omega_name = defaultdict()
         self.var_index_to_route_index = defaultdict()
-        self.col_of_path = 0
-        self.col_of_omega = 0
+        self.route_index_to_var_index = defaultdict()
         for pi in range(len(self.list_of_route)):
             route = self.list_of_route[pi]
             self.var_to_obj_coef[var_index] = route.cost
             self.var_to_col_coef[var_index] = route.Exog_vec
             self.var_index_to_route_index[var_index] = pi
+            self.route_index_to_var_index[pi] = var_index
             var_index += 1
             self.col_of_path += 1
         for u in self.pickup_node:
@@ -312,7 +312,10 @@ class CG_RMP:
         # Repeat until no more columns to add or max iterations reached
         col_added = 0
         debug_on=True
+        #obj_func = self.model.objective
         while num_iter_left > 0:
+            obj_func = self.model.objective
+            print('check here for loop')
             # Step 3: Solve current RMP
             solution = self.solve()
             #input('this lp')
@@ -419,6 +422,7 @@ class CG_RMP:
             #print(cols_to_add)
             #print('input')
             # Step 8: Add selected columns to my_routes and to the problem
+            obj_func = self.model.objective
             if debug_on==True:
                 this_sol = self.solve()
                 this_obj_val=this_sol['objective_value']
@@ -440,6 +444,9 @@ class CG_RMP:
                 print(route.just_nodes_ordered)
                 col_added +=1
                 #input('did ad route')
+            obj_func = self.model.objective
+            if len(obj_func)<50:
+                print('error here for obj')
             # Step 9: Decrement iterations counter
             num_iter_left -= 1
             if debug_on==True:
@@ -447,9 +454,12 @@ class CG_RMP:
                 print('this_sol')
                 print(this_sol)
                 this_obj_val=this_sol['objective_value']
+                var_index_to_value = this_sol['variable_values']
+                path_index_used = [self.var_index_to_route_index[idx] for idx in self.var_index_to_route_index.keys() if var_index_to_value[idx]>0.0001]
+                path_used = [self.list_of_route[idx] for idx in path_index_used]
                 if this_obj_val<.001:
-                    input('HOW CAN COST DROP TO ZERO UPON ADDING THESE TERMS')
-                input('just after  additions lp')
+                    print('HOW CAN COST DROP TO ZERO UPON ADDING THESE TERMS')
+                print('just after  additions lp')
 
         # Solve one final time with all the added columns
         final_solution = self.solve()
@@ -570,19 +580,28 @@ class CG_RMP:
         self.var_to_obj_coef[var_idx] = route.cost
         self.var_to_col_coef[var_idx] = route.Exog_vec
         self.var_index_to_route_index[var_idx] = route_idx
-        
+        self.route_index_to_var_index[route_idx] = var_idx
         # Create new variable
-        self.variables[var_idx] = pulp.LpVariable(f"x_{var_idx}", lowBound=0)
-        var = self.variables[var_idx]
+        new_var = pulp.LpVariable(f"x_{var_idx}", lowBound=0)
+        self.variables[var_idx] = new_var
+ 
         
         # Update the objective function
-        self.model += float(route.cost) * var
+        self.model.addVariable(new_var)
+        self.model.objective += float(route.cost) * new_var
         
         # Update the constraints
         constraint_names = list(self.model.constraints.keys())
         for i in range(len(self.rhs_exog_vec)):
             if i < len(constraint_names):
                 constraint_name = constraint_names[i]
-                self.model.constraints[constraint_name] += float(route.Exog_vec[i]) * var
+                coef = float(route.Exog_vec[i])
+                if abs(coef) > 1e-10:  # Only add non-zero coefficients
+                    # Get the constraint
+                    constraint = self.model.constraints[constraint_name]
+                    
+                    # Update the constraint by adding the new term directly
+                    # This modifies the constraint's expression
+                    constraint.addInPlace(coef * new_var)
         
         return var_idx
