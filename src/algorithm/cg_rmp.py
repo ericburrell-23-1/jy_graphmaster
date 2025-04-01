@@ -293,6 +293,8 @@ class CG_RMP:
                 self.model.constraints[constraint_name] += float(column_coef[i]) * var
         
         return var_idx
+    
+
     def solve_2(self, max_iter=5, max_add=10):
         """
         Solve the RMP problem iteratively according to Algorithm 2.
@@ -325,7 +327,7 @@ class CG_RMP:
                 
             # Step 4: Compute mutation scores for all relevant (l,u,v) triples
             all_mut_scores = []
-            
+            my_dual_vals=self._get_dual_values()
             # For each route l with x_l > 0
             for var_idx, x_val in x_values.items():
                 if var_idx in self.var_index_to_route_index and x_val > 0.00001:
@@ -341,6 +343,7 @@ class CG_RMP:
                         for v in self.pickup_node:
                             if v not in route_nodes:
                                 # Check if omega_uv > 0
+                                #input('hihi')
                                 if ('omega', u, v) in self.omega_name_to_index:
                                     omega_idx = self.omega_name_to_index[('omega', u, v)]
                                     omega_val = x_values.get(omega_idx, 0)
@@ -348,7 +351,23 @@ class CG_RMP:
                                     if omega_val > 0.00001:
                                         # Calculate mutation score
                                         l_hat = self._swap(route, u, v)  # Create new route by swapping u with v
+                                        
+                                        #print('l_hat')
+                                        #print('[u,v]')
+                                        ##print([u,v])
+                                        #print('route.just_nodes_ordered')
+                                        #print(route.just_nodes_ordered)
+                                        #print('type(route)')
+                                        #print(type(route))
+                                        
+                                        #print('type(l_hat)')
+                                        #print(type(l_hat))
+                                        ###input('lookzy')
                                         if l_hat:
+                                            this_red_cost=l_hat.get_red_cost(my_dual_vals)
+                                            print('this_red_cost')
+                                            print(this_red_cost)
+                                            #input('this_red_cost')
                                             # Calculate cost difference
                                             cost_l_hat = l_hat.cost
                                             cost_l = route.cost
@@ -357,10 +376,29 @@ class CG_RMP:
                                             mut_score = cost_l_hat - cost_l + rho_uv
                                             
                                             # Add to all mutation scores
-                                            all_mut_scores.append((mut_score, l_hat, route_idx))
+                                            #all_mut_scores.append((mut_score, l_hat, route_idx))
+                                            all_mut_scores.append(tuple([this_red_cost,l_hat,route_idx]))
+            #print('all_mut_scores')
+            #print(all_mut_scores)
+            #print('above all bb')
+            #input('---')
+
+            #for my_tup in self.omega_name_to_index:
+            #    my_nm=my_tup[0]
+            #    if my_nm=='omega':
+            #        u=my_tup[1]#('omega', u, v)
+            #        v=my_tup[2]
+            #        omega_idx = self.omega_name_to_index[('omega', u, v)]
+            #        omega_val = x_values.get(omega_idx, 0)
+                    #if omega_val>0.001:
+                        #print('uv')
+                        #print([u,v])
+                        #print('omega_val')
+                        #print(omega_val)
             
             # Step 5: Select columns with negative mutation scores
-            cols_to_add = [(score, route, orig_idx) for score, route, orig_idx in all_mut_scores if score <= 0]
+            #cols_to_add = [(score, route, orig_idx) for score, route, orig_idx in all_mut_scores if score <= 0]
+            cols_to_add = [(score, route, orig_idx) for score, route, orig_idx in all_mut_scores if score <= -.0001]
             
             # Step 6: Remove routes that are already in my_routes
             for score, route, orig_idx in cols_to_add:
@@ -376,22 +414,26 @@ class CG_RMP:
             # If no columns to add, break
             if not cols_to_add:
                 break
-                
+            #print('cols_to_add')
+            #print(cols_to_add)
+            #print('input')
             # Step 8: Add selected columns to my_routes and to the problem
             for _, route, _ in cols_to_add:
                 # Add route to my_routes set
-                self.node_sequence_of_routes.add(self._route_to_tuple(route))
+                self.node_sequence_of_routes.append(self._route_to_tuple(route))
                 
                 # Add route to the problem
                 var_idx = self._add_route(route)
                 col_added +=1
+                #input('did ad route')
             # Step 9: Decrement iterations counter
             num_iter_left -= 1
         
         # Solve one final time with all the added columns
         final_solution = self.solve()
-        print('----col added----')
-        print(col_added)
+        #print('----col added----')
+        #print(col_added)
+        #input('count Adds ALL')
         return final_solution, self.node_sequence_of_routes
 
     def _swap(self, route, u, v):
@@ -425,29 +467,62 @@ class CG_RMP:
         if new_nodes in self.node_sequence_of_routes:
             return None
         # Create a valid route
-        try:
-            # Create state-action sequence for the new route
-            state_action_alt_repeat = []
-            source_state = State(-1, self.initial_resource_vector, 0, True, False)
-            state_action_alt_repeat.append(source_state)
-            cur_state = source_state
-            
-            for (tail, head) in zip(new_nodes[:-1], new_nodes[1:]):
-                this_act = self.actions[(tail, head)][0]
-                state_action_alt_repeat.append(this_act)
-                next_state = this_act.get_head_state(cur_state)
-                if next_state is None:
-                    # Not a valid route
-                    return None
-                state_action_alt_repeat.append(next_state)
-                cur_state = next_state
-            
-            # Create and return the new route
-            new_route = Route(state_action_alt_repeat, 1, self.pickup_node)
-            return new_route
-        except:
+        #try:
+        # Create state-action sequence for the new route
+        state_action_alt_repeat = []
+        source_state = State(-1, self.initial_resource_vector, 0, True, False)
+        state_action_alt_repeat.append(source_state)
+        cur_state = source_state
+        print('u')
+        print(u)
+        print('v')
+        print(v)
+        print('nodes')
+        print(nodes)
+        print('new_nodes')
+        print(new_nodes)
+        print('zip(new_nodes[:-1], new_nodes[1:])')
+        print()
+        tmp=zip(new_nodes[:-1], new_nodes[1:])
+        print('len(new_nodes)')
+        print(len(new_nodes))
+        
+        #input('looking here')
+        num_steps=0
+        #for (tail, head) in zip(new_nodes[:-1], new_nodes[1:]):
+        for i in range(0,len(new_nodes)-1):
+            #print('hihihffafa')
+            tail=new_nodes[i]
+            head=new_nodes[i+1]
+            #print('check1')
+
+            this_act = self.actions[(tail, head)][0]
+            #print('check2')
+
+            state_action_alt_repeat.append(this_act)
+            #print('check3')
+            #this_act.pretty_print_action()
+            #cur_state.pretty_print_state()
+            next_state = this_act.get_head_state(cur_state,cur_state.l_id)
+            #print('num_steps')
+            #print(i)
+            if next_state is None:
+                # Not a valid route
+                #input('route violated')
+                return None
+            state_action_alt_repeat.append(next_state)
+            cur_state = next_state
+        
+        # Create and return the new route
+        new_route = Route(state_action_alt_repeat, 1, self.pickup_node)
+        
+        
+        #input('route created')
+
+        return new_route
+        #except:
             # In case of any error, return None
-            return None
+        #    return None
 
     def _route_to_tuple(self, route):
         """Convert a route to a hashable tuple for checking if already added."""
