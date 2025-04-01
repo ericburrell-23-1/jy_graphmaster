@@ -311,10 +311,11 @@ class CG_RMP:
          
         # Repeat until no more columns to add or max iterations reached
         col_added = 0
+        debug_on=True
         while num_iter_left > 0:
             # Step 3: Solve current RMP
             solution = self.solve()
-            
+            input('this lp')
 
             x_values = solution['variable_values']
             
@@ -418,6 +419,11 @@ class CG_RMP:
             #print(cols_to_add)
             #print('input')
             # Step 8: Add selected columns to my_routes and to the problem
+            if debug_on==True:
+                this_sol = self.solve()
+                
+                input('just before additions lp')
+
             for _, route, _ in cols_to_add:
                 # Add route to my_routes set
                 self.node_sequence_of_routes.append(self._route_to_tuple(route))
@@ -428,12 +434,15 @@ class CG_RMP:
                 #input('did ad route')
             # Step 9: Decrement iterations counter
             num_iter_left -= 1
-        
+            if debug_on==True:
+                this_sol = self.solve()
+                
+                input('just after  additions lp')
+
         # Solve one final time with all the added columns
         final_solution = self.solve()
-        #print('----col added----')
-        #print(col_added)
-        #input('count Adds ALL')
+        
+        input('final lp')
         return final_solution, self.node_sequence_of_routes
 
     def _swap(self, route, u, v):

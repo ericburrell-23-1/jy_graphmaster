@@ -110,7 +110,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_fast_pricing'] = True
         self.jy_options_user_defined['lb_option'] =2
         self.jy_options_user_defined['poss_action'] = 2
-        self.jy_options_user_defined['k_benefit_group'] = 60
+        self.jy_options_user_defined['k_benefit_group'] = 10
         self.jy_options_user_defined['information_for_iteration'] =True
         self.jy_options_user_defined['new_rmp'] =True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
@@ -264,7 +264,14 @@ class GraphMaster_cg:
                     print(type(self.state_update_module.actions))
                     cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                     if self.jy_options_user_defined['new_rmp'] == True:
+                        
+                        output = cg_solver.solve()
+                        input('before')
                         output,node_sequence_of_routes = cg_solver.solve_2()
+                        input('during')
+                        output = cg_solver.solve()
+                        input('after')
+
                     else:
                         output = cg_solver.solve()
                     num_path_col_in_rmp.append(cg_solver.col_of_path)
