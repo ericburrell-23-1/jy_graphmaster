@@ -514,6 +514,7 @@ class loadAI(OptimizationProblem):
             self.initial_res_actions.add(self.actions[skip_node, -2][0])
 
     
+    
     def _create_initial_res_states(self):
         self.initial_res_states.add(State(-1, self._full_resource_vec(), 0, True, False))
 

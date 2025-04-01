@@ -328,7 +328,13 @@ class jy_fast_pricing():
         lowest_so_far=np.inf
         route_gen_count=0
         use_completion_on=False
-        while True:
+        max_ter = 1
+        itr_num = 0
+        if self.jy_opt['use_comp_col'] == True:
+            max_ter =100000
+        
+        while itr_num < max_ter:
+            itr_num+=1
             # Re-compute bounds based on dual values
             # Remove expandable labels with LB > 0
             num_expansion_out=num_expansion_out+1

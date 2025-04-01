@@ -311,13 +311,15 @@ class CG_RMP:
          
         # Repeat until no more columns to add or max iterations reached
         col_added = 0
-        debug_on=True
+        debug_on=False
+        cur_obj = np.inf
         #obj_func = self.model.objective
         while num_iter_left > 0:
             obj_func = self.model.objective
             print('check here for loop')
             # Step 3: Solve current RMP
             solution = self.solve()
+            
             #input('this lp')
 
             x_values = solution['variable_values']
@@ -426,13 +428,14 @@ class CG_RMP:
             if debug_on==True:
                 this_sol = self.solve()
                 this_obj_val=this_sol['objective_value']
+                before_obj = this_obj_val
                 if this_obj_val<.001:
                     print('error here')
                     input('just before additions lp')
 
             for _, route, _ in cols_to_add:
                 # Add route to my_routes set
-                self.node_sequence_of_routes.append(self._route_to_tuple(route))
+                
                 
                 # Add route to the problem
                 var_idx = self._add_route(route)
@@ -444,9 +447,6 @@ class CG_RMP:
                 print(route.just_nodes_ordered)
                 col_added +=1
                 #input('did ad route')
-            obj_func = self.model.objective
-            if len(obj_func)<50:
-                print('error here for obj')
             # Step 9: Decrement iterations counter
             num_iter_left -= 1
             if debug_on==True:
@@ -454,6 +454,8 @@ class CG_RMP:
                 print('this_sol')
                 print(this_sol)
                 this_obj_val=this_sol['objective_value']
+                if this_obj_val > before_obj:
+                    input('error here: obj not improving with new col')
                 var_index_to_value = this_sol['variable_values']
                 path_index_used = [self.var_index_to_route_index[idx] for idx in self.var_index_to_route_index.keys() if var_index_to_value[idx]>0.0001]
                 path_used = [self.list_of_route[idx] for idx in path_index_used]
@@ -465,7 +467,7 @@ class CG_RMP:
         final_solution = self.solve()
         
         #input('final lp')
-        return final_solution, self.node_sequence_of_routes
+        return final_solution, self.list_of_route, self.node_sequence_of_routes
 
     def _swap(self, route, u, v):
         """
@@ -571,6 +573,7 @@ class CG_RMP:
         """
         # Add route to list_of_route
         route_idx = len(self.list_of_route)
+        self.node_sequence_of_routes.append(self._route_to_tuple(route))
         self.list_of_route.append(route)
         
         # Create new variable
@@ -599,9 +602,10 @@ class CG_RMP:
                 if abs(coef) > 1e-10:  # Only add non-zero coefficients
                     # Get the constraint
                     constraint = self.model.constraints[constraint_name]
-                    
+
                     # Update the constraint by adding the new term directly
                     # This modifies the constraint's expression
                     constraint.addInPlace(coef * new_var)
+                    print('check here')
         
         return var_idx

@@ -112,6 +112,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['poss_action'] = 2
         self.jy_options_user_defined['k_benefit_group'] = 10
         self.jy_options_user_defined['information_for_iteration'] =True
+        self.jy_options_user_defined['use_comp_col'] =True
         self.jy_options_user_defined['new_rmp'] =True
         self.jy_options_user_defined['subset_route'] = True
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
@@ -268,7 +269,14 @@ class GraphMaster_cg:
                         
                         #output = cg_solver.solve()
                         #input('before')
-                        output,node_sequence_of_routes = cg_solver.solve_2()
+                        
+                        before_num = len(list_of_routes)
+                        output,list_of_routes, node_sequence_of_routes = cg_solver.solve_2()
+                        print('before : len(list_of_routes)')
+                        print(before_num)
+                        print('after : len(list_of_routes)')
+                        print(len(list_of_routes))
+                        print('check')
                         #input('during')
                         #output = cg_solver.solve()
                         #input('after')
