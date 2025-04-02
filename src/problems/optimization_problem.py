@@ -56,6 +56,7 @@ class OptimizationProblem(ABC):
             self.the_single_null_action,
             #node_to_list
         )
+        
         self.solver.solve()
 
     @abstractmethod

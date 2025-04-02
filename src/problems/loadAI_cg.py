@@ -83,7 +83,7 @@ class loadAI_cg:
             self.benefit_group_cost
             #node_to_list
         )
-        with TimeProfiler('profile/time_profile'):
+        with TimeProfiler('time_profile_50'):
             output = self.solver.solve()
 
         variable_to_values = output['x']
