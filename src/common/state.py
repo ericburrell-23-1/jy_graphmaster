@@ -7,14 +7,14 @@ from scipy.sparse import csr_matrix
 class State:
     def __init__(self, node:int, state_vec:csr_matrix, l_id: int, is_source: bool, is_sink: bool):
         self.node = node
-        self.state_vec = state_vec.astype(int) 
-
-        self.state_vec_full=self.state_vec.toarray().flatten()
+        #self.state_vec = state_vec.astype(int) 
+        self.state_vec=state_vec.astype(int).toarray().flatten()
+        #self.state_vec_full=self.state_vec.toarray().flatten()
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
 
-        self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,self.csr_matrix_hash()))
+        self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,self.state_vec))
 
 
     def __eq__(self, other: 'State') -> bool:

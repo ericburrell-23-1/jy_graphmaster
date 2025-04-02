@@ -186,7 +186,7 @@ class Action:
         # 1. Early rejection using sparse comparison (fast & memory efficient)
         #diff_data = state_tail.state_vec - self.min_resource_vec
         #if self.violates_min_resources(state_tail.state_vec)==True:
-        if self.violates_min_resources(state_tail.state_vec_full)==True:
+        if self.violates_min_resources(state_tail.state_vec)==True:
                 return None
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
