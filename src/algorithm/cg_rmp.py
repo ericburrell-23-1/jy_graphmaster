@@ -537,7 +537,7 @@ class CG_RMP:
             #print('check3')
             #this_act.pretty_print_action()
             #cur_state.pretty_print_state()
-            next_state = this_act.get_head_state(cur_state,cur_state.l_id)
+            next_state = this_act.get_head_state_fast_load_ai(cur_state,cur_state.l_id)
             #print('num_steps')
             #print(i)
             if next_state is None:

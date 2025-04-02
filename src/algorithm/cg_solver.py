@@ -204,11 +204,11 @@ class GraphMaster_cg:
             state_action = [source_state]
             first_action = actions_from_minus1[node]
             state_action.append(first_action)
-            this_state = first_action.get_head_state(source_state,source_state.l_id)
+            this_state = first_action.get_head_state_fast_load_ai(source_state,source_state.l_id)
             state_action.append(this_state)
             second_action = actions_to_minus2[node]
             state_action.append(second_action)
-            this_state = second_action.get_head_state(this_state,source_state.l_id)
+            this_state = second_action.get_head_state_fast_load_ai(this_state,source_state.l_id)
             state_action.append(this_state)
             route = Route(state_action,1,self.state_update_module.pickup_node)
             list_of_routes.append(route)
@@ -359,16 +359,16 @@ class GraphMaster_cg:
                             print('node in route ordered')
                             print(route.node_in_ordered)
                             print('time remaining')
-                            print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
+                            print([s.state_vec[:2] for s in route.just_states_ordered])
                             # if len(route.just_states_ordered) >3:
                             #     print('time window start')
                             #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
                             #     print('time window end')
                             #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
                             #     print('weight remain')
-                            print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
+                            print([s.state_vec[0] for s in route.just_states_ordered])
                             print('volume remain')
-                            print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
+                            print([s.state_vec[1] for s in route.just_states_ordered])
                             route_num+=1
                         print('=========time profiling================')
                         self.output_all_time_profile(all_time_profile)

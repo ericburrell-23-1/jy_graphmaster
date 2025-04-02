@@ -8,13 +8,13 @@ class State:
     def __init__(self, node:int, state_vec:csr_matrix, l_id: int, is_source: bool, is_sink: bool):
         self.node = node
         #self.state_vec = state_vec.astype(int) 
-        self.state_vec=state_vec.astype(int).toarray().flatten()
+        self.state_vec = state_vec
         #self.state_vec_full=self.state_vec.toarray().flatten()
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
 
-        self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,self.state_vec))
+        self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,tuple(self.state_vec)))
 
 
     def __eq__(self, other: 'State') -> bool:
@@ -68,8 +68,8 @@ class State:
             return [False, False]
 
         # Convert sparse vectors to dense NumPy arrays to align indices
-        vec1_dense = self.state_vec.toarray().flatten()
-        vec2_dense = other_state.state_vec.toarray().flatten()
+        vec1_dense = self.state_vec
+        vec2_dense = other_state.state_vec
 
         # Compute element-wise difference
         res_vec_diff = vec1_dense - vec2_dense

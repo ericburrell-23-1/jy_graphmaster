@@ -46,12 +46,20 @@ class Action:
         self.min_resource_vec_indices = self.min_resource_vec.indices
         self.min_resource_vec_data = self.min_resource_vec.data
         self.resource_consumption_vec = resource_consumption_vec
+        self.resource_consumption_indices = self.resource_consumption_vec.indices
+        self.resource_consumption_data = self.resource_consumption_vec.data
         self.indices_non_zero_max = indices_non_zero_max
         self.max_resource_vec = max_resource_vec
         self.non_zero_indices_exog = np.nonzero(self.Exog_vec)[0]
         self.full_resource_vec = full_resource_vec
         self.empty_resource_vec = empty_resource_vec
         self.max_vals = {j: int(self.max_resource_vec[0, j]) for j in self.indices_non_zero_max}
+        if self.max_vals:
+            self.max_indices = np.array(list(self.max_vals.keys()), dtype=int)
+            self.max_values = np.array(list(self.max_vals.values()))
+        else:
+            self.max_indices = np.array([], dtype=int)
+            self.max_values = np.array([], dtype=float)
         self.red_cost_non_zero_cal_vals = self.Exog_vec_csr.data
         self.red_cost_non_zero_cal_indices = self.Exog_vec_csr.indices
         self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
@@ -100,7 +108,7 @@ class Action:
         Generate a cache key based on the state_tail but excluding l_id.
         """
         # Create a hash of the node, is_source, is_sink, and state_vec, but NOT l_id
-        state_vec_hash = state_tail.csr_matrix_hash()
+        state_vec_hash = tuple(state_tail.state_vec)
         return hash((state_tail.node, state_tail.is_source, state_tail.is_sink, state_vec_hash))
 
     def get_head_state(self, state_tail: State, l_id):
@@ -176,7 +184,14 @@ class Action:
             #Action._head_state_cache[cache_key] = (head_state_vec, False, False)
         
         return head_state
-    
+    def _get_head_stat_vec(self, state_tail: State):
+        head_state_vec = state_tail.state_vec.copy()
+        
+        # For 1D array, use direct indexing without the first dimension
+        for idx, col in enumerate(self.resource_consumption_indices):
+            head_state_vec[col] += self.resource_consumption_data[idx]
+        
+        return head_state_vec
 
     def get_head_state_fast_load_ai(self, state_tail: State, l_id):
         """
@@ -191,9 +206,9 @@ class Action:
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
         # 2. Compute tentative head state vector
-        head_state_vec = state_tail.state_vec + self.resource_consumption_vec
-        if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
-            return None
+        head_state_vec = self._get_head_stat_vec(state_tail)
+        # if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
+        #     return None
         # 3. Apply max_resource cap (only on indices of interest)
         head_state_vec = self.fast_max_res_apply(head_state_vec)
         # if len(self.indices_non_zero_max)>0:
@@ -235,7 +250,7 @@ class Action:
         Optimized version of get_tail_state with caching for performance.
         """
         # Generate a cache key that includes action_id and state properties but excludes l_id
-        state_vec_hash = state_head.csr_matrix_hash()
+        state_vec_hash = tuple(state_head.state_vec)
         cache_key = (self.action_id, hash((state_head.node, state_head.is_source, state_head.is_sink, state_vec_hash)))
         
         # Check if we have a cached result
@@ -324,23 +339,22 @@ class Action:
            self.Exog_vec        == other.Exog_vec        and
            self.cost            == other.cost
         )
-    def fast_max_res_apply(self, head_state_vec):
-        #head_state_vec = head_state_vec_input.tocsr(copy=Fase)
- 
-        data = head_state_vec.data
-        indices = head_state_vec.indices
-        max_vals = self.max_vals  # Local alias for speed
- 
-        # Build a mapping from column index j to data index i
-        col_to_pos = dict(zip(indices, range(len(indices))))  # No filtering
- 
-        # Only loop over the small set of keys in self.max_vals
-        for j, max_val in max_vals.items():
-            i = col_to_pos.get(j, None)
-            if i is not None and data[i] > max_val:
-                data[i] = max_val
- 
-        return head_state_vec
+    def fast_max_res_apply(self, head_state_vec_array):
+        """
+        Apply maximum resource constraints using pre-computed arrays.
+        For 1D arrays.
+        """
+        # Get current values at the constrained indices
+        current_values = head_state_vec_array[self.max_indices]
+        
+        # Find which values exceed their maximum
+        mask = current_values > self.max_values
+        
+        # Only apply constraints where necessary
+        if np.any(mask):
+            head_state_vec_array[self.max_indices[mask]] = self.max_values[mask]
+        
+        return head_state_vec_array
 
     def __hash__(self):
        """
@@ -369,7 +383,7 @@ class Action:
             is_valid = False
             print('not valid due to node not agree')
             return is_valid
-        ideal_head = self.get_head_state(state_tail, state_tail.l_id)
+        ideal_head = self.get_head_state_fast_load_ai(state_tail, state_tail.l_id)
         if ideal_head==None:
             return False
         [is_dom, is_equal] = ideal_head.this_state_dominates_input_state(state_head)

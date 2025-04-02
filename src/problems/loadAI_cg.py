@@ -148,7 +148,7 @@ class loadAI_cg:
         self.problem_info['max_combined_loads'] = MAX_COMBINED_LOADS
         file_path = self.problem_instance_file_name # FIX THIS FOR THE PROPER FILE PATH
         df = pd.read_csv(file_path)
-        self._create_null_action_info()
+        
 
         # Convert time columns to datetime objects
         df["Pickup Appointment Start Date Time"] = pd.to_datetime(df["Pickup Appointment Start Date Time"])
@@ -233,12 +233,14 @@ class loadAI_cg:
 
         # ACTIONS
         self._create_default_resource_values()
+        
         self._create_source_sink_actions()
         self._create_pickup_to_pickup_actions()
         self._create_pickup_to_dropoff_actions()
         self._create_dropoff_to_pickup_actions()
         self._create_dropoff_to_dropoff_actions()
         self._create_skip_actions()
+        self._create_null_action_info()
 
         
 
@@ -299,13 +301,13 @@ class loadAI_cg:
             idx += 1
 
         self.number_of_resources = len(self.initial_resource_dict)
-        self.initial_resource_vector=csr_matrix(self.initial_resource_vector.reshape(1, -1))
+        #self.initial_resource_vector=csr_matrix(self.initial_resource_vector.reshape(1, -1))
 
     def _empty_resource_vec(self) -> csr_matrix:
-        return csr_matrix(self.empty_resource_array.reshape(1, -1))
+        return self.empty_resource_array
     
     def _full_resource_vec(self):
-        return csr_matrix(self.full_resource_array.reshape(1, -1))
+        return self.full_resource_array
 
 
     def _create_default_resource_values(self):
@@ -640,13 +642,13 @@ class loadAI_cg:
             trans_min_input[res_name] = 0
             trans_term_add[res_name] = 0
             trans_term_min[res_name] = np.inf
-        #contribution_vector = np.zeros(len(self.rhs_vector))
-        contribution_vector = np.zeros(len(self.rhs_vector))
+        #contribution_vector = np.zeros(len(self.rhs_vector)
+        contribution_vector = np.zeros(len(self.rhs_vector)).reshape(1,-1)
         cost = 0
-        min_resource_vec = np.zeros(self.number_of_resources)
-        resource_consumption_vec = np.zeros(self.number_of_resources)
+        min_resource_vec = csr_matrix(np.zeros(self.number_of_resources).reshape(1,-1))
+        resource_consumption_vec = csr_matrix(np.zeros(self.number_of_resources).reshape(1,-1))
         indices_apply_min_to = []    
-        max_resource_vec = np.full(self.number_of_resources, np.inf)
+        max_resource_vec = csr_matrix(np.full(self.number_of_resources, np.inf).reshape(1,-1))
        # self.initial_null_actions['trans_min_input'] = trans_min_input
        # self.initial_null_actions['trans_term_add'] = trans_term_add
        # self.initial_null_actions['trans_term_min'] = trans_term_min
