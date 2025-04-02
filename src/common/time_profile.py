@@ -14,5 +14,5 @@ class TimeProfiler:
         s = io.StringIO()
         ps = pstats.Stats(self.pr, stream=s).sort_stats('cumtime')
         ps.print_stats()
-        with open(self.filename + '.txt', 'w+') as f:
-            f.write(s.getvalue())
+        #with open(self.filename + '.txt', 'w+') as f:
+        #    f.write(s.getvalue())

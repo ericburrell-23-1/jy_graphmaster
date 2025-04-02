@@ -185,7 +185,8 @@ class Action:
 
         # 1. Early rejection using sparse comparison (fast & memory efficient)
         #diff_data = state_tail.state_vec - self.min_resource_vec
-        if self.violates_min_resources(state_tail.state_vec)==True:
+        #if self.violates_min_resources(state_tail.state_vec)==True:
+        if self.violates_min_resources(state_tail.state_vec_full)==True:
                 return None
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
@@ -292,20 +293,13 @@ class Action:
             this_dominates_input = True #set the domination to true
 
         return this_dominates_input #return the domination property
-    def violates_min_resources(self, tail_vec):
-        """Returns True if state_tail violates any min_resource constraint."""
- 
- 
-        # Only check non-zero entries in min_resource_vec
-        indices = self.min_resource_vec_indices
-        tail_data = tail_vec[0, indices].toarray().flatten()
-        min_data = self.min_resource_vec_data
- 
-        # Check if tail_data < min_data at any index
-        if np.any(tail_data < min_data):
-            return True
- 
-        return False
+    
+    def violates_min_resources(self, tail_vec):   
+        
+        return np.any(tail_vec[self.min_resource_vec_indices] < self.min_resource_vec_data)
+
+        #return False
+
     def is_null_action(self):
         """
         identifies if current action is a null action

@@ -9,7 +9,7 @@ class State:
         self.node = node
         self.state_vec = state_vec.astype(int) 
 
-
+        self.state_vec_full=self.state_vec.toarray().flatten()
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
