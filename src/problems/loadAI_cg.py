@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from src.algorithm.update_states.state_update_function import StateUpdateFunction
 from itertools import permutations
 from src.algorithm.cg_solver import GraphMaster_cg
+from src.common.pgm_approach import Route
+from src.common.time_profile import TimeProfiler
 import random
 # CONSTANTS
 VOLUME_CAPACITY = 3000
@@ -56,6 +58,8 @@ class loadAI_cg:
         self._create_initial_res_actions()
         self._define_state_update_module()
         self._get_benefit_group()
+        # path = 'Load_ai.xlsx'
+        # self._evaluate_solution(path)
         #self.plot_pickup_dropoff_with_clusters()
     def solve(self):
         """Creates a GraphMasterSolver instance from problem data and calls its solve() method"""
@@ -79,10 +83,11 @@ class loadAI_cg:
             self.benefit_group_cost
             #node_to_list
         )
-        output = self.solver.solve()
+        with TimeProfiler('profile/time_profile'):
+            output = self.solver.solve()
 
         variable_to_values = output['x']
-        routes = output['used_routes']
+        routes:List[Route] = output['used_routes']
         output_info = output['output_info']
         
         print('=======output info=======')
@@ -90,6 +95,21 @@ class loadAI_cg:
             print(' ')
             print(name)
             print(value)
+        import csv
+        filename="output.csv"
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            
+            # Write header
+            writer.writerow(['sequence_of_nodes', 'cost'])
+            for route in routes:
+                sequece_of_node = route.node_in_ordered
+                cost = route.cost
+                sequence_str = ','.join(map(str, sequece_of_node))
+            
+                # Write row with sequence (as string) and cost
+                writer.writerow([sequence_str, cost])
+        print(f"Routes successfully saved to {filename}")
             
 
 
@@ -824,3 +844,54 @@ class loadAI_cg:
         plt.show()
         # Return cluster information
         return cluster_info, plt
+    def _evaluate_solution(self,excel_file_path):
+
+        input_df = pd.read_excel(excel_file_path, sheet_name=0)
+        
+        # Read the output sheet (second sheet)
+        output_df = pd.read_excel(excel_file_path, sheet_name=1)
+        
+        # Create a mapping from Shipment ID to its 1-based index in the input sheet
+        shipment_id_to_index = {}
+        for idx, row in input_df.iterrows():
+            shipment_id = row['Shipment ID']
+            shipment_id_to_index[shipment_id] = idx + 1  # 1-based indexing
+        
+        # Process each manifest in the output sheet
+        manifest_to_indices = {}
+        for _, row in output_df.iterrows():
+            manifest_id = row['Manifest ID']
+            
+            # The Manifest ID contains hyphen-separated Shipment IDs
+            shipment_ids = manifest_id.split('-')
+            
+            # Map each shipment ID to its index in the input sheet
+            covered_indices = []
+            for shipment_id in shipment_ids:
+                # Convert to integer if needed
+                try:
+                    shipment_id = int(shipment_id)
+                except ValueError:
+                    pass
+                
+                # Find the index in our mapping
+                if shipment_id in shipment_id_to_index:
+                    covered_indices.append(shipment_id_to_index[shipment_id])
+            
+            # Store the covered indices for this manifest
+            manifest_to_indices[manifest_id] = sorted(covered_indices)
+        
+        # Find uncovered indices
+        all_indices = set(range(1, len(input_df) + 1))  # All possible 1-based indices
+        covered_indices = set()
+        for indices in manifest_to_indices.values():
+            covered_indices.update(indices)
+        
+        uncovered_indices = sorted(list(all_indices - covered_indices))
+        
+        penalty_for_uncovered = 0
+        for node in uncovered_indices:
+            skipnode = node + 2 * self.number_of_customers
+            penalty_for_uncovered += self.actions[(-1,skipnode)][0].cost + self.actions[(skipnode,-2)][0].cost
+        print('check here')
+        return manifest_to_indices, uncovered_indices

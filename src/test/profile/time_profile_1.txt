@@ -1,0 +1,450 @@
+Note:did not comment our diff calculation in Action.get_head_state_fast_load_ai         
+4128275312 function calls (4115565128 primitive calls) in 2624.202 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.373    0.373 2624.202 2624.202 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_solver.py:223(solve)
+       27    0.001    0.000 2498.577   92.540 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:97(run)
+       27   38.606    1.430 2498.559   92.539 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:305(find_min_reduced_cost_path)
+  4509599   26.541    0.000 2213.550    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:356(expand_given_action)
+  4511799   38.913    0.000 2038.060    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:181(get_head_state_fast_load_ai)
+ 33080475  118.334    0.000 1002.609    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:29(__init__)
+  4511799   23.076    0.000  745.643    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:331(violates_min_resources)
+  8272243   58.366    0.000  710.256    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1355(_binopt)
+  5036511   13.465    0.000  678.647    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_index.py:29(__getitem__)
+  4511799    7.055    0.000  503.544    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_csr.py:223(_get_intXarray)
+ 37627946   52.895    0.000  430.256    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:1369(_get_index_dtype)
+  4520794    5.801    0.000  426.550    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:569(__sub__)
+ 33080475  182.942    0.000  402.319    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:165(check_format)
+  4520794    3.246    0.000  402.076    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:388(_sub_sparse)
+  3752543    6.437    0.000  399.405    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/state.py:8(__init__)
+ 37627946  255.069    0.000  349.786    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:264(get_index_dtype)
+  3751449    4.622    0.000  332.660    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:549(__add__)
+  3752543    8.058    0.000  319.184    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:69(astype)
+  3751449    2.586    0.000  314.012    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:385(_add_sparse)
+  4511799   37.534    0.000  290.197    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:822(_minor_index_fancy)
+  7503473   11.358    0.000  285.353    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1341(_with_data)
+ 41352718   97.355    0.000  232.257    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1284(prune)
+  4511799   12.500    0.000  206.291    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_csr.py:157(_getrow)
+  5036511   50.150    0.000  152.682    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_index.py:212(_validate_indices)
+  3740358   97.820    0.000  138.037    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:17(__init__)
+  5364248   78.814    0.000  129.865    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:204(calculate_better_lb_2)
+ 24826068   52.700    0.000  107.683    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:429(check_shape)
+185742633   41.028    0.000   92.537    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:341(nnz)
+       28    0.000    0.000   90.098    3.218 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:8(__init__)
+       28    6.499    0.232   88.908    3.175 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:77(_build_master_problem)
+  3742531   75.525    0.000   79.602    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:369(fast_max_res_apply)
+  3761733   61.267    0.000   73.273    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/state.py:25(csr_matrix_hash)
+ 11246083    7.665    0.000   70.672    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:240(__rmul__)
+668437075/666902209   68.312    0.000   68.698    0.000 {built-in method builtins.len}
+359822480   50.688    0.000   60.083    0.000 {built-in method builtins.isinstance}
+      503    7.267    0.014   59.524    0.118 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:226(update_red_cost_and_lb)
+ 75255892   55.023    0.000   55.023    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/getlimits.py:685(__init__)
+185715879   51.407    0.000   51.407    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:117(_getnnz)
+ 22496806   30.378    0.000   47.586    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:706(__init__)
+  4511799   18.701    0.000   46.039    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_index.py:313(_asindices)
+ 18884577   38.882    0.000   38.882    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+ 20182264   16.374    0.000   37.970    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:350(isintlike)
+ 11246083    7.815    0.000   34.541    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:955(__mul__)
+  6988165   19.019    0.000   31.139    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:101(calculate_red_cost_given_dual)
+  4922524   11.490    0.000   29.044    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1167(toarray)
+ 33098311   10.478    0.000   28.918    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:21(__init__)
+ 92153414   19.878    0.000   28.180    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:74(_shape_as_2d)
+     9190    8.231    0.001   28.144    0.003 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:106(get_head_state)
+  8272247    5.392    0.000   27.179    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:345(isscalarlike)
+  5036511   26.759    0.000   26.759    0.000 {built-in method scipy.sparse._sparsetools.get_csr_submatrix}
+  4380479   22.040    0.000   26.473    0.000 {built-in method builtins.sorted}
+ 82705436   24.392    0.000   25.758    0.000 /root/myenv/lib/python3.12/site-packages/scipy/_lib/_util.py:229(_prune_array)
+ 74478204   19.689    0.000   25.168    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:457(<genexpr>)
+ 37645782   14.909    0.000   24.136    0.000 <frozen importlib._bootstrap>:645(parent)
+ 11246083    3.858    0.000   22.971    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:764(emptyCopy)
+  3143133    2.565    0.000   22.962    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_sortedObject_list.py:10(insert)
+  4511799    4.766    0.000   22.806    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2322(any)
+149165377   22.139    0.000   22.139    0.000 {built-in method numpy.asarray}
+  4908846    8.813    0.000   21.264    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:71(_wrapreduction)
+     1305    0.013    0.000   21.134    0.016 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:147(verify_feasibility)
+     6841    0.058    0.000   21.120    0.003 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:400(check_valid)
+ 24879576   13.443    0.000   21.017    0.000 {built-in method builtins.any}
+  3143133    3.677    0.000   20.883    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:85(label_2_tuple)
+     1247    0.005    0.000   20.094    0.016 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:21(__init__)
+ 78178220   19.807    0.000   19.807    0.000 {built-in method numpy.array}
+  3759925    1.937    0.000   18.912    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:32(_deduped_data)
+  8272247    7.429    0.000   18.702    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/numeric.py:1855(isscalar)
+ 33098311   12.991    0.000   18.440    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:114(__init__)
+ 20182264   14.664    0.000   18.101    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:3176(ndim)
+ 29319435   17.716    0.000   17.716    0.000 {method 'astype' of 'numpy.ndarray' objects}
+  4542738    2.872    0.000   17.365    0.000 {method 'max' of 'numpy.ndarray' objects}
+ 33848699   17.293    0.000   17.293    0.000 {built-in method numpy.empty}
+  4520794   17.031    0.000   17.031    0.000 {built-in method scipy.sparse._sparsetools.csr_minus_csr}
+  3143133   16.901    0.000   16.901    0.000 {method 'randint' of 'numpy.random.mtrand.RandomState' objects}
+  4507066    3.569    0.000   15.984    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1025(argsort)
+  3768843    1.131    0.000   15.764    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1228(sum_duplicates)
+  3740331   12.967    0.000   15.544    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/numeric.py:67(zeros_like)
+ 18328253   14.725    0.000   14.725    0.000 {built-in method builtins.hash}
+  3768843    5.725    0.000   14.633    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1199(has_canonical_format)
+  6286266   14.614    0.000   14.614    0.000 {method 'insert' of 'list' objects}
+  4542738    1.572    0.000   14.493    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/_methods.py:39(_amax)
+       27    0.210    0.008   14.350    0.531 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:299(solve_2)
+ 45864519    8.803    0.000   14.077    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:1401(issparse)
+ 98208797   13.274    0.000   13.274    0.000 {method 'append' of 'list' objects}
+11250694/75538    9.087    0.000   12.898    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:889(addInPlace)
+     4611    0.005    0.000   12.737    0.003 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:2370(lpSum)
+  4507596    3.594    0.000   12.417    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:53(_wrapfunc)
+ 16968947   12.304    0.000   12.304    0.000 {built-in method numpy.zeros}
+  3751449   12.283    0.000   12.283    0.000 {built-in method scipy.sparse._sparsetools.csr_plus_csr}
+ 12042574   12.201    0.000   12.201    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:112(getdtype)
+  8259605    6.916    0.000   11.768    0.000 {built-in method builtins.sum}
+  3751449    2.810    0.000   11.422    0.000 {method 'any' of 'numpy.ndarray' objects}
+  3522238    3.262    0.000   10.851    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_eff_fronteir.py:34(alter_fronteir_given_new_element)
+      468    0.037    0.000   10.751    0.023 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:473(_swap)
+  1519189    4.458    0.000   10.744    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:681(get_actions_from_label_2)
+  3326341   10.098    0.000   10.573    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:95(comp_red_cost)
+  1519189    1.146    0.000   10.557    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_sortedObject_list.py:27(pop)
+ 70489395   10.424    0.000   10.424    0.000 {built-in method time.time}
+  4747436    2.182    0.000   10.227    0.000 {method 'min' of 'numpy.ndarray' objects}
+      503    5.268    0.010    9.845    0.020 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:628(_remove_labels_with_positive_lb)
+ 24826068    7.114    0.000    9.835    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:372(isshape)
+  4507066    9.801    0.000    9.801    0.000 {built-in method scipy.sparse._sparsetools.csr_column_index1}
+  3038378    9.411    0.000    9.411    0.000 {method 'pop' of 'list' objects}
+ 19523022    4.157    0.000    9.395    0.000 <frozen abc>:117(__instancecheck__)
+  8272244    4.711    0.000    9.381    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:25(upcast)
+ 37645782    9.227    0.000    9.227    0.000 {method 'rpartition' of 'str' objects}
+ 24844072    8.986    0.000    8.986    0.000 {built-in method builtins.max}
+ 37627946    8.844    0.000    8.844    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/getlimits.py:696(min)
+  3751449    1.474    0.000    8.612    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/_methods.py:55(_any)
+  4922524    3.321    0.000    8.250    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:1356(_process_toarray_args)
+      452    0.003    0.000    8.241    0.018 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:440(convert_2_route)
+  4747436    1.298    0.000    8.045    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/_methods.py:43(_amin)
+ 91790935    7.951    0.000    7.951    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/multiarray.py:503(can_cast)
+ 28173811    5.444    0.000    7.832    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:70(ndim)
+  4921195    7.807    0.000    7.807    0.000 {method 'flatten' of 'numpy.ndarray' objects}
+  4507066    7.734    0.000    7.734    0.000 {method 'argsort' of 'numpy.ndarray' objects}
+ 94391670    7.635    0.000    7.635    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_csr.py:127(_swap)
+  3524126    1.531    0.000    7.579    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:298(this_label_dominates_input)
+ 74478204    7.543    0.000    7.543    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:462(<genexpr>)
+  4507066    6.949    0.000    6.949    0.000 {built-in method scipy.sparse._sparsetools.csr_column_index2}
+ 54447687    6.932    0.000    6.932    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_matrix.py:65(get_shape)
+ 60784048    6.748    0.000    6.748    0.000 {built-in method _operator.index}
+ 16936975    6.664    0.000    6.664    0.000 {built-in method builtins.getattr}
+  4922524    6.487    0.000    6.487    0.000 {built-in method scipy.sparse._sparsetools.csr_todense}
+       27    0.088    0.003    6.363    0.236 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:22(__init__)
+   204698    1.307    0.000    6.281    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/state.py:58(this_state_dominates_input_state)
+  3143133    5.783    0.000    5.783    0.000 {built-in method _bisect.bisect_left}
+ 37627946    5.655    0.000    5.655    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/getlimits.py:709(max)
+  9292139    5.622    0.000    5.622    0.000 {method 'copy' of 'numpy.ndarray' objects}
+ 13207909    5.476    0.000    5.476    0.000 {method 'get' of 'dict' objects}
+ 49633460    5.287    0.000    5.287    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:361(format)
+ 19523022    5.237    0.000    5.238    0.000 {built-in method _abc._abc_instancecheck}
+ 34794698    5.189    0.000    5.189    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:24(dtype)
+       81    0.001    0.000    4.917    0.061 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1985(solve)
+       81    0.004    0.000    4.915    0.061 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:126(actualSolve)
+       81    0.005    0.000    4.911    0.061 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:134(solve_CBC)
+ 99829451    4.414    0.000    4.414    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:262(<lambda>)
+  3768843    4.393    0.000    4.393    0.000 {built-in method scipy.sparse._sparsetools.csr_has_canonical_format}
+ 32382430    4.280    0.000    4.280    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:105(<genexpr>)
+       27    3.654    0.135    4.210    0.156 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:648(pre_process__partition_actions)
+   397045    0.546    0.000    3.769    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2836(min)
+   296120    0.975    0.000    3.746    0.000 {method 'update' of 'set' objects}
+   524712    0.710    0.000    3.483    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:716(_get_intXint)
+        1    0.116    0.116    3.435    3.435 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:175(solve_ilp)
+       80    0.040    0.001    3.288    0.041 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:108(solve)
+ 20740624    3.195    0.000    3.195    0.000 {method 'items' of 'dict' objects}
+  8272247    2.162    0.000    3.084    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:402(isdense)
+  8272243    2.166    0.000    2.925    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:428(asformat)
+  3768843    2.088    0.000    2.876    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1222(has_canonical_format)
+  4511799    2.069    0.000    2.829    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_index.py:423(_compatible_boolean_index)
+ 22496887    2.668    0.000    2.668    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:699(name)
+ 12040650    2.576    0.000    2.576    0.000 {built-in method builtins.hasattr}
+       81    0.000    0.000    2.532    0.031 /usr/lib/python3.12/subprocess.py:1259(wait)
+       81    0.001    0.000    2.531    0.031 /usr/lib/python3.12/subprocess.py:2021(_wait)
+       81    0.000    0.000    2.531    0.031 /usr/lib/python3.12/subprocess.py:2008(_try_wait)
+       81    2.530    0.031    2.530    0.031 {built-in method posix.waitpid}
+ 20182264    2.227    0.000    2.227    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:3172(_ndim_dispatcher)
+  9256688    2.096    0.000    2.096    0.000 {method 'add' of 'set' objects}
+  4520796    1.989    0.000    1.989    0.000 {method 'ravel' of 'numpy.ndarray' objects}
+       27    1.702    0.063    1.979    0.073 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:169(initiate_RCP_d)
+    17836    0.091    0.000    1.639    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:30(__init__)
+       81    0.017    0.000    1.620    0.020 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1856(writeMPS)
+       81    0.412    0.005    1.603    0.020 /root/myenv/lib/python3.12/site-packages/pulp/mps_lp.py:201(writeMPS)
+   729412    0.386    0.000    1.527    0.000 {function matrix.sum at 0x7f38fefdc4a0}
+   298800    1.462    0.000    1.462    0.000 {built-in method builtins.print}
+  2481922    1.369    0.000    1.369    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:724(<genexpr>)
+ 16176424    1.336    0.000    1.336    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:207(__hash__)
+ 11472093    1.256    0.000    1.256    0.000 {method 'items' of 'collections.OrderedDict' objects}
+  4920632    1.242    0.000    1.242    0.000 {method 'copy' of 'list' objects}
+ 10310159    1.236    0.000    1.236    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/multiarray.py:741(dot)
+  5060253    1.233    0.000    1.233    0.000 {method 'remove' of 'list' objects}
+  2532541    0.921    0.000    1.180    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:387(__hash__)
+ 11246083    1.171    0.000    1.171    0.000 {built-in method math.isfinite}
+   729412    0.177    0.000    1.140    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/_methods.py:47(_sum)
+       58    0.000    0.000    1.094    0.019 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_solver.py:450(validate_route)
+       28    0.999    0.036    1.082    0.039 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:30(_generate_rho)
+  2815057    1.012    0.000    1.012    0.000 {method 'intersection' of 'set' objects}
+        1    0.003    0.003    0.994    0.994 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_solver.py:188(_initial_routes)
+   204698    0.462    0.000    0.959    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/numeric.py:2378(array_equal)
+   346739    0.886    0.000    0.931    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:719(<genexpr>)
+  8265233    0.794    0.000    0.794    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/multiarray.py:85(empty_like)
+  3768843    0.788    0.000    0.788    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1259(has_sorted_indices)
+     8918    0.038    0.000    0.670    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:1151(tocoo)
+  4511799    0.667    0.000    0.667    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2317(_any_dispatcher)
+    17836    0.207    0.000    0.658    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:202(_check)
+  4922524    0.614    0.000    0.614    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_csr.py:55(tocsr)
+   193538    0.486    0.000    0.578    0.000 /root/myenv/lib/python3.12/site-packages/pulp/mps_lp.py:284(writeMPSColumnLines)
+  1534866    0.386    0.000    0.570    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_sortedObject_list.py:57(__len__)
+  4507066    0.479    0.000    0.479    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1021(_argsort_dispatcher)
+  3747172    0.470    0.000    0.470    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/state.py:20(__eq__)
+  3740333    0.443    0.000    0.443    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/multiarray.py:1080(copyto)
+   204698    0.110    0.000    0.438    0.000 {method 'all' of 'numpy.ndarray' objects}
+  3740331    0.414    0.000    0.414    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/numeric.py:63(_zeros_like_dispatcher)
+       81    0.072    0.001    0.394    0.005 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1620(normalisedNames)
+      162    0.278    0.002    0.390    0.002 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1706(variablesDict)
+    17571    0.203    0.000    0.349    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1683(addVariables)
+  2895583    0.340    0.000    0.340    0.000 {method 'keys' of 'dict' objects}
+   204698    0.066    0.000    0.329    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/_methods.py:61(_all)
+       81    0.005    0.000    0.312    0.004 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1692(variables)
+  1280080    0.304    0.000    0.304    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:281(<genexpr>)
+  1280080    0.268    0.000    0.268    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_label.py:280(<genexpr>)
+       81    0.199    0.002    0.267    0.003 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:252(readsol_MPS)
+     8918    0.054    0.000    0.242    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:381(_coo_to_compressed)
+   346739    0.222    0.000    0.222    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:710(<genexpr>)
+       81    0.016    0.000    0.216    0.003 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1927(assignVarsVals)
+   296681    0.214    0.000    0.214    0.000 {method 'union' of 'set' objects}
+       81    0.015    0.000    0.206    0.003 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1933(assignVarsDj)
+     9190    0.007    0.000    0.204    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/action.py:98(_get_state_cache_key)
+    70423    0.019    0.000    0.191    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:943(__iadd__)
+   193619    0.050    0.000    0.168    0.000 /root/myenv/lib/python3.12/site-packages/pulp/utilities.py:19(value)
+   524738    0.149    0.000    0.149    0.000 {built-in method builtins.min}
+    53508    0.020    0.000    0.146    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:60(<genexpr>)
+     8995    0.006    0.000    0.145    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:375(min)
+     8995    0.047    0.000    0.139    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:209(_min_or_max)
+   212778    0.114    0.000    0.138    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:758(addterm)
+     4640    0.005    0.000    0.136    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1765(__iadd__)
+    70452    0.023    0.000    0.135    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:285(__init__)
+  2714749    0.133    0.000    0.133    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:195(getName)
+     4611    0.012    0.000    0.130    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1719(addConstraint)
+    17836    0.013    0.000    0.126    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:142(getdata)
+   148060    0.119    0.000    0.119    0.000 {method 'difference' of 'set' objects}
+   346739    0.115    0.000    0.115    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:714(<genexpr>)
+    70452    0.019    0.000    0.112    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:200(__init__)
+       28    0.078    0.003    0.107    0.004 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:47(_generate_col_coeff)
+    26754    0.038    0.000    0.102    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:165(_getnnz)
+   724401    0.092    0.000    0.101    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1673(addVariable)
+    70452    0.031    0.000    0.087    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:183(setName)
+   580699    0.075    0.000    0.075    0.000 {method 'extend' of 'list' objects}
+     1613    0.002    0.000    0.071    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_data.py:94(copy)
+       81    0.047    0.001    0.065    0.001 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:744(value)
+   397045    0.054    0.000    0.054    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2831(_min_dispatcher)
+      133    0.023    0.000    0.053    0.000 {method 'sort' of 'list' objects}
+   193619    0.025    0.000    0.043    0.000 /root/myenv/lib/python3.12/site-packages/pulp/utilities.py:14(isNumber)
+      168    0.014    0.000    0.043    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:565(_add_route)
+    70533    0.042    0.000    0.042    0.000 {method 'translate' of 'str' objects}
+       81    0.001    0.000    0.042    0.001 /usr/lib/python3.12/subprocess.py:807(__init__)
+     3497    0.042    0.000    0.042    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:59(get_red_cost)
+      530    0.016    0.000    0.042    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:115(_compute_action_reduced_costs)
+       81    0.002    0.000    0.039    0.000 /usr/lib/python3.12/subprocess.py:1791(_execute_child)
+    17836    0.025    0.000    0.038    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_matrix.py:13(_coo_container)
+   206660    0.035    0.000    0.035    0.000 {method 'split' of 'str' objects}
+   193538    0.032    0.000    0.032    0.000 /root/myenv/lib/python3.12/site-packages/pulp/mps_lp.py:302(writeMPSBoundLines)
+     8918    0.031    0.000    0.031    0.000 {built-in method scipy.sparse._sparsetools.coo_tocsr}
+   193538    0.019    0.000    0.030    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1703(<lambda>)
+       81    0.029    0.000    0.029    0.000 {built-in method _posixsubprocess.fork_exec}
+   204698    0.026    0.000    0.026    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/numeric.py:2374(_array_equal_dispatcher)
+    53508    0.014    0.000    0.021    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:215(<genexpr>)
+    80262    0.016    0.000    0.021    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:168(<genexpr>)
+     1247    0.013    0.000    0.020    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:136(generate_all_node_pairs_ordered)
+       58    0.014    0.000    0.018    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:39(get_forbidden_omega)
+       54    0.018    0.000    0.018    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_eff_fronteir.py:14(__init__)
+   448146    0.018    0.000    0.018    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:78(<lambda>)
+     4611    0.009    0.000    0.017    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1029(__ge__)
+      972    0.017    0.000    0.017    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+     1247    0.015    0.000    0.015    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:69(generate_cost_exog_vector)
+    70452    0.014    0.000    0.014    0.000 {method 'match' of 're.Pattern' objects}
+      244    0.013    0.000    0.014    0.000 {built-in method _io.open}
+     8918    0.011    0.000    0.011    0.000 {built-in method scipy.sparse._sparsetools.expandptr}
+       81    0.000    0.000    0.011    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:365(delete_tmp_files)
+      324    0.000    0.000    0.011    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:359(silent_remove)
+      131    0.008    0.000    0.011    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:240(_get_dual_values)
+      324    0.011    0.000    0.011    0.000 {built-in method posix.remove}
+    17490    0.008    0.000    0.011    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1301(keys)
+      324    0.010    0.000    0.010    0.000 {method 'join' of 'str' objects}
+   193538    0.010    0.000    0.010    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:469(value)
+    80262    0.010    0.000    0.010    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:172(<genexpr>)
+     4611    0.009    0.000    0.009    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1645(unusedConstraintName)
+       27    0.007    0.000    0.009    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:179(initiate_RCP_u)
+     1247    0.005    0.000    0.008    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:80(generate_states_nodes_actions_ordered)
+    25758    0.005    0.000    0.007    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1292(__iter__)
+   123187    0.007    0.000    0.007    0.000 {built-in method builtins.abs}
+     8918    0.003    0.000    0.007    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:103(row)
+     4611    0.005    0.000    0.007    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1057(__init__)
+     1247    0.005    0.000    0.006    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:61(clean_state_action_alt_repeat_by_removing_null)
+    12879    0.005    0.000    0.006    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1307(items)
+      187    0.005    0.000    0.006    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:98(generate_subset_routes)
+    17836    0.006    0.000    0.006    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:96(to_native)
+    70452    0.005    0.000    0.005    0.000 {built-in method builtins.id}
+       81    0.000    0.000    0.005    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:376(__init__)
+       27    0.004    0.000    0.005    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:186(initiate_RCP_u_2)
+       81    0.001    0.000    0.005    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:62(__init__)
+       81    0.001    0.000    0.005    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:313(get_status)
+     8995    0.004    0.000    0.004    0.000 {built-in method math.prod}
+       81    0.001    0.000    0.004    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:306(__init__)
+       81    0.001    0.000    0.003    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:335(setTmpDir)
+       81    0.000    0.000    0.003    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:381(executable)
+       81    0.003    0.000    0.003    0.000 {built-in method posix.read}
+       81    0.001    0.000    0.003    0.000 /usr/lib/python3.12/shutil.py:1525(which)
+    10529    0.003    0.000    0.003    0.000 {method 'remove' of 'set' objects}
+      475    0.001    0.000    0.003    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1142(addInPlace)
+    17870    0.003    0.000    0.003    0.000 {method 'keys' of 'collections.OrderedDict' objects}
+      530    0.000    0.000    0.003    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1881(nonzero)
+      324    0.003    0.000    0.003    0.000 {built-in method posix.stat}
+       81    0.001    0.000    0.003    0.000 /usr/lib/python3.12/subprocess.py:1688(_get_handles)
+    25758    0.002    0.000    0.002    0.000 {built-in method builtins.iter}
+      244    0.002    0.000    0.002    0.000 {method '__exit__' of '_io._IOBase' objects}
+       81    0.002    0.000    0.002    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1946(assignConsSlack)
+       81    0.000    0.000    0.002    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:352(create_tmp_files)
+       81    0.001    0.000    0.002    0.000 /usr/lib/python3.12/subprocess.py:1282(_close_pipe_fds)
+     1637    0.001    0.000    0.002    0.000 <frozen codecs>:319(decode)
+       27    0.000    0.000    0.002    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:192(initialize_source_label)
+      162    0.000    0.000    0.002    0.000 <frozen genericpath>:16(exists)
+     8918    0.002    0.000    0.002    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_coo.py:119(col)
+       81    0.000    0.000    0.002    0.000 /usr/lib/python3.12/uuid.py:723(uuid4)
+      162    0.000    0.000    0.001    0.000 <frozen genericpath>:39(isdir)
+      530    0.001    0.000    0.001    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
+     1637    0.001    0.000    0.001    0.000 {built-in method _codecs.utf_8_decode}
+     8997    0.001    0.000    0.001    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:406(validateaxis)
+       81    0.001    0.000    0.001    0.000 {method 'readline' of '_io.TextIOWrapper' objects}
+       81    0.000    0.000    0.001    0.000 /usr/lib/python3.12/shutil.py:1510(_access_check)
+       81    0.001    0.000    0.001    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1939(assignConsPi)
+      162    0.000    0.000    0.001    0.000 <frozen _collections_abc>:804(get)
+      162    0.001    0.000    0.001    0.000 <frozen posixpath>:179(dirname)
+       81    0.001    0.000    0.001    0.000 /usr/lib/python3.12/uuid.py:139(__init__)
+     4611    0.001    0.000    0.001    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1270(name)
+     4293    0.001    0.000    0.001    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_fast_pricing.py:184(<lambda>)
+       81    0.000    0.000    0.001    0.000 /usr/lib/python3.12/subprocess.py:1135(_get_devnull)
+      162    0.000    0.000    0.001    0.000 <frozen os>:680(__getitem__)
+       81    0.000    0.000    0.001    0.000 /usr/lib/python3.12/contextlib.py:530(callback)
+      243    0.001    0.000    0.001    0.000 {built-in method posix.close}
+       81    0.000    0.000    0.001    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/coin_api.py:236(getOptions)
+       81    0.001    0.000    0.001    0.000 {built-in method posix.open}
+      162    0.001    0.000    0.001    0.000 {built-in method posix.access}
+       81    0.001    0.000    0.001    0.000 {built-in method posix.pipe}
+       81    0.000    0.000    0.001    0.000 <frozen posixpath>:100(split)
+     4611    0.001    0.000    0.001    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1266(name)
+      162    0.000    0.000    0.001    0.000 <frozen posixpath>:71(join)
+       81    0.000    0.000    0.001    0.000 /usr/lib/python3.12/contextlib.py:299(helper)
+     1683    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/pgm_approach.py:120(<genexpr>)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:567(__exit__)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2177(sum)
+      243    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:741(__bool__)
+      162    0.000    0.000    0.000    0.000 <frozen os>:762(encode)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:662(sum)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:1098(sum)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:104(__init__)
+     84/4    0.000    0.000    0.000    0.000 <frozen abc>:121(__subclasscheck__)
+     84/4    0.000    0.000    0.000    0.000 {built-in method _abc._abc_subclasscheck}
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:141(__exit__)
+      162    0.000    0.000    0.000    0.000 <frozen codecs>:309(__init__)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:132(__enter__)
+      162    0.000    0.000    0.000    0.000 {built-in method builtins.next}
+      162    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1964(fixObjective)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/subprocess.py:1961(_handle_exitstatus)
+      584    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/jy_sortedObject_list.py:6(__init__)
+       29    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:940(__radd__)
+      936    0.000    0.000    0.000    0.000 {method 'index' of 'list' objects}
+       81    0.000    0.000    0.000    0.000 {built-in method posix.urandom}
+       81    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:2018(stopClock)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/subprocess.py:1120(__del__)
+       81    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:2013(startClock)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:1517(debug)
+      162    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
+      243    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
+      405    0.000    0.000    0.000    0.000 <frozen posixpath>:41(_get_sep)
+       81    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:97(__init__)
+       29    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:767(copy)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:728(__matmul__)
+       81    0.000    0.000    0.000    0.000 <frozen os>:812(fsencode)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/uuid.py:334(hex)
+      405    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:357(<genexpr>)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:481(__init__)
+       29    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1411(__init__)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:548(_push_exit_callback)
+      168    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:561(_route_to_tuple)
+      530    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1877(_nonzero_dispatcher)
+       81    0.000    0.000    0.000    0.000 {method 'format' of 'str' objects}
+       28    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/helper.py:68(merge_two_dict)
+       81    0.000    0.000    0.000    0.000 {built-in method _thread.allocate_lock}
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:597(_matmul_dispatch)
+       81    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:2103(assignStatus)
+      243    0.000    0.000    0.000    0.000 {method 'values' of 'collections.OrderedDict' objects}
+      567    0.000    0.000    0.000    0.000 {built-in method posix.fspath}
+       81    0.000    0.000    0.000    0.000 {method 'rfind' of 'bytes' objects}
+      162    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:733(isNumericalConstant)
+       81    0.000    0.000    0.000    0.000 {built-in method posix.WIFSTOPPED}
+      162    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:477(_exit_wrapper)
+      162    0.000    0.000    0.000    0.000 {built-in method time.monotonic}
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:475(_create_cb_wrapper)
+       81    0.000    0.000    0.000    0.000 {built-in method sys.exc_info}
+        1    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/time_profile.py:12(__exit__)
+        4    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_base.py:230(_ascontainer)
+        1    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_solver.py:511(output_all_time_profile)
+      162    0.000    0.000    0.000    0.000 {built-in method _stat.S_ISDIR}
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/subprocess.py:268(_cleanup)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:1790(isEnabledFor)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_compressed.py:518(_matmul_vector)
+        1    0.000    0.000    0.000    0.000 {built-in method _pickle.dump}
+      162    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:695(name)
+       81    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.lock' objects}
+      162    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/pulp.py:1979(restoreObjective)
+      162    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}
+       81    0.000    0.000    0.000    0.000 {method 'rstrip' of 'bytes' objects}
+      162    0.000    0.000    0.000    0.000 {method 'endswith' of 'str' objects}
+       81    0.000    0.000    0.000    0.000 {built-in method from_bytes}
+       81    0.000    0.000    0.000    0.000 {built-in method sys.audit}
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/matrixlib/defmatrix.py:288(sum)
+       81    0.000    0.000    0.000    0.000 {method 'count' of 'list' objects}
+       81    0.000    0.000    0.000    0.000 <frozen posixpath>:52(normcase)
+      162    0.000    0.000    0.000    0.000 /usr/lib/python3.12/subprocess.py:1311(_on_error_fd_closer)
+       81    0.000    0.000    0.000    0.000 <frozen codecs>:186(__init__)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:59(upcast_char)
+       81    0.000    0.000    0.000    0.000 {method 'pop' of 'collections.deque' objects}
+       81    0.000    0.000    0.000    0.000 <frozen codecs>:331(getstate)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/numeric.py:136(ones)
+        4    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:584(asmatrix)
+       81    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
+      162    0.000    0.000    0.000    0.000 <frozen codecs>:260(__init__)
+      196    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/algorithm/cg_rmp.py:418(<lambda>)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/subprocess.py:1973(_internal_poll)
+       81    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/pulp/apis/core.py:387(get_pipe)
+       81    0.000    0.000    0.000    0.000 {built-in method posix.waitstatus_to_exitcode}
+        4    0.000    0.000    0.000    0.000 {method 'view' of 'numpy.ndarray' objects}
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/scipy/sparse/_sputils.py:336(get_sum_dtype)
+     10/8    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/matrixlib/defmatrix.py:168(__array_finalize__)
+       81    0.000    0.000    0.000    0.000 /usr/lib/python3.12/contextlib.py:564(__enter__)
+        2    0.000    0.000    0.000    0.000 {built-in method scipy.sparse._sparsetools.csr_matvec}
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/matrixlib/defmatrix.py:254(_collapse)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:104(_check_methods)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1768(ravel)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:234(_acquireLock)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/matrixlib/defmatrix.py:190(__getitem__)
+       55    0.000    0.000    0.000    0.000 <frozen _collections_abc>:435(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 <frozen _collections_abc>:288(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 <frozen os>:1087(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 <frozen _collections_abc>:388(__subclasshook__)
+        2    0.000    0.000    0.000    0.000 {method 'reshape' of 'numpy.ndarray' objects}
+        5    0.000    0.000    0.000    0.000 <frozen _collections_abc>:309(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:1776(getEffectiveLevel)
+        1    0.000    0.000    0.000    0.000 {method 'acquire' of '_thread.RLock' objects}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:243(_releaseLock)
+        8    0.000    0.000    0.000    0.000 <frozen _collections_abc>:341(__subclasshook__)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2172(_sum_dispatcher)
+        4    0.000    0.000    0.000    0.000 {built-in method builtins.issubclass}
+        2    0.000    0.000    0.000    0.000 {built-in method numpy.asanyarray}
+        1    0.000    0.000    0.000    0.000 /usr/lib/python3.12/logging/__init__.py:1369(disable)
+        1    0.000    0.000    0.000    0.000 {method 'release' of '_thread.RLock' objects}
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1764(_ravel_dispatcher)
+        2    0.000    0.000    0.000    0.000 /root/myenv/lib/python3.12/site-packages/numpy/core/multiarray.py:669(result_type)
+        1    0.000    0.000    0.000    0.000 /mnt/c/Users/Xiaohang/Downloads/jy_graphmaster 10/jy_graphmaster/src/common/state.py:50(__hash__)
+
+

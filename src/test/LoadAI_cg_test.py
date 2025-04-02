@@ -12,22 +12,21 @@ class CVRPTest(TestCase):
         return super().setUp()
 
     def test_thirty_customers(self):
-        try:
+        run_model=True
+        
+        instance = "loadAI_160cus"
 
-            instance = "loadAI_160cus"
-
-            path = os.path.join(os.path.dirname(__file__),
-                            "assets", "loadai_instances", f"{instance}.csv")
-            problem = loadAI_cg(\
-                path
-            )
-
+        path = os.path.join(os.path.dirname(__file__),
+                        "assets", "loadai_instances", f"{instance}.csv")
+        problem = loadAI_cg(\
+            path
+        )
+        if run_model ==True:
             start = time.time()
             problem.solve()
             end = time.time()
             print(f"solving took {end-start} seconds")
-        except:
-            traceback.print_exc()
+
 
 
     def tearDown(self):

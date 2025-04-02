@@ -4,7 +4,6 @@ import pulp
 from src.common.pgm_approach import Route
 import itertools
 from src.common.state import State
-
 class CG_RMP:
     def __init__(self, list_of_route:list[Route],node_sequence_of_routes, rhs_exog_vec,data, forbidden = [],initial_resource_vector=None):
         self.list_of_route = list_of_route
@@ -26,7 +25,7 @@ class CG_RMP:
         self._generate_col_coeff()
         
         self._build_master_problem()
-
+        self.time_profile = defaultdict(float)
 
     def _generate_rho(self):
         this_rho = defaultdict()
@@ -113,6 +112,7 @@ class CG_RMP:
         
         # Disable presolve to prevent constraint elimination
         solver = pulp.PULP_CBC_CMD(msg=True, presolve=False)
+        
         self.model.solve(solver)
         
         # Return the solution status and objective value
@@ -210,6 +210,7 @@ class CG_RMP:
             )
             constraint_count += 1
         solver = pulp.PULP_CBC_CMD(msg=True, presolve=True)
+       
         model.solve(solver)
 
         status = pulp.LpStatus[model.status]

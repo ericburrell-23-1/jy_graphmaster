@@ -2,7 +2,6 @@ import os
 import random
 import networkx as nx
 import numpy as np
-from cspy import BiDirectional, REFCallback
 from typing import List, Dict, Tuple
 from src.common.action import Action
 from src.common.state import State
@@ -152,19 +151,19 @@ class PricingProblem:
 
         return list_of_nodes, list_of_actions
 
-class ResourceExtensionCallback(REFCallback):
-    """This is what is used to define REF. I had a lot of trouble getting this to work as intended."""
-    def __init__(self, max_resource_state, min_resource_state):
-        super().__init__()
-        self.graph: nx.DiGraph = None
-        self._max_res = max_resource_state
-        self._min_res = min_resource_state
+# class ResourceExtensionCallback(REFCallback):
+#     """This is what is used to define REF. I had a lot of trouble getting this to work as intended."""
+#     def __init__(self, max_resource_state, min_resource_state):
+#         super().__init__()
+#         self.graph: nx.DiGraph = None
+#         self._max_res = max_resource_state
+#         self._min_res = min_resource_state
 
-    def REF_fwd(self, cumulative_resource, tail, head, edge_resource_consumption, partial_path, accummulated_cost):
-        pass
+#     def REF_fwd(self, cumulative_resource, tail, head, edge_resource_consumption, partial_path, accummulated_cost):
+#         pass
 
-    def REF_bwd(self, cumulative_resource, tail, head, edge_resource_consumption, partial_path, accummulated_cost):
-        pass
+#     def REF_bwd(self, cumulative_resource, tail, head, edge_resource_consumption, partial_path, accummulated_cost):
+#         pass
 
-    def REF_join(self, fwd_resource, bwd_resource, tail, head, edge_resource_consumption):
+#     def REF_join(self, fwd_resource, bwd_resource, tail, head, edge_resource_consumption):
         pass

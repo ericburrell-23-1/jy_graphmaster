@@ -184,20 +184,15 @@ class Action:
         """
 
         # 1. Early rejection using sparse comparison (fast & memory efficient)
-        time1 = time.time()
-        diff_data = state_tail.state_vec - self.min_resource_vec
-        time1_1 = time.time()
+        #diff_data = state_tail.state_vec - self.min_resource_vec
         if self.violates_min_resources(state_tail.state_vec)==True:
                 return None
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
-        time2 = time.time()
         # 2. Compute tentative head state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption_vec
-        time2_1 = time.time()
         if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
             return None
-        time3 = time.time()
         # 3. Apply max_resource cap (only on indices of interest)
         head_state_vec = self.fast_max_res_apply(head_state_vec)
         # if len(self.indices_non_zero_max)>0:
@@ -213,43 +208,12 @@ class Action:
             head_state = State(self.node_head, self.empty_resource_vec, l_id, is_source=False, is_sink=True)
         else:
             head_state = State(self.node_head, head_state_vec, l_id, is_source=False, is_sink=False)
-        time5 = time.time()
 
         
         #Handle the case where times are too small to measure
         #print('self.indices_non_zero_max')
         #print(len(self.indices_non_zero_max))
-        if 0>0:
-            first_part_time = time2 - time1
-            second_part_time = time3 - time2
-            third_part_time = time4 - time3
-            forth_part_time = time5-time4
-            total_time = time5 - time1
-            com1 = time2 - time1_1
-            com2 = time3 - time2_1
-            if total_time == 0:
-                print("Operations executed too quickly to measure timing accurately")
-                print(f"First part time: {first_part_time:.9f} seconds")
-                print(f"Second part time: {second_part_time:.9f} seconds")
-                print(f"Third part time: {third_part_time:.9f} seconds")
-                print(f"Fourth part time: {forth_part_time:.9f} seconds")
-                print(f'comparison 1: {com1:.9f} seconds')
-                print(f'comparison 2: {com2:.9f} seconds')
-                print(f"Total time: {total_time:.9f} seconds")
-            else:
-                first_part_percentage = (first_part_time / total_time) * 100
-                second_part_percentage = (second_part_time / total_time) * 100
-                third_part_percentage = (third_part_time / total_time) * 100
-                fourth_part_percentage = (forth_part_time/total_time) *100
-                com1_part_percentage = (com1/total_time) *100
-                com2_part_percentage = (com2/total_time) *100
-                print(f"First part time: {first_part_time:.9f} seconds ({first_part_percentage:.2f}%)")
-                print(f"Second part time: {second_part_time:.9f} seconds ({second_part_percentage:.2f}%)")
-                print(f"Third part time: {third_part_time:.9f} seconds ({third_part_percentage:.2f}%)")
-                print(f"Fourth part time: {forth_part_time:.9f} seconds ({fourth_part_percentage:.2f}%)")
-                print(f'com1 part time: {com1:.9f} seconds ({com1_part_percentage:.2f}%) ')
-                print(f'com1 part time: {com2:.9f} seconds ({com2_part_percentage:.2f}%) ')
-                print(f"Total time: {total_time:.9f} seconds")
+
         do_debug=False
         if do_debug==True:
             backup_head=self.get_head_state(state_tail,state_tail.l_id)

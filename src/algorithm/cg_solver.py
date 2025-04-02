@@ -20,9 +20,9 @@ from src.algorithm.jy_slow_pricing import jy_slow_general_pricing_solver
 from src.common.jy_fast_pricing import jy_fast_pricing
 import time
 import random
-from src.common.time_profile import TimeProfiler
 from src.algorithm.cg_rmp import CG_RMP
 import random
+import pickle
 class GraphMaster_cg:
     """
     Entry point to the GraphMaster solver. Takes problem model and initial feasible solution from problem-specific module, and creates the general GraphMaster problem.
@@ -114,7 +114,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['information_for_iteration'] =True
         self.jy_options_user_defined['use_comp_col'] =True # true: if use complementary column
         self.jy_options_user_defined['new_rmp'] =True # true: if generate more routes from omega term
-        self.jy_options_user_defined['subset_route'] = True # true: if use subset routes for col serice 3 customers
+        self.jy_options_user_defined['subset_route'] = True # true: if use subset routes for col service 3 customers
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -227,220 +227,226 @@ class GraphMaster_cg:
         for (n1,n2),a_list in self.action_dict.items():
             jy_actions_node[n1].append(a_list[0])
 
-        with TimeProfiler(all_time_profile, "all_time"):
             
-            l_id = 0
-            max_iterations = 100000
-            state_remove=[]
-            for s in self.initial_res_states:
-                if s.node==-2 and np.sum(s.state_vec)>0.5:
-                    state_remove.append(s)
-            for s in state_remove:
-                self.initial_res_states.remove(s)
-            self.rez_states_minus:Set[State]=self.initial_res_states
-            self.res_actions=self.initial_res_actions
-            iteration = 1
-            self.action_id_2_actions={my_action.action_id: my_action for my_action in self.actions}
-            self.lp_before_operations=np.inf
-            self.complete_routes=[]
-            print('starting Graph Master System')
-            
-            cg_iteration_time =1
-            self.path_added = set()
-            list_of_routes = self._initial_routes()
-            forbidden_omega = []
-            node_sequence_of_routes = []
-            all_reduce_cost_list = []
-            all_min_reduce_cost = []
-            num_path_col_in_rmp = []
-            num_omega_col_in_rmp = []
-            path_col_generated = []
-            path_added = []
-            for route in list_of_routes:
-                node_sequence_of_routes.append(route.node_in_ordered)
-            with TimeProfiler(all_time_profile, "solve:iteration"):
+        l_id = 0
+        max_iterations = 100000
+        state_remove=[]
+        for s in self.initial_res_states:
+            if s.node==-2 and np.sum(s.state_vec)>0.5:
+                state_remove.append(s)
+        for s in state_remove:
+            self.initial_res_states.remove(s)
+        self.rez_states_minus:Set[State]=self.initial_res_states
+        self.res_actions=self.initial_res_actions
+        iteration = 1
+        self.action_id_2_actions={my_action.action_id: my_action for my_action in self.actions}
+        self.lp_before_operations=np.inf
+        self.complete_routes=[]
+        print('starting Graph Master System')
+        
+        cg_iteration_time =1
+        self.path_added = set()
+        list_of_routes = self._initial_routes()
+        forbidden_omega = []
+        node_sequence_of_routes = []
+        all_reduce_cost_list = []
+        all_min_reduce_cost = []
+        num_path_col_in_rmp = []
+        num_omega_col_in_rmp = []
+        path_col_generated = []
+        path_added = []
+        for route in list_of_routes:
+            node_sequence_of_routes.append(route.node_in_ordered)
 
-                lp_objective_list = []
-                omega_term_list = []
-                while iteration < max_iterations:
-                    print(type(self.state_update_module.actions))
-                    cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
-                    if self.jy_options_user_defined['new_rmp'] == True:
-                        
-                        #output = cg_solver.solve()
-                        #input('before')
-                        
-                        before_num = len(list_of_routes)
-                        output,list_of_routes, node_sequence_of_routes = cg_solver.solve_2()
-                        print('before : len(list_of_routes)')
-                        print(before_num)
-                        print('after : len(list_of_routes)')
-                        print(len(list_of_routes))
-                        print('check')
-                        #input('during')
-                        #output = cg_solver.solve()
-                        #input('after')
+        lp_objective_list = []
+        omega_term_list = []
+        while iteration < max_iterations:
+            print(type(self.state_update_module.actions))
+            cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+            if self.jy_options_user_defined['new_rmp'] == True:
+                
+                #output = cg_solver.solve()
+                #input('before')
+                
+                before_num = len(list_of_routes)
+                output,list_of_routes, node_sequence_of_routes = cg_solver.solve_2()
+                print('before : len(list_of_routes)')
+                print(before_num)
+                print('after : len(list_of_routes)')
+                print(len(list_of_routes))
+                print('check')
+                #input('during')
+                #output = cg_solver.solve()
+                #input('after')
 
-                    else:
-                        output = cg_solver.solve()
-                    num_path_col_in_rmp.append(cg_solver.col_of_path)
-                    num_omega_col_in_rmp.append(cg_solver.col_of_omega)
-                    this_sol = output['variable_values']
-                    this_dual = output['dual_values']
-                    this_lp_objective = output['objective_value']
-                    lp_objective_list.append(this_lp_objective)
-                    for index, route_index in cg_solver.var_index_to_route_index.items():
-                        value = this_sol[index]
-                        if value > 0.0001:
-                            this_route = list_of_routes[route_index]
-                            red_cost = this_route.get_red_cost(this_dual)
-                            if red_cost <-1:
-                                input('error here')
-                            print(f'value:{value}, red_cost:{red_cost}')
-                    l_id += 1
-                    with TimeProfiler(all_time_profile, "solve:call_gwo_pricing"):
-                        jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
-                        this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
-                        if self.jy_options_user_defined['use_fast_pricing'] == True:
-                            jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
-                            routes= jy_fast_pricer.run()
-                            reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
-                            all_reduce_cost_list.append(reduced_cost_list)
-                            reduced_cost=0
-                            if len(reduced_cost_list)>0:
-                                reduced_cost = min(reduced_cost_list)
-                                all_min_reduce_cost.append(reduced_cost)
-                            print('reduced_cost')
-                            print(reduced_cost)
-                            print('reduced_cost_list')
-                            print(reduced_cost_list)
-                            #input('----')
+            else:
+                output = cg_solver.solve()
+            all_time_profile = Helper.merge_two_dict(all_time_profile,cg_solver.time_profile)
+            num_path_col_in_rmp.append(cg_solver.col_of_path)
+            num_omega_col_in_rmp.append(cg_solver.col_of_omega)
+            this_sol = output['variable_values']
+            this_dual = output['dual_values']
+            this_lp_objective = output['objective_value']
+            lp_objective_list.append(this_lp_objective)
+            for index, route_index in cg_solver.var_index_to_route_index.items():
+                value = this_sol[index]
+                if value > 0.0001:
+                    this_route = list_of_routes[route_index]
+                    red_cost = this_route.get_red_cost(this_dual)
+                    if red_cost <-1:
+                        input('error here')
+                    print(f'value:{value}, red_cost:{red_cost}')
+            l_id += 1
 
-                            if reduced_cost >= -1.1:
-                                this_forbidden_omega = cg_solver.get_forbidden_omega()
-                                print('this_forbidden_omega')
-                                print(this_forbidden_omega)
-                                omega_term_list.append(len(this_forbidden_omega))
-                                output_info = defaultdict()
-                                if len(this_forbidden_omega)<0.5:
-                                    if self.jy_options_user_defined['information_for_iteration'] == True:
-                                        output_info['list of lp'] = lp_objective_list
-                                        output_info['list number of positive omega terms (for each iteration lp'] = omega_term_list
-                                        output_info['the sum of the omega terms (all positive omega)'] = forbidden_omega
-                                        output_info['the total number of forbidden omega terms'] = len(forbidden_omega)
-                                        output_info['sum of the reduced cost term (reduce cost of all path each iteration)'] = all_reduce_cost_list
-                                        output_info['minimum reduced cost term (for each iteration)'] = all_min_reduce_cost
-                                        output_info['number of col (path) in rmp (for each iteraiton)'] = num_path_col_in_rmp
-                                        output_info['number of col (omega) in rmp (for each iteraiton)'] = num_omega_col_in_rmp
-                                        output_info['number of col generated (path added for each iteration)'] = path_col_generated
-                                        
-                                    ilp_cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
-                                    sol = ilp_cg_solver.solve_ilp()
-                                    all_time_end = time.time()
-                                    all_time_profile['all_time'] = all_time_end - all_time_start
-                                    self.output_all_time_profile(all_time_profile)
-                                    used_routes = sol['used_routes']
-                                    #variable_to_value = sol['variable_values']
-                                    print('route generated')
-                                    for route in list_of_routes:
-                                        print(route.node_in_ordered)
-                                    print('route used')
-                                    
-                                    for route in used_routes:
-                                        print(route.node_in_ordered)
-                                        valid = self.validate_route(route)
-                                        if valid == False:
-                                            input('invalid route here')
-                                    route_num = 1
-                                    for route in used_routes:
-                                        print(f'=========route {route_num}============')
-                                        print('node in route ordered')
-                                        print(route.node_in_ordered)
-                                        print('time remaining')
-                                        print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
-                                        # if len(route.just_states_ordered) >3:
-                                        #     print('time window start')
-                                        #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
-                                        #     print('time window end')
-                                        #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
-                                        #     print('weight remain')
-                                        print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
-                                        print('volume remain')
-                                        print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
-                                        route_num+=1
-                                    return {
-                                        'status': 'optimal',
-                                        'x': sol['variable_values'],
-                                        'iterations': iteration,
-                                        'used_routes':used_routes,
-                                        'output_info':output_info
-                                    }
-                                else:
-                                    forbidden_omega.extend(this_forbidden_omega)
+            jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
+            this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
+            if self.jy_options_user_defined['use_fast_pricing'] == True:
+               
+                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
+                routes= jy_fast_pricer.run()
+                reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
+                all_reduce_cost_list.append(reduced_cost_list)
+                reduced_cost=0
+                if len(reduced_cost_list)>0:
+                    reduced_cost = min(reduced_cost_list)
+                    all_min_reduce_cost.append(reduced_cost)
+                print('reduced_cost')
+                print(reduced_cost)
+                print('reduced_cost_list')
+                print(reduced_cost_list)
+                #input('----')
 
-                            #list_of_routes.extend(routes)
-                            add_route_num = 0
-                            for idx in range(len(routes)):
-                                route = routes[idx]
-                                #red_cost = route.get_red_cost(this_dual)
-                                red_cost = reduced_cost_list[idx]
-                                if route.node_in_ordered in node_sequence_of_routes and red_cost<-1:
-                                    print('node_in_ordered')
-                                    print(route.node_in_ordered)
-                                    print('red_cost')
-                                    print(red_cost)
-                                    input('error here: route added has negative red cost')
-                                if red_cost<-1e-3 :
-                                    print('route added')
-                                    print(route.node_in_ordered)
-                                    node_sequence_of_routes.append(route.node_in_ordered)
-                                    list_of_routes.append(route)
-                                    if self.jy_options_user_defined['subset_route'] == True:
-                                        if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
-                                            subset_of_routes = route.generate_subset_routes()
-                                            for subset_route in subset_of_routes:
-                                                if subset_route not in node_sequence_of_routes:
-                                                    cur_state = State(-1,self.initial_resource_vector,1,True,False)
-                                                    state_action_alt_repeat=[cur_state]
-                                                    for o,d in zip(subset_route[:-1],subset_route[1:]):
-                                                        this_a:Action = self.action_dict[(o,d)][0]
-                                                        state_action_alt_repeat.append(this_a)
-                                                        try:
-                                                            new_state = this_a.get_head_state_fast_load_ai(cur_state,1)
-                                                        except:
-                                                            print('check here')
-                                                        state_action_alt_repeat.append(new_state)
-                                                        cur_state = new_state
-                                                    
-                                                    this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
-                                                    list_of_routes.append(this_sub_route)
-                                                    node_sequence_of_routes.append(this_sub_route.node_in_ordered)
-                                    add_route_num += 1
-                            path_col_generated.append(add_route_num)
+                if reduced_cost >= -1.1:
+                    this_forbidden_omega = cg_solver.get_forbidden_omega()
+                    print('this_forbidden_omega')
+                    print(this_forbidden_omega)
+                    omega_term_list.append(len(this_forbidden_omega))
+                    output_info = defaultdict()
+                    if len(this_forbidden_omega)<0.5:
+                        if self.jy_options_user_defined['information_for_iteration'] == True:
+                            output_info['list of lp'] = lp_objective_list
+                            output_info['list number of positive omega terms (for each iteration lp'] = omega_term_list
+                            output_info['the sum of the omega terms (all positive omega)'] = forbidden_omega
+                            output_info['the total number of forbidden omega terms'] = len(forbidden_omega)
+                            output_info['sum of the reduced cost term (reduce cost of all path each iteration)'] = all_reduce_cost_list
+                            output_info['minimum reduced cost term (for each iteration)'] = all_min_reduce_cost
+                            output_info['number of col (path) in rmp (for each iteraiton)'] = num_path_col_in_rmp
+                            output_info['number of col (omega) in rmp (for each iteraiton)'] = num_omega_col_in_rmp
+                            output_info['number of col generated (path added for each iteration)'] = path_col_generated
                             
-                            print('======route check here======')
-                        else:
-                            for i in range(self.jy_options_user_defined['complementary_col']):
-                                jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
-                                [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
-                                print('done jy pricing ')
-                                state_action_list =[]
-                                for idx in range(len(list_of_actions_used_in_col)):
-                                    state_action_list.append(state_in_ordered[idx])
-                                    state_action_list.append(list_of_actions_used_in_col[idx])
-                                state_action_list.append(state_in_ordered[-1])
-                                this_route = Route(state_action_list,1,self.state_update_module.pickup_node)
-                                list_of_routes.append(this_route)
-                                self._check_path_duplicate(list_of_nodes_in_shortest_path,reduced_cost)
-                                nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
-                                for idx in nonzero_indices:
-                                    this_dual[idx] =0
+                        ilp_cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                         
-                    
-                    iteration += 1
-                    print(f'========= cg iteration: {cg_iteration_time} =========')
-                    cg_iteration_time+=1
-                return {'status': 'max_iterations', 'iterations': iteration}     
+                        sol = ilp_cg_solver.solve_ilp()
+                        all_time_profile = Helper.merge_two_dict(all_time_profile,ilp_cg_solver.time_profile)
+                        all_time_end = time.time()
+                        all_time_profile['all_time'] = all_time_end - all_time_start
+                        
+                        used_routes = sol['used_routes']
+                        #variable_to_value = sol['variable_values']
+                        print('route generated')
+                        for route in list_of_routes:
+                            print(route.node_in_ordered)
+                        print('route used')
+                        
+                        for route in used_routes:
+                            print(route.node_in_ordered)
+                            valid = self.validate_route(route)
+                            if valid == False:
+                                input('invalid route here')
+                        route_num = 1
+                        for route in used_routes:
+                            print(f'=========route {route_num}============')
+                            print('node in route ordered')
+                            print(route.node_in_ordered)
+                            print('time remaining')
+                            print([s.state_vec.toarray()[0,2] for s in route.just_states_ordered])
+                            # if len(route.just_states_ordered) >3:
+                            #     print('time window start')
+                            #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
+                            #     print('time window end')
+                            #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
+                            #     print('weight remain')
+                            print([s.state_vec.toarray()[0,0] for s in route.just_states_ordered])
+                            print('volume remain')
+                            print([s.state_vec.toarray()[0,1] for s in route.just_states_ordered])
+                            route_num+=1
+                        print('=========time profiling================')
+                        self.output_all_time_profile(all_time_profile)
+                        with open("time.pkl", "wb") as f:
+                            pickle.dump(all_time_profile, f)
+                        return {
+                            'status': 'optimal',
+                            'x': sol['variable_values'],
+                            'iterations': iteration,
+                            'used_routes':used_routes,
+                            'output_info':output_info
+                        }
+                    else:
+                        forbidden_omega.extend(this_forbidden_omega)
+
+                #list_of_routes.extend(routes)
+                add_route_num = 0
+                for idx in range(len(routes)):
+                    route = routes[idx]
+                    #red_cost = route.get_red_cost(this_dual)
+                    red_cost = reduced_cost_list[idx]
+                    if route.node_in_ordered in node_sequence_of_routes and red_cost<-1:
+                        print('node_in_ordered')
+                        print(route.node_in_ordered)
+                        print('red_cost')
+                        print(red_cost)
+                        input('error here: route added has negative red cost')
+                    if red_cost<-1e-3 :
+                        print('route added')
+                        print(route.node_in_ordered)
+                        node_sequence_of_routes.append(route.node_in_ordered)
+                        list_of_routes.append(route)
+                        if self.jy_options_user_defined['subset_route'] == True:
+                            if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
+                                subset_of_routes = route.generate_subset_routes()
+                                for subset_route in subset_of_routes:
+                                    if subset_route not in node_sequence_of_routes:
+                                        cur_state = State(-1,self.initial_resource_vector,1,True,False)
+                                        state_action_alt_repeat=[cur_state]
+                                        for o,d in zip(subset_route[:-1],subset_route[1:]):
+                                            this_a:Action = self.action_dict[(o,d)][0]
+                                            state_action_alt_repeat.append(this_a)
+                                            try:
+                                                new_state = this_a.get_head_state_fast_load_ai(cur_state,1)
+                                            except:
+                                                print('check here')
+                                            state_action_alt_repeat.append(new_state)
+                                            cur_state = new_state
+                                        
+                                        this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
+                                        list_of_routes.append(this_sub_route)
+                                        node_sequence_of_routes.append(this_sub_route.node_in_ordered)
+                        add_route_num += 1
+                path_col_generated.append(add_route_num)
+                
+                print('======route check here======')
+            else:
+                for i in range(self.jy_options_user_defined['complementary_col']):
+                    jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
+                    [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
+                    print('done jy pricing ')
+                    state_action_list =[]
+                    for idx in range(len(list_of_actions_used_in_col)):
+                        state_action_list.append(state_in_ordered[idx])
+                        state_action_list.append(list_of_actions_used_in_col[idx])
+                    state_action_list.append(state_in_ordered[-1])
+                    this_route = Route(state_action_list,1,self.state_update_module.pickup_node)
+                    list_of_routes.append(this_route)
+                    self._check_path_duplicate(list_of_nodes_in_shortest_path,reduced_cost)
+                    nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
+                    for idx in nonzero_indices:
+                        this_dual[idx] =0
+                
+            
+            iteration += 1
+            print(f'========= cg iteration: {cg_iteration_time} =========')
+            cg_iteration_time+=1
+        return {'status': 'max_iterations', 'iterations': iteration}     
     def validate_route(self,route):
         return route.verify_feasibility()
     def post_procssing(self, routes):

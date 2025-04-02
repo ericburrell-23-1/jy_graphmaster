@@ -76,7 +76,7 @@ class Route:
             my_act=self.just_actions_ordered[i]
             self.cost=self.cost+my_act.cost
             self.Exog_vec=self.Exog_vec+self.just_actions_ordered[i].Exog_vec
-
+        
     def generate_states_nodes_actions_ordered(self):
         #generate all states and actions in order
         self.just_states_ordered=[]
