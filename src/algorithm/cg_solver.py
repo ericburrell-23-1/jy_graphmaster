@@ -21,6 +21,7 @@ from src.common.jy_fast_pricing import jy_fast_pricing
 import time
 import random
 from src.algorithm.cg_rmp import CG_RMP
+from src.algorithm.xz_jy_cg_solver_via import xy_jy_cg_solver
 import random
 import pickle
 class GraphMaster_cg:
@@ -121,7 +122,7 @@ class GraphMaster_cg:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
         #self.gwo_pricing_solver = GWOPricingSolver(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined)
-        self.gwo_pricing_solver_loadAI = GWOPricingSolverLoadAI(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined,self.state_update_module)
+        #self.gwo_pricing_solver_loadAI = GWOPricingSolverLoadAI(actions,initial_resource_state,nodes, self.resource_name_to_index,initial_resource_vector,self.jy_options_user_defined,self.state_update_module)
         random.seed(1000)
     def LOAD_AI_setup(self):
         load_ai_dict=dict()
@@ -262,9 +263,10 @@ class GraphMaster_cg:
 
         lp_objective_list = []
         omega_term_list = []
+        cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
         while iteration < max_iterations:
             print(type(self.state_update_module.actions))
-            cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+            
             if self.jy_options_user_defined['new_rmp'] == True:
                 
                 #output = cg_solver.solve()
@@ -319,7 +321,7 @@ class GraphMaster_cg:
                 #input('----')
                 rmp_obj = output['objective_value']
                 if reduced_cost >= -1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
-                    this_forbidden_omega = cg_solver.get_forbidden_omega()
+                    this_forbidden_omega = cg_solver.get_active_DOI()
                     print('this_forbidden_omega')
                     print(this_forbidden_omega)
                     omega_term_list.append(len(this_forbidden_omega))
@@ -336,7 +338,7 @@ class GraphMaster_cg:
                             output_info['number of col (omega) in rmp (for each iteraiton)'] = num_omega_col_in_rmp
                             output_info['number of col generated (path added for each iteration)'] = path_col_generated
                             
-                        ilp_cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+                        ilp_cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                         
                         sol = ilp_cg_solver.solve_ilp()
                         last_lp_obj = rmp_obj
@@ -407,6 +409,7 @@ class GraphMaster_cg:
                         print(route.node_in_ordered)
                         node_sequence_of_routes.append(route.node_in_ordered)
                         list_of_routes.append(route)
+                        cg_solver.add_route(route)
                         if self.jy_options_user_defined['subset_route'] == True:
                             if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
                                 subset_of_routes = route.generate_subset_routes()

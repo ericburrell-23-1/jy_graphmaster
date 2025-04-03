@@ -132,7 +132,7 @@ class CG_RMP:
             input('problem not solve')
             
         # Get dual values
-        dual_values = self._get_dual_values()
+        dual_values = self.grab_dual_sol()
         
         return {
             'status': status,
@@ -237,7 +237,7 @@ class CG_RMP:
             'variable_values': var_values,
             'used_routes':route_used
         }
-    def _get_dual_values(self):
+    def grab_dual_sol(self):
         """Extract dual values from the solved model."""
         if self.model.status != pulp.LpStatusOptimal:
             return None
@@ -334,7 +334,7 @@ class CG_RMP:
                 
             # Step 4: Compute mutation scores for all relevant (l,u,v) triples
             all_mut_scores = []
-            my_dual_vals=self._get_dual_values()
+            my_dual_vals=self.grab_dual_sol()
             # For each route l with x_l > 0
             for var_idx, x_val in x_values.items():
                 if var_idx in self.var_index_to_route_index and x_val > 0.00001:
@@ -439,7 +439,7 @@ class CG_RMP:
                 
                 
                 # Add route to the problem
-                var_idx = self._add_route(route)
+                var_idx = self.add_route(route)
                 print('var_idx')
                 print(var_idx)
                 print('self.var_to_obj_coef[var_idx]')
@@ -562,7 +562,7 @@ class CG_RMP:
         """Convert a route to a hashable tuple for checking if already added."""
         return tuple(route.node_in_ordered)
 
-    def _add_route(self, route):
+    def add_route(self, route):
         """
         Add a new route to the problem.
         
