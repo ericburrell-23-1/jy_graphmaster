@@ -347,7 +347,8 @@ class jy_fast_pricing():
             # Update efficient frontier with current set of expandable labels
             time_e_1 = time.time()
             for label in self.expandable_labels.objects:
-                self.efficient_frontier.alter_fronteir_given_new_element(label)
+                if label.lb<self.jy_opt['min_dual_val_expand']:
+                    self.efficient_frontier.alter_fronteir_given_new_element(label)
             time_e_2 = time.time()
             print(f'alter_fronteir_given_new_element: {time_e_2-time_e_1}')
             print('chekc here')
@@ -398,6 +399,18 @@ class jy_fast_pricing():
                 if debug_on==True:
                     self.jy_get_compelition(curr_label)
                 verbose=True
+                if curr_label.lb>self.jy_opt['min_dual_val_expand']:
+                    print('curr_label.lb')
+                    print(curr_label.lb)
+                    print('num_expansion_in')
+                    print(num_expansion_in)
+                    print('itr_num')
+                    print(itr_num)
+                    print('curr_label.all_nodes')
+                    print(curr_label.all_nodes_ordered)
+                    input('error here')
+                if curr_label.lb>self.jy_opt['min_dual_val_expand']:
+                    continue
                 if verbose==True and num_expansion_in % 100==0:
                     print('incumbant_lb')
                     print(incumbant_lb)
@@ -522,7 +535,8 @@ class jy_fast_pricing():
                     #print('t5')
                     #print('try ing add fronteir')
                     time_m_4_1 = time.time()
-                    self.efficient_frontier.alter_fronteir_given_new_element(new_label)
+                    if new_label.lb<self.jy_opt['min_dual_val_expand']:
+                        self.efficient_frontier.alter_fronteir_given_new_element(new_label)
                     time_m_5 = time.time()
                     time_alter_frontier += (time_m_5 - time_m_4_1)
                     if new_label.is_complete_route:
@@ -548,8 +562,8 @@ class jy_fast_pricing():
                     elif not new_label.is_complete_route:
                         #new_label.calculate_better_lb(self.dual_vec)
                         new_tuple=self.label_2_tuple(new_label)
-
-                        self.expandable_labels.insert(new_label,new_tuple)
+                        if new_label.lb<self.jy_opt['min_dual_val_expand']:
+                            self.expandable_labels.insert(new_label,new_tuple)
                     time_m_6 = time.time()
                     rest_time += (time_m_6-time_m_5)
                 time_i_3 = time.time()

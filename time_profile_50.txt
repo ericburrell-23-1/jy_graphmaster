@@ -1,368 +1,360 @@
-         45062308 function calls (44483378 primitive calls) in 47.462 seconds
+         444625025 function calls (435599235 primitive calls) in 194.520 seconds
 
-   Ordered by: cumulative time
+   Ordered by: internal time
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    0.029    0.029   47.462   47.462 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:223(solve)
-       13    0.001    0.000   39.712    3.055 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:97(run)
-       13    1.812    0.139   39.711    3.055 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:305(find_min_reduced_cost_path)
-   330153    1.118    0.000   20.548    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:356(expand_given_action)
-   332726    1.108    0.000   11.733    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:196(get_head_state_fast_load_ai)
-   351228    4.009    0.000    7.934    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:204(calculate_better_lb_2)
-   219683    4.470    0.000    6.616    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:17(__init__)
-       14    0.000    0.000    5.433    0.388 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:8(__init__)
-       14    0.410    0.029    5.368    0.383 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:77(_build_master_problem)
-      147    0.568    0.004    4.668    0.032 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:226(update_red_cost_and_lb)
-   332726    2.234    0.000    4.241    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:312(violates_min_resources)
-   511010    0.426    0.000    4.215    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:240(__rmul__)
-   482786    2.822    0.000    3.799    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:101(calculate_red_cost_given_dual)
-   222222    1.926    0.000    3.130    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:342(fast_max_res_apply)
-   554948    0.466    0.000    3.128    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2322(any)
-  1022785    1.768    0.000    2.805    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:707(__init__)
-   569276    0.791    0.000    2.785    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:71(_wrapreduction)
-    19587    2.675    0.000    2.686    0.000 {built-in method builtins.print}
-   616601    2.018    0.000    2.018    0.000 {method 'reduce' of 'numpy.ufunc' objects}
-   511010    0.508    0.000    2.017    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:956(__mul__)
-   222440    1.083    0.000    1.709    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:8(__init__)
-       13    0.007    0.001    1.611    0.124 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:299(solve_2)
-   222222    1.302    0.000    1.504    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:187(_get_head_stat_vec)
-       36    0.000    0.000    1.462    0.041 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1974(solve)
-       36    0.002    0.000    1.461    0.041 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:110(actualSolve)
-       36    0.003    0.000    1.455    0.040 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:118(solve_CBC)
-       35    0.007    0.000    1.450    0.041 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:108(solve)
-   511010    0.255    0.000    1.286    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:765(emptyCopy)
-   208329    0.255    0.000    1.152    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:85(label_2_tuple)
-   195263    1.054    0.000    1.082    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:103(comp_red_cost)
-  5656788    0.794    0.000    1.017    0.000 {built-in method builtins.isinstance}
-   278272    0.793    0.000    0.989    0.000 {built-in method builtins.sorted}
-   598690    0.550    0.000    0.978    0.000 {built-in method builtins.sum}
-    76758    0.306    0.000    0.940    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:681(get_actions_from_label_2)
-       36    0.000    0.000    0.929    0.026 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1259(wait)
-       36    0.000    0.000    0.929    0.026 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1580(_wait)
-       36    0.929    0.026    0.929    0.026 {built-in method _winapi.WaitForSingleObject}
-   208329    0.874    0.000    0.874    0.000 {method 'randint' of 'numpy.random.mtrand.RandomState' objects}
-    76758    0.064    0.000    0.865    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:27(pop)
-511760/10910    0.579    0.000    0.832    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:890(addInPlace)
-      750    0.001    0.000    0.802    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:2356(lpSum)
-   153516    0.802    0.000    0.802    0.000 {method 'pop' of 'list' objects}
-   219670    0.634    0.000    0.778    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:67(zeros_like)
-      147    0.321    0.002    0.708    0.005 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:628(_remove_labels_with_positive_lb)
-   208329    0.173    0.000    0.680    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:10(insert)
-4564748/4487084    0.650    0.000    0.672    0.000 {built-in method builtins.len}
-   465237    0.657    0.000    0.657    0.000 {built-in method builtins.hash}
-   222410    0.186    0.000    0.584    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:34(alter_fronteir_given_new_element)
-  3554619    0.537    0.000    0.537    0.000 {method 'append' of 'list' objects}
-  3133819    0.451    0.000    0.451    0.000 {built-in method time.time}
-   221088    0.087    0.000    0.398    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:298(this_label_dominates_input)
-    33686    0.112    0.000    0.389    0.000 {method 'update' of 'set' objects}
-  2089670    0.370    0.000    0.370    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:105(<genexpr>)
-    15775    0.078    0.000    0.343    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:58(this_state_dominates_input_state)
-       36    0.004    0.000    0.288    0.008 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1845(writeMPS)
-       36    0.062    0.002    0.285    0.008 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\mps_lp.py:201(writeMPS)
-   208329    0.281    0.000    0.281    0.000 {built-in method _bisect.bisect_left}
-       13    0.008    0.001    0.260    0.020 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:22(__init__)
-   416658    0.226    0.000    0.226    0.000 {method 'insert' of 'list' objects}
-   511796    0.117    0.000    0.223    0.000 <frozen abc>:117(__instancecheck__)
-  1164762    0.222    0.000    0.222    0.000 {method 'items' of 'dict' objects}
-        1    0.011    0.011    0.211    0.211 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:175(solve_ilp)
-   222222    0.202    0.000    0.202    0.000 {method 'copy' of 'numpy.ndarray' objects}
-   219882    0.201    0.000    0.201    0.000 {built-in method numpy.array}
-  2784920    0.194    0.000    0.194    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:262(<lambda>)
-   446340    0.179    0.000    0.179    0.000 {built-in method numpy.zeros}
-  1022821    0.154    0.000    0.155    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:700(name)
-       13    0.117    0.009    0.149    0.011 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:648(pre_process__partition_actions)
-    14210    0.018    0.000    0.140    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2836(min)
-   242797    0.106    0.000    0.137    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:359(__hash__)
-    39349    0.117    0.000    0.122    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:719(<genexpr>)
-   237134    0.122    0.000    0.122    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:724(<genexpr>)
-  1148136    0.121    0.000    0.121    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:207(__hash__)
-      306    0.001    0.000    0.119    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:21(__init__)
-   506756    0.116    0.000    0.116    0.000 {method 'add' of 'set' objects}
-    15775    0.039    0.000    0.112    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2378(array_equal)
-      326    0.002    0.000    0.110    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:147(verify_feasibility)
-     1662    0.003    0.000    0.109    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:372(check_valid)
-   511796    0.106    0.000    0.106    0.000 {built-in method _abc._abc_instancecheck}
-       60    0.003    0.000    0.099    0.002 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:473(_swap)
-   677373    0.097    0.000    0.097    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:741(dot)
-   329506    0.096    0.000    0.096    0.000 {method 'copy' of 'list' objects}
-   217259    0.091    0.000    0.091    0.000 {method 'intersection' of 'set' objects}
-       13    0.071    0.005    0.091    0.007 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:169(initiate_RCP_d)
-    24079    0.071    0.000    0.086    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\mps_lp.py:284(writeMPSColumnLines)
-    15775    0.014    0.000    0.084    0.000 {method 'min' of 'numpy.ndarray' objects}
-   543022    0.082    0.000    0.082    0.000 {method 'items' of 'collections.OrderedDict' objects}
-   554948    0.082    0.000    0.082    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2317(_any_dispatcher)
-    15775    0.007    0.000    0.070    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:43(_amin)
-   511010    0.067    0.000    0.067    0.000 {built-in method math.isfinite}
-    15775    0.011    0.000    0.067    0.000 {method 'sum' of 'numpy.ndarray' objects}
-       72    0.047    0.001    0.067    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1705(variablesDict)
-    15775    0.011    0.000    0.065    0.000 {method 'all' of 'numpy.ndarray' objects}
-       36    0.042    0.001    0.065    0.002 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:237(readsol_MPS)
-       36    0.010    0.000    0.064    0.002 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1619(normalisedNames)
-       36    0.000    0.000    0.063    0.002 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:807(__init__)
-   229505    0.060    0.000    0.060    0.000 {method 'remove' of 'list' objects}
-       36    0.001    0.000    0.060    0.002 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1436(_execute_child)
-     2586    0.036    0.000    0.060    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1682(addVariables)
-      122    0.001    0.000    0.057    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:440(convert_2_route)
-    15775    0.006    0.000    0.056    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:47(_sum)
-    15775    0.006    0.000    0.054    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:61(_all)
-       36    0.001    0.000    0.052    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1691(variables)
-       36    0.052    0.001    0.052    0.001 {built-in method _winapi.CreateProcess}
-      160    0.008    0.000    0.051    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:115(_compute_action_reduced_costs)
-       14    0.044    0.003    0.050    0.004 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:30(_generate_rho)
-       36    0.002    0.000    0.039    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1916(assignVarsVals)
-    10039    0.003    0.000    0.035    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:944(__iadd__)
-    77664    0.022    0.000    0.034    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:57(__len__)
-   117230    0.032    0.000    0.032    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:280(<genexpr>)
-       36    0.002    0.000    0.032    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1922(assignVarsDj)
-   221332    0.031    0.000    0.031    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:20(__eq__)
-   180075    0.030    0.000    0.030    0.000 {method 'keys' of 'dict' objects}
-    24115    0.008    0.000    0.030    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\utilities.py:19(value)
-   219670    0.028    0.000    0.028    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:63(_zeros_like_dispatcher)
-    30053    0.022    0.000    0.027    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:759(addterm)
-   117230    0.026    0.000    0.026    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:281(<genexpr>)
-   219670    0.026    0.000    0.026    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:1080(copyto)
-      432    0.011    0.000    0.026    0.000 {method 'write' of '_io.TextIOWrapper' objects}
-       36    0.000    0.000    0.026    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:460(delete_tmp_files)
-      144    0.000    0.000    0.025    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:454(silent_remove)
-    10054    0.004    0.000    0.025    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:285(__init__)
-      144    0.025    0.000    0.025    0.000 {built-in method nt.remove}
-      765    0.001    0.000    0.025    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1764(__iadd__)
-   219670    0.024    0.000    0.024    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:85(empty_like)
-      750    0.002    0.000    0.024    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1718(addConstraint)
-   335603    0.023    0.000    0.023    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:195(getName)
-    33824    0.023    0.000    0.023    0.000 {method 'union' of 'set' objects}
-    10054    0.004    0.000    0.021    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:200(__init__)
-      109    0.019    0.000    0.020    0.000 {built-in method _io.open}
-    39349    0.019    0.000    0.019    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:710(<genexpr>)
-    91684    0.015    0.000    0.016    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1672(addVariable)
-       37    0.003    0.000    0.016    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:565(_add_route)
-    10054    0.006    0.000    0.016    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:183(setName)
-       14    0.011    0.001    0.015    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:47(_generate_col_coeff)
-    14326    0.015    0.000    0.015    0.000 {built-in method builtins.getattr}
-      432    0.000    0.000    0.015    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py:18(encode)
-    39349    0.015    0.000    0.015    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:714(<genexpr>)
-      432    0.015    0.000    0.015    0.000 {built-in method _codecs.charmap_encode}
-    16843    0.014    0.000    0.014    0.000 {method 'difference' of 'set' objects}
-       36    0.010    0.000    0.013    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:745(value)
-      136    0.000    0.000    0.011    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1487(_array_repr_implementation)
-    73245    0.011    0.000    0.011    0.000 {method 'extend' of 'list' objects}
-      136    0.000    0.000    0.011    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:561(array2string)
-        1    0.000    0.000    0.010    0.010 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:188(_initial_routes)
-      136    0.000    0.000    0.010    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:506(wrapper)
-      136    0.000    0.000    0.009    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:523(_array2string)
-       48    0.004    0.000    0.009    0.000 {method 'sort' of 'list' objects}
-    47461    0.008    0.000    0.008    0.000 {built-in method numpy.asarray}
-       20    0.000    0.000    0.008    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:450(validate_route)
-      512    0.007    0.000    0.007    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:59(get_red_cost)
-    10090    0.007    0.000    0.007    0.000 {method 'translate' of 'str' objects}
-    24115    0.004    0.000    0.007    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\utilities.py:14(isNumber)
-       36    0.000    0.000    0.007    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:298(get_status)
-      136    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:452(_get_format_function)
-    26295    0.006    0.000    0.006    0.000 {method 'split' of 'str' objects}
-       36    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:361(__init__)
-       36    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:46(__init__)
-      136    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:411(<lambda>)
-      306    0.004    0.000    0.006    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:136(generate_all_node_pairs_ordered)
-      136    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:907(__init__)
-    24079    0.006    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\mps_lp.py:302(writeMPSBoundLines)
-       36    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:401(__init__)
-      136    0.002    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:934(fillFormat)
-    24079    0.003    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1702(<lambda>)
-       36    0.000    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:476(executable)
-       36    0.000    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:430(setTmpDir)
-       36    0.001    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\shutil.py:1525(which)
-       36    0.003    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:576(list2cmdline)
-      109    0.005    0.000    0.005    0.000 {method '__exit__' of '_io._IOBase' objects}
-      252    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:218(Close)
-      180    0.004    0.000    0.004    0.000 {built-in method _winapi.CloseHandle}
-      306    0.004    0.000    0.004    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:69(generate_cost_exog_vector)
-       72    0.004    0.000    0.004    0.000 {built-in method nt._path_isdir}
-      271    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py:22(decode)
-       72    0.004    0.000    0.004    0.000 {built-in method nt._path_exists}
-      271    0.004    0.000    0.004    0.000 {built-in method _codecs.charmap_decode}
-    10054    0.003    0.000    0.003    0.000 {method 'match' of 're.Pattern' objects}
-       23    0.002    0.000    0.003    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:39(get_forbidden_omega)
-      306    0.002    0.000    0.003    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:80(generate_states_nodes_actions_ordered)
-    15775    0.003    0.000    0.003    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2374(_array_equal_dispatcher)
-       36    0.000    0.000    0.003    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1335(_get_handles)
-       36    0.000    0.000    0.003    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\shutil.py:1510(_access_check)
-      136    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:780(_formatArray)
-  408/136    0.001    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:789(recurser)
-    14210    0.002    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2831(_min_dispatcher)
-      750    0.001    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1030(__ge__)
-       36    0.001    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1282(_close_pipe_fds)
-     2550    0.002    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1300(keys)
-       36    0.001    0.000    0.002    0.000 {method 'readline' of '_io.TextIOWrapper' objects}
-       46    0.002    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:240(_get_dual_values)
-      180    0.002    0.000    0.002    0.000 {method 'join' of 'str' objects}
-      306    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:61(clean_state_action_alt_repeat_by_removing_null)
-    29328    0.002    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:78(<lambda>)
-       46    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:98(generate_subset_routes)
-       72    0.002    0.000    0.002    0.000 {built-in method nt.access}
-    24079    0.002    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:469(value)
-     3600    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1291(__iter__)
-       36    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:447(create_tmp_files)
-      160    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1881(nonzero)
-      750    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1644(unusedConstraintName)
-     5929    0.001    0.000    0.001    0.000 {method 'get' of 'dict' objects}
-       13    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:179(initiate_RCP_u)
-    14000    0.001    0.000    0.001    0.000 {built-in method builtins.abs}
-    10190    0.001    0.000    0.001    0.000 {built-in method builtins.id}
-       13    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:192(initialize_source_label)
-       26    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:14(__init__)
-      160    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:53(_wrapfunc)
-       13    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:186(initiate_RCP_u_2)
-       36    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:567(__exit__)
-      481    0.001    0.000    0.001    0.000 {built-in method builtins.max}
-       36    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1135(_get_devnull)
-      106    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1144(addInPlace)
-       36    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\uuid.py:723(uuid4)
-      144    0.000    0.000    0.001    0.000 <frozen _collections_abc>:804(get)
-      116    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2692(max)
-     1800    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1306(items)
-       36    0.001    0.000    0.001    0.000 {built-in method nt.open}
-      408    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:989(<genexpr>)
-      144    0.000    0.000    0.001    0.000 <frozen os>:680(__getitem__)
-      750    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1058(__init__)
-      232    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:33(seterr)
-      272    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:753(_extendLine_pretty)
-      272    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1018(__call__)
-      144    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:477(_exit_wrapper)
-      108    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1414(_make_inheritable)
-      144    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:530(callback)
-     2669    0.001    0.000    0.001    0.000 {method 'keys' of 'collections.OrderedDict' objects}
-      136    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:64(_make_options_dict)
-       72    0.000    0.000    0.001    0.000 <frozen ntpath>:107(join)
-       36    0.000    0.000    0.001    0.000 <frozen ntpath>:236(split)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\uuid.py:139(__init__)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1935(assignConsSlack)
-      408    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:984(<genexpr>)
-     3600    0.000    0.000    0.000    0.000 {built-in method builtins.iter}
-      116    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:430(__enter__)
-      160    0.000    0.000    0.000    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
-      750    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1268(name)
-      180    0.000    0.000    0.000    0.000 <frozen ntpath>:179(splitroot)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\coin_api.py:221(getOptions)
-      544    0.000    0.000    0.000    0.000 {built-in method numpy.core._multiarray_umath.dragon4_positional}
-       36    0.000    0.000    0.000    0.000 <frozen ntpath>:257(splitext)
-      108    0.000    0.000    0.000    0.000 {built-in method _winapi.DuplicateHandle}
-      116    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:435(__exit__)
-      396    0.000    0.000    0.000    0.000 <frozen os>:824(fsdecode)
-      272    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:739(_extendLine)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:299(helper)
-     74/2    0.000    0.000    0.000    0.000 <frozen abc>:121(__subclasscheck__)
+  1914537   25.079    0.000   41.965    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:204(calculate_better_lb_2)
+  1221812   17.323    0.000   22.867    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:17(__init__)
+ 17744290   17.212    0.000   26.635    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:672(__init__)
+       75   11.908    0.159   11.908    0.159 {built-in method posix.waitpid}
+  1231626    9.973    0.000   11.766    0.000 /Users/julian/Documents/jy_graphmaster/src/common/state.py:8(__init__)
+  1627355    9.291    0.000   11.697    0.000 {built-in method builtins.sorted}
+ 97771916    7.119    0.000    9.118    0.000 {built-in method builtins.isinstance}
+       23    7.038    0.306  126.333    5.493 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:305(find_min_reduced_cost_path)
+8874120/63930    5.107    0.000    7.326    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:843(addInPlace)
+  1637898    4.940    0.000   60.313    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:356(expand_given_action)
+  1230672    4.167    0.000    4.691    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:187(_get_head_stat_vec)
+  8866170    3.962    0.000   19.316    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:909(__mul__)
+  1647064    3.943    0.000    7.264    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:312(violates_min_resources)
+  8866170    3.445    0.000   37.835    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:208(__rmul__)
+  2607285    3.294    0.000    6.039    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:101(calculate_red_cost_given_dual)
+      375    2.870    0.008   23.230    0.062 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:226(update_red_cost_and_lb)
+  1647064    2.771    0.000   31.397    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:196(get_head_state_fast_load_ai)
+       23    2.678    0.116    3.060    0.133 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:662(pre_process__partition_actions)
+       24    2.632    0.110   47.310    1.971 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:77(_build_master_problem)
+  1230672    2.477    0.000    4.787    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:342(fast_max_res_apply)
+ 63225340    2.393    0.000    2.393    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:262(<lambda>)
+  3061229    2.369    0.000    2.369    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+  1152224    2.049    0.000    2.049    0.000 {method 'randint' of 'numpy.random.mtrand.RandomState' objects}
+  8866170    1.975    0.000   13.417    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:732(emptyCopy)
+ 21136012    1.966    0.000    1.966    0.000 {method 'append' of 'list' objects}
+  2669958    1.889    0.000    1.889    0.000 {built-in method builtins.hash}
+      375    1.862    0.005    3.534    0.009 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:642(_remove_labels_with_positive_lb)
+  2882525    1.817    0.000    4.365    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:71(_wrapreduction)
+24838323/24623753    1.804    0.000    1.839    0.000 {built-in method builtins.len}
+ 17744365    1.567    0.000    1.567    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:661(setName)
+  3412471    1.435    0.000    2.870    0.000 {built-in method builtins.sum}
+ 15239651    1.387    0.000    1.387    0.000 {built-in method time.time}
+  1221789    1.375    0.000    1.780    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/numeric.py:67(zeros_like)
+ 12327536    1.281    0.000    1.281    0.000 {method 'items' of 'dict' objects}
+ 10581584    1.247    0.000    1.247    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:105(<genexpr>)
+  1809720    1.134    0.000    1.134    0.000 {method 'insert' of 'list' objects}
+  2877736    1.069    0.000    5.414    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2322(any)
+  8870220    1.044    0.000    1.998    0.000 <frozen abc>:117(__instancecheck__)
+   943774    0.979    0.000    1.046    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:103(comp_red_cost)
+  8870220    0.954    0.000    0.954    0.000 {built-in method _abc._abc_instancecheck}
+       23    0.816    0.035    1.020    0.044 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:169(initiate_RCP_d)
+ 13592061    0.741    0.000    0.741    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:175(__hash__)
+  9052203    0.734    0.000    0.734    0.000 {method 'items' of 'collections.OrderedDict' objects}
+   212089    0.674    0.000    2.643    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:695(get_actions_from_label_2)
+       75    0.672    0.009    0.672    0.009 {built-in method _posixsubprocess.fork_exec}
+  8870145    0.599    0.000    0.599    0.000 {built-in method math.isfinite}
+  1152224    0.570    0.000    2.690    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:85(label_2_tuple)
+  1230672    0.524    0.000    0.524    0.000 {method 'copy' of 'numpy.ndarray' objects}
+   904860    0.508    0.000    0.508    0.000 {built-in method _bisect.bisect_left}
+  2481728    0.501    0.000    0.501    0.000 {built-in method numpy.zeros}
+  1405561    0.483    0.000    0.483    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:738(<genexpr>)
+       24    0.452    0.019    0.506    0.021 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:30(_generate_rho)
+  1222279    0.437    0.000    0.437    0.000 {built-in method numpy.array}
+  1321602    0.392    0.000    0.392    0.000 {method 'intersection' of 'set' objects}
+   904860    0.392    0.000    2.033    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_sortedObject_list.py:10(insert)
+  1438332    0.385    0.000    0.482    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:359(__hash__)
+   181920    0.368    0.000    1.381    0.000 {method 'update' of 'set' objects}
+   424178    0.349    0.000    0.349    0.000 {method 'pop' of 'list' objects}
+   905147    0.334    0.000    0.982    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_eff_fronteir.py:34(alter_fronteir_given_new_element)
+  2557622    0.318    0.000    0.318    0.000 {method 'add' of 'set' objects}
+   165482    0.275    0.000    0.335    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/mps_lp.py:280(writeMPSColumnLines)
+  1868403    0.267    0.000    0.267    0.000 {method 'copy' of 'list' objects}
+       75    0.251    0.003    1.011    0.013 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/mps_lp.py:197(writeMPS)
+  3547356    0.240    0.000    0.240    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/multiarray.py:741(dot)
+  2877736    0.216    0.000    0.216    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2317(_any_dispatcher)
+        1    0.209    0.209  194.520  194.520 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_solver.py:224(solve)
+  2282199    0.202    0.000    0.202    0.000 {method 'keys' of 'dict' objects}
+      150    0.187    0.001    0.271    0.002 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1576(variablesDict)
+   214691    0.180    0.000    0.198    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:733(<genexpr>)
+   912230    0.178    0.000    0.640    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:298(this_label_dominates_input)
+    59667    0.172    0.000    0.213    0.000 {built-in method builtins.print}
+       75    0.160    0.002    0.243    0.003 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:225(readsol_MPS)
+    59568    0.147    0.000    0.506    0.000 /Users/julian/Documents/jy_graphmaster/src/common/state.py:58(this_state_dominates_input_state)
+       23    0.129    0.006    5.097    0.222 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:299(solve_2)
+   770764    0.113    0.000    0.113    0.000 {method 'remove' of 'list' objects}
+       75    0.109    0.001    0.109    0.001 {built-in method posix.read}
+   212089    0.103    0.000    0.452    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_sortedObject_list.py:27(pop)
+  2306800    0.103    0.000    0.103    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:163(getName)
+   812546    0.095    0.000    0.095    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:281(<genexpr>)
+   812546    0.092    0.000    0.092    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:280(<genexpr>)
+  1227150    0.091    0.000    0.091    0.000 /Users/julian/Documents/jy_graphmaster/src/common/state.py:20(__eq__)
+  1221789    0.087    0.000    0.087    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/multiarray.py:1080(copyto)
+  1221789    0.085    0.000    0.085    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/numeric.py:63(_zeros_like_dispatcher)
+  1221789    0.080    0.000    0.080    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/multiarray.py:85(empty_like)
+    59568    0.072    0.000    0.165    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/numeric.py:2378(array_equal)
+   182298    0.067    0.000    0.067    0.000 {method 'union' of 'set' objects}
+   603155    0.064    0.000    0.069    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1543(addVariable)
+       23    0.060    0.003    4.199    0.183 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:22(__init__)
+   165833    0.060    0.000    0.109    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:724(addterm)
+       75    0.057    0.001    0.201    0.003 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1562(variables)
+    15975    0.051    0.000    0.119    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1553(addVariables)
+   214691    0.048    0.000    0.048    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:724(<genexpr>)
+   496523    0.046    0.000    0.046    0.000 {method 'extend' of 'list' objects}
+        1    0.045    0.045   10.543   10.543 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:175(solve_ilp)
+       24    0.042    0.002    0.056    0.002 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:47(_generate_col_coeff)
+    90960    0.041    0.000    0.041    0.000 {method 'difference' of 'set' objects}
+   253128    0.040    0.000    0.049    0.000 {method 'get' of 'dict' objects}
+       75    0.040    0.001    0.248    0.003 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1490(normalisedNames)
+      226    0.040    0.000    0.040    0.000 {built-in method _io.open}
+   214570    0.035    0.000    0.052    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_sortedObject_list.py:57(__len__)
+   214691    0.035    0.000    0.035    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:728(<genexpr>)
+   165557    0.033    0.000    0.116    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/utilities.py:17(value)
+       75    0.032    0.000    0.044    0.001 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:710(value)
+   178518    0.029    0.000    0.029    0.000 {method 'split' of 'str' objects}
+       74    0.029    0.000    4.772    0.064 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:108(solve)
+    55632    0.026    0.000    0.026    0.000 {method 'translate' of 'str' objects}
+     3233    0.025    0.000    0.025    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:59(get_red_cost)
+   165482    0.024    0.000    0.025    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/mps_lp.py:298(writeMPSBoundLines)
+      226    0.023    0.000    0.023    0.000 {method '__exit__' of '_io._IOBase' objects}
+      459    0.021    0.000    0.143    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:473(_swap)
+    59568    0.021    0.000    0.107    0.000 {method 'min' of 'numpy.ndarray' objects}
+    59568    0.020    0.000    0.076    0.000 {method 'all' of 'numpy.ndarray' objects}
+    55557    0.019    0.000    0.054    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:151(setName)
+   165557    0.018    0.000    0.031    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/utilities.py:12(isNumber)
+    59568    0.018    0.000    0.082    0.000 {method 'sum' of 'numpy.ndarray' objects}
+      124    0.017    0.000    0.038    0.000 {method 'sort' of 'list' objects}
+   179147    0.016    0.000    0.016    0.000 {built-in method numpy.asarray}
+     3975    0.016    0.000    0.060    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1589(addConstraint)
+      300    0.014    0.000    0.014    0.000 {built-in method posix.remove}
+       75    0.014    0.000   14.339    0.191 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:118(solve_CBC)
+       75    0.014    0.000    0.154    0.002 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1787(assignVarsVals)
+   165482    0.014    0.000    0.021    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1573(<lambda>)
+    55557    0.013    0.000    0.082    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:253(__init__)
+   350796    0.013    0.000    0.013    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:78(<lambda>)
+    59568    0.013    0.000    0.087    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_methods.py:43(_amin)
+    59568    0.012    0.000    0.056    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_methods.py:61(_all)
+    55557    0.012    0.000    0.069    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:168(__init__)
+      900    0.011    0.000    0.011    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+    59568    0.011    0.000    0.063    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_methods.py:47(_sum)
+       75    0.011    0.000    0.141    0.002 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1793(assignVarsDj)
+    55532    0.011    0.000    0.118    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:897(__iadd__)
+      398    0.010    0.000    0.021    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:115(_compute_action_reduced_costs)
+       75    0.010    0.000    1.021    0.014 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1716(writeMPS)
+       54    0.010    0.000    0.013    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:39(get_forbidden_omega)
+      147    0.009    0.000    0.025    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:565(_add_route)
+    55557    0.009    0.000    0.009    0.000 {method 'match' of 're.Pattern' objects}
+      300    0.009    0.000    0.009    0.000 {built-in method posix.stat}
+      982    0.009    0.000    0.009    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:69(generate_cost_exog_vector)
+       75    0.008    0.000   14.347    0.191 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:110(actualSolve)
+       75    0.008    0.000    0.008    0.000 {built-in method posix.open}
+   165482    0.008    0.000    0.008    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:437(value)
+      982    0.008    0.000    0.012    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:136(generate_all_node_pairs_ordered)
+      300    0.008    0.000    0.008    0.000 {method 'join' of 'str' objects}
+      443    0.007    0.000    0.021    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:934(fillFormat)
+       75    0.007    0.000    0.803    0.011 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1791(_execute_child)
+      982    0.006    0.000    0.008    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:80(generate_states_nodes_actions_ordered)
+     1476    0.006    0.000    0.007    0.000 {built-in method builtins.max}
+      122    0.006    0.000    0.009    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:240(_get_dual_values)
+    59568    0.005    0.000    0.005    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/numeric.py:2374(_array_equal_dispatcher)
+   112878    0.005    0.000    0.005    0.000 {built-in method builtins.abs}
+     5361    0.005    0.000    0.209    0.000 /Users/julian/Documents/jy_graphmaster/src/common/action.py:372(check_valid)
+       75    0.004    0.000    0.004    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1806(assignConsSlack)
+       75    0.004    0.000    0.012    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1282(_close_pipe_fds)
+       75    0.004    0.000    0.004    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1799(assignConsPi)
+     1061    0.004    0.000    0.212    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:147(verify_feasibility)
+     3975    0.004    0.000    0.132    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:978(__ge__)
+       75    0.004    0.000    0.817    0.011 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:807(__init__)
+       23    0.003    0.000    0.005    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:179(initiate_RCP_u)
+     4423    0.003    0.000    0.022    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2836(min)
+    56000    0.003    0.000    0.003    0.000 {built-in method builtins.id}
+       46    0.003    0.000    0.003    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_eff_fronteir.py:14(__init__)
+ 1329/443    0.003    0.000    0.008    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:789(recurser)
+       75    0.003    0.000   11.911    0.159 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:2021(_wait)
+    14405    0.003    0.000    0.003    0.000 {method 'remove' of 'set' objects}
+      150    0.003    0.000    0.003    0.000 {built-in method posix.access}
+       23    0.002    0.000    0.003    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:186(initiate_RCP_u_2)
+       75    0.002    0.000    0.004    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:530(callback)
+     4607    0.002    0.000    0.002    0.000 {built-in method builtins.getattr}
+      982    0.002    0.000    0.003    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:61(clean_state_action_alt_repeat_by_removing_null)
+     3975    0.002    0.000    0.057    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1000(__init__)
+      126    0.002    0.000    0.003    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:98(generate_subset_routes)
+     4000    0.002    0.000    0.063    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1635(__iadd__)
+     3975    0.002    0.000    7.216    0.002 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:2227(lpSum)
+      225    0.002    0.000    0.002    0.000 {built-in method posix.close}
+     3975    0.002    0.000    0.071    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:900(__sub__)
+      982    0.002    0.000    0.233    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:21(__init__)
+    16244    0.002    0.000    0.002    0.000 {method 'keys' of 'collections.OrderedDict' objects}
+      443    0.002    0.000    0.037    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:506(wrapper)
+     3975    0.002    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1515(unusedConstraintName)
+      886    0.002    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:1018(__call__)
+      443    0.002    0.000    0.035    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:523(_array2string)
+     1421    0.002    0.000    0.002    0.000 {built-in method _codecs.utf_8_decode}
+      443    0.001    0.000    0.025    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:452(_get_format_function)
+      334    0.001    0.000    0.088    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_label.py:440(convert_2_route)
+     4000    0.001    0.000    0.060    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:735(copy)
+       75    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:481(__init__)
+      150    0.001    0.000    0.008    0.000 <frozen genericpath>:16(exists)
+      443    0.001    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:64(_make_options_dict)
+       75    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:475(_create_cb_wrapper)
+       75    0.001    0.000   14.348    0.191 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1845(solve)
+      443    0.001    0.000    0.040    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:561(array2string)
+     1329    0.001    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:984(<genexpr>)
+       75    0.001    0.000    0.024    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:286(get_status)
+      398    0.001    0.000    0.001    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
+       75    0.001    0.000    0.002    0.000 {method 'readline' of '_io.TextIOWrapper' objects}
+     3975    0.001    0.000    0.009    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:878(subInPlace)
+      443    0.001    0.000    0.001    0.000 {built-in method builtins.locals}
+       75    0.001    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:567(__exit__)
+     1772    0.001    0.000    0.001    0.000 {built-in method numpy.core._multiarray_umath.dragon4_positional}
+       75    0.001    0.000    0.010    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1688(_get_handles)
+       23    0.001    0.000  126.336    5.493 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:97(run)
+     1421    0.001    0.000    0.002    0.000 <frozen codecs>:319(decode)
+       75    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:548(_push_exit_callback)
+     1329    0.001    0.000    0.003    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:989(<genexpr>)
+      443    0.001    0.000    0.041    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:1487(_array_repr_implementation)
+       75    0.001    0.000    0.003    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:448(create_tmp_files)
+      728    0.001    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_ufunc_config.py:33(seterr)
+      443    0.001    0.000    0.022    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:907(__init__)
+       75    0.001    0.000    0.001    0.000 {built-in method posix.pipe}
+      886    0.001    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:753(_extendLine_pretty)
+      150    0.001    0.000    0.001    0.000 <frozen os>:709(__getitem__)
+      886    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:739(_extendLine)
+      443    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:403(_get_formatdict)
+       75    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/uuid.py:139(__init__)
+      728    0.001    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_ufunc_config.py:132(geterr)
+       75    0.000    0.000    0.000    0.000 {built-in method posix.urandom}
+     4125    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:667(getName)
+       75    0.000    0.000    0.004    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:477(executable)
+        1    0.000    0.000    0.022    0.022 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_solver.py:189(_initial_routes)
+       75    0.000    0.000    0.005    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:431(setTmpDir)
+     4423    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2831(_min_dispatcher)
+      364    0.000    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_ufunc_config.py:430(__enter__)
+       75    0.000    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/uuid.py:723(uuid4)
+       75    0.000    0.000    0.003    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/shutil.py:1486(which)
+      225    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:707(__bool__)
+       75    0.000    0.000    0.006    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:46(__init__)
+      150    0.000    0.000    0.000    0.000 <frozen codecs>:309(__init__)
+       75    0.000    0.000    0.007    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:349(__init__)
+      443    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:1415(dtype_is_implied)
+       75    0.000    0.000    0.006    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:402(__init__)
+      525    0.000    0.000    0.000    0.000 {built-in method posix.fspath}
+      150    0.000    0.000    0.001    0.000 <frozen posixpath>:179(dirname)
+       75    0.000    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:299(helper)
+      443    0.000    0.000    0.022    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:411(<lambda>)
+       23    0.000    0.000    0.002    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:192(initialize_source_label)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/coin_api.py:207(getOptions)
+      443    0.000    0.000    0.008    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:780(_formatArray)
+     3657    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_fast_pricing.py:184(<lambda>)
+      398    0.000    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1881(nonzero)
+      398    0.000    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:53(_wrapfunc)
+       24    0.000    0.000   47.872    1.995 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:8(__init__)
+      150    0.000    0.000    0.000    0.000 <frozen posixpath>:71(join)
+       75    0.000    0.000   11.908    0.159 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:2008(_try_wait)
+      364    0.000    0.000    0.003    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2692(max)
+      300    0.000    0.000    0.015    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:455(silent_remove)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:104(__init__)
+      150    0.000    0.000    0.002    0.000 <frozen genericpath>:39(isdir)
+     1329    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:993(<genexpr>)
+     1329    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:994(<genexpr>)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/logging/__init__.py:1517(debug)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:268(_cleanup)
+      443    0.000    0.000    0.000    0.000 {method 'copy' of 'dict' objects}
+       75    0.000    0.000    0.000    0.000 <frozen posixpath>:100(split)
+      364    0.000    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_ufunc_config.py:435(__exit__)
+      728    0.000    0.000    0.000    0.000 {built-in method numpy.seterrobj}
+      150    0.000    0.000    0.001    0.000 <frozen _collections_abc>:804(get)
+      423    0.000    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1073(addInPlace)
+     1772    0.000    0.000    0.000    0.000 {built-in method builtins.issubclass}
+      593    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1963(assignStatus)
+     1134    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/common/pgm_approach.py:120(<genexpr>)
+      150    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
+      918    0.000    0.000    0.000    0.000 {method 'index' of 'list' objects}
+      886    0.000    0.000    0.000    0.000 {method 'splitlines' of 'str' objects}
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/logging/__init__.py:1790(isEnabledFor)
+       75    0.000    0.000    0.015    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:461(delete_tmp_files)
+       75    0.000    0.000    0.000    0.000 {method 'decode' of 'bytes' objects}
+     1456    0.000    0.000    0.000    0.000 {built-in method numpy.geterrobj}
+      150    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1824(fixObjective)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:141(__exit__)
+      225    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1961(_handle_exitstatus)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/uuid.py:334(hex)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1120(__del__)
+      150    0.000    0.000    0.000    0.000 {method 'format' of 'str' objects}
+      444    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/common/jy_sortedObject_list.py:6(__init__)
+      443    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+      150    0.000    0.000    0.000    0.000 {built-in method builtins.next}
+       75    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.lock' objects}
      74/2    0.000    0.000    0.000    0.000 {built-in method _abc._abc_subclasscheck}
-       36    0.000    0.000    0.000    0.000 <frozen ntpath>:51(normcase)
-       36    0.000    0.000    0.000    0.000 {built-in method _winapi.GetExitCodeProcess}
-      144    0.000    0.000    0.000    0.000 <frozen os>:754(encodekey)
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:511(output_all_time_profile)
-       36    0.000    0.000    0.000    0.000 <frozen genericpath>:133(_splitext)
-      136    0.000    0.000    0.000    0.000 {built-in method builtins.locals}
-      232    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:132(geterr)
-      108    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:742(__bool__)
-      822    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:696(name)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1928(assignConsPi)
-      136    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:403(_get_formatdict)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:104(__init__)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:141(__exit__)
-       36    0.000    0.000    0.000    0.000 {built-in method _thread.allocate_lock}
-       36    0.000    0.000    0.000    0.000 {built-in method _winapi.LCMapStringEx}
-      414    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:120(<genexpr>)
-       15    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:941(__radd__)
-       36    0.000    0.000    0.000    0.000 {built-in method nt.close}
-      136    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1415(dtype_is_implied)
-       36    0.000    0.000    0.000    0.000 <frozen os>:779(getenv)
-       36    0.000    0.000    0.000    0.000 {built-in method nt.urandom}
-       72    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1953(fixObjective)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1120(__del__)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:2007(stopClock)
-       36    0.000    0.000    0.000    0.000 <frozen codecs>:186(__init__)
-      756    0.000    0.000    0.000    0.000 {built-in method nt.fspath}
-      144    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:548(_push_exit_callback)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py:1517(debug)
-       72    0.000    0.000    0.000    0.000 {built-in method builtins.next}
-       36    0.000    0.000    0.000    0.000 {built-in method builtins.any}
-      408    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:993(<genexpr>)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:2002(startClock)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:192(__init__)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:132(__enter__)
-      408    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:994(<genexpr>)
-       14    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:68(merge_two_dict)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:481(__init__)
-      232    0.000    0.000    0.000    0.000 {built-in method numpy.seterrobj}
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1423(_filter_handle_list)
-      216    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
-       15    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1410(__init__)
-       15    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:768(copy)
-      186    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:6(__init__)
-      108    0.000    0.000    0.000    0.000 {method 'rfind' of 'str' objects}
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\uuid.py:334(hex)
-      144    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:475(_create_cb_wrapper)
-        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2177(sum)
-      172    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
-      252    0.000    0.000    0.000    0.000 {method 'upper' of 'str' objects}
-      544    0.000    0.000    0.000    0.000 {built-in method builtins.issubclass}
-      144    0.000    0.000    0.000    0.000 <frozen os>:748(check_str)
-       72    0.000    0.000    0.000    0.000 {built-in method _winapi.GetStdHandle}
-      272    0.000    0.000    0.000    0.000 {method 'splitlines' of 'str' objects}
-      650    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:184(<lambda>)
-      180    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\apis\core.py:452(<genexpr>)
-      216    0.000    0.000    0.000    0.000 {built-in method _winapi.GetCurrentProcess}
-      160    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1877(_nonzero_dispatcher)
-       36    0.000    0.000    0.000    0.000 {method 'format' of 'str' objects}
-       72    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:734(isNumericalConstant)
-      464    0.000    0.000    0.000    0.000 {built-in method numpy.geterrobj}
-       72    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\shutil.py:1589(<genexpr>)
-      144    0.000    0.000    0.000    0.000 {method 'pop' of 'collections.deque' objects}
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:2092(assignStatus)
-      108    0.000    0.000    0.000    0.000 {method 'values' of 'collections.OrderedDict' objects}
-      120    0.000    0.000    0.000    0.000 {method 'index' of 'list' objects}
-      136    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\time_profile.py:12(__exit__)
-       36    0.000    0.000    0.000    0.000 {built-in method msvcrt.get_osfhandle}
-      136    0.000    0.000    0.000    0.000 {method 'discard' of 'set' objects}
-       72    0.000    0.000    0.000    0.000 {built-in method time.monotonic}
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py:1790(isEnabledFor)
-       36    0.000    0.000    0.000    0.000 {method 'count' of 'list' objects}
+       75    0.000    0.000   11.911    0.159 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1259(wait)
+      150    0.000    0.000    0.000    0.000 <frozen os>:791(encode)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:193(__init__)
+       75    0.000    0.000    0.002    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/shutil.py:1471(_access_check)
+       75    0.000    0.000    0.008    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1135(_get_devnull)
+      443    0.000    0.000    0.000    0.000 {method 'discard' of 'set' objects}
+      375    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/apis/core.py:453(<genexpr>)
+       24    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/common/helper.py:68(merge_two_dict)
+       75    0.000    0.000    0.000    0.000 <frozen codecs>:186(__init__)
+      375    0.000    0.000    0.000    0.000 <frozen posixpath>:41(_get_sep)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1878(stopClock)
+       75    0.000    0.000    0.000    0.000 {built-in method sys.exc_info}
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:132(__enter__)
+      225    0.000    0.000    0.000    0.000 {method 'values' of 'collections.OrderedDict' objects}
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1873(startClock)
+       75    0.000    0.000    0.000    0.000 {built-in method _thread.allocate_lock}
+      147    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:561(_route_to_tuple)
+       75    0.000    0.000    0.000    0.000 {method 'rfind' of 'bytes' objects}
+      443    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
+       25    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1285(__init__)
+      443    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/arrayprint.py:898(_none_or_positive_arg)
+       75    0.000    0.000    0.000    0.000 {built-in method from_bytes}
+       75    0.000    0.000    0.000    0.000 <frozen os>:841(fsencode)
+       75    0.000    0.000    0.000    0.000 {built-in method posix.WIFSTOPPED}
+       75    0.000    0.000    0.001    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:477(_exit_wrapper)
+      150    0.000    0.000    0.000    0.000 {built-in method time.monotonic}
+       75    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
         1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
-      136    0.000    0.000    0.000    0.000 {method 'copy' of 'dict' objects}
-       37    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:561(_route_to_tuple)
-       36    0.000    0.000    0.000    0.000 {built-in method sys.exc_info}
-       36    0.000    0.000    0.000    0.000 {built-in method from_bytes}
-      144    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
-       72    0.000    0.000    0.000    0.000 <frozen codecs>:260(__init__)
-       72    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\pulp\pulp.py:1968(restoreObjective)
+      398    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:1877(_nonzero_dispatcher)
+       75    0.000    0.000    0.000    0.000 <frozen os>:795(decode)
+      150    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}
+      364    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/_ufunc_config.py:426(__init__)
+       75    0.000    0.000    0.000    0.000 {method 'rstrip' of 'bytes' objects}
+      150    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:699(isNumericalConstant)
+      364    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2687(_max_dispatcher)
         1    0.000    0.000    0.000    0.000 {built-in method _pickle.dump}
-      136    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
-       36    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
-       13    0.000    0.000    0.000    0.000 {built-in method builtins.min}
-       36    0.000    0.000    0.000    0.000 {built-in method sys.audit}
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:193(__init__)
-      136    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:898(_none_or_positive_arg)
-       36    0.000    0.000    0.000    0.000 <frozen ntpath>:35(_get_bothseps)
-      116    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:426(__init__)
-      116    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2687(_max_dispatcher)
-       72    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1311(_on_error_fd_closer)
-       36    0.000    0.000    0.000    0.000 <frozen codecs>:281(getstate)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:259(_cleanup)
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:1563(_internal_poll)
+       75    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+      150    0.000    0.000    0.000    0.000 {method 'endswith' of 'str' objects}
+       75    0.000    0.000    0.000    0.000 {method 'pop' of 'collections.deque' objects}
+      150    0.000    0.000    0.000    0.000 {built-in method _stat.S_ISDIR}
+       75    0.000    0.000    0.000    0.000 {method 'count' of 'list' objects}
+      150    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:1839(restoreObjective)
+      176    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_rmp.py:418(<lambda>)
+       79    0.000    0.000    0.014    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_solver.py:451(validate_route)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:564(__enter__)
+       25    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pulp/pulp.py:894(__radd__)
+       75    0.000    0.000    0.000    0.000 {built-in method posix.waitstatus_to_exitcode}
+       20    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+       75    0.000    0.000    0.000    0.000 {built-in method sys.audit}
+      150    0.000    0.000    0.000    0.000 <frozen codecs>:260(__init__)
+      150    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1311(_on_error_fd_closer)
+        1    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/algorithm/cg_solver.py:512(output_all_time_profile)
+       75    0.000    0.000    0.000    0.000 <frozen posixpath>:52(normcase)
+       75    0.000    0.000    0.000    0.000 <frozen codecs>:331(getstate)
+       75    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/subprocess.py:1973(_internal_poll)
+     74/2    0.000    0.000    0.000    0.000 <frozen abc>:121(__subclasscheck__)
+        1    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/common/time_profile.py:12(__exit__)
+        2    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2177(sum)
         6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:104(_check_methods)
-       39    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_rmp.py:418(<lambda>)
-        1    0.000    0.000    0.000    0.000 <frozen _collections_abc>:288(__subclasshook__)
-       55    0.000    0.000    0.000    0.000 <frozen _collections_abc>:435(__subclasshook__)
-        5    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
-       36    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:564(__enter__)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py:234(_acquireLock)
-        1    0.000    0.000    0.000    0.000 <frozen os>:1087(__subclasshook__)
-        8    0.000    0.000    0.000    0.000 <frozen _collections_abc>:341(__subclasshook__)
         5    0.000    0.000    0.000    0.000 <frozen _collections_abc>:309(__subclasshook__)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py:243(_releaseLock)
-        1    0.000    0.000    0.000    0.000 <frozen _collections_abc>:388(__subclasshook__)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py:1776(getEffectiveLevel)
-        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2172(_sum_dispatcher)
+       55    0.000    0.000    0.000    0.000 <frozen _collections_abc>:435(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/logging/__init__.py:234(_acquireLock)
+        1    0.000    0.000    0.000    0.000 <frozen _collections_abc>:288(__subclasshook__)
+        8    0.000    0.000    0.000    0.000 <frozen _collections_abc>:341(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/logging/__init__.py:243(_releaseLock)
+        1    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/logging/__init__.py:1776(getEffectiveLevel)
+        1    0.000    0.000    0.000    0.000 <frozen os>:1116(__subclasshook__)
         1    0.000    0.000    0.000    0.000 {method 'acquire' of '_thread.RLock' objects}
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\logging\__init__.py:1369(disable)
+        2    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/numpy/core/fromnumeric.py:2172(_sum_dispatcher)
+        1    0.000    0.000    0.000    0.000 <frozen _collections_abc>:388(__subclasshook__)
+        1    0.000    0.000    0.000    0.000 /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/logging/__init__.py:1369(disable)
         1    0.000    0.000    0.000    0.000 {method 'release' of '_thread.RLock' objects}
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:50(__hash__)
+        1    0.000    0.000    0.000    0.000 /Users/julian/Documents/jy_graphmaster/src/common/state.py:50(__hash__)
 
 
