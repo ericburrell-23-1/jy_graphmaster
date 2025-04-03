@@ -17,7 +17,7 @@ from src.algorithm.update_states.state_update_function import StateUpdateFunctio
 from itertools import permutations
 from src.algorithm.cg_solver import GraphMaster_cg
 from src.common.pgm_approach import Route
-from src.common.time_profile import TimeProfiler
+from src.common.line_time_profiler import LineTimeProfiler, profile_lines
 import random
 # CONSTANTS
 VOLUME_CAPACITY = 3000
@@ -31,9 +31,10 @@ MIN_DISTANCE_SAVING = 100
 STANDARD_SERVICE_TIME = 2 * 60
 JY_OPT_SPLIT=1
 class loadAI_cg:
-    def __init__(self, problem_instance_file_name, file_type: str = "Standard_Form"):
+    def __init__(self, problem_instance_file_name,instance_name, file_type: str = "Standard_Form"):
         
         self.problem_instance_file_name: str = problem_instance_file_name
+        self.instance_name = instance_name
         self.file_type: str = file_type
         self.nodes: List[int] = []
         self.rhs_vector: ndarray = array([])
@@ -83,18 +84,20 @@ class loadAI_cg:
             self.benefit_group_cost
             #node_to_list
         )
-        with TimeProfiler('time_profile_50'):
+        with LineTimeProfiler(f'time_profile_{self.instance_name}') as profiler:
+            profiler.add_function(self.solver.solve)
             output = self.solver.solve()
 
         variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
         output_info = output['output_info']
-        
+        opt_gap = output['optimality_gap']
         print('=======output info=======')
         for name,value in output_info.items():
             print(' ')
             print(name)
             print(value)
+        print(f'optimality gap: {opt_gap*100}%')
         import csv
         filename="output.csv"
         with open(filename, 'w', newline='') as csvfile:

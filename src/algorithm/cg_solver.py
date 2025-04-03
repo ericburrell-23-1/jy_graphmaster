@@ -115,6 +115,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_comp_col'] =True # true: if use complementary column
         self.jy_options_user_defined['new_rmp'] =True # true: if generate more routes from omega term
         self.jy_options_user_defined['subset_route'] = True # true: if use subset routes for col service 3 customers
+        self.jy_options_user_defined['optimality_gap'] = 0.01 
         self.jy_options_user_defined['min_dual_val_expand']=-1
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
@@ -316,8 +317,8 @@ class GraphMaster_cg:
                 print('reduced_cost_list')
                 print(reduced_cost_list)
                 #input('----')
-
-                if reduced_cost >= -1.1:
+                rmp_obj = output['objective_value']
+                if reduced_cost >= -1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
                     this_forbidden_omega = cg_solver.get_forbidden_omega()
                     print('this_forbidden_omega')
                     print(this_forbidden_omega)
@@ -338,6 +339,9 @@ class GraphMaster_cg:
                         ilp_cg_solver = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                         
                         sol = ilp_cg_solver.solve_ilp()
+                        last_lp_obj = rmp_obj
+                        ilp_obj = sol['objective_value']
+                        gap = (ilp_obj-last_lp_obj)/last_lp_obj
                         all_time_profile = Helper.merge_two_dict(all_time_profile,ilp_cg_solver.time_profile)
                         all_time_end = time.time()
                         all_time_profile['all_time'] = all_time_end - all_time_start
@@ -380,7 +384,8 @@ class GraphMaster_cg:
                             'x': sol['variable_values'],
                             'iterations': iteration,
                             'used_routes':used_routes,
-                            'output_info':output_info
+                            'output_info':output_info,
+                            'optimality_gap':gap
                         }
                     else:
                         forbidden_omega.extend(this_forbidden_omega)
