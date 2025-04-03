@@ -244,14 +244,14 @@ class jy_fast_pricing():
             #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
             time2_1 = time.time()
             if self.jy_opt['lb_option'] == 2:
-                my_label.calculate_better_lb_2(self.dual_vec)
+                my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
             elif self.jy_opt['lb_option'] == 1:
                 my_label.calculate_better_lb(self.dual_vec)
             elif self.jy_opt['lb_option'] == 0:
                 my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
             elif self.jy_opt['lb_option'] == 'check':
                 lb1 = my_label.calculate_better_lb(self.dual_vec)
-                lb2 = my_label.calculate_better_lb_2(self.dual_vec)
+                lb2 = my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
                 if lb1<lb2:
                     input('lb error here')
             else:
@@ -301,7 +301,16 @@ class jy_fast_pricing():
             #lowest_lb=np.min(lowest_lb,)
             #self.node_2_eff_fronteir[my_node]
         return lowest_lb
-
+    def _update_sorted_node_with_k(self):
+        self.sorted_node_with_k = {}
+        for num_pickups in range(1,self.jy_opt['max_pickups_in_a_route']+1):
+            # Calculate tot_gain for all nodes at once
+            tot_gain = {
+                u: -self.dual_vec[u-1] + self.rcp_u_partial_2[(num_pickups, u)]
+                for u in self.pickup_node
+            }
+            # Sort once and store the sorted items
+            self.sorted_node_with_k[num_pickups] = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
     def find_min_reduced_cost_path(self):
         """
         Main method to find the minimum reduced cost path following the algorithm in the PDF.
@@ -341,7 +350,9 @@ class jy_fast_pricing():
             #print('num_expansion_out,num_expansion_in')
             #print(num_expansion_out,num_expansion_in)
             #input('redoing labels')
+            self._update_sorted_node_with_k()
             self.update_red_cost_and_lb()
+            
             self._remove_labels_with_positive_lb()
 
             # Update efficient frontier with current set of expandable labels
@@ -399,16 +410,16 @@ class jy_fast_pricing():
                 if debug_on==True:
                     self.jy_get_compelition(curr_label)
                 verbose=True
-                if curr_label.lb>self.jy_opt['min_dual_val_expand']:
-                    print('curr_label.lb')
-                    print(curr_label.lb)
-                    print('num_expansion_in')
-                    print(num_expansion_in)
-                    print('itr_num')
-                    print(itr_num)
-                    print('curr_label.all_nodes')
-                    print(curr_label.all_nodes_ordered)
-                    input('error here')
+                # if curr_label.lb>self.jy_opt['min_dual_val_expand']:
+                #     print('curr_label.lb')
+                #     print(curr_label.lb)
+                #     print('num_expansion_in')
+                #     print(num_expansion_in)
+                #     print('itr_num')
+                #     print(itr_num)
+                #     print('curr_label.all_nodes')
+                #     print(curr_label.all_nodes_ordered)
+                #     input('error here')
                 if curr_label.lb>self.jy_opt['min_dual_val_expand']:
                     continue
                 if verbose==True and num_expansion_in % 100==0:
@@ -434,14 +445,14 @@ class jy_fast_pricing():
                     #check the lower bound
                     old_lb=curr_label.lb
                     if self.jy_opt['lb_option'] == 2:
-                        curr_label.calculate_better_lb_2(self.dual_vec)
+                        curr_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
                     elif self.jy_opt['lb_option'] == 1:
                         curr_label.calculate_better_lb(self.dual_vec)
                     elif self.jy_opt['lb_option'] == 0:
                         curr_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
                     elif self.jy_opt['lb_option'] == 'check':
                         lb1 = curr_label.calculate_better_lb(self.dual_vec)
-                        lb2 = curr_label.calculate_better_lb_2(self.dual_vec)
+                        lb2 = curr_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
                         if lb1<lb2:
                             input('lb error here')
                     else:
@@ -501,14 +512,14 @@ class jy_fast_pricing():
                         continue
                     time_m_2_1 = time.time()
                     if self.jy_opt['lb_option'] == 2:
-                        new_label.calculate_better_lb_2(self.dual_vec)
+                        new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
                     elif self.jy_opt['lb_option'] == 1:
                         new_label.calculate_better_lb(self.dual_vec)
                     elif self.jy_opt['lb_option'] == 0:
                         new_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
                     elif self.jy_opt['lb_option'] == 'check':
                         lb1 = new_label.calculate_better_lb(self.dual_vec)
-                        lb2 = new_label.calculate_better_lb_2(self.dual_vec)
+                        lb2 = new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
                         if lb1<lb2:
                             input('lb error here')
                     else:

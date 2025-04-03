@@ -17,7 +17,8 @@ from src.algorithm.update_states.state_update_function import StateUpdateFunctio
 from itertools import permutations
 from src.algorithm.cg_solver import GraphMaster_cg
 from src.common.pgm_approach import Route
-from src.common.line_time_profiler import LineTimeProfiler, profile_lines
+from src.common.line_time_profiler import HierarchicalProfiler
+from src.common.time_profile import TimeProfiler
 import random
 # CONSTANTS
 VOLUME_CAPACITY = 3000
@@ -84,8 +85,7 @@ class loadAI_cg:
             self.benefit_group_cost
             #node_to_list
         )
-        with LineTimeProfiler(f'time_profile_{self.instance_name}') as profiler:
-            profiler.add_function(self.solver.solve)
+        with TimeProfiler(f'time_profile_{self.instance_name}_x'):
             output = self.solver.solve()
 
         variable_to_values = output['x']

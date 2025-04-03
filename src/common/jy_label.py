@@ -201,7 +201,7 @@ class jy_label:
             #print('lb')
             #print(lb)
             #input('----')
-    def calculate_better_lb_2(self, dual):
+    def calculate_better_lb_2(self, dual,sorted_node_with_k):
         self.calculate_red_cost_given_dual(dual)
         
         if self.node == -1:
@@ -214,7 +214,7 @@ class jy_label:
             # Optimize by pre-computing sets
             pickup_nodes_set = set(self.pickup_nodes)
             nodes_picked_up_set = set(self.nodes_picked_up)
-            node_not_picked_up = list(pickup_nodes_set - nodes_picked_up_set)
+            #node_not_picked_up = list(pickup_nodes_set - nodes_picked_up_set)
             
             D = self.must_drop_off.copy()  # Use .copy() instead of [:] for clarity
             
@@ -249,20 +249,10 @@ class jy_label:
             else:
                 lowest_red_cost = float('inf')  # Use float('inf') instead of np.inf for better performance
             
-            # Optimize the sorting and calculation of sorted_node_with_k
-            sorted_node_with_k = {}
-            for k in range(extra_customer_can_pick_up):
-                num_pickups = 1 + k + self.num_pickups_in_route
-                # Calculate tot_gain for all nodes at once
-                tot_gain = {
-                    u: -dual[u-1] + self.rcp_u_partial_2[(num_pickups, u)]
-                    for u in node_not_picked_up
-                }
-                # Sort once and store the sorted items
-                sorted_node_with_k[k] = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
+
             
             # Optimize the final loop to calculate the best lower bound
-            for k in range(extra_customer_can_pick_up):
+            for k in range(1,extra_customer_can_pick_up+1):
                 sorted_key = list(sorted_node_with_k[k].keys())
                 
                 # Skip unnecessary computation if there are no keys
@@ -270,26 +260,31 @@ class jy_label:
                     continue
                     
                 # Only take as many keys as are available or needed
-                nodes_to_use = sorted_key[:k+1]
+                nodes_to_use = sorted_key[:k]
                 
                 # Only calculate if we have enough nodes
-                if len(nodes_to_use) == k+1:
-                    myDenom = k + self.num_pickups_in_route + 1
-                    
+                if len(nodes_to_use) == k:
+                    myDenom = k + self.num_pickups_in_route
+                    this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_droppoff_cost / myDenom
                     # Calculate total benefit in one pass
-                    tot_benefit_dropoff_pickup_dual = -sum(dual[node-1] for node in nodes_to_use)
-                    tot_benefit_dropoff_pickup_cost = sum(
-                        self.action_dict[(node, node+pickup_nodes_len)][0].cost 
-                        for node in nodes_to_use
-                    )
+                    for i in range(k):
+                        this_key = sorted_key[i]
+                        this_red_cost += sorted_node_with_k[k][this_key]
                     
-                    this_red_cost = (
-                        self.red_cost + 
-                        tot_benefit_dropoff_dual + 
-                        tot_benefit_dropoff_pickup_dual + 
-                        (tot_benefit_droppoff_cost + tot_benefit_dropoff_pickup_cost) / myDenom
-                    )
+                    # tot_benefit_dropoff_pickup_dual = -sum(dual[node-1] for node in nodes_to_use)
+                    # tot_benefit_dropoff_pickup_cost = sum(
+                    #     self.action_dict[(node, node+pickup_nodes_len)][0].cost 
+                    #     for node in nodes_to_use
+                    # )
                     
+                    # this_red_cost = (
+                    #     self.red_cost + 
+                    #     tot_benefit_dropoff_dual + 
+                    #     tot_benefit_dropoff_pickup_dual + 
+                    #     (tot_benefit_droppoff_cost + tot_benefit_dropoff_pickup_cost) / myDenom
+                    # )
+                    
+
                     if this_red_cost < lowest_red_cost:
                         lowest_red_cost = this_red_cost
             
