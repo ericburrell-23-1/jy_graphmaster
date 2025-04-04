@@ -22,6 +22,7 @@ import time
 import random
 from src.algorithm.cg_rmp import CG_RMP
 from src.algorithm.xz_jy_cg_solver_via import xy_jy_cg_solver
+from src.algorithm.cg_solver import CG_RMP
 import random
 import pickle
 class GraphMaster_cg:
@@ -201,7 +202,7 @@ class GraphMaster_cg:
         
         # Find intermediate nodes that appear in both dictionaries
         common_nodes = set(actions_from_minus1.keys()).intersection(set(actions_to_minus2.keys()))
-        list_of_routes = []
+        this_list_of_routes = []
         for node in common_nodes:
             source_state = State(-1,self.initial_resource_vector,0,True,False)
             state_action = [source_state]
@@ -214,8 +215,8 @@ class GraphMaster_cg:
             this_state = second_action.get_head_state_fast_load_ai(this_state,source_state.l_id)
             state_action.append(this_state)
             route = Route(state_action,1,self.state_update_module.pickup_node)
-            list_of_routes.append(route)
-        return list_of_routes
+            this_list_of_routes.append(route)
+        return this_list_of_routes
     
     def _check_path_duplicate(self,path,red_cost):
         path_tuple = tuple(path)
@@ -249,35 +250,37 @@ class GraphMaster_cg:
         
         cg_iteration_time =1
         self.path_added = set()
-        list_of_routes = self._initial_routes()
+        skip_routes = self._initial_routes()
         forbidden_omega = []
         node_sequence_of_routes = []
+        list_of_routes = skip_routes
         all_reduce_cost_list = []
         all_min_reduce_cost = []
         num_path_col_in_rmp = []
         num_omega_col_in_rmp = []
         path_col_generated = []
         path_added = []
-        for route in list_of_routes:
+        for route in skip_routes:
             node_sequence_of_routes.append(route.node_in_ordered)
-
         lp_objective_list = []
         omega_term_list = []
-        cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+        cg_solver = xy_jy_cg_solver(skip_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+        #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
         while iteration < max_iterations:
             print(type(self.state_update_module.actions))
-            
+            #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
             if self.jy_options_user_defined['new_rmp'] == True:
                 
                 #output = cg_solver.solve()
                 #input('before')
                 
-                before_num = len(list_of_routes)
-                output,list_of_routes, node_sequence_of_routes = cg_solver.solve_2()
+                before_num = len(node_sequence_of_routes)
+                output,node_sequence_of_routes, list_of_routes = cg_solver.solve_2()
+                #output,list_of_routes, node_sequence_of_routes = cg_solver_pulp.solve_2()
                 print('before : len(list_of_routes)')
                 print(before_num)
                 print('after : len(list_of_routes)')
-                print(len(list_of_routes))
+                print(len(node_sequence_of_routes))
                 print('check')
                 #input('during')
                 #output = cg_solver.solve()
@@ -285,7 +288,6 @@ class GraphMaster_cg:
 
             else:
                 output = cg_solver.solve()
-            all_time_profile = Helper.merge_two_dict(all_time_profile,cg_solver.time_profile)
             num_path_col_in_rmp.append(cg_solver.col_of_path)
             num_omega_col_in_rmp.append(cg_solver.col_of_omega)
             this_sol = output['variable_values']
@@ -323,6 +325,7 @@ class GraphMaster_cg:
                 rmp_obj = output['objective_value']
                 if reduced_cost >= -1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
                     this_forbidden_omega = cg_solver.get_active_DOI()
+                    #this_forbidden_omega = cg_solver.get_forbidden_omega()
                     print('this_forbidden_omega')
                     print(this_forbidden_omega)
                     omega_term_list.append(len(this_forbidden_omega))
@@ -339,13 +342,13 @@ class GraphMaster_cg:
                             output_info['number of col (omega) in rmp (for each iteraiton)'] = num_omega_col_in_rmp
                             output_info['number of col generated (path added for each iteration)'] = path_col_generated
                             
-                        ilp_cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+                        #ilp_cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
                         
-                        sol = ilp_cg_solver.solve_ilp()
+                        sol = cg_solver.solve_ilp()
                         last_lp_obj = rmp_obj
                         ilp_obj = sol['objective_value']
                         gap = (ilp_obj-last_lp_obj)/last_lp_obj
-                        all_time_profile = Helper.merge_two_dict(all_time_profile,ilp_cg_solver.time_profile)
+                        all_time_profile = Helper.merge_two_dict(all_time_profile,cg_solver.time_profile)
                         all_time_end = time.time()
                         all_time_profile['all_time'] = all_time_end - all_time_start
                         

@@ -1,0 +1,519 @@
+         8069860 function calls (8059358 primitive calls) in 16.421 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   1029/3    2.444    0.002    0.000    0.000 {method 'acquire' of '_thread.lock' objects}
+  191/130    2.018    0.011   30.671    0.236 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\queue.py:154(get)
+        2    1.906    0.953    1.906    0.953 {built-in method _xpress._init}
+   110278    0.845    0.000    0.900    0.000 {built-in method builtins.sum}
+    54125    0.823    0.000    1.282    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:17(__init__)
+     8526    0.736    0.000    0.748    0.000 {built-in method builtins.print}
+    80240    0.480    0.000    0.942    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:204(calculate_better_lb_2)
+    63309    0.415    0.000    0.625    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:342(fast_max_res_apply)
+       77    0.413    0.005    0.413    0.005 {method 'solve' of 'xpress.problem' objects}
+   106387    0.376    0.000    0.547    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:101(calculate_red_cost_given_dual)
+    77255    0.369    0.000    0.681    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:312(violates_min_resources)
+        7    0.332    0.047    0.332    0.047 {method 'recv' of '_socket.socket' objects}
+    37216    0.304    0.000    0.304    0.000 {method 'getSolution' of 'xpress.problem' objects}
+    64225    0.292    0.000    0.460    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:8(__init__)
+       32    0.269    0.008    0.341    0.011 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:673(pre_process__partition_actions)
+    63309    0.259    0.000    0.326    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:187(_get_head_stat_vec)
+    77255    0.256    0.000    2.350    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:196(get_head_state_fast_load_ai)
+   160423    0.233    0.000    0.233    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+    67863    0.228    0.000    3.741    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:351(expand_given_action)
+      248    0.203    0.001   23.230    0.094 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:323(wait)
+  1491019    0.191    0.000    0.191    0.000 {method 'append' of 'list' objects}
+    52087    0.179    0.000    0.186    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:103(comp_red_cost)
+   116221    0.174    0.000    0.174    0.000 {built-in method builtins.hash}
+   140881    0.170    0.000    0.400    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:71(_wrapreduction)
+       76    0.158    0.002    0.815    0.011 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:90(_construct_problem)
+    54093    0.157    0.000    0.188    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:67(zeros_like)
+       32    0.150    0.005    0.190    0.006 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:169(initiate_RCP_d)
+    38019    0.147    0.000    0.147    0.000 {method 'randint' of 'numpy.random.mtrand.RandomState' objects}
+1258469/1249351    0.142    0.000    0.145    0.000 {built-in method builtins.len}
+   140564    0.105    0.000    0.504    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2322(any)
+   638560    0.085    0.000    0.085    0.000 {built-in method time.time}
+     9861    0.078    0.000    0.176    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:1129(_levenshtein_distance)
+      138    0.070    0.001    0.487    0.004 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:226(update_red_cost_and_lb)
+    63309    0.067    0.000    0.067    0.000 {method 'copy' of 'numpy.ndarray' objects}
+      121    0.067    0.001   17.200    0.142 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:637(wait)
+       32    0.064    0.002    1.253    0.039 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:314(find_min_reduced_cost_path)
+   416671    0.055    0.000    0.055    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:105(<genexpr>)
+    56076    0.051    0.000    0.057    0.000 {built-in method builtins.sorted}
+      138    0.047    0.000    0.107    0.001 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:653(_remove_labels_with_positive_lb)
+     8905    0.046    0.000    0.150    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:706(get_actions_from_label_2)
+    54397    0.046    0.000    0.046    0.000 {built-in method numpy.array}
+    38019    0.044    0.000    0.194    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:85(label_2_tuple)
+   108186    0.037    0.000    0.037    0.000 {built-in method numpy.zeros}
+   222045    0.035    0.000    0.035    0.000 {built-in method builtins.min}
+   106049    0.035    0.000    0.057    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:1059(_substitution_cost)
+   274574    0.031    0.000    0.031    0.000 {method 'keys' of 'dict' objects}
+    35084    0.029    0.000    0.029    0.000 {built-in method _bisect.bisect_left}
+   148671    0.029    0.000    0.029    0.000 {method 'items' of 'dict' objects}
+   129274    0.028    0.000    0.028    0.000 {method 'add' of 'set' objects}
+    35127    0.027    0.000    0.066    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:34(alter_fronteir_given_new_element)
+    35084    0.026    0.000    0.072    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:10(insert)
+     6510    0.025    0.000    0.089    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:58(this_state_dominates_input_state)
+      153    0.023    0.000    0.023    0.000 {method 'addVariable' of 'xpress.problem' objects}
+    81496    0.023    0.000    0.023    0.000 {method 'copy' of 'list' objects}
+   207388    0.023    0.000    0.023    0.000 {method 'lower' of 'str' objects}
+    51992    0.022    0.000    0.029    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:359(__hash__)
+    50481    0.022    0.000    0.022    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:749(<genexpr>)
+     5210    0.021    0.000    0.076    0.000 {method 'update' of 'set' objects}
+   156810    0.019    0.000    0.019    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:741(dot)
+      722    0.018    0.000    0.375    0.001 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:599(_swap)
+   140564    0.018    0.000    0.018    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2317(_any_dispatcher)
+    33/32    0.018    0.001    1.552    0.049 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:228(solve_2)
+    70168    0.017    0.000    0.017    0.000 {method 'insert' of 'list' objects}
+    40629    0.016    0.000    0.016    0.000 {method 'intersection' of 'set' objects}
+       76    0.016    0.000    1.398    0.018 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:175(solve)
+     1277    0.015    0.000    0.015    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:59(get_red_cost)
+    17983    0.013    0.000    0.013    0.000 {method 'pop' of 'list' objects}
+     6510    0.013    0.000    0.029    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2378(array_equal)
+       32    0.012    0.000    0.366    0.011 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:22(__init__)
+       77    0.012    0.000    0.012    0.000 {method 'addConstraint' of 'xpress.problem' objects}
+      173    0.012    0.000    0.012    0.000 {built-in method nt.stat}
+    34282    0.011    0.000    0.039    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:293(this_label_dominates_input)
+      138    0.011    0.000    0.018    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:304(_update_sorted_node_with_k)
+      783    0.011    0.000    0.016    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:136(generate_all_node_pairs_ordered)
+      783    0.010    0.000    0.010    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:69(generate_cost_exog_vector)
+     6721    0.009    0.000    0.009    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:744(<genexpr>)
+    58826    0.008    0.000    0.008    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:20(__eq__)
+     8905    0.007    0.000    0.020    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:27(pop)
+      170    0.007    0.000    0.043    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:115(_compute_action_reduced_costs)
+    23400    0.007    0.000    0.007    0.000 {method 'remove' of 'list' objects}
+     4733    0.007    0.000    0.220    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:372(check_valid)
+      173    0.007    0.000    0.188    0.001 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:1067(_compute_suggestion_error)
+    54093    0.006    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:63(_zeros_like_dispatcher)
+    54093    0.006    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:1080(copyto)
+    54093    0.006    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:85(empty_like)
+       77    0.005    0.000    0.005    0.000 {method 'setObjective' of 'xpress.problem' objects}
+      263    0.005    0.000    0.005    0.000 {built-in method builtins.next}
+        2    0.005    0.003    0.006    0.003 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:43(_generate_rho)
+       61    0.005    0.000    0.007    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:556(get_active_DOI)
+      173    0.005    0.000    0.289    0.002 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:728(remove_doi)
+     6516    0.004    0.000    0.019    0.000 {method 'min' of 'numpy.ndarray' objects}
+    72192    0.004    0.000    0.004    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:78(<lambda>)
+      805    0.004    0.000    0.224    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:147(verify_feasibility)
+     5351    0.004    0.000    0.004    0.000 {method 'union' of 'set' objects}
+        2    0.004    0.002    0.007    0.003 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:52(_initiate_col_coeff)
+     6510    0.004    0.000    0.014    0.000 {method 'all' of 'numpy.ndarray' objects}
+      783    0.004    0.000    0.006    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:80(generate_states_nodes_actions_ordered)
+     6721    0.004    0.000    0.004    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:735(<genexpr>)
+    15908    0.004    0.000    0.004    0.000 {method 'get' of 'dict' objects}
+      173    0.004    0.000    0.004    0.000 {built-in method builtins.compile}
+     6510    0.004    0.000    0.014    0.000 {method 'sum' of 'numpy.ndarray' objects}
+        1    0.004    0.004    0.030    0.030 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:365(solve_ilp)
+      104    0.004    0.000    0.026    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:661(add_route)
+      783    0.003    0.000    0.005    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:61(clean_state_action_alt_repeat_by_removing_null)
+    19686    0.003    0.000    0.003    0.000 {built-in method numpy.asarray}
+      248    0.003    0.000    0.003    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:311(_acquire_restore)
+      173    0.003    0.000    0.003    0.000 {built-in method builtins.dir}
+      173    0.003    0.000    0.010    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:460(format_frame_summary)
+      783    0.003    0.000    0.258    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:21(__init__)
+     9118    0.002    0.000    0.004    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:57(__len__)
+     2605    0.002    0.000    0.002    0.000 {method 'difference' of 'set' objects}
+       64    0.002    0.000    0.002    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:14(__init__)
+     6516    0.002    0.000    0.015    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:43(_amin)
+      142    0.002    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:934(fillFormat)
+      173    0.002    0.000    0.214    0.001 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:718(__init__)
+     6510    0.002    0.000    0.010    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:61(_all)
+       32    0.002    0.000    0.003    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:179(initiate_RCP_u)
+    27583    0.002    0.000    0.002    0.000 {built-in method builtins.abs}
+     6721    0.002    0.000    0.002    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:739(<genexpr>)
+     6510    0.002    0.000    0.011    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:47(_sum)
+       38    0.002    0.000    0.002    0.000 {method 'sendall' of '_socket.socket' objects}
+      173    0.002    0.000    0.023    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:399(_extract_from_extended_frame_gen)
+       61    0.002    0.000    0.005    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1765(process_internal_commands)
+      692    0.002    0.000    0.018    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:944(format)
+       32    0.002    0.000    0.002    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:186(initiate_RCP_u_2)
+       76    0.002    0.000    0.002    0.000 {method 'getDual' of 'xpress.problem' objects}
+      230    0.002    0.000    0.002    0.000 {method 'setControl' of 'xpress.problem' objects}
+       47    0.001    0.000    0.002    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:98(generate_subset_routes)
+     1038    0.001    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:665(emit)
+      125    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_daemon_thread.py:108(new_threading_enumerate)
+    20700    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:313(<lambda>)
+      248    0.001    0.000    0.001    0.000 {built-in method _thread.allocate_lock}
+      173    0.001    0.000    0.005    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:589(_extract_caret_anchors_from_line_segment)
+       21    0.001    0.000    0.001    0.000 {built-in method nt._path_exists}
+       10    0.001    0.000    0.001    0.000 {built-in method nt.listdir}
+     2248    0.001    0.000    0.001    0.000 {built-in method builtins.getattr}
+      665    0.001    0.000    0.001    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
+  426/142    0.001    0.000    0.003    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:789(recurser)
+      173    0.001    0.000    0.054    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:1045(print)
+      173    0.001    0.000    0.264    0.002 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:111(print_exception)
+     2010    0.001    0.000    0.001    0.000 {built-in method builtins.isinstance}
+     6510    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2374(_array_equal_dispatcher)
+       32    0.001    0.000    2.511    0.078 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:97(run)
+      153    0.001    0.000    0.001    0.000 {method 'getProbStatus' of 'xpress.problem' objects}
+      706    0.001    0.000    0.002    0.000 {method 'join' of 'str' objects}
+     1384    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\textwrap.py:482(prefixed_lines)
+      346    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:869(format_exception_only)
+      665    0.001    0.000    0.003    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1881(nonzero)
+      392    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:302(__exit__)
+      154    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\enum.py:726(__call__)
+      173    0.001    0.000    0.270    0.002 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:178(print_exc)
+      665    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:53(_wrapfunc)
+       75    0.001    0.000    0.028    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:435(convert_2_route)
+      142    0.001    0.000    0.010    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:523(_array2string)
+     1038    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:318(line)
+     1243    0.001    0.000    0.001    0.000 {built-in method builtins.hasattr}
+      173    0.001    0.000    0.013    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\linecache.py:52(checkcache)
+      284    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1018(__call__)
+       32    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:192(initialize_source_label)
+      173    0.000    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:365(_get_code_position)
+      346    0.000    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:351(_walk_tb_with_full_positions)
+      519    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\textwrap.py:470(indent)
+      173    0.000    0.000    0.011    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:525(format)
+      346    0.000    0.000    0.000    0.000 {method 'format' of 'str' objects}
+      346    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:573(_byte_offset_to_character_offset)
+      142    0.000    0.000    0.012    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1487(_array_repr_implementation)
+      142    0.000    0.000    0.007    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:452(_get_format_function)
+     1444    0.000    0.000    0.000    0.000 {method 'index' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 {built-in method _io.open}
+      378    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\queue.py:209(_qsize)
+      803    0.000    0.000    0.000    0.000 {method 'splitlines' of 'str' objects}
+       60    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1467(has_user_threads_alive)
+       60    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:314(can_exit)
+      142    0.000    0.000    0.012    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:561(array2string)
+      568    0.000    0.000    0.000    0.000 {built-in method numpy.core._multiarray_umath.dragon4_positional}
+       77    0.000    0.000    0.000    0.000 {method 'getObjVal' of 'xpress.problem' objects}
+     1211    0.000    0.000    0.000    0.000 {method 'strip' of 'str' objects}
+      142    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:64(_make_options_dict)
+       62    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1709(notify_thread_created)
+      941    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
+     1439    0.000    0.000    0.000    0.000 {built-in method builtins.issubclass}
+      426    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:984(<genexpr>)
+      142    0.000    0.000    0.011    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:506(wrapper)
+       33    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:68(merge_two_dict)
+      426    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:989(<genexpr>)
+      240    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:33(seterr)
+      142    0.000    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:907(__init__)
+        1    0.000    0.000    0.009    0.009 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:191(_initial_routes)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:96(_parse_value_tb)
+       76    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:545(grab_dual_sol)
+      392    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:299(__enter__)
+      430    0.000    0.000    0.001    0.000 {built-in method builtins.max}
+      173    0.000    0.000    0.000    0.000 {built-in method _abc._abc_instancecheck}
+      173    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\linecache.py:26(getline)
+      195    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2836(min)
+      247    0.000    0.000    0.000    0.000 {method 'remove' of 'collections.deque' objects}
+      154    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\enum.py:1129(__new__)
+      346    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:170(_safe_string)
+      142    0.000    0.000    0.000    0.000 {built-in method builtins.locals}
+      519    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:662(indent)
+        2    0.000    0.000    0.004    0.002 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command_factory_json.py:238(make_get_thread_stack_message)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:162(_format_final_exc_line)
+      284    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:753(_extendLine_pretty)
+      284    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:739(_extendLine)
+       64    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1584(get_internal_queue_and_event)
+      655    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.lock' objects}
+      288    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:314(_is_owned)
+       62    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_utils.py:139(get_non_pydevd_threads)
+      240    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:132(geterr)
+      142    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:403(_get_formatdict)
+       38    0.000    0.000    0.003    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command_factory_xml.py:197(_iter_visible_frames_info)
+        2    0.000    0.000    0.013    0.006 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:12(__init__)
+      142    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1415(dtype_is_implied)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\linecache.py:147(lazycache)
+        2    0.000    0.000    0.000    0.000 {method '__exit__' of '_io._IOBase' objects}
+        1    0.000    0.000    0.000    0.000 {method 'readlines' of '_io._IOBase' objects}
+      366    0.000    0.000    0.000    0.000 {built-in method time.monotonic}
+      142    0.000    0.000    0.006    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:411(<lambda>)
+        8    0.000    0.000    0.006    0.001 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:150(process_net_command_json)
+      248    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:308(_release_save)
+      355    0.000    0.000    0.000    0.000 {method 'decode' of 'bytes' objects}
+       14    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\json\encoder.py:205(iterencode)
+      256    0.000    0.000    0.000    0.000 {method 'release' of '_thread.lock' objects}
+      346    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:638(_display_width)
+      173    0.000    0.000    0.004    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\ast.py:34(parse)
+      142    0.000    0.000    0.003    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:780(_formatArray)
+      403    0.000    0.000    0.000    0.000 {method '__enter__' of '_thread.lock' objects}
+        9    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:137(_resolve_listing)
+      379    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
+       37    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_utils.py:248(notify_about_gevent_if_needed)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:856(_load_lines)
+      102    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:324(<genexpr>)
+     1600    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:184(<lambda>)
+      423    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:120(<genexpr>)
+       60    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\queue.py:97(empty)
+       96    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_daemon_thread.py:36(py_db)
+       15    0.000    0.000    0.332    0.022 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:217(_read_line)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\abc.py:117(__instancecheck__)
+       48    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1040(get_file_type)
+        1    0.000    0.000    0.006    0.006 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:226(solve)
+      173    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\linecache.py:36(getlines)
+      120    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2692(max)
+      251    0.000    0.000    0.000    0.000 {method 'values' of 'dict' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:522(output_all_time_profile)
+      101    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}
+       14    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command.py:58(__init__)
+       60    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:438(empty)
+      121    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1619(check_output_redirect)
+      426    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:993(<genexpr>)
+      234    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:6(__init__)
+      353    0.000    0.000    0.000    0.000 {built-in method builtins.id}
+      240    0.000    0.000    0.000    0.000 {built-in method numpy.seterrobj}
+      293    0.000    0.000    0.000    0.000 {method 'split' of 'str' objects}
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:657(__init__)
+       19    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command.py:104(send)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\time_profile.py:12(__exit__)
+       63    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:1483(current_thread)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_base_schema.py:84(from_dict)
+      426    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:994(<genexpr>)
+       22    0.000    0.000    0.007    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:461(validate_route)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\xpress\__init__.py:164(init)
+      120    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:430(__enter__)
+      173    0.000    0.000    0.000    0.000 {method 'co_positions' of 'code' objects}
+      665    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1877(_nonzero_dispatcher)
+       29    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:311(<lambda>)
+      264    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
+       36    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command_factory_json.py:66(track_module)
+      205    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
+       23    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:518(<genexpr>)
+       61    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:627(clear)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:149(get_index_dtype)
+      120    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:435(__exit__)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:265(__init__)
+       43    0.000    0.000    0.000    0.000 {method 'sort' of 'list' objects}
+       60    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:1234(daemon)
+        2    0.000    0.000    0.001    0.001 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:27(__init__)
+       36    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1361(apply_files_filter)
+      692    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:676(<lambda>)
+        8    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_base_schema.py:112(from_json)
+      221    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:312(_original_line)
+      123    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydev_bundle\pydev_is_thread_alive.py:16(is_thread_alive)
+      173    0.000    0.000    0.000    0.000 {built-in method sys.exception}
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py:343(raw_decode)
+       16    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\queue.py:122(put)
+      346    0.000    0.000    0.000    0.000 {method 'isascii' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\json\decoder.py:332(decode)
+      480    0.000    0.000    0.000    0.000 {built-in method numpy.geterrobj}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command_factory_json.py:167(make_list_threads_message)
+       40    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:394(notify)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2172(_sum_dispatcher)
+       45    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\ntpath.py:179(splitroot)
+      195    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2831(_min_dispatcher)
+       18    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\ntpath.py:107(join)
+      142    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+      173    0.000    0.000    0.000    0.000 {method 'lstrip' of 'str' objects}
+      100    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:26(<lambda>)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:440(__init__)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py:299(loads)
+       36    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_source_mapping.py:85(map_to_client)
+       21    0.000    0.000    0.000    0.000 {built-in method time.sleep}
+      142    0.000    0.000    0.000    0.000 {method 'discard' of 'set' objects}
+        9    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:233(_get_path_with_real_case)
+       65    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:668(get_thread_id)
+      142    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:898(_none_or_positive_arg)
+       14    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\json\encoder.py:183(encode)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2177(sum)
+        2    0.000    0.000    0.004    0.002 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:680(can_be_executed_by)
+      127    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.RLock' objects}
+       12    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1255(in_project_scope)
+       48    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:935(get_abs_path_real_path_and_base_from_frame)
+      7/1    0.000    0.000    0.000    0.000 {built-in method _abc._abc_subclasscheck}
+        8    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:167(_from_json)
+      142    0.000    0.000    0.000    0.000 {method 'copy' of 'dict' objects}
+       18    0.000    0.000    0.000    0.000 {method 'match' of 're.Pattern' objects}
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:446(__exit__)
+       63    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:648(get_current_thread_id)
+       12    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11879(__init__)
+       24    0.000    0.000    0.000    0.000 {method 'find' of 'bytes' objects}
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\traceback.py:673(<lambda>)
+       36    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:627(_original_file_to_client)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:185(_check)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\tokenize.py:445(open)
+        1    0.000    0.000    0.000    0.000 {built-in method _pickle.dump}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7611(__init__)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:1303(_get_index_dtype)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:296(check_shape)
+      120    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:426(__init__)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:685(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_api.py:647(remove_all_breakpoints)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:784(on_setbreakpoints_request)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:111(getdtype)
+       16    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\queue.py:213(_put)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7541(__init__)
+        1    0.000    0.000    0.000    0.000 {method 'readline' of '_io.BufferedReader' objects}
+        1    0.000    0.000    0.001    0.001 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\linecache.py:80(updatecache)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1598(post_internal_command)
+       17    0.000    0.000    0.000    0.000 {method 'startswith' of 'bytes' objects}
+      120    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2687(_max_dispatcher)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:170(_on_dict_loaded)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\tokenize.py:352(detect_encoding)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:1093(on_variables_request)
+        2    0.000    0.000    0.004    0.002 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_api.py:231(request_stack)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_base_schema.py:17(_translate_id_to_dap)
+      173    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:443(__enter__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:1039(on_scopes_request)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_thread_lifecycle.py:49(internal_run_thread)
+       12    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11934(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_base_schema.py:135(build_response)
+        8    0.000    0.000    0.000    0.000 {method 'split' of 'bytes' objects}
+       61    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:702(__enter__)
+       14    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\json\__init__.py:183(dumps)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:272(contextmanager)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:3176(ndim)
+       21    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\queue.py:217(_get)
+       16    0.000    0.000    0.000    0.000 {method 'end' of 're.Match' objects}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\platform.py:978(system)
+       18    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11547(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1591(post_method_as_internal_command)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:35(update_wrapper)
+       61    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:705(__exit__)
+        2    0.000    0.000    0.004    0.002 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:995(on_stacktrace_request)
+        9    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:163(_resolve_listing_parts)
+       14    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:377(add_command)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\ntpath.py:564(normpath)
+       33    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:818(get_protocol)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7163(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:666(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:218(isintlike)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7104(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_api.py:173(list_threads)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:196(_read)
+        3    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:616(set)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:104(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:299(helper)
+       14    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11798(to_dict)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:15507(to_dict)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:1160(to_dict)
+       27    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1526(dap_messages_listeners)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:8318(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numerictypes.py:357(issubdtype)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:161(_getnnz)
+       45    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\platform.py:889(uname)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16689(to_dict)
+       13    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:481(__enter__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:295(on_threads_request)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_suspended_frames.py:475(get_thread_id_for_variable_reference)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:552(on_continue_request)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\tokenize.py:382(find_cookie)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\ntpath.py:156(splitdrive)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:629(_get_or_compute_thread_id_with_lock)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_base_schema.py:29(_translate_id_from_dap)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:240(isshape)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_data.py:21(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:137(getdata)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\codecs.py:319(decode)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_api.py:933(request_get_variable_json)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16427(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:294(nnz)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:552(__init__)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:416(absolute_path)
+       12    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command_factory_json.py:215(_format_frame_name)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:4047(__init__)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:59(<genexpr>)
+       72    0.000    0.000    0.000    0.000 {built-in method nt.fspath}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16472(to_dict)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:3890(__init__)
+        4    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap>:645(parent)
+        8    0.000    0.000    0.000    0.000 {method 'strip' of 'bytes' objects}
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:327(<genexpr>)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:113(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:65(wraps)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:39(_amax)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:709(max)
+        6    0.000    0.000    0.000    0.000 {built-in method builtins.any}
+       36    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\codecs.py:309(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_thread_lifecycle.py:58(resume_threads)
+        6    0.000    0.000    0.000    0.000 {method 'max' of 'numpy.ndarray' objects}
+       13    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:484(__exit__)
+       15    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11753(__init__)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:538(is_authenticated)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:12035(__init__)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11508(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7338(__init__)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numerictypes.py:283(issubclass_)
+        3    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:424(notify_all)
+        7    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_collections_abc.py:341(__subclasshook__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:3172(_ndim_dispatcher)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:696(min)
+        9    0.000    0.000    0.000    0.000 {built-in method nt._path_normpath}
+      7/1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\abc.py:121(__subclasscheck__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:4077(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_suspended_frames.py:431(get_frames_list)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:503(can_cast)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:198(<genexpr>)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\tokenize.py:376(read_or_stop)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:5226(__init__)
+       21    0.000    0.000    0.000    0.000 {method 'popleft' of 'collections.deque' objects}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7294(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_suspended_frames.py:506(get_frames_list)
+        8    0.000    0.000    0.000    0.000 {built-in method _codecs.utf_8_decode}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:3953(__init__)
+       12    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:674(get_client_filename_source_reference)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11694(update_dict_ids_to_dap)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_suspended_frames.py:460(_get_tracker_for_variable_reference)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:15495(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_suspended_frames.py:370(get_main_thread_id)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_matrix.py:64(get_shape)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:12090(to_dict)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:13366(__init__)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11972(update_dict_ids_to_dap)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:620(_path_to_expected_str)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:69(ndim)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:95(to_native)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7264(__init__)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:1144(__init__)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:164(<genexpr>)
+        9    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:899(get_abs_path_real_path_and_base_from_file)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7495(to_dict)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:168(<genexpr>)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_thread_lifecycle.py:11(pydevd_find_thread_by_id)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7467(__init__)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:336(<genexpr>)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:13325(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:355(normcase_from_client)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_api.py:223(request_resume_thread)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11681(to_dict)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:7391(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:12129(update_dict_ids_to_dap)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:5283(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_comm.py:707(do_it)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\codecs.py:260(__init__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:13399(to_dict)
+        4    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_utils.py:323(__hash__)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16414(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1175(on_breakpoints_changed)
+       11    0.000    0.000    0.000    0.000 {built-in method builtins.iter}
+       12    0.000    0.000    0.000    0.000 {built-in method builtins.setattr}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:599(get_pid)
+        4    0.000    0.000    0.000    0.000 {method 'rpartition' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:1180(name)
+        9    0.000    0.000    0.000    0.000 {method 'upper' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame_utils.py:242(__iter__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:8290(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:485(add_on_resumed_callback)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16105(to_dict)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:11664(__init__)
+        2    0.000    0.000    0.000    0.000 {method 'endswith' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1238(multi_threads_single_notification)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_utils.py:314(__eq__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:8224(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd_file_utils.py:342(normcase)
+        2    0.000    0.000    0.000    0.000 {method 'pop' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_utils.py:309(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16679(__init__)
+        1    0.000    0.000    0.000    0.000 {method 'seek' of '_io.BufferedReader' objects}
+        2    0.000    0.000    0.000    0.000 {method 'setdefault' of 'dict' objects}
+        4    0.000    0.000    0.000    0.000 {built-in method _operator.index}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16462(__init__)
+        1    0.000    0.000    0.000    0.000 {built-in method nt.getpid}
+        2    0.000    0.000    0.000    0.000 {method '__enter__' of '_thread.RLock' objects}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\pydevd.py:1246(threads_suspended_single_notification)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_process_net_command_json.py:737(_verify_launch_or_attach_done)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_api.py:362(filename_to_str)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\_debug_adapter\pydevd_schema.py:16094(__init__)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_constants.py:834(get_global_debugger)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydev_bundle\pydev_log.py:222(info)
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\.vscode\extensions\ms-python.debugpy-2025.4.1-win32-x64\bundled\libs\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_net_command.py:21(send)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:50(__hash__)
+
+

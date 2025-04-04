@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 import xpress as xp
 import os
 import platform
+from sortedcontainers import SortedList
 
 class xy_jy_cg_solver:
     def __init__(self, list_of_route:list[Route], node_sequence_of_routes, rhs_exog_vec, data, forbidden=[], initial_resource_vector=None):
@@ -85,6 +86,7 @@ class xy_jy_cg_solver:
                     self.index_to_omega_name[var_index] = ('omega',u,v)
                     var_index += 1
                     self.col_of_omega +=1
+        self.index_sorted_slot = SortedList()
         self.constraints_matrix = coo_matrix((data, (rows, cols)), shape=(len(self.rhs_exog_vec), var_index))
 
     def _construct_problem(self):
@@ -111,7 +113,10 @@ class xy_jy_cg_solver:
             
             # Create all variables in batch where possible
             self.variables = {}
-            
+            # debug here
+            # overlap = set(route_indices) & set(omega_indices)
+            # if overlap:
+            #     raise ValueError(f"Overlapping indices found: {overlap}")
             # Add route variables
             if route_indices:
                 route_vars = [xp.var(name=f"r_{idx}", lb=0) for idx in route_indices]
@@ -223,65 +228,6 @@ class xy_jy_cg_solver:
             'variable_values': self.var_values,
             'dual_values': self.dual_values
         }
-
-    def grab_primal_sol(self):
-        return self.objective_value, self.var_values
-        
-    def grab_dual_sol(self):
-        """Extract dual values from the solved model."""
-        
-        status_code = self.model.getProbStatus()
-        if status_code != xp.lp_optimal:
-            return None
-        
-        dual_values = self.model.getDual(self.constraints)
-
-        
-        return dual_values
-    def get_active_DOI(self):
-        """
-        Get all active DOI variables (omega variables with non-zero values).
-        
-        Returns:
-        list: List of (u,v) pairs corresponding to active DOI variables
-        """
-        active_DOI = set()
-        for var_index, omega_name in self.index_to_omega_name.items():
-            if var_index in self.var_values and abs(self.var_values[var_index]) > 0.00001:
-                u = omega_name[1]
-                v = omega_name[2]
-                active_DOI.add((u,v))
-        return active_DOI
-    def generate_subset_of_routes(self):
-        sub_set_routes = []
-        for route in self.list_of_route:
-            node_in_ordered = route.node_in_ordered
-            pickup_nodes_in_route = [node for node in route.node_in_ordered 
-                                    if node in self.pickup_node]
-            if len(pickup_nodes_in_route) <=2:
-                continue
-            for size in range(2, len(pickup_nodes_in_route) + 1):
-                for pickup_subset in itertools.combinations(pickup_nodes_in_route, size):
-                    # Check if this subset forms a valid route
-                    if self.is_valid_pickup_subset(pickup_subset, route):
-                        # Create a new route
-                        new_route = self.create_subset_route(pickup_subset, route)
-                        sub_set_routes.append(new_route)
-        for route in sub_set_routes:
-            state_action_alt_repeat = []
-            source_state = State(-1,self.initial_resource_vector,0,True,False)
-            state_action_alt_repeat.append(source_state)
-            cur_state = source_state
-            for (tail,head) in zip(route[:-1],route[1:]):
-                this_act = self.actions[(tail,head)][0]
-                state_action_alt_repeat.append(this_act)
-                next_state = this_act.get_head_state(cur_state)
-                if next_state == None:
-                    input('error here: none state generated from given column')
-                state_action_alt_repeat.append(next_state)
-                cur_state = next_state
-            this_route = Route(state_action_alt_repeat,1,self.pickup_node)
-            self.list_of_route.append(this_route)
     
     
     def solve_2(self, max_iter=5, max_add=10):
@@ -420,7 +366,7 @@ class xy_jy_cg_solver:
         # Solve one final time with all the added columns
         final_solution = self.solve()
         
-        return final_solution, self.list_of_route, self.node_sequence_of_routes
+        return final_solution, self.node_sequence_of_routes, self.list_of_route
     def solve_ilp(self):
         """
         Solve the integer version of the problem using Xpress, focusing only on route variables.
@@ -598,7 +544,63 @@ class xy_jy_cg_solver:
             }
         
     
-    
+    def grab_primal_sol(self):
+        return self.objective_value, self.var_values
+        
+    def grab_dual_sol(self):
+        """Extract dual values from the solved model."""
+        
+        status_code = self.model.getProbStatus()
+        if status_code != xp.lp_optimal:
+            return None
+        
+        dual_values = self.model.getDual(self.constraints)
+
+        
+        return dual_values
+    def get_active_DOI(self):
+        """
+        Get all active DOI variables (omega variables with non-zero values).
+        
+        Returns:
+        list: List of (u,v) pairs corresponding to active DOI variables
+        """
+        active_DOI = set()
+        for var_index, omega_name in self.index_to_omega_name.items():
+            if var_index in self.var_values and abs(self.var_values[var_index]) > 0.00001:
+                u = omega_name[1]
+                v = omega_name[2]
+                active_DOI.add((u,v))
+        return active_DOI
+    def generate_subset_of_routes(self):
+        sub_set_routes = []
+        for route in self.list_of_route:
+            pickup_nodes_in_route = [node for node in route.node_in_ordered 
+                                    if node in self.pickup_node]
+            if len(pickup_nodes_in_route) <=2:
+                continue
+            for size in range(2, len(pickup_nodes_in_route) + 1):
+                for pickup_subset in itertools.combinations(pickup_nodes_in_route, size):
+                    # Check if this subset forms a valid route
+                    if self.is_valid_pickup_subset(pickup_subset, route):
+                        # Create a new route
+                        new_route = self.create_subset_route(pickup_subset, route)
+                        sub_set_routes.append(new_route)
+        for route in sub_set_routes:
+            state_action_alt_repeat = []
+            source_state = State(-1,self.initial_resource_vector,0,True,False)
+            state_action_alt_repeat.append(source_state)
+            cur_state = source_state
+            for (tail,head) in zip(route[:-1],route[1:]):
+                this_act = self.actions[(tail,head)][0]
+                state_action_alt_repeat.append(this_act)
+                next_state = this_act.get_head_state(cur_state)
+                if next_state == None:
+                    input('error here: none state generated from given column')
+                state_action_alt_repeat.append(next_state)
+                cur_state = next_state
+            this_route = Route(state_action_alt_repeat,1,self.pickup_node)
+            self.list_of_route.append(this_route)
     def _swap(self, route, u, v):
         """
         Create a new route by swapping node u with node v.
@@ -676,7 +678,7 @@ class xy_jy_cg_solver:
         route_tuple = tuple(route.node_in_ordered) if hasattr(route, 'node_in_ordered') else None
         if route_tuple in self.node_sequence_of_routes:
             print(f"Route {route_tuple} already exists in the model")
-            # Return the existing variable index for this route
+            # Find the existing route index
             route_idx = self.node_sequence_of_routes.index(route_tuple)
             route_name = ('route', route_idx)
             if route_name in self.route_name_to_index:
@@ -684,26 +686,22 @@ class xy_jy_cg_solver:
             else:
                 print(f"Warning: Route exists but no variable mapping found")
         
-        # Add route to list_of_route
+        # Add route to list_of_route and get its index
         route_idx = len(self.list_of_route)
         self.list_of_route.append(route)
         
-        # Add route to node sequence (if not already there)
+        # Add route to node sequence if needed
         if route_tuple and route_tuple not in self.node_sequence_of_routes:
             self.node_sequence_of_routes.append(route_tuple)
         
-        # Create new variable index
-        var_idx = self.next_var_index if hasattr(self, 'next_var_index') else 0
-        if not hasattr(self, 'next_var_index'):
-            self.next_var_index = 0
-        
-        # If we use variable deletion, we could reuse indices
-        if hasattr(self, 'deleted_indices') and self.deleted_indices:
-            var_idx = min(self.deleted_indices)
-            self.deleted_indices.remove(var_idx)
+        # Determine variable index - reuse from index_sorted_slot if available
+        if hasattr(self, 'index_sorted_slot') and self.index_sorted_slot:
+            var_idx = self.index_sorted_slot.pop(0)  # Get the smallest available index
+            print(f"Reusing index {var_idx} for new route")
         else:
-            var_idx = self.next_var_index
-            self.next_var_index += 1
+            # Use next available index
+            var_idx = len(self.var_to_obj_coef)
+            print(f"Assigned new index {var_idx} for new route")
         
         # Update mappings
         self.var_to_obj_coef[var_idx] = route.cost
@@ -763,11 +761,11 @@ class xy_jy_cg_solver:
             del self.index_to_omega_name[var_idx]
             del self.omega_name_to_index[omega_name]
             
-            # Add to deleted indices if we're tracking them
-            if hasattr(self, 'deleted_indices'):
-                self.deleted_indices.add(var_idx)
-            else:
-                self.deleted_indices = {var_idx}
+            # Add index to reuse list, ensuring it exists first
+            if not hasattr(self, 'index_sorted_slot'):
+                from sortedcontainers import SortedList
+                self.index_sorted_slot = SortedList()
+            self.index_sorted_slot.add(var_idx)
             
             # If we had the solution values, remove this variable's value
             if hasattr(self, 'var_values') and var_idx in self.var_values:
@@ -776,11 +774,11 @@ class xy_jy_cg_solver:
             # Decrement omega count
             self.col_of_omega -= 1
             
-            # Add this pair to forbidden pairs to prevent it from being added again
+            # Add this pair to forbidden pairs
             if not hasattr(self, 'forbidden'):
-                self.forbidden = []
-            if (u, v) not in self.forbidden:
-                self.forbidden.append((u, v))
+                self.forbidden = set()
+            
+            self.forbidden.add((u, v))
             
             print(f"Successfully removed omega variable mapping for pair ({u},{v})")
             return True
@@ -788,8 +786,8 @@ class xy_jy_cg_solver:
         except Exception as e:
             print(f"Error removing omega variable mapping for pair ({u},{v}): {e}")
             import traceback
-            traceback.print_exc()  # Print full traceback for debugging
-            return False 
+            traceback.print_exc()
+            return False
     # def remove_route(self, route):
     #     """
     #     Remove a route from the problem.
