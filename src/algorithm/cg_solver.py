@@ -292,9 +292,10 @@ class GraphMaster_cg:
             this_dual = output['dual_values']
             this_lp_objective = output['objective_value']
             lp_objective_list.append(this_lp_objective)
-            for index, route_index in cg_solver.var_index_to_route_index.items():
+            for index, route_name in cg_solver.index_to_route_name.items():
                 value = this_sol[index]
                 if value > 0.0001:
+                    route_index = route_name[1]
                     this_route = list_of_routes[route_index]
                     red_cost = this_route.get_red_cost(this_dual)
                     if red_cost <-1:
@@ -390,7 +391,8 @@ class GraphMaster_cg:
                             'optimality_gap':gap
                         }
                     else:
-                        forbidden_omega.extend(this_forbidden_omega)
+                        for (u,v) in this_forbidden_omega:
+                            cg_solver.remove_doi(u,v)
 
                 #list_of_routes.extend(routes)
                 add_route_num = 0
