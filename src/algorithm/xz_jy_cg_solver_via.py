@@ -5,6 +5,8 @@ import itertools
 from src.common.state import State
 from scipy.sparse import coo_matrix
 import xpress as xp
+import os
+import platform
 
 class xy_jy_cg_solver:
     def __init__(self, list_of_route:list[Route], node_sequence_of_routes, rhs_exog_vec, data, forbidden=[], initial_resource_vector=None):
@@ -33,6 +35,10 @@ class xy_jy_cg_solver:
         self._initiate_col_coeff()
 
         self.time_profile = defaultdict(float)
+        if platform.system() == 'Windows':
+            self.license_path = 'C:/xpressmp/bin/xpauth.xpr'
+        else:
+            self.license_path = '/mnt/c/xpressmp/bin/xpauth.xpr'
 
     def _generate_rho(self):
         this_rho = defaultdict()
@@ -90,7 +96,8 @@ class xy_jy_cg_solver:
         try:
             # Initialize the model
             if not hasattr(self, 'xpress_initialized'):
-                xp.init('C:/xpressmp/bin/xpauth.xpr')
+                
+                xp.init(self.license_path)
                 self.xpress_initialized = True
             
             # Create a new problem
@@ -291,7 +298,6 @@ class xy_jy_cg_solver:
         num_iter_left = max_iter
         col_added = 0
         debug_on = False
-        cur_obj = np.inf
         
         while num_iter_left > 0:
             print('check here for loop')
