@@ -226,7 +226,6 @@ class GraphMaster_cg:
             self.path_added.add(path_tuple)
     def solve(self):
         all_time_profile = defaultdict(float)
-        all_time_start = time.time()
         jy_actions_node=defaultdict(list)
         for (n1,n2),a_list in self.action_dict.items():
             jy_actions_node[n1].append(a_list[0])
@@ -349,8 +348,6 @@ class GraphMaster_cg:
                         ilp_obj = sol['objective_value']
                         gap = (ilp_obj-last_lp_obj)/last_lp_obj
                         all_time_profile = Helper.merge_two_dict(all_time_profile,cg_solver.time_profile)
-                        all_time_end = time.time()
-                        all_time_profile['all_time'] = all_time_end - all_time_start
                         
                         used_routes = sol['used_routes']
                         #variable_to_value = sol['variable_values']
@@ -358,7 +355,7 @@ class GraphMaster_cg:
                         for route in list_of_routes:
                             print(route.node_in_ordered)
                         print('route used')
-                        
+                        used_routes = self.post_procssing(used_routes)
                         for route in used_routes:
                             print(route.node_in_ordered)
                             valid = self.validate_route(route)
@@ -381,10 +378,6 @@ class GraphMaster_cg:
                             print('volume remain')
                             print([s.state_vec[1] for s in route.just_states_ordered])
                             route_num+=1
-                        print('=========time profiling================')
-                        self.output_all_time_profile(all_time_profile)
-                        with open("time.pkl", "wb") as f:
-                            pickle.dump(all_time_profile, f)
                         return {
                             'status': 'optimal',
                             'x': sol['variable_values'],
@@ -472,23 +465,24 @@ class GraphMaster_cg:
             non_zero_indices = np.nonzero(route.Exog_vec)[0]
             for node in non_zero_indices:
                 node_to_routes[node+1].append(route)
-        over_cover = rhs_sum - np.ones(self.rhs_exog_vec)
+        over_cover = rhs_sum - np.ones(len(self.rhs_exog_vec))
         over_cover_indices = np.nonzero(over_cover)[0]
         for idx in over_cover_indices:
-            over_cover_num = over_cover_indices[idx]
-            over_cover_node = idx+1
+            over_cover_num = int(over_cover[idx])
+            over_cover_node = int(idx+1)
             random_route_remove = random.sample(node_to_routes[over_cover_node],over_cover_num)
             
             for route in random_route_remove:
                 state_action_alt_repeat = []
                 node_in_ordered = route.node_in_ordered
                 node_in_ordered.remove(over_cover_node)
-                node_in_ordered.remove(over_cover_node+len(self.pickup_node))
+                node_in_ordered.remove(over_cover_node+len(self.state_update_module.pickup_node))
                 cur_state = State(-1,self.initial_resource_vector,0,True,False)
+                state_action_alt_repeat.append(cur_state)
                 for (tail,head) in zip(node_in_ordered[:-1],node_in_ordered[1:]):
-                    this_act = self.actions[(tail,head)][0]
+                    this_act = self.action_dict[(tail,head)][0]
                     state_action_alt_repeat.append(this_act)
-                    next_state = this_act.get_head_state(cur_state)
+                    next_state = this_act.get_head_state_fast_load_ai(cur_state,1)
                     if next_state == None:
                         input('error here: none state generated from given column')
                     state_action_alt_repeat.append(next_state)
@@ -496,6 +490,7 @@ class GraphMaster_cg:
                 this_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
                 routes_no_over_cover.remove(route)
                 routes_no_over_cover.append(this_route)
+        return routes_no_over_cover
     
 
     

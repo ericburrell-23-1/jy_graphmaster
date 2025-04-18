@@ -218,7 +218,6 @@ class Action:
         #         current_val = head_state_vec[0, j]
         #         if current_val > max_val:
         #             head_state_vec[0, j] = max_val
-        time4 = time.time()
         # 4. Create the final State object
         if self.node_head == -2:
             head_state = State(self.node_head, self.empty_resource_vec, l_id, is_source=False, is_sink=True)
