@@ -19,6 +19,7 @@ from src.algorithm.cg_solver import GraphMaster_cg
 from src.common.pgm_approach import Route
 from src.common.line_time_profiler import HierarchicalProfiler
 from src.common.time_profile import TimeProfiler
+from tqdm import tqdm
 import random
 # CONSTANTS
 VOLUME_CAPACITY = 3000
@@ -143,6 +144,8 @@ class loadAI_cg:
         self.service_time : Dict[int, float] = {}
         self.pickup_to_dropoff : Dict[int, int] = {}
         self.dropoff_to_pickup : Dict[int, int] = {}
+        self.pickup_node = []
+        self.dropoff_node = []
         self.problem_info = {}
         self.problem_info['volume_capacity'] = VOLUME_CAPACITY
         self.problem_info['weight_capacity'] = WEIGHT_CAPACITY
@@ -197,7 +200,9 @@ class loadAI_cg:
             
             # Assign pickup-dropoff relationships
             self.pickup_to_dropoff[pickup_id] = dropoff_id
+            self.pickup_node.append(pickup_id)
             self.dropoff_to_pickup[dropoff_id] = pickup_id
+            self.dropoff_node.append(dropoff_id)
         self.time_window_start[-1] = np.inf
         self.time_window_end[-1] = 0
         self.time_window_start[-2] = np.inf
@@ -354,7 +359,7 @@ class loadAI_cg:
 
 
     def _create_source_sink_actions(self):
-        for destination_node in self.pickup_to_dropoff:
+        for destination_node in tqdm(self.pickup_to_dropoff,desc = 'create_source_sink_actions_1'):
             origin_node = -1  # Source
             cost = 0
             exog_contrib_vec = self._default_contribution_vector()
@@ -368,12 +373,12 @@ class loadAI_cg:
             _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
             _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,trans_term_min)     
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,trans_term_min)
-            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
             action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
             self.actions[origin_node, destination_node] = [action]
 
-        for origin_node in self.dropoff_to_pickup:
+        for origin_node in tqdm(self.dropoff_to_pickup,desc='create_source_sink_actions_2'):
             origin_node = origin_node
             destination_node = -2  # Sink
             cost = 0
@@ -405,14 +410,14 @@ class loadAI_cg:
             _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
             _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
             action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
             self.actions[origin_node, destination_node] = [action]
             
         
     def _create_pickup_to_pickup_actions(self):
-        for origin_node in self.pickup_to_dropoff:
+        for origin_node in tqdm(self.pickup_to_dropoff,desc='create_pickup_to_pickup_actions'):
             for destination_node in self.pickup_to_dropoff:
                 if origin_node == destination_node:
                     continue
@@ -444,13 +449,13 @@ class loadAI_cg:
                 _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
                 _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
                 #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
                 action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
                 self.actions[origin_node, destination_node] = [action]
         
     def _create_pickup_to_dropoff_actions(self):
-        for origin_node in self.pickup_to_dropoff:
+        for origin_node in tqdm(self.pickup_to_dropoff,desc='create_pickup_to_dropoff_actions'):
             for destination_node in self.dropoff_to_pickup:
                 cost = self._haversine_distance(origin_node, destination_node)
                 exog_contrib_vec = self._default_contribution_vector()
@@ -475,14 +480,14 @@ class loadAI_cg:
                 _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
                 _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
                 #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
                 action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
                 self.actions[origin_node, destination_node] = [action]
             
         
     def _create_dropoff_to_pickup_actions(self):
-        for origin_node in self.dropoff_to_pickup:
+        for origin_node in tqdm(self.dropoff_to_pickup,desc='create_dropoff_to_pickup_actions'):
             for destination_node in self.pickup_to_dropoff:
                 origin_pickup_node = self.dropoff_to_pickup[origin_node]
                 if origin_pickup_node == destination_node:
@@ -510,14 +515,14 @@ class loadAI_cg:
                 _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
                 _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
                 #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
                 action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
                 self.actions[origin_node, destination_node] = [action]
         
         
     def _create_dropoff_to_dropoff_actions(self):
-        for origin_node in self.dropoff_to_pickup:
+        for origin_node in tqdm(self.dropoff_to_pickup,desc='create_dropoff_to_dropoff_actions'):
             for destination_node in self.dropoff_to_pickup:
                 if origin_node == destination_node:
                     continue
@@ -541,14 +546,14 @@ class loadAI_cg:
                 _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
                 _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
                 #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
                 action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
                 self.actions[origin_node, destination_node] = [action]
         
         
     def _create_skip_actions(self):
-        for destination_node in self.pickup_to_dropoff:
+        for destination_node in tqdm(self.pickup_to_dropoff,desc='create_skip_actions'):
             origin_node = -1
             cost = self._slack(destination_node)
             exog_contrib_vec = self._default_contribution_vector()
@@ -563,7 +568,7 @@ class loadAI_cg:
             _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
             _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,{})     
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,{})
-            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
             destination_node = destination_node + 2 * self.number_of_customers
             action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
@@ -584,7 +589,7 @@ class loadAI_cg:
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,{})
 
             origin_node = origin_node + 2 * self.number_of_customers
-            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node,self.number_of_customers)
+            indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
             action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
             self.actions[origin_node, destination_node] = [action]
