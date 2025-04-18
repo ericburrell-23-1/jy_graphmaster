@@ -65,6 +65,19 @@ class Helper:
         #my_vec = csr_matrix((data, (np.zeros(len(data), dtype=int), indices)),shape=(1,vec_sz))                
 
         return indices
+    
+    def LOAD_AI_partial_map_2_indices_applied(key_2_index,destination_node,origin_node):
+    
+        key_list=["time","volume","weight","max_combined_loads"]
+        if origin_node in self.pickup_nodes:
+            key_list.append("may_pickup"+origin_node)
+            key_list.append("may_avoid_dropoff"+origin_node)
+        indices = np.array([key_2_index[k] for k in key_to_value], dtype=int)
+        return indices
+
+        #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node)
+
+
     def merge_two_dict(dict1, dict2):
         """
         Merges two time profile dictionaries, adding values for keys that appear in both.
