@@ -249,7 +249,7 @@ class loadAI_cg:
         self._create_dropoff_to_dropoff_actions()
         self._create_skip_actions()
         self._create_null_action_info()
-
+        input('here for check')
         
 
 
