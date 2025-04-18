@@ -1,235 +1,262 @@
-         195829 function calls (194777 primitive calls) in 2.147 seconds
+         278086 function calls (277349 primitive calls) in 2.254 seconds
 
    Ordered by: internal time
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    1.928    1.928    1.928    1.928 {built-in method _xpress._init}
-      410    0.030    0.000    0.035    0.000 {built-in method builtins.print}
-     7238    0.023    0.000    0.043    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:311(violates_min_resources)
-        3    0.014    0.005    0.014    0.005 {method 'solve' of 'xpress.problem' objects}
-      959    0.013    0.000    0.020    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:17(__init__)
-     7238    0.010    0.000    0.073    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:196(get_head_state_fast_load_ai)
-     8627    0.010    0.000    0.010    0.000 {method 'reduce' of 'numpy.ufunc' objects}
-        1    0.009    0.009    0.164    0.164 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:275(find_min_reduced_cost_path)
-     7118    0.008    0.000    0.101    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:351(expand_given_action)
-     8378    0.007    0.000    0.018    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:71(_wrapreduction)
-     1078    0.007    0.000    0.010    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:341(fast_max_res_apply)
-      959    0.006    0.000    0.011    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:204(calculate_better_lb_2)
-     1022    0.006    0.000    0.006    0.000 {built-in method builtins.sum}
-      921    0.005    0.000    0.015    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:637(get_actions_from_label_2)
-     8316    0.004    0.000    0.022    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2322(any)
-33616/32684    0.004    0.000    0.004    0.000 {built-in method builtins.len}
-     1078    0.004    0.000    0.004    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:187(_get_head_stat_vec)
-      923    0.004    0.000    0.004    0.000 {method 'randint' of 'numpy.random.mtrand.RandomState' objects}
-     1099    0.003    0.000    0.005    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:8(__init__)
-      960    0.003    0.000    0.005    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:101(calculate_red_cost_given_dual)
-      958    0.003    0.000    0.003    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:103(comp_red_cost)
-     1204    0.003    0.000    0.008    0.000 {method 'update' of 'set' objects}
-    19417    0.002    0.000    0.002    0.000 {method 'append' of 'list' objects}
-        2    0.002    0.001    1.936    0.968 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:92(_construct_problem)
-      441    0.002    0.000    0.002    0.000 {method 'getSolution' of 'xpress.problem' objects}
-      958    0.002    0.000    0.003    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:67(zeros_like)
-     7879    0.002    0.000    0.002    0.000 {built-in method builtins.hash}
-     6780    0.002    0.000    0.003    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:358(__hash__)
-     6586    0.002    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:680(<genexpr>)
-     8535    0.001    0.000    0.001    0.000 {method 'items' of 'dict' objects}
-        1    0.001    0.001    0.002    0.002 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:604(pre_process__partition_actions)
-        1    0.001    0.001    2.147    2.147 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:227(solve)
-      923    0.001    0.000    0.005    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:85(label_2_tuple)
-     8316    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2317(_any_dispatcher)
-     1398    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:675(<genexpr>)
-       60    0.001    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:934(fillFormat)
-        1    0.001    0.001    0.001    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:168(initiate_RCP_d)
-        1    0.001    0.001    0.006    0.006 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:370(solve_ilp)
-      968    0.001    0.000    0.001    0.000 {built-in method numpy.array}
-     1078    0.001    0.000    0.001    0.000 {method 'copy' of 'numpy.ndarray' objects}
-      922    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:34(alter_fronteir_given_new_element)
-      923    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:10(insert)
-     1917    0.001    0.000    0.001    0.000 {built-in method numpy.zeros}
-      986    0.001    0.000    0.001    0.000 {built-in method builtins.sorted}
-     1204    0.001    0.000    0.001    0.000 {method 'union' of 'set' objects}
-      921    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:27(pop)
-      923    0.001    0.000    0.001    0.000 {built-in method _bisect.bisect_left}
-        1    0.001    0.001    0.001    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:44(_generate_rho)
-     3894    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:105(<genexpr>)
+        1    1.893    1.893    1.893    1.893 {built-in method _xpress._init}
+        9    0.041    0.005    0.041    0.005 {method 'solve' of 'xpress.problem' objects}
+      504    0.033    0.000    0.038    0.000 {built-in method builtins.print}
+     7807    0.026    0.000    0.050    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:311(violates_min_resources)
+     3108    0.023    0.000    0.024    0.000 {built-in method builtins.sum}
+     1644    0.020    0.000    0.032    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:17(__init__)
+     2282    0.014    0.000    0.026    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:204(calculate_better_lb_2)
+     7807    0.013    0.000    0.096    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:196(get_head_state_fast_load_ai)
+    10269    0.013    0.000    0.013    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+     1844    0.012    0.000    0.018    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:341(fast_max_res_apply)
+        8    0.011    0.001    1.929    0.241 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:92(_construct_problem)
+        3    0.011    0.004    0.231    0.077 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:275(find_min_reduced_cost_path)
+     7602    0.010    0.000    0.139    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:351(expand_given_action)
+     1819    0.009    0.000    0.009    0.000 {method 'getSolution' of 'xpress.problem' objects}
+     9762    0.009    0.000    0.023    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:71(_wrapreduction)
+     2923    0.009    0.000    0.013    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:101(calculate_red_cost_given_dual)
+     1844    0.007    0.000    0.008    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:187(_get_head_stat_vec)
+     1736    0.006    0.000    0.006    0.000 {method 'randint' of 'numpy.random.mtrand.RandomState' objects}
+     1872    0.005    0.000    0.008    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:8(__init__)
+     9651    0.005    0.000    0.028    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2322(any)
+46766/46151    0.005    0.000    0.005    0.000 {built-in method builtins.len}
+     1641    0.005    0.000    0.005    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:103(comp_red_cost)
+      598    0.005    0.000    0.017    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:637(get_actions_from_label_2)
+    36101    0.005    0.000    0.005    0.000 {method 'append' of 'list' objects}
+        3    0.004    0.001    0.005    0.002 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:604(pre_process__partition_actions)
+     1641    0.004    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:67(zeros_like)
+     9375    0.003    0.000    0.003    0.000 {built-in method builtins.hash}
+     1112    0.003    0.000    0.009    0.000 {method 'update' of 'set' objects}
+     7503    0.002    0.000    0.003    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:358(__hash__)
+        3    0.002    0.001    0.003    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:168(initiate_RCP_d)
+     7087    0.002    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:680(<genexpr>)
+     1736    0.002    0.000    0.008    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:85(label_2_tuple)
+        1    0.002    0.002    2.254    2.254 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:227(solve)
+    10176    0.002    0.000    0.002    0.000 {method 'items' of 'dict' objects}
+       17    0.001    0.000    0.001    0.000 {method 'addVariable' of 'xpress.problem' objects}
+     9700    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:105(<genexpr>)
+     1673    0.001    0.000    0.001    0.000 {built-in method numpy.array}
+     1844    0.001    0.000    0.001    0.000 {method 'copy' of 'numpy.ndarray' objects}
+     1747    0.001    0.000    0.001    0.000 {built-in method builtins.sorted}
+       14    0.001    0.000    0.011    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:225(update_red_cost_and_lb)
+     9651    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2317(_any_dispatcher)
+     3283    0.001    0.000    0.001    0.000 {built-in method numpy.zeros}
+     1528    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:675(<genexpr>)
+       61    0.001    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:934(fillFormat)
+     7071    0.001    0.000    0.001    0.000 {method 'keys' of 'dict' objects}
+       14    0.001    0.000    0.003    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:584(_remove_labels_with_positive_lb)
+     1242    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:10(insert)
+        9    0.001    0.000    0.001    0.000 {method 'addConstraint' of 'xpress.problem' objects}
+        8    0.001    0.000    1.973    0.247 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:180(solve)
+     1248    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:34(alter_fronteir_given_new_element)
+        1    0.001    0.001    0.008    0.008 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:370(solve_ilp)
+     1242    0.001    0.000    0.001    0.000 {built-in method _bisect.bisect_left}
+       54    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:59(get_red_cost)
+     1653    0.001    0.000    0.001    0.000 {method 'intersection' of 'set' objects}
+     3028    0.001    0.000    0.001    0.000 {method 'add' of 'set' objects}
+      167    0.001    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:58(this_state_dominates_input_state)
+     1112    0.001    0.000    0.001    0.000 {method 'union' of 'set' objects}
+     1528    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:666(<genexpr>)
+     2254    0.001    0.000    0.001    0.000 {method 'copy' of 'list' objects}
+     4498    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:741(dot)
+     2484    0.001    0.000    0.001    0.000 {method 'insert' of 'list' objects}
+        3    0.001    0.000    0.010    0.003 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:22(__init__)
+      598    0.001    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:27(pop)
+   183/61    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:789(recurser)
+       14    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:265(_update_sorted_node_with_k)
+        3    0.000    0.000    1.976    0.659 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:233(solve_2)
         1    0.000    0.000    0.001    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:53(_initiate_col_coeff)
-     3021    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}
-   180/60    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:789(recurser)
-        5    0.000    0.000    0.000    0.000 {method 'addVariable' of 'xpress.problem' objects}
-      605    0.000    0.000    0.000    0.000 {method 'intersection' of 'set' objects}
-     1398    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:666(<genexpr>)
-     1883    0.000    0.000    0.000    0.000 {method 'add' of 'set' objects}
-     1846    0.000    0.000    0.000    0.000 {method 'insert' of 'list' objects}
-     1842    0.000    0.000    0.000    0.000 {method 'pop' of 'list' objects}
-       81    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:58(this_state_dominates_input_state)
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:59(get_red_cost)
-      602    0.000    0.000    0.000    0.000 {method 'difference' of 'set' objects}
-        3    0.000    0.000    0.000    0.000 {method 'addConstraint' of 'xpress.problem' objects}
-       60    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:523(_array2string)
-      881    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:293(this_label_dominates_input)
-     1060    0.000    0.000    0.000    0.000 {method 'remove' of 'list' objects}
-      940    0.000    0.000    0.000    0.000 {method 'copy' of 'list' objects}
-     1896    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:741(dot)
-      932    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:57(__len__)
-     1398    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:670(<genexpr>)
-      120    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1018(__call__)
-        1    0.000    0.000    0.003    0.003 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:22(__init__)
-        2    0.000    0.000    1.948    0.974 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:180(solve)
-       60    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:452(_get_format_function)
-       60    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1487(_array_repr_implementation)
-       81    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2378(array_equal)
-        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:561(get_active_DOI)
-       60    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:506(wrapper)
-       60    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:561(array2string)
-       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:64(_make_options_dict)
-        1    0.000    0.000    1.928    1.928 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\xpress\__init__.py:164(init)
-      180    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:984(<genexpr>)
-       60    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:907(__init__)
-     1038    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:20(__eq__)
-       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1415(dtype_is_implied)
-      240    0.000    0.000    0.000    0.000 {built-in method numpy.core._multiarray_umath.dragon4_positional}
-        1    0.000    0.000    0.004    0.004 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:192(_initial_routes)
-      310    0.000    0.000    0.000    0.000 {built-in method numpy.asarray}
-      182    0.000    0.000    0.000    0.000 {built-in method builtins.max}
-       80    0.000    0.000    0.004    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:371(check_valid)
-      120    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:753(_extendLine_pretty)
-      958    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:63(_zeros_like_dispatcher)
-       40    0.000    0.000    0.004    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:147(verify_feasibility)
-       60    0.000    0.000    0.000    0.000 {built-in method builtins.locals}
-      959    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:1080(copyto)
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:69(generate_cost_exog_vector)
-      120    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:739(_extendLine)
-      180    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:989(<genexpr>)
-      958    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:85(empty_like)
-        3    0.000    0.000    0.000    0.000 {method 'setObjective' of 'xpress.problem' objects}
-       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:403(_get_formatdict)
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:136(generate_all_node_pairs_ordered)
-       60    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:411(<lambda>)
-        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:265(_update_sorted_node_with_k)
+        9    0.000    0.000    0.000    0.000 {method 'setObjective' of 'xpress.problem' objects}
+       17    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:115(_compute_action_reduced_costs)
+      167    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2378(array_equal)
+     1196    0.000    0.000    0.000    0.000 {method 'pop' of 'list' objects}
+      556    0.000    0.000    0.000    0.000 {method 'difference' of 'set' objects}
+     1152    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:293(this_label_dominates_input)
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:44(_generate_rho)
+     1051    0.000    0.000    0.000    0.000 {method 'remove' of 'list' objects}
+       11    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:666(add_route)
+     1528    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:670(<genexpr>)
+       61    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:523(_array2string)
+        7    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:561(get_active_DOI)
+     1792    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:20(__eq__)
+       32    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:69(generate_cost_exog_vector)
+      122    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1018(__call__)
+       61    0.000    0.000    0.003    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:452(_get_format_function)
+      148    0.000    0.000    0.006    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:371(check_valid)
+     1641    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:63(_zeros_like_dispatcher)
+       61    0.000    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1487(_array_repr_implementation)
+       26    0.000    0.000    0.000    0.000 {method 'setControl' of 'xpress.problem' objects}
+     1642    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:1080(copyto)
+       32    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:136(generate_all_node_pairs_ordered)
+      615    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:57(__len__)
+       61    0.000    0.000    0.005    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:561(array2string)
+     1641    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:85(empty_like)
+      220    0.000    0.000    0.000    0.000 {built-in method numpy.core._multiarray_umath.dragon4_positional}
+       61    0.000    0.000    0.004    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:506(wrapper)
+       43    0.000    0.000    0.006    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:147(verify_feasibility)
+       61    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:64(_make_options_dict)
+        6    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:14(__init__)
+       61    0.000    0.000    0.002    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:907(__init__)
+      569    0.000    0.000    0.000    0.000 {built-in method numpy.asarray}
+      165    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:984(<genexpr>)
+     1500    0.000    0.000    0.000    0.000 {built-in method builtins.abs}
+      191    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+       61    0.000    0.000    0.000    0.000 {built-in method builtins.locals}
+      170    0.000    0.000    0.000    0.000 {method 'min' of 'numpy.ndarray' objects}
+       78    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:33(seterr)
+      122    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:753(_extendLine_pretty)
         1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:459(post_procssing)
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:80(generate_states_nodes_actions_ordered)
-       40    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:33(seterr)
-      440    0.000    0.000    0.000    0.000 {built-in method builtins.abs}
-        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_eff_fronteir.py:14(__init__)
-       60    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:780(_formatArray)
-        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:149(get_index_dtype)
-       84    0.000    0.000    0.000    0.000 {method 'min' of 'numpy.ndarray' objects}
-        3    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:115(_compute_action_reduced_costs)
-       81    0.000    0.000    0.000    0.000 {method 'all' of 'numpy.ndarray' objects}
-       81    0.000    0.000    0.000    0.000 {method 'sum' of 'numpy.ndarray' objects}
-        8    0.000    0.000    0.000    0.000 {method 'setControl' of 'xpress.problem' objects}
+       17    0.000    0.000    0.000    0.000 {method 'getProbStatus' of 'xpress.problem' objects}
+      167    0.000    0.000    0.000    0.000 {method 'all' of 'numpy.ndarray' objects}
+      122    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:739(_extendLine)
+       32    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:80(generate_states_nodes_actions_ordered)
+        8    0.000    0.000    0.000    0.000 {method 'getDual' of 'xpress.problem' objects}
+      167    0.000    0.000    0.000    0.000 {method 'sum' of 'numpy.ndarray' objects}
+       61    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:403(_get_formatdict)
+      165    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:989(<genexpr>)
+       61    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:1415(dtype_is_implied)
+        1    0.000    0.000    0.003    0.003 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:192(_initial_routes)
+       32    0.000    0.000    0.005    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:21(__init__)
+        1    0.000    0.000    1.893    1.893 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\xpress\__init__.py:164(init)
+       60    0.000    0.000    0.000    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
+       32    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:61(clean_state_action_alt_repeat_by_removing_null)
+       61    0.000    0.000    0.003    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:411(<lambda>)
+        4    0.000    0.000    0.001    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:604(_swap)
+       70    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2836(min)
+      527    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+       78    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:132(geterr)
+       61    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:780(_formatArray)
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\enum.py:726(__call__)
+        3    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:185(initiate_RCP_u_2)
+     1074    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:78(<lambda>)
+        3    0.000    0.000    0.231    0.077 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:97(run)
+      100    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      170    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:43(_amin)
+      840    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:274(<lambda>)
+        3    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:178(initiate_RCP_u)
+        9    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_label.py:435(convert_2_route)
+      167    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:61(_all)
+       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:53(_wrapfunc)
+      167    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:47(_sum)
+       39    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2692(max)
         1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
-       20    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:21(__init__)
-        1    0.000    0.000    0.002    0.002 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:13(__init__)
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\pgm_approach.py:61(clean_state_action_alt_repeat_by_removing_null)
-       40    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:132(geterr)
-      243    0.000    0.000    0.000    0.000 {built-in method builtins.issubclass}
-      180    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:993(<genexpr>)
-       73    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
-       44    0.000    0.000    0.000    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
-       40    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2836(min)
+      122    0.000    0.000    0.000    0.000 {method 'split' of 'str' objects}
+      247    0.000    0.000    0.000    0.000 {built-in method builtins.issubclass}
+       78    0.000    0.000    0.000    0.000 {built-in method numpy.seterrobj}
+       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1881(nonzero)
+      165    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:993(<genexpr>)
+        3    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:191(initialize_source_label)
+        9    0.000    0.000    0.000    0.000 {method 'getObjVal' of 'xpress.problem' objects}
+       39    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:430(__enter__)
+      122    0.000    0.000    0.000    0.000 {method 'splitlines' of 'str' objects}
+       87    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+      165    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:994(<genexpr>)
+       39    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:435(__exit__)
+       55    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:149(get_index_dtype)
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\enum.py:1129(__new__)
+       62    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+       24    0.000    0.000    0.000    0.000 {built-in method numpy.core._multiarray_umath.dragon4_scientific}
+      167    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2374(_array_equal_dispatcher)
+      156    0.000    0.000    0.000    0.000 {built-in method numpy.geterrobj}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:729(remove_doi)
+       61    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+       61    0.000    0.000    0.000    0.000 {method 'discard' of 'set' objects}
+        1    0.000    0.000    0.001    0.001 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:13(__init__)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:27(__init__)
-      120    0.000    0.000    0.000    0.000 {method 'split' of 'str' objects}
-      180    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:994(<genexpr>)
-        1    0.000    0.000    0.165    0.165 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:97(run)
-      120    0.000    0.000    0.000    0.000 {method 'splitlines' of 'str' objects}
-       44    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:53(_wrapfunc)
-       84    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:43(_amin)
-       81    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:61(_all)
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:185(initiate_RCP_u_2)
-       20    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2692(max)
-      358    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:78(<lambda>)
-       71    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
-       61    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
-        5    0.000    0.000    0.000    0.000 {method 'getProbStatus' of 'xpress.problem' objects}
-       40    0.000    0.000    0.000    0.000 {built-in method numpy.seterrobj}
-       20    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:430(__enter__)
-       60    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
-       81    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:47(_sum)
-        6    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\enum.py:726(__call__)
-        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:1303(_get_index_dtype)
-        4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:685(__init__)
-       44    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1881(nonzero)
-       60    0.000    0.000    0.000    0.000 {method 'discard' of 'set' objects}
-        2    0.000    0.000    0.000    0.000 {method 'getDual' of 'xpress.problem' objects}
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:191(initialize_source_label)
-        1    0.000    0.000    1.948    1.948 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:233(solve_2)
-        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:225(update_red_cost_and_lb)
-       20    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:435(__exit__)
-       60    0.000    0.000    0.000    0.000 {method 'copy' of 'dict' objects}
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:35(update_wrapper)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:185(_check)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:144(__init__)
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:178(initiate_RCP_u)
+       61    0.000    0.000    0.000    0.000 {method 'copy' of 'dict' objects}
+       61    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:136(ones)
-       60    0.000    0.000    0.000    0.000 {built-in method _thread.get_ident}
-       60    0.000    0.000    0.000    0.000 {built-in method builtins.id}
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:272(contextmanager)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:296(check_shape)
-       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:898(_none_or_positive_arg)
-        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:584(_remove_labels_with_positive_lb)
-       80    0.000    0.000    0.000    0.000 {built-in method numpy.geterrobj}
-       20    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:457(validate_route)
-        3    0.000    0.000    0.000    0.000 {method 'getObjVal' of 'xpress.problem' objects}
-       81    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numeric.py:2374(_array_equal_dispatcher)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\platform.py:978(system)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:3176(ndim)
-        2    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap>:645(parent)
-        3    0.000    0.000    0.000    0.000 {method 'max' of 'numpy.ndarray' objects}
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:960(<genexpr>)
+        8    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:550(grab_dual_sol)
+       61    0.000    0.000    0.000    0.000 {built-in method builtins.id}
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:963(<genexpr>)
+       61    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:898(_none_or_positive_arg)
+       23    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:6(__init__)
+       70    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2831(_min_dispatcher)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:185(_check)
+       60    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1877(_nonzero_dispatcher)
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:1303(_get_index_dtype)
+       39    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:426(__init__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\random.py:359(sample)
+       39    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2687(_max_dispatcher)
+       11    0.000    0.000    0.002    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:457(validate_route)
+        4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:685(__init__)
         2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2177(sum)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:111(getdtype)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:174(__new__)
-      120    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:274(<lambda>)
-        6    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\enum.py:1129(__new__)
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:27(<lambda>)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:104(__init__)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:218(isintlike)
-        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:327(<genexpr>)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:35(update_wrapper)
         1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\time_profile.py:12(__exit__)
-        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:550(grab_dual_sol)
-       40    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2831(_min_dispatcher)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:296(check_shape)
+       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:27(<lambda>)
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:964(<genexpr>)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:104(__init__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:272(contextmanager)
+       12    0.000    0.000    0.000    0.000 {method 'partition' of 'str' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\random.py:242(_randbelow_with_getrandbits)
+        3    0.000    0.000    0.000    0.000 {method 'sort' of 'list' objects}
+       12    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:523(<genexpr>)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:1319(pop)
+       60    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:183(<lambda>)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:299(helper)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_data.py:21(__init__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\platform.py:978(system)
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:968(<genexpr>)
+        2    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap>:645(parent)
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:965(<genexpr>)
+       18    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\arrayprint.py:977(<genexpr>)
+        3    0.000    0.000    0.000    0.000 {method 'max' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:89(merge_two_dict)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:3176(ndim)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:174(__new__)
+        3    0.000    0.000    0.000    0.000 {built-in method builtins.any}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:465(_delete)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:144(__init__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:218(isintlike)
+        1    0.000    0.000    0.000    0.000 {built-in method _abc._abc_instancecheck}
+       11    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:1155(__len__)
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:327(<genexpr>)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:240(isshape)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:65(wraps)
-       44    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1877(_nonzero_dispatcher)
+        5    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numerictypes.py:357(issubdtype)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:294(nnz)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:161(_getnnz)
-       21    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:523(<genexpr>)
-        3    0.000    0.000    0.000    0.000 {built-in method builtins.any}
-       20    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2687(_max_dispatcher)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numerictypes.py:357(issubdtype)
-        5    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_sortedObject_list.py:6(__init__)
-        5    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
-       20    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_ufunc_config.py:426(__init__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:137(getdata)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_data.py:21(__init__)
+        1    0.000    0.000    0.000    0.000 <frozen abc>:117(__instancecheck__)
+        8    0.000    0.000    0.000    0.000 {method 'index' of 'list' objects}
+       10    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\cg_solver.py:325(<genexpr>)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:65(wraps)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:111(getdtype)
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:59(<genexpr>)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\sortedcontainers\sortedlist.py:253(add)
         2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\numerictypes.py:283(issubclass_)
         2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:696(min)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:137(getdata)
-        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:709(max)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:113(__init__)
-        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:59(<genexpr>)
-        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:95(merge_two_dict)
-        2    0.000    0.000    0.000    0.000 {method 'rpartition' of 'str' objects}
-       20    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\jy_fast_pricing.py:183(<lambda>)
-        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:39(_amax)
-        1    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x00007FFCA65E68F0}
+        2    0.000    0.000    0.000    0.000 {method 'getrandbits' of '_random.Random' objects}
+        1    0.000    0.000    0.000    0.000 {built-in method builtins.min}
         6    0.000    0.000    0.000    0.000 {built-in method builtins.setattr}
-        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:198(<genexpr>)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\platform.py:889(uname)
-        1    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\_methods.py:39(_amax)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:113(__init__)
+        4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_matrix.py:64(get_shape)
         1    0.000    0.000    0.000    0.000 {built-in method numpy.empty}
+        2    0.000    0.000    0.000    0.000 {method 'rpartition' of 'str' objects}
         3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:164(<genexpr>)
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:198(<genexpr>)
+        1    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x00007FFCC98768F0}
+        2    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\algorithm\xz_jy_cg_solver_via.py:316(<lambda>)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\platform.py:889(uname)
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\getlimits.py:709(max)
         4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\multiarray.py:503(can_cast)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:95(to_native)
-        4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_matrix.py:64(get_shape)
-        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:3172(_ndim_dispatcher)
         3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_sputils.py:336(<genexpr>)
-        2    0.000    0.000    0.000    0.000 {built-in method _operator.index}
-        1    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:168(<genexpr>)
         1    0.000    0.000    0.000    0.000 {method 'values' of 'dict' objects}
         2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:2172(_sum_dispatcher)
-        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_coo.py:168(<genexpr>)
+        1    0.000    0.000    0.000    0.000 {method 'bit_length' of 'int' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:3172(_ndim_dispatcher)
         1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\scipy\sparse\_base.py:69(ndim)
+        2    0.000    0.000    0.000    0.000 {built-in method _operator.index}
         1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\state.py:50(__hash__)
 
 

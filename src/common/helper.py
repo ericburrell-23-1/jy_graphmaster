@@ -74,10 +74,10 @@ class Helper:
             key_list=["time","volume","weight","max_combined_loads"]
             if origin_node in pickup_node:
                 key_list.append(str(("may_pickup", origin_node)))
-                key_list.append(str(("may_avoid_dropoff",origin_node)))
+                key_list.append(str(("may_avoid_dropoff",origin_node+num_pickups)))
             if destination_node in dropoff_node:
                 key_list.append(str(("may_pickup",destination_node-num_pickups)))
-                key_list.append(str(("may_avoid_dropoff",destination_node-num_pickups)))
+                key_list.append(str(("may_avoid_dropoff",destination_node)))
         indices = np.array([key_2_index[k] for k in key_list], dtype=int)
         print((origin_node,destination_node))
         print(key_list)
