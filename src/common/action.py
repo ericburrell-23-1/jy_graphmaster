@@ -36,7 +36,7 @@ class Action:
         self.node_tail = node_tail
         self.node_head = node_head
         self.Exog_vec = Exog_vec
-        self.Exog_vec_csr = csr_matrix(Exog_vec)
+        #self.Exog_vec_csr = csr_matrix(Exog_vec) #1
         self.cost = cost
         self.min_resource_vec = min_resource_vec
         if isinstance(self.min_resource_vec, np.ndarray):
@@ -60,35 +60,24 @@ class Action:
         else:
             self.max_indices = np.array([], dtype=int)
             self.max_values = np.array([], dtype=float)
-        self.red_cost_non_zero_cal_vals = self.Exog_vec_csr.data
-        self.red_cost_non_zero_cal_indices = self.Exog_vec_csr.indices
+        self.red_cost_non_zero_cal_vals = self.red_cost_non_zero_cal_vals = Exog_vec[Exog_vec != 0]
+        self.red_cost_non_zero_cal_indices = np.nonzero(Exog_vec)[0]
         self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
-        # Generate a deterministic hash based on the action's properties
-        # Convert numpy arrays to bytes for hashing
-        exog_bytes = self.Exog_vec.tobytes() if hasattr(self.Exog_vec, 'tobytes') else str(self.Exog_vec).encode()
-        min_res_bytes = self.min_resource_vec.data.tobytes() if hasattr(self.min_resource_vec, 'data') else str(self.min_resource_vec).encode()
-        res_cons_bytes = self.resource_consumption_vec.data.tobytes() if hasattr(self.resource_consumption_vec, 'data') else str(self.resource_consumption_vec).encode()
-        max_res_bytes = self.max_resource_vec.data.tobytes() if hasattr(self.max_resource_vec, 'data') else str(self.max_resource_vec).encode()
-        
-        # Create a hash from the combined key properties
-        hash_components = [
-            str(self.node_tail).encode(),
-            str(self.node_head).encode(),
-            str(self.cost).encode(),
-            exog_bytes,
-            min_res_bytes,
-            res_cons_bytes,
-            str(self.indices_non_zero_max).encode(),
-            max_res_bytes
-        ]
-        
-        hash_object = hashlib.md5(b''.join(hash_components))
-        self.action_id = hash_object.hexdigest()
+        self.action_id = hash((self.node_tail,self.node_head))
         
         self.mark_of_null_action = False
         if self.node_tail is None:
             self.mark_of_null_action = True
 
+        # Generate a deterministic hash based on the action's properties
+        # Convert numpy arrays to bytes for hashing
+        # exog_bytes = self.Exog_vec.tobytes() if hasattr(self.Exog_vec, 'tobytes') else str(self.Exog_vec).encode()
+        # min_res_bytes = self.min_resource_vec.data.tobytes() if hasattr(self.min_resource_vec, 'data') else str(self.min_resource_vec).encode()
+        # res_cons_bytes = self.resource_consumption_vec.data.tobytes() if hasattr(self.resource_consumption_vec, 'data') else str(self.resource_consumption_vec).encode()
+        # max_res_bytes = self.max_resource_vec.data.tobytes() if hasattr(self.max_resource_vec, 'data') else str(self.max_resource_vec).encode()
+        
+        # Create a hash from the combined key properties
+        
     # def comp_red_cost(self, dual_vec):
     #     """Computes the reduced cost by multiplying the dual vector times the exogenous."""
     #     # this_red_cost = 0

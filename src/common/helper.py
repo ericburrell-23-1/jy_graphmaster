@@ -68,7 +68,7 @@ class Helper:
     
     def LOAD_AI_partial_map_2_indices_applied(key_2_index,pickup_node, dropoff_node,destination_node,origin_node,num_pickups):
         key_list=["time"]
-        debug_on=True
+        debug_on=False
         if debug_on==True:
 
             key_list=["time","volume","weight","max_combined_loads"]
@@ -79,8 +79,6 @@ class Helper:
                 key_list.append(str(("may_pickup",destination_node-num_pickups)))
                 key_list.append(str(("may_avoid_dropoff",destination_node)))
         indices = np.array([key_2_index[k] for k in key_list], dtype=int)
-        print((origin_node,destination_node))
-        print(key_list)
         return indices
 
         #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,destination_node,origin_node)
