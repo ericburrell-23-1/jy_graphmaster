@@ -189,7 +189,7 @@ class jy_make_load_ai_states:
     def confirm_if_state_possible(self,candid_state):
         #print('hello world')
         #print('candid_state')
-        candid_state.pretty_print_state()
+        #candid_state.pretty_print_state()
         pickup_node = self.pickup_node
         dropoff_node = self.dropoff_node
         s2 = candid_state

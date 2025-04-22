@@ -32,6 +32,7 @@ AVERAGE_SPEED = 55 / 60
 MIN_DISTANCE_SAVING = 0
 STANDARD_SERVICE_TIME = 2 * 60
 JY_OPT_SPLIT=1
+THRESHOLD = [1,10,100, np.inf]
 class loadAI_cg:
     def __init__(self, problem_instance_file_name,instance_name, file_type: str = "Standard_Form"):
         
@@ -53,7 +54,7 @@ class loadAI_cg:
         self.initial_res_actions: Set[Action] = set()
         self.the_single_null_action: Action = None
         self.state_update_module: StateUpdateFunction = None
-                
+        self.edges = defaultdict(set)
         self._load_data_from_file()   
         self._build_problem_model()
         self._create_dom_action_object()
@@ -71,6 +72,9 @@ class loadAI_cg:
         self.solver = GraphMaster_cg(
             self.nodes,
             self.actions,
+            self.can_group,
+            self.edges,
+            self.distance,
             self.rhs_vector,
             self.initial_resource_dict,
             self.initial_resource_vector,
@@ -203,10 +207,14 @@ class loadAI_cg:
             self.pickup_node.append(pickup_id)
             self.dropoff_to_pickup[dropoff_id] = pickup_id
             self.dropoff_node.append(dropoff_id)
+        self.pickup_and_dropoff_node = self.pickup_node+self.dropoff_node
         self.time_window_start[-1] = np.inf
         self.time_window_end[-1] = 0
         self.time_window_start[-2] = np.inf
         self.time_window_end[-2] = 0
+        
+
+
     def _build_problem_model(self):
         # NODES
         self.nodes.append(-1)
@@ -228,6 +236,8 @@ class loadAI_cg:
         #print(self.nodes)
         #input('---')
         # EXOG RHS
+        self._create_travel_time()
+        print('check here')
         self.rhs_vector = ones(self.number_of_customers)
         idx = 0
         for pickup_node in self.pickup_to_dropoff:
@@ -241,17 +251,15 @@ class loadAI_cg:
 
         # ACTIONS
         self._create_default_resource_values()
-        
+        self._create_distance()
         self._create_source_sink_actions()
-        self._create_pickup_to_pickup_actions()
-        self._create_pickup_to_dropoff_actions()
-        self._create_dropoff_to_pickup_actions()
-        self._create_dropoff_to_dropoff_actions()
+        # self._create_pickup_to_pickup_actions()
+        # self._create_pickup_to_dropoff_actions()
+        # self._create_dropoff_to_pickup_actions()
+        # self._create_dropoff_to_dropoff_actions()
+        self._create_edges()
         self._create_skip_actions()
         self._create_null_action_info()
-        
-
-
 
     def _populate_initial_resources(self):
         """Helper function to handle building the resource dicts/vector"""
@@ -360,6 +368,7 @@ class loadAI_cg:
     def _create_source_sink_actions(self):
         for destination_node in tqdm(self.pickup_to_dropoff,desc = 'create_source_sink_actions_1'):
             origin_node = -1  # Source
+            self.edges[origin_node].add(destination_node)
             cost = 0
             exog_contrib_vec = self._default_contribution_vector()
             partial_trans_min_input = {}
@@ -380,6 +389,7 @@ class loadAI_cg:
         for origin_node in tqdm(self.dropoff_to_pickup,desc='create_source_sink_actions_2'):
             origin_node = origin_node
             destination_node = -2  # Sink
+            self.edges[origin_node].add(destination_node)
             cost = 0
             exog_contrib_vec = self._default_contribution_vector()
             if JY_OPT_SPLIT==1:
@@ -415,145 +425,143 @@ class loadAI_cg:
             self.actions[origin_node, destination_node] = [action]
             
         
-    def _create_pickup_to_pickup_actions(self):
-        for origin_node in tqdm(self.pickup_to_dropoff,desc='create_pickup_to_pickup_actions'):
-            for destination_node in self.pickup_to_dropoff:
-                if origin_node == destination_node:
-                    continue
+    def _create_pickup_to_pickup_actions(self, origin_node,destination_node):
+        if origin_node == destination_node:
+            return None
+        self.edges[origin_node].add(destination_node)
+        cost = self._haversine_distance(origin_node, destination_node)
+        exog_contrib_vec = self._default_contribution_vector()
+        cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
+        exog_contrib_vec[cover_constraint_index] = 1
+        if JY_OPT_SPLIT==1:
+            exog_contrib_vec[cover_constraint_index] = 0.5
 
-                cost = self._haversine_distance(origin_node, destination_node)
-                exog_contrib_vec = self._default_contribution_vector()
-                cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
-                exog_contrib_vec[cover_constraint_index] = 1
-                if JY_OPT_SPLIT==1:
-                    exog_contrib_vec[cover_constraint_index] = 0.5
-
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node], 
-                                           "volume": self.volume_demands[origin_node] + self.volume_demands[destination_node],
-                                           "weight": self.weight_demands[origin_node] + self.weight_demands[destination_node],
-                                           "max_combined_loads": 1,
-                                           str(("may_pickup", destination_node)): 1}
-                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
-                                           "volume": -self.volume_demands[origin_node],
-                                           "weight": -self.weight_demands[origin_node],
-                                           "max_combined_loads": -1,
-                                           str(("may_pickup", origin_node)): -1,
-                                           str(("may_avoid_dropoff", self.pickup_to_dropoff[origin_node])): -1}
-                partial_trans_term_min = {"time": self.time_window_start[destination_node]}
-                trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
-                trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
-                trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
-                
-                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
-                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
-                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
-                #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
-
-                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
-                self.actions[origin_node, destination_node] = [action]
+        partial_trans_min_input = {"time": self.travel_time[(origin_node, destination_node)] + self.service_time[origin_node] + self.time_window_end[destination_node], 
+                                    "volume": self.volume_demands[origin_node] + self.volume_demands[destination_node],
+                                    "weight": self.weight_demands[origin_node] + self.weight_demands[destination_node],
+                                    "max_combined_loads": 1,
+                                    str(("may_pickup", destination_node)): 1}
+        partial_trans_term_vec = {"time": -self.travel_time[(origin_node, destination_node)] - self.service_time[origin_node], 
+                                    "volume": -self.volume_demands[origin_node],
+                                    "weight": -self.weight_demands[origin_node],
+                                    "max_combined_loads": -1,
+                                    str(("may_pickup", origin_node)): -1,
+                                    str(("may_avoid_dropoff", self.pickup_to_dropoff[origin_node])): -1}
+        partial_trans_term_min = {"time": self.time_window_start[destination_node]}
+        trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
+        trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
+        trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
         
-    def _create_pickup_to_dropoff_actions(self):
-        for origin_node in tqdm(self.pickup_to_dropoff,desc='create_pickup_to_dropoff_actions'):
-            for destination_node in self.dropoff_to_pickup:
-                cost = self._haversine_distance(origin_node, destination_node)
-                exog_contrib_vec = self._default_contribution_vector()
-                cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
-                exog_contrib_vec[cover_constraint_index] = 1
-                if JY_OPT_SPLIT==1:
-                    exog_contrib_vec[cover_constraint_index] = 0.5
+        _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+        _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+        _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+        #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+        indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node]}
-                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
-                                           "volume": -self.volume_demands[origin_node],
-                                           "weight": -self.weight_demands[origin_node],
-                                           "max_combined_loads": -1,
-                                           str(("may_pickup", origin_node)): -1,
-                                           str(("may_avoid_dropoff", self.pickup_to_dropoff[origin_node])): -1}
-                partial_trans_term_min = {"time": self.time_window_start[destination_node]}
-                trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
-                trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
-                trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
-                
-                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
-                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
-                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
-                #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
+        action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+        self.actions[origin_node, destination_node] = [action]
+        return action
+        
+    def _create_pickup_to_dropoff_actions(self,origin_node, destination_node):
+        self.edges[origin_node].add(destination_node)
+        cost = self._haversine_distance(origin_node, destination_node)
+        exog_contrib_vec = self._default_contribution_vector()
+        cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
+        exog_contrib_vec[cover_constraint_index] = 1
+        if JY_OPT_SPLIT==1:
+            exog_contrib_vec[cover_constraint_index] = 0.5
 
-                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
-                self.actions[origin_node, destination_node] = [action]
-            
+        partial_trans_min_input = {"time": self.travel_time[(origin_node, destination_node)] + self.service_time[origin_node] + self.time_window_end[destination_node]}
+        partial_trans_term_vec = {"time": -self.travel_time[(origin_node, destination_node)] - self.service_time[origin_node], 
+                                    "volume": -self.volume_demands[origin_node],
+                                    "weight": -self.weight_demands[origin_node],
+                                    "max_combined_loads": -1,
+                                    str(("may_pickup", origin_node)): -1,
+                                    str(("may_avoid_dropoff", self.pickup_to_dropoff[origin_node])): -1}
+        partial_trans_term_min = {"time": self.time_window_start[destination_node]}
+        trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
+        trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
+        trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
         
-    def _create_dropoff_to_pickup_actions(self):
-        for origin_node in tqdm(self.dropoff_to_pickup,desc='create_dropoff_to_pickup_actions'):
-            for destination_node in self.pickup_to_dropoff:
-                origin_pickup_node = self.dropoff_to_pickup[origin_node]
-                if origin_pickup_node == destination_node:
-                    continue
-                cost = self._haversine_distance(origin_node, destination_node)
-                exog_contrib_vec = self._default_contribution_vector()
-                if JY_OPT_SPLIT==1:
-                    cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
-                    exog_contrib_vec[cover_constraint_index] = 0.5
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node], 
-                                           "volume": self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
-                                           "weight": self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
-                                           "max_combined_loads": 1,
-                                           str(("may_pickup", destination_node)): 1}
-                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
-                                           "volume": -self.volume_demands[origin_pickup_node],
-                                           "weight": -self.weight_demands[origin_pickup_node],
-                                           str(("may_avoid_dropoff", origin_node)): 1}
-                partial_trans_term_min = {"time": self.time_window_start[destination_node]}
-                trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
-                trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
-                trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
-                
-                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
-                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
-                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
-                #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
+        _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+        _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+        _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+        #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+        indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
-                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
-                self.actions[origin_node, destination_node] = [action]
+        action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+        self.actions[origin_node, destination_node] = [action]
+        return action
         
-        
-    def _create_dropoff_to_dropoff_actions(self):
-        for origin_node in tqdm(self.dropoff_to_pickup,desc='create_dropoff_to_dropoff_actions'):
-            for destination_node in self.dropoff_to_pickup:
-                if origin_node == destination_node:
-                    continue
-                origin_pickup_node = self.dropoff_to_pickup[origin_node]
-                cost = self._haversine_distance(origin_node, destination_node)
-                exog_contrib_vec = self._default_contribution_vector()
-                if JY_OPT_SPLIT==1:
-                    cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
-                    exog_contrib_vec[cover_constraint_index] = 0.5
-                partial_trans_min_input = {"time": self._travel_time(origin_node, destination_node) + self.service_time[origin_node] + self.time_window_end[destination_node]}
-                partial_trans_term_vec = {"time": -self._travel_time(origin_node, destination_node) - self.service_time[origin_node], 
-                                           "volume": -self.volume_demands[origin_pickup_node],
-                                           "weight": -self.weight_demands[origin_pickup_node],
-                                           str(("may_avoid_dropoff", origin_node)): 1}
-                partial_trans_term_min = {"time": self.time_window_start[destination_node]}
-                trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
-                trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
-                trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
-                
-                _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
-                _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
-                _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
-                #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-                indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
+    def _create_dropoff_to_pickup_actions(self,origin_node, destination_node):
 
-                action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
-                self.actions[origin_node, destination_node] = [action]
+        origin_pickup_node = self.dropoff_to_pickup[origin_node]
+        if origin_pickup_node == destination_node:
+            return None
+        self.edges[origin_node].add(destination_node)
+        cost = self._haversine_distance(origin_node, destination_node)
+        exog_contrib_vec = self._default_contribution_vector()
+        if JY_OPT_SPLIT==1:
+            cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
+            exog_contrib_vec[cover_constraint_index] = 0.5
+        partial_trans_min_input = {"time": self.travel_time[(origin_node, destination_node)] + self.service_time[origin_node] + self.time_window_end[destination_node], 
+                                    "volume": self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
+                                    "weight": self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
+                                    "max_combined_loads": 1,
+                                    str(("may_pickup", destination_node)): 1}
+        partial_trans_term_vec = {"time": -self.travel_time[(origin_node, destination_node)] - self.service_time[origin_node], 
+                                    "volume": -self.volume_demands[origin_pickup_node],
+                                    "weight": -self.weight_demands[origin_pickup_node],
+                                    str(("may_avoid_dropoff", origin_node)): 1}
+        partial_trans_term_min = {"time": self.time_window_start[destination_node]}
+        trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
+        trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
+        trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
         
+        _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+        _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+        _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+        #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+        indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
+
+        action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+        self.actions[origin_node, destination_node] = [action]
+        return action
+        
+    def _create_dropoff_to_dropoff_actions(self, origin_node, destination_node):
+        if origin_node == destination_node:
+            return None
+        self.edges[origin_node].add(destination_node)
+        origin_pickup_node = self.dropoff_to_pickup[origin_node]
+        cost = self._haversine_distance(origin_node, destination_node)
+        exog_contrib_vec = self._default_contribution_vector()
+        if JY_OPT_SPLIT==1:
+            cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
+            exog_contrib_vec[cover_constraint_index] = 0.5
+        partial_trans_min_input = {"time": self.travel_time[(origin_node, destination_node)] + self.service_time[origin_node] + self.time_window_end[destination_node]}
+        partial_trans_term_vec = {"time": -self.travel_time[(origin_node, destination_node)] - self.service_time[origin_node], 
+                                    "volume": -self.volume_demands[origin_pickup_node],
+                                    "weight": -self.weight_demands[origin_pickup_node],
+                                    str(("may_avoid_dropoff", origin_node)): 1}
+        partial_trans_term_min = {"time": self.time_window_start[destination_node]}
+        trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
+        trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
+        trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
+        
+        _,min_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
+        _,resource_consumption_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
+        _,max_resource_vec = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
+        #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
+        indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
+
+        action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
+        self.actions[origin_node, destination_node] = [action]
+        return action
         
     def _create_skip_actions(self):
         for destination_node in tqdm(self.pickup_to_dropoff,desc='create_skip_actions'):
             origin_node = -1
+            self.edges[origin_node].add(destination_node)
             cost = self._slack(destination_node)
             exog_contrib_vec = self._default_contribution_vector()
             cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", destination_node))]
@@ -575,6 +583,7 @@ class loadAI_cg:
                
         for origin_node in self.pickup_to_dropoff:
             destination_node = -2
+            self.edges[origin_node].add(destination_node)
             cost = 0
             exog_contrib_vec = self._default_contribution_vector()
 
@@ -593,6 +602,116 @@ class loadAI_cg:
             action = Action(trans_min_input, trans_term_vec, trans_term_min, destination_node, origin_node, exog_contrib_vec, cost, min_resource_vec, resource_consumption_vec, indices_apply_min_to, max_resource_vec, self._full_resource_vec(), self._empty_resource_vec())
             self.actions[origin_node, destination_node] = [action]
     
+    def _create_edges(self):
+        self.can_group = defaultdict(set)
+
+        self.max_action_cost = -1
+        self.dist = {(u,v):np.inf for u in self.pickup_and_dropoff_node for v in self.pickup_and_dropoff_node if u!=v}
+        for u in self.pickup_node:
+            self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
+
+        for u in self.pickup_node:
+            for v in self.pickup_node:
+                if u!=v:
+                    if u==2 and v ==8:
+                        print('check here')
+                    did_create_edge = False
+                    earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[(u, v)]
+                    if earlist_time_arrive_v_pickup>self.time_window_end[v]:
+                        earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
+                        earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
+                            -self.travel_time[(v,self.pickup_to_dropoff[u])]
+                        earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
+                            -self.travel_time[(v,self.pickup_to_dropoff[v])]
+                        if earlist_time_arrive_u_dropoff > self.time_window_end[self.pickup_to_dropoff[u]]:
+                            earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
+                            earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
+                            if earlist_time_arrive_v_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[v]]:
+                                did_create_edge = True
+                                if (u,v) not in self.actions:
+                                    this_action = self._create_pickup_to_pickup_actions(u,v)
+    
+                                    if this_action.cost > self.max_action_cost:
+                                        self.max_action_cost = this_action.cost
+                                if (v,self.pickup_to_dropoff[u]) not in self.actions:
+                                    this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[u])
+  
+                                    if this_action.cost > self.max_action_cost:
+                                        self.max_action_cost = this_action.cost
+                                if (self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]) not in self.actions:
+                                    this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
+
+                                    if this_action.cost > self.max_action_cost:
+                                        self.max_action_cost = this_action.cost
+                                
+
+                        if earlist_time_arrive_v_dropoff>self.time_window_end[self.pickup_to_dropoff[v]]:
+                            earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
+                            earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])]
+                            if earlist_time_arrive_u_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[u]]:
+                                did_create_edge= True
+                                if (u,v) not in self.actions:
+                                    this_action = self._create_pickup_to_pickup_actions(u,v)
+
+                                    if this_action.cost > self.max_action_cost:
+                                        self.max_action_cost = this_action.cost
+                                if (v,self.pickup_to_dropoff[v]) not in self.actions:
+                                    this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[v])
+
+                                    if this_action.cost > self.max_action_cost:
+                                        self.max_action_cost = this_action.cost
+                                if (self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]) not in self.actions:
+                                    this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
+
+                                    if this_action.cost > self.max_action_cost:
+                                        self.max_action_cost = this_action.cost
+
+                    earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[(u, self.pickup_to_dropoff[u])]
+                    earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
+                    earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[(self.pickup_to_dropoff[u],v)]
+                    if earlist_time_arrive_pickup_v_3 > self.time_window_start[v]:
+                        did_create_edge = True
+                        if (self.pickup_to_dropoff[u],v) not in self.actions:
+                            this_action = self._create_dropoff_to_pickup_actions(self.pickup_to_dropoff[u],v)
+
+                            if this_action.cost > self.max_action_cost:
+                                    self.max_action_cost = this_action.cost
+                    if did_create_edge == True:
+                        self.can_group[u].add(v)
+                        self.dist[(u,v)] = min(self.travel_time[(u,v)],self.travel_time[(u,self.pickup_to_dropoff[v])],\
+                                            self.travel_time[(self.pickup_to_dropoff[u],v)],self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])])
+    def _generate_preferred_actions(self):
+        self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
+        for threshold in THRESHOLD:
+            dist = self.scores.copy()
+            for k in range(0,MAX_COMBINED_LOADS):
+                for (u,v) in self.actions.keys():
+                    min_uwv = min((dist[(u,w)]+dist[(w,v)]) for w in self.edges[u] & self.edges[v])
+                    dist[(u,v)] = min(dist[(u,v)],min_uwv)
+            for (u,v) in self.actions.keys():
+                self._add_action_to_threshold(dist, (u,v), len(THRESHOLD))
+            
+    def _add_action_to_threshold(self,dist, this_tuple,thre_idx):
+        if dist[this_tuple] < THRESHOLD[thre_idx]:
+            self.parefered_actions[THRESHOLD[thre_idx]].append(this_tuple)
+        if thre_idx >0:
+            self._add_action_to_threshold(thre_idx-1)
+
+    def _create_distance(self):
+        self.distance = defaultdict()
+        for u in self.pickup_node:
+            self.distance[(-1,u)] = 0
+            skip_node = u + 2 * self.number_of_customers
+            self.distance[(-1,skip_node)]=self._slack(u)
+            self.distance[(skip_node,-2)]= 0
+
+        for v in self.dropoff_node:
+            self.distance[(v,-2)] = 0
+        for u in self.pickup_and_dropoff_node:
+            for v in self.pickup_and_dropoff_node:
+                if u!=v:
+                    self.distance[(u,v)] = self._haversine_distance(u,v)
+
 
     def _default_contribution_vector(self):
         return zeros(self.number_of_customers)
@@ -665,40 +784,48 @@ class loadAI_cg:
         resource_consumption_vec = csr_matrix(np.zeros(self.number_of_resources).reshape(1,-1))
         indices_apply_min_to = []    
         max_resource_vec = csr_matrix(np.full(self.number_of_resources, np.inf).reshape(1,-1))
-       # self.initial_null_actions['trans_min_input'] = trans_min_input
-       # self.initial_null_actions['trans_term_add'] = trans_term_add
-       # self.initial_null_actions['trans_term_min'] = trans_term_min
-       # self.initial_null_actions['contribution_vector'] = contribution_vector
-       # self.initial_null_actions['cost'] = cost
-       # self.initial_null_actions['min_resource_vec'] = min_resource_vec
-       # self.initial_null_actions['resource_consumption_vec'] = resource_consumption_vec
-       # self.initial_null_actions['indices_non_zero_max'] = indices_non_zero_max
-       # self.initial_null_actions['max_resource_vec'] = max_resource_vec
 
         self.the_single_null_action= Action(trans_min_input,trans_term_add,trans_term_min,None,None,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_vec,empty_resource_vec)
+    def _create_infeasible_action(self,u,v):
+        full_resource_array = np.ones(self.number_of_resources)
+        full_resource_vec = csr_matrix(full_resource_array.reshape(1, -1))
+        empty_resource_array = np.zeros(self.number_of_resources)
+        empty_resource_vec = csr_matrix(empty_resource_array.reshape(1, -1))
+        trans_min_input = {}
+        trans_term_add = {}
+        trans_term_min = {}
+        for res_name in self.resource_name_to_index.keys():
+            trans_min_input[res_name] = 0
+            trans_term_add[res_name] = 0
+            trans_term_min[res_name] = np.inf
+        #contribution_vector = np.zeros(len(self.rhs_vector)
+        contribution_vector = np.zeros(len(self.rhs_vector)).reshape(1,-1)
+        cost = np.inf
+        min_resource_vec = csr_matrix(np.full((1, self.number_of_resources), np.inf))
+        resource_consumption_vec = csr_matrix(np.zeros(self.number_of_resources).reshape(1,-1))
+        indices_apply_min_to = []    
+        max_resource_vec = csr_matrix(np.full(self.number_of_resources, np.inf).reshape(1,-1))
+        self.infeasible_action = Action(trans_min_input,trans_term_add,trans_term_min,u,v,contribution_vector,cost,min_resource_vec,resource_consumption_vec,indices_apply_min_to,max_resource_vec,full_resource_vec,empty_resource_vec)
+        self.actions[(u,v)]=[self.infeasible_action]
+                    
     def _create_travel_time(self):
         self.travel_time = {}
-        nodes = []
-        for n1,n2 in self.pickup_to_dropoff.items():
-            nodes.append(n1)
-            nodes.append(n2)
+        nodes = self.pickup_node+self.dropoff_node
         for n1 in nodes:
             for n2 in nodes:
                 if n1 != n2:
-                    self.travel_time[(n1,n2)] = self._travel_time(n1,n2)
+                    self.travel_time[(n1,n2)] = self._travel_time(n1,n2) + self.service_time[n1]
                 else:
                     self.travel_time[(n1,n2)] =0
-        nodes.append(-1)
-        nodes.append(-2)
-        return nodes
+
     def _create_nearest_node(self,k):
         neighbors_by_distance = {
-                        u: sorted(
-                            [v for v in self.nodes if v != u and v not in {-1, -2}],
-                            key=lambda v: self.actions[(u, v)][0].cost if (u, v) in self.actions else np.inf
-                        )
-                        for u in self.nodes if u not in {-1, -2}
-                    }
+                    u: sorted(
+                        [v for v in self.nodes if v != u and v not in {-1, -2} and v in self.edges[u]],
+                        key=lambda v: self.actions[(u, v)][0].cost
+                    )
+                    for u in self.nodes if u not in {-1, -2}
+                }
         k = min(k,len(self.nodes)-1)
         neighbors = {}
 
@@ -742,30 +869,36 @@ class loadAI_cg:
 
         self.benefit_group = defaultdict()
         self.benefit_group_cost = defaultdict()
-        for u in self.pickup_to_dropoff.keys():
+        for u in self.pickup_node:
             this_benefit_group = defaultdict()
             this_benefit_group_cost = defaultdict()
-            for v in self.pickup_to_dropoff.keys():
+            for v in self.can_group[u]:
                 if u != v:
-                    cost_1 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[u])][0].cost+\
-                    +self.actions[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])][0].cost + self.actions[(self.pickup_to_dropoff[v],-2)][0].cost
-                    cost_2 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[v])][0].cost+\
-                    +self.actions[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])][0].cost + self.actions[(self.pickup_to_dropoff[u],-2)][0].cost
+                    try:
+                        cost_1 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[u])][0].cost+\
+                        +self.actions[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])][0].cost + self.actions[(self.pickup_to_dropoff[v],-2)][0].cost
+                    except:
+                        cost_1 = np.inf
+                    try:
+                        cost_2 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[v])][0].cost+\
+                        +self.actions[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])][0].cost + self.actions[(self.pickup_to_dropoff[u],-2)][0].cost
+                    except:
+                        cost_2 = np.inf
                     #min_cost[(u,v)] = min(cost_1,cost_2)
                     this_benefit=  min(cost_1,cost_2)- self._slack(u)-self._slack(v) + random.uniform(-1e-6, 1e-6)
                     if this_benefit <-0.0001:
                         this_benefit_group[v] = this_benefit
                         this_benefit_group_cost[v] = this_benefit
+
             this_benefit_group = dict(sorted(this_benefit_group.items(), key=lambda item: item[1])) 
             self.benefit_group[u] =   this_benefit_group
             self.benefit_group_cost[u] = this_benefit_group_cost
         print('finish benefit group')
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
-        nodes = self._create_travel_time()
         self.neighbors_by_distance, self.neighbors = self._create_nearest_node(10)
         #self.plot_pickup_dropoff_locations()
-        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, self.neighbors_by_distance, self.neighbors , self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
+        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.max_action_cost, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, self.neighbors_by_distance, self.neighbors , self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
 
 
     def plot_pickup_dropoff_with_clusters(self, threshold=0.1):

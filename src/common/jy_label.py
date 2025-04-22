@@ -17,7 +17,7 @@ class jy_label:
     def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
                  dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
                  actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
-                 rcp_u_partial, rcp_d_partial,rcp_u_partial_2):
+                 rcp_u_partial, rcp_d_partial,rcp_u_partial_2,edges, distance):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         if not my_actions_ordered:
@@ -79,7 +79,8 @@ class jy_label:
         self.rcp_u_partial = rcp_u_partial
         self.rcp_d_partial = rcp_d_partial
         self.rcp_u_partial_2 = rcp_u_partial_2
-        
+        self.edges = edges
+        self.distance = distance
         for s in self.my_states_ordered:
             self.all_nodes_ordered.append(s.node)
             if s.node  in self.pickup_nodes:
@@ -228,18 +229,79 @@ class jy_label:
             # Consolidate loops and calculations
             tot_benefit_dropoff_dual = 0
             tot_benefit_droppoff_cost = 0
-            
-            for d in D:
-                drop_off_of_d = d + pickup_nodes_len
-                if drop_off_of_d == self.node:
-                    tot_benefit_dropoff_dual -= dual[d-1] / 2
-                elif d == self.node:
-                    tot_benefit_dropoff_dual -= dual[d-1]
-                    tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
-                else:
-                    tot_benefit_dropoff_dual -= dual[d-1] / 2
-                    tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
-            
+            if 1>0:
+                for d in D:
+                    drop_off_of_d = d + pickup_nodes_len
+                    if drop_off_of_d in self.edges[self.node]:
+                        if self.node == 8 and drop_off_of_d == 22:
+                            print('check here')
+                        if drop_off_of_d == self.node:
+                            tot_benefit_dropoff_dual -= dual[d-1] / 2
+                        elif d == self.node:
+                            tot_benefit_dropoff_dual -= dual[d-1]
+                            #tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
+                            tot_benefit_droppoff_cost += self.distance[(self.node, drop_off_of_d)]
+                        else:
+                            tot_benefit_dropoff_dual -= dual[d-1] / 2
+                            #tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
+                            tot_benefit_droppoff_cost += self.distance[(self.node, drop_off_of_d)]
+            else:
+                if D ==[1]:
+                    print('look here')
+                D_copy = D.copy()
+                processed = set()  # Track which nodes we've successfully processed
+                pending = []  # Track nodes we couldn't process directly
+                route_through = {}  # Map nodes to their required intermediate nodes
+
+                while D_copy:
+                    d = D_copy.pop(0)  # Take the first element
+                    drop_off_of_d = d + pickup_nodes_len
+                    
+                    # Case 1: Direct edge exists from current node to drop_off
+                    if drop_off_of_d in self.edges[self.node]:
+                        tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
+                        
+                        # Handle dual calculations
+                        if drop_off_of_d == self.node:
+                            tot_benefit_dropoff_dual -= dual[d-1] / 2
+                        elif d == self.node:
+                            tot_benefit_dropoff_dual -= dual[d-1]
+                        else:
+                            tot_benefit_dropoff_dual -= dual[d-1] / 2
+                            
+                        processed.add(d)
+                        
+                        # Check if this node can be used as an intermediate for any pending nodes
+                        for pending_d in pending[:]:
+                            pending_drop_off = pending_d + pickup_nodes_len
+                            if pending_drop_off in self.edges[drop_off_of_d]:
+                                route_through[pending_d] = drop_off_of_d
+                                pending.remove(pending_d)
+                                D_copy.append(pending_d)  # Re-add to process with the new route
+                    
+                    # Case 2: Node is already marked to go through an intermediate
+                    elif d in route_through:
+                        intermediate = route_through[d]
+                        drop_off_of_d = d + pickup_nodes_len
+                        
+                        # Calculate cost through the intermediate node
+                        tot_benefit_droppoff_cost += self.action_dict[(intermediate, drop_off_of_d)][0].cost
+                        tot_benefit_dropoff_dual -= dual[d-1] / 2
+                        processed.add(d)
+                    
+                    # Case 3: No direct edge, try later with other nodes as intermediates
+                    else:
+                        if d in pending:  # If we've already tried once before
+                            # If we've tried all nodes and none worked
+                            if len(processed) == 0 and len(pending) == len(D):
+                                raise ValueError(f"No feasible path found for any drop-off point")
+                        else:
+                            pending.append(d)
+                            D_copy.append(d)  # Move to the end of the queue
+
+                # Check if we have unprocessed nodes
+                if pending:
+                    raise ValueError(f"No feasible paths found for nodes: {pending}")
             # Pre-calculate constants
             extra_customer_can_pick_up = self.jy_opt['max_pickups_in_a_route'] - self.num_pickups_in_route
             
@@ -374,7 +436,7 @@ class jy_label:
             #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2)
+            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2,self.edges,self.distance)
         #     if self.jy_opt['lb_option'] == 2:
         #         NEW_label.calculate_better_lb_2(dual_vec)
         #     elif self.jy_opt['lb_option'] == 1:

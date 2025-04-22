@@ -366,8 +366,8 @@ class Action:
             return is_valid
         if self.mark_of_null_action == False and (state_tail.node != self.node_tail or state_head.node != self.node_head):
             self.pretty_print_action()
-            state_head.pretty_print_state()
-            state_tail.pretty_print_state()
+            #state_head.pretty_print_state()
+            #state_tail.pretty_print_state()
             is_valid = False
             print('not valid due to node not agree')
             return is_valid

@@ -11,10 +11,11 @@ import numpy as np
 class LoadAI_state_input():
     
  
-    def __init__(self, nodes, actions, capacity, demands, time_window_start, time_window_end, pickup_to_dropoff, dropoff_to_pickup, neighbors_by_distance, neighbors, travel_time, initial_resource_vector, resource_name_to_index, number_of_resources,problem_info):
+    def __init__(self, nodes, actions, max_action_cost, capacity, demands, time_window_start, time_window_end, pickup_to_dropoff, dropoff_to_pickup, neighbors_by_distance, neighbors, travel_time, initial_resource_vector, resource_name_to_index, number_of_resources,problem_info):
         self.nodes = nodes
         
         self.actions = actions
+        self.max_action_cost = max_action_cost
         self.capacity = capacity
         self.demands = demands
         self.time_window_start=time_window_start

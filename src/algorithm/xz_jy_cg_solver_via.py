@@ -26,7 +26,7 @@ class xy_jy_cg_solver:
         self.route_name_to_index = defaultdict()
         self.row_to_col_to_data = defaultdict(lambda:defaultdict(float))
         self.actions = data.actions
-
+        self.max_action_cost = data.max_action_cost
         self.pickup_node = data.pickup_node
         self.dropoff_node = data.dropoff_node
         self.neighbors = data.neighbors
@@ -45,9 +45,11 @@ class xy_jy_cg_solver:
         this_rho = defaultdict()
         for u in self.pickup_node:
             for v in self.pickup_node:
-                if u!= v:
+                if u!= v and (u,v) in self.actions and (u+len(self.pickup_node),v+len(self.pickup_node)) in self.actions:
                     this_rho[(u,v)] = 2*self.actions[(u,v)][0].cost + 2*self.actions[(u+len(self.pickup_node),v+len(self.pickup_node))][0].cost
                     this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
+                else:
+                    this_rho[(u,v)] = self.max_action_cost*2
         return this_rho
         
     def _initiate_col_coeff(self):
@@ -642,7 +644,8 @@ class xy_jy_cg_solver:
         for i in range(0, len(new_nodes)-1):
             tail = new_nodes[i]
             head = new_nodes[i+1]
-
+            if (tail, head) not in self.actions:
+                return None
             this_act = self.actions[(tail, head)][0]
             state_action_alt_repeat.append(this_act)
             
