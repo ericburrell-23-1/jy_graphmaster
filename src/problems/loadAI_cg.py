@@ -74,6 +74,7 @@ class loadAI_cg:
             self.actions,
             self.can_group,
             self.edges,
+            self.preferred_actions,
             self.distance,
             self.rhs_vector,
             self.initial_resource_dict,
@@ -260,6 +261,7 @@ class loadAI_cg:
         self._create_edges()
         self._create_skip_actions()
         self._create_null_action_info()
+        self._create_preferred_actions()
 
     def _populate_initial_resources(self):
         """Helper function to handle building the resource dicts/vector"""
@@ -606,7 +608,7 @@ class loadAI_cg:
         self.can_group = defaultdict(set)
 
         self.max_action_cost = -1
-        self.dist = {(u,v):np.inf for u in self.pickup_and_dropoff_node for v in self.pickup_and_dropoff_node if u!=v}
+        
         for u in self.pickup_node:
             self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
 
@@ -678,24 +680,90 @@ class loadAI_cg:
                                     self.max_action_cost = this_action.cost
                     if did_create_edge == True:
                         self.can_group[u].add(v)
-                        self.dist[(u,v)] = min(self.travel_time[(u,v)],self.travel_time[(u,self.pickup_to_dropoff[v])],\
-                                            self.travel_time[(self.pickup_to_dropoff[u],v)],self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])])
-    def _generate_preferred_actions(self):
-        self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
+    def _create_preferred_actions(self):
+        #self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
+        self.preferred_actions = {}
         for threshold in THRESHOLD:
-            dist = self.scores.copy()
-            for k in range(0,MAX_COMBINED_LOADS):
-                for (u,v) in self.actions.keys():
-                    min_uwv = min((dist[(u,w)]+dist[(w,v)]) for w in self.edges[u] & self.edges[v])
-                    dist[(u,v)] = min(dist[(u,v)],min_uwv)
-            for (u,v) in self.actions.keys():
-                self._add_action_to_threshold(dist, (u,v), len(THRESHOLD))
+
+            F = {2:{}}
+            B = {2:{}}
+            for u in self.nodes:
+                F[2][u] = set()
+                for v in self.nodes:
+                    if self.distance[u][v] <= threshold:
+                        F[2][u].add(v)
+            for v in self.nodes:
+                B[2][v] = set()
+                for u in self.nodes:
+                    if self.distance[u][v] <= threshold:
+                        B[2][v].add(u)
+
+            for k in range(3,MAX_COMBINED_LOADS+1):
+                F[k]={}
+                B[k]={}
+
+                for u in self.nodes:
+                    for v in self.nodes:
+                        if u in self.edges and v in self.edges[u]:
+                            min_dist = self.distance[u][v]
+
+                            for k-1 in F and k-1 in B:
+                                for w in self.nodes:
+                                    if w in F[k-1].get(u,set()) and u in B[k-1].get(w,set()):
+                                        if self.distance[u][w] + self.distance[w][v] < min_dist:
+                                            min_dist = self.distance[u][w] + self.distance[w][v]
+                        self.distance[u][v] = min_dist
+                for u in self.nodes:
+                    F[k][u] = set()
+                    for v in self.nodes:
+                        if self.distance[u][v] <= threshold:
+                            F[k][u].add(v)
             
-    def _add_action_to_threshold(self,dist, this_tuple,thre_idx):
-        if dist[this_tuple] < THRESHOLD[thre_idx]:
-            self.parefered_actions[THRESHOLD[thre_idx]].append(this_tuple)
-        if thre_idx >0:
-            self._add_action_to_threshold(thre_idx-1)
+                for v in self.nodes:
+                    B[k][v] = set()
+                    for u in self.nodes:
+                        if self.distance[u][v] <= threshold:
+                            B[k][v].add(u)
+
+            preferred_edge = defaultdict(set)
+            # Rule 1: dropoff(u) -> dropoff(v) for feasible (u,v)
+            for u in self.dropoff_node:
+                for v in self.edges[u] & self.dropoff_node:
+                    preferred_edge[u].add(v)
+
+            
+            # Rule 2: pickup(u) -> dropoff(u) for all u
+            for u in self.pickup_node:
+                preferred_edge[u].add(self.pickup_to_dropoff[u])
+            
+            # Rule 3: pickup(u) -> pickup(v) for close enough nodes
+            for u in self.pickup_node:
+                for v in self.pickup_node & self.edges[u]:
+                    if self.distance[u][v] <= threshold:
+                        preferred_edge[u].add(v)
+            
+            # Rule 4: pickup(u) -> dropoff(v) for feasible combinations
+            for u in self.pickup_node:
+                for v in self.nodes:
+                    if self.distance[u][v] <= threshold and self.pickup_to_dropoff[v] in self.edges[u]:
+                        preferred_edge[u].add(v)
+            
+            # Rule 5: dropoff(u) -> pickup(v) for close enough nodes
+            for u in self.pickup_node:
+                for v in self.pickup_node:
+                    if self.distance[self.pickup_to_dropoff[u]][v] <= threshold and v in self.edges[self.pickup_to_dropoff[u]]:
+                        preferred_edge[self.pickup_to_dropoff[u]].add(v)
+            
+            for u in self.pickup_node:
+                preferred_edge[-1].add(u)
+                preferred_edge[-1].add(u+2*self.number_of_customers)
+                preferred_edge[u+2*self.number_of_customers].add(-1)
+
+            for v in self.dropoff_node:
+                preferred_edge[v].add(-2)
+            
+            self.preferred_actions[threshold] = preferred_edge
+            
 
     def _create_distance(self):
         self.distance = defaultdict()

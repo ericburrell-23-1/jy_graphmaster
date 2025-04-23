@@ -17,7 +17,7 @@ class jy_label:
     def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
                  dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
                  actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
-                 rcp_u_partial, rcp_d_partial,rcp_u_partial_2,edges, distance):
+                 rcp_u_partial, rcp_d_partial,rcp_u_partial_2,edges,preferred_actions, distance):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         if not my_actions_ordered:
@@ -80,6 +80,7 @@ class jy_label:
         self.rcp_d_partial = rcp_d_partial
         self.rcp_u_partial_2 = rcp_u_partial_2
         self.edges = edges
+        self.preferred_actions = preferred_actions
         self.distance = distance
         for s in self.my_states_ordered:
             self.all_nodes_ordered.append(s.node)
@@ -436,7 +437,7 @@ class jy_label:
             #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2,self.edges,self.distance)
+            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
         #     if self.jy_opt['lb_option'] == 2:
         #         NEW_label.calculate_better_lb_2(dual_vec)
         #     elif self.jy_opt['lb_option'] == 1:

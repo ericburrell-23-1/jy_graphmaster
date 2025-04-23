@@ -56,6 +56,7 @@ class GraphMaster_cg:
                  actions: Dict[Tuple[int, int], Action],
                  can_group,
                  edges,
+                 preferred_actions,
                  distance,
                  rhs_exog_vec: np.ndarray,
                  initial_resource_state: Dict[str, int],
@@ -78,6 +79,7 @@ class GraphMaster_cg:
         self.actions = set().union(*actions.values())
         self.can_group = can_group
         self.edges = edges
+        self.preferred_actions = preferred_actions
         self.distance = distance
         self.rhs_exog_vec = rhs_exog_vec
         self.initial_resource_state = initial_resource_state
@@ -314,7 +316,7 @@ class GraphMaster_cg:
             this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
             if self.jy_options_user_defined['use_fast_pricing'] == True:
                
-                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
+                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
                 routes= jy_fast_pricer.run()
                 reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
                 all_reduce_cost_list.append(reduced_cost_list)

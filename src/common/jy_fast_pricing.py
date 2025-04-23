@@ -24,6 +24,7 @@ class jy_fast_pricing():
                  action_dict, 
                  can_group,
                  edges,
+                 preferred_actions,
                  distance,
                  dual_vec, 
                  init_res_state, 
@@ -50,6 +51,7 @@ class jy_fast_pricing():
         self.action_dict = action_dict
         self.can_group = can_group
         self.edges = edges
+        self.preferred_actions = preferred_actions
         self.distance = distance
         self.forbidden_nodes=[]
         self.dual_vec = dual_vec.copy()
@@ -221,6 +223,7 @@ class jy_fast_pricing():
             rcp_d_partial = self.rcp_d_partial,
             rcp_u_partial_2 = self.rcp_u_partial_2,
             edges = self.edges,
+            preferred_actions = self.preferred_actions,
             distance = self.distance
         )
 
@@ -427,7 +430,7 @@ class jy_fast_pricing():
                 if self.jy_opt['poss_action'] == 1:
                     poss_actions  = self.get_actions_from_label(curr_label)
                 elif self.jy_opt['poss_action'] == 2:
-                    poss_actions = self.get_actions_from_label_2(curr_label)
+                    poss_actions = self.get_actions_from_label_2(curr_label,prefered_actions)
                 else:
                     input('error')
 
@@ -640,7 +643,7 @@ class jy_fast_pricing():
                 else:
                     self.actions_from_node_MINUS_dest_dropoff[my_origin].append(a)
         
-    def get_actions_from_label_2(self,my_label:jy_label):
+    def get_actions_from_label_2(self,my_label:jy_label,preferred_actions):
 
         if my_label.node == -1:
             actions_use = []
@@ -654,7 +657,7 @@ class jy_fast_pricing():
         if len(my_label.nodes_picked_up) >= self.jy_opt['max_pickups_in_a_route']:
             actions_use = []
             for n2 in my_label.must_drop_off:
-                if n2+len(self.pickup_node) in self.edges[my_label.node]:
+                if n2+len(self.pickup_node) in preferred_actions[my_label.node]:
                     actions_use.append(self.action_dict[(my_label.node,n2+len(self.pickup_node))][0])
             return actions_use
         # actions_use = set()
@@ -670,17 +673,17 @@ class jy_fast_pricing():
 
         # Part 1: Actions for drop-offs
         drop_off_nodes = [n+len(self.pickup_node) for n in my_label.must_drop_off]
-        actions_use.update(self.action_dict[(my_label.node, node)][0] for node in drop_off_nodes if node in self.edges[my_label.node])
+        actions_use.update(self.action_dict[(my_label.node, node)][0] for node in drop_off_nodes if node in preferred_actions[my_label.node])
 
         # Get all relevant neighbors (from drop-offs and current node)
         #neighbor for must drop off (drop off)
-        must_drop_off_neighbors_drop_off_node = set().union(*([this_node for this_node in self.neighbors[node] if this_node in self.edges[my_label.node]]
+        must_drop_off_neighbors_drop_off_node = set().union(*([this_node for this_node in self.neighbors[node] if this_node in preferred_actions[my_label.node]]
                                                                     for node in drop_off_nodes))
         #neighbor for current node
         neighbor_for_this_node = set(self.neighbors[my_label.node])
         #neighbor for must drop off (pick up)
         k= self.jy_opt['k_benefit_group']
-        must_drop_off_neighbors_pick_up_node = set().union(*([this_node for this_node in list(self.benefit_group[node].keys() )[:k] if this_node in self.edges[my_label.node]] for node in my_label.must_drop_off))
+        must_drop_off_neighbors_pick_up_node = set().union(*([this_node for this_node in list(self.benefit_group[node].keys() )[:k] if this_node in preferred_actions[my_label.node]] for node in my_label.must_drop_off))
         
         all_neighbors_to_check = must_drop_off_neighbors_drop_off_node | neighbor_for_this_node | must_drop_off_neighbors_pick_up_node
         # Find all valid pickup nodes at once
