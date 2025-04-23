@@ -70,7 +70,6 @@ class jy_fast_pricing():
         self.dropoff_node = self.all_nodes[self.num_cus+1:2*self.num_cus+1]
         self.skip_node = self.all_nodes[2*self.num_cus+1:-1]
         # Initialize additional attributes needed for the algorithm
-        self.all_routes = []
         self.expandable_labels = jy_sortedObject_list()
         self.efficient_frontier = jy_efficient_frontier(all_nodes)
         
@@ -110,15 +109,14 @@ class jy_fast_pricing():
             List of Route objects with negative reduced cost
         """
         # Reset state for a new run
-        self.all_routes = []
         self.expandable_labels = jy_sortedObject_list()
         self.efficient_frontier = jy_efficient_frontier(self.all_nodes)
         
         # Find minimum reduced cost paths
-        for threshold,this_preferred_actions in self.preferred_actions.keys():
+        for threshold,this_preferred_actions in self.preferred_actions.items():
 
-            routes, min_reduce_cost = self.find_min_reduced_cost_path(this_preferred_actions)
-            if min_reduce_cost<0:
+            routes = self.find_min_reduced_cost_path(this_preferred_actions)
+            if len(routes)>0:
                 break
         
         # Return the routes found
@@ -297,7 +295,8 @@ class jy_fast_pricing():
         # Initialize with source label
         self._compute_action_reduced_costs()
         source_label = self.initialize_source_label()
-        self.all_routes = []
+        all_routes = []
+        min_reduce_cost = np.inf
         self.expandable_labels = jy_sortedObject_list()
         #my_tup=tuple([-len(source_label.my_states_ordered),source_label.red_cost,my_noise])
         new_tuple=self.label_2_tuple(source_label)
@@ -501,7 +500,7 @@ class jy_fast_pricing():
                     if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
                         #input('making route')
                         route = new_label.convert_2_route()
-                        self.all_routes.append(route)
+                        all_routes.append(route)
                         print('route made')
                         print('new_label.all_nodes_ordered')
                         print(new_label.all_nodes_ordered)
@@ -571,10 +570,10 @@ class jy_fast_pricing():
         #print('lowest_so_far')
         #print(lowest_so_far)
         #input('----')time_expand_action
-        print(len(self.all_routes))
+        print(len(all_routes))
         print('route_gen_count')
         print(route_gen_count)
-        return self.all_routes,min_lb
+        return all_routes
     
     def _get_dual_index_for_customer(self, customer):
         """
@@ -660,15 +659,6 @@ class jy_fast_pricing():
                 if n2+len(self.pickup_node) in preferred_actions[my_label.node]:
                     actions_use.append(self.action_dict[(my_label.node,n2+len(self.pickup_node))][0])
             return actions_use
-        # actions_use = set()
-        # for n in my_label.must_drop_off:
-        #     actions_use.add(self.action_dict[(my_label.node,n+len(self.pickup_node))][0])
-        #     for n2 in self.neighbors[n+len(self.pickup_node)]:
-        #         if n2 in self.pickup_node and n2 not in my_label.nodes_picked_up:
-        #             actions_use.add(self.action_dict[(my_label.node,n2)][0])
-        # for n in self.neighbors[my_label.node]:
-        #     if n in self.pickup_node and n not in my_label.nodes_picked_up:
-        #         actions_use.add(self.action_dict[(my_label.node,n)][0])
         actions_use = set()
 
         # Part 1: Actions for drop-offs
