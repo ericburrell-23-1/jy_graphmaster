@@ -49,13 +49,31 @@ class Helper:
         return result
     @staticmethod
     def dict_2_vec(key_2_index, vec_sz, key_to_value):
-        # Filter keys to include only those with non-zero values
-        filtered_keys = [k for k in key_to_value if key_to_value[k] != 0]
-        # Build indices and data arrays from the filtered keys
-        indices = np.array([key_2_index[k] for k in filtered_keys], dtype=int)
-        data = np.array([key_to_value[k] for k in filtered_keys])
-        # Create a 1 x vec_sz sparse row vector
-        my_vec = csr_matrix((data, (np.zeros(len(data), dtype=int), indices)), shape=(1, vec_sz))
+        # For very sparse vectors, we want to minimize memory operations
+    
+        # Process only the non-zero elements directly
+        nonzero_items = []
+        for k, v in key_to_value.items():
+            if v != 0:
+                idx = key_2_index[k]
+                nonzero_items.append((idx, v))
+        
+        # Sort by index (not required but can improve performance for some operations)
+        nonzero_items.sort(key=lambda x: x[0])
+        
+        # Create arrays from the sorted items
+        if nonzero_items:
+            indices, data = zip(*nonzero_items)
+            indices = np.array(indices, dtype=int)
+            data = np.array(data)
+        else:
+            indices = np.array([], dtype=int)
+            data = np.array([])
+        
+        # Create sparse matrix with direct indptr construction
+        indptr = np.array([0, len(indices)])
+        my_vec = csr_matrix((data, indices, indptr), shape=(1, vec_sz))
+        
         return indices, my_vec
     def partial_map_2_indices_applied(key_2_index,key_to_value):
         #take in thej partial map and produce the terms where the min operator is applied
