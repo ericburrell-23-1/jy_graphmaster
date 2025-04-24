@@ -317,7 +317,6 @@ class CG_RMP:
         #obj_func = self.model.objective
         while num_iter_left > 0:
             obj_func = self.model.objective
-            print('check here for loop')
             # Step 3: Solve current RMP
             solution = self.solve()
             

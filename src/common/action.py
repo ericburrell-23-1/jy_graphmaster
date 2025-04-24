@@ -27,9 +27,9 @@ class Action:
 
     def __init__(self, trans_min_input:dict, trans_term_add:dict, trans_term_min:dict, 
                 node_head:int, node_tail:int, Exog_vec, cost, 
-                min_resource_vec:csr_matrix, resource_consumption_vec:csr_matrix, 
-                indices_non_zero_max:list, max_resource_vec:csr_matrix, 
-                full_resource_vec, empty_resource_vec):
+                min_resource_vec_indices, min_resource_vec_data, resource_consumption_vec_indices, 
+                resource_consumption_vec_data,indices_non_zero_max:list, max_resource_vec_indices, 
+                max_resource_vec_data,full_resource_vec, empty_resource_vec):
         self.trans_min_input = trans_min_input
         self.trans_term_add = trans_term_add
         self.trans_term_min = trans_term_min
@@ -38,22 +38,24 @@ class Action:
         self.Exog_vec = Exog_vec
         #self.Exog_vec_csr = csr_matrix(Exog_vec) #1
         self.cost = cost
-        self.min_resource_vec = min_resource_vec
-        if isinstance(self.min_resource_vec, np.ndarray):
-            # Reshape to row vector if it's 1D
-            self.min_resource_vec = self.min_resource_vec.reshape(1, -1)
-            self.min_resource_vec=csr_matrix(self.min_resource_vec)
-        self.min_resource_vec_indices = self.min_resource_vec.indices
-        self.min_resource_vec_data = self.min_resource_vec.data
-        self.resource_consumption_vec = resource_consumption_vec
-        self.resource_consumption_indices = self.resource_consumption_vec.indices
-        self.resource_consumption_data = self.resource_consumption_vec.data
+
+        self.min_resource_vec_indices = min_resource_vec_indices
+        self.min_resource_vec_data = min_resource_vec_data
+        self.resource_consumption_indices = resource_consumption_vec_indices
+        self.resource_consumption_data = resource_consumption_vec_data
         self.indices_non_zero_max = indices_non_zero_max
-        self.max_resource_vec = max_resource_vec
+        self.max_resource_vec_indices = max_resource_vec_indices
+        self.max_resource_vec_data = max_resource_vec_data
         self.non_zero_indices_exog = np.nonzero(self.Exog_vec)[0]
         self.full_resource_vec = full_resource_vec
         self.empty_resource_vec = empty_resource_vec
-        self.max_vals = {j: int(self.max_resource_vec[0, j]) for j in self.indices_non_zero_max}
+        self.max_vals = {}
+        for idx, val in zip(self.max_resource_vec_indices, self.max_resource_vec_data):
+            try:
+                self.max_vals[idx] = val
+            except:
+                print('check here')
+        
         if self.max_vals:
             self.max_indices = np.array(list(self.max_vals.keys()), dtype=int)
             self.max_values = np.array(list(self.max_vals.values()))
@@ -100,79 +102,6 @@ class Action:
         state_vec_hash = tuple(state_tail.state_vec)
         return hash((state_tail.node, state_tail.is_source, state_tail.is_sink, state_vec_hash))
 
-    def get_head_state(self, state_tail: State, l_id):
-        """
-        Optimized version using zipVec pattern with caching for efficiency.
-        """
-        # Generate cache key
-        cache_key = (self.action_id, self._get_state_cache_key(state_tail))
-        
-        # Check if we have a cached result
-        if cache_key in Action._head_state_cache:
-            cached_result = Action._head_state_cache[cache_key]
-            # If found in cache, handle accordingly
-            if cached_result is None:
-                return None
-                
-            # Unpack the cached result - we store a tuple of (state_vec, is_source, is_sink)
-            cached_state_vec, is_source, is_sink = cached_result
-            
-            # Create a new state with the same data but updated l_id
-            return State(self.node_head, cached_state_vec, l_id, is_source, is_sink)
-        
-        # If not in cache, compute the head state
-        # Early checks for minimum resource requirements
-        diff_matrix = state_tail.state_vec - self.min_resource_vec
-        if np.min(diff_matrix) < 0:
-            # Cache the negative result
-            Action._head_state_cache[cache_key] = None
-            return None
-        if diff_matrix.data.size > 0 and np.min(diff_matrix.data) < 0:
-            # Cache the negative result
-            Action._head_state_cache[cache_key] = None
-            return None
-            
-        # Compute new state vector
-        head_state_vec = state_tail.state_vec + self.resource_consumption_vec
-        if (head_state_vec.data < 0).any():
-            return None
-        # Convert to CSR if needed
-        if not isinstance(head_state_vec, sp.csr_matrix):
-            head_state_vec = head_state_vec.tocsr()
-        
-        # Create data structures for a new sparse matrix with capped values
-        rows = []
-        cols = []
-        data = []
-        
-        # Process existing non-zero elements
-        cx = head_state_vec.tocoo()  # Convert to COO format for easy iteration
-        
-        for i, j, v in zip(cx.row, cx.col, cx.data):
-            # Apply maximum constraint if needed
-            if j in self.indices_non_zero_max:
-                max_val = int(self.max_resource_vec[0, j])
-                v = min(int(v), max_val)
-            
-            rows.append(i)
-            cols.append(j)
-            data.append(v)
-        
-        # Create new sparse matrix from the processed data
-        head_state_vec = sp.csr_matrix((data, (rows, cols)), shape=head_state_vec.shape)
-        
-        # Create new state object
-        if self.node_head == -2:
-            this_vec = self.empty_resource_vec
-            head_state = State(self.node_head, this_vec, l_id, False, True)
-            # Cache the computed head state data
-            #Action._head_state_cache[cache_key] = (this_vec, False, True)
-        else:
-            head_state = State(self.node_head, head_state_vec, l_id, False, False)
-            # Cache the computed head state data
-            #Action._head_state_cache[cache_key] = (head_state_vec, False, False)
-        
-        return head_state
     def _get_head_stat_vec(self, state_tail: State):
         head_state_vec = state_tail.state_vec.copy()
         

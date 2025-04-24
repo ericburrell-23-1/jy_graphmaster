@@ -247,7 +247,6 @@ class xy_jy_cg_solver:
         debug_on = False
         
         while num_iter_left > 0:
-            print('check here for loop')
             # Step 3: Solve current RMP
             solution = self.solve()
             

@@ -71,10 +71,9 @@ class Helper:
             data = np.array([])
         
         # Create sparse matrix with direct indptr construction
-        indptr = np.array([0, len(indices)])
-        my_vec = csr_matrix((data, indices, indptr), shape=(1, vec_sz))
+
         
-        return indices, my_vec
+        return indices, data
     def partial_map_2_indices_applied(key_2_index,key_to_value):
         #take in thej partial map and produce the terms where the min operator is applied
         indices = np.array([key_2_index[k] for k in key_to_value], dtype=int)
