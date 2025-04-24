@@ -271,7 +271,7 @@ class GraphMaster_cg:
             node_sequence_of_routes.append(route.node_in_ordered)
         lp_objective_list = []
         omega_term_list = []
-        cg_solver = xy_jy_cg_solver(skip_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+        cg_solver = xy_jy_cg_solver(skip_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,self.distance, forbidden_omega,self.initial_resource_vector)
         #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
         while iteration < max_iterations:
             print(type(self.state_update_module.actions))
@@ -328,13 +328,14 @@ class GraphMaster_cg:
                 print(reduced_cost)
                 print('reduced_cost_list')
                 print(reduced_cost_list)
-                #input('----')
+                    
                 rmp_obj = output['objective_value']
-                if reduced_cost >= -1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
+                if len(reduced_cost_list) < 0.5 or reduced_cost >= -1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
                     this_forbidden_omega = cg_solver.get_active_DOI()
                     #this_forbidden_omega = cg_solver.get_forbidden_omega()
                     print('this_forbidden_omega')
                     print(this_forbidden_omega)
+                    #breakpoint()
                     omega_term_list.append(len(this_forbidden_omega))
                     output_info = defaultdict()
                     if len(this_forbidden_omega)<0.5:
@@ -363,7 +364,7 @@ class GraphMaster_cg:
                         for route in list_of_routes:
                             print(route.node_in_ordered)
                         print('route used')
-                        used_routes = self.post_procssing(used_routes)
+                        #used_routes = self.post_procssing(used_routes)
                         for route in used_routes:
                             print(route.node_in_ordered)
                             valid = self.validate_route(route)
@@ -423,7 +424,11 @@ class GraphMaster_cg:
                                     if subset_route not in node_sequence_of_routes:
                                         cur_state = State(-1,self.initial_resource_vector,1,True,False)
                                         state_action_alt_repeat=[cur_state]
+                                        do_continue = False
                                         for o,d in zip(subset_route[:-1],subset_route[1:]):
+                                            if d not in self.edges[o]:
+                                                do_continue = True
+                                                break
                                             this_a:Action = self.action_dict[(o,d)][0]
                                             state_action_alt_repeat.append(this_a)
                                             try:
@@ -432,7 +437,8 @@ class GraphMaster_cg:
                                                 print('check here')
                                             state_action_alt_repeat.append(new_state)
                                             cur_state = new_state
-                                        
+                                        if do_continue == True:
+                                            continue
                                         this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
                                         list_of_routes.append(this_sub_route)
                                         node_sequence_of_routes.append(this_sub_route.node_in_ordered)

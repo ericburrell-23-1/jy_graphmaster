@@ -10,7 +10,7 @@ import platform
 from sortedcontainers import SortedList
 
 class xy_jy_cg_solver:
-    def __init__(self, list_of_route:list[Route], node_sequence_of_routes, rhs_exog_vec, data, forbidden=[], initial_resource_vector=None):
+    def __init__(self, list_of_route:list[Route], node_sequence_of_routes, rhs_exog_vec, data, distance, forbidden=[], initial_resource_vector=None):
         self.list_of_route = list_of_route
         self.list_of_action_list = []
         self.node_sequence_of_routes = node_sequence_of_routes
@@ -32,6 +32,7 @@ class xy_jy_cg_solver:
         self.neighbors = data.neighbors
         self.forbidden = set(forbidden)
         self.initial_resource_vector = initial_resource_vector
+        self.distance = distance
         self.rho = self._generate_rho()
         self._initiate_col_coeff()
 
@@ -45,11 +46,9 @@ class xy_jy_cg_solver:
         this_rho = defaultdict()
         for u in self.pickup_node:
             for v in self.pickup_node:
-                if u!= v and (u,v) in self.actions and (u+len(self.pickup_node),v+len(self.pickup_node)) in self.actions:
-                    this_rho[(u,v)] = 2*self.actions[(u,v)][0].cost + 2*self.actions[(u+len(self.pickup_node),v+len(self.pickup_node))][0].cost
+                if u!= v:
+                    this_rho[(u,v)] = 2*self.distance[(u,v)] + 2*self.distance[(u+len(self.pickup_node),v+len(self.pickup_node))]
                     this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
-                else:
-                    this_rho[(u,v)] = self.max_action_cost*2
         return this_rho
         
     def _initiate_col_coeff(self):

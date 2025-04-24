@@ -12,7 +12,7 @@ class TimeProfiler:
     def __exit__(self, exc_type, exc_value, exc_tb):
         self.pr.disable()
         s = io.StringIO()
-        ps = pstats.Stats(self.pr, stream=s).sort_stats('tottime')
+        ps = pstats.Stats(self.pr, stream=s).sort_stats('cumtime')
         ps.print_stats()
         with open(self.filename + '.txt', 'w+') as f:
            f.write(s.getvalue())
