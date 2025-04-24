@@ -39,6 +39,8 @@ class xy_jy_cg_solver:
         self.time_profile = defaultdict(float)
         if platform.system() == 'Windows':
             self.license_path = 'C:/xpressmp/bin/xpauth.xpr'
+        elif platform.system() == 'Darwin':  # macOS is identified as 'Darwin', not 'Max'
+            self.license_path = '/Users/julian/Documents/FICO_Xpress_Config/xpauth.xpr'
         else:
             self.license_path = '/mnt/c/xpressmp/bin/xpauth.xpr'
 
