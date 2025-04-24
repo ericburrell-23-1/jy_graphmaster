@@ -20,6 +20,7 @@ from src.common.pgm_approach import Route
 from src.common.line_time_profiler import HierarchicalProfiler
 from src.common.time_profile import TimeProfiler
 from tqdm import tqdm
+import time
 import random
 # CONSTANTS
 VOLUME_CAPACITY = 3000
@@ -252,8 +253,9 @@ class loadAI_cg:
 
         # ACTIONS
         self._create_default_resource_values()
-        
         self.travel_time, self.distance = self._travel_time_and_distance()
+
+
         with TimeProfiler(f'time_profile_edges_creation'):
             self._create_edges()
         breakpoint()
@@ -1025,39 +1027,48 @@ class loadAI_cg:
         self._distance_cache[cache_key] = distance
         
         return distance
-
     def _travel_time_and_distance(self):
-        distance = {}
-        travel_time = {}
-
-        # Only calculate for each unique pair
-        for i, u in enumerate(tqdm(self.pickup_and_dropoff_node, desc='create travel time and distance')):
-            for v in self.pickup_and_dropoff_node[i:]:  # Start from i to avoid redundant calculations
-                dist = self._haversine_distance(u, v)
-                
-                # Store distance for both (u,v) and (v,u)
-                distance[(u, v)] = dist
-                distance[(v, u)] = dist
-                
-                # Calculate travel time
-                drive_time = dist / AVERAGE_SPEED
-                number_of_rests = int(drive_time / HOS_DRIVE_TIME)
-                time = drive_time + number_of_rests * HOS_REST_TIME
-                
-                # Store travel time for both (u,v) and (v,u)
-                travel_time[(u, v)] = time
-                travel_time[(v, u)] = time
-
-        # Handle special cases
-        for u in self.pickup_node:
-            travel_time[(-1, u)] = 0
-            distance[(-1, u)] = 0
-            distance[(-1, u + 2 * self.number_of_customers)] = self._slack(u)
-            distance[(u + 2 * self.number_of_customers, -2)] = 0
-
-        for v in self.dropoff_node:
-            travel_time[(v, -2)] = 0
-            distance[(v, -2)] = 0
+        """
+        Vectorized full pairwise travel times & distances using numpy.
+        Returns two dicts: distance[(u,v)] and travel_time[(u,v)].
+        """
+        nodes = list(self.pickup_and_dropoff_node)
+        n = len(nodes)
+    
+        # 1) extract and radians‐convert coords into arrays
+        lat = np.array([ self.coordinates[u][0] for u in nodes ])
+        lon = np.array([ self.coordinates[u][1] for u in nodes ])
+        lat_r = np.radians(lat)
+        lon_r = np.radians(lon)
+    
+        # 2) pairwise deltas via broadcasting
+        dlat = lat_r[:, None] - lat_r[None, :]
+        dlon = lon_r[:, None] - lon_r[None, :]
+    
+        # 3) vectorized haversine
+        h1 = np.sin(dlat * 0.5)
+        h2 = np.sin(dlon * 0.5)
+        R = 3958.8  # miles
+        a = h1**2 + np.cos(lat_r)[:,None] * np.cos(lat_r)[None,:] * (h2**2)
+        dist_mat = 2 * R * np.arcsin(np.sqrt(a))   # (n,n) matrix
+    
+        # 4) compute travel times
+        drive = dist_mat / AVERAGE_SPEED          # (n,n)
+        rests = np.floor(drive / HOS_DRIVE_TIME)  # (n,n)
+        t_mat = drive + rests * HOS_REST_TIME     # (n,n)
+    
+        # 5) build dicts in one comprehension each
+        distance = {
+            (nodes[i], nodes[j]): dist_mat[i, j]
+            for i in range(n) for j in range(n)
+        }
+        travel_time = {
+            (nodes[i], nodes[j]): t_mat[i, j]
+            for i in range(n) for j in range(n)
+        }
+    
+        self.distance    = distance
+        self.travel_time = travel_time
         return travel_time, distance
     def _slack(self, pickup_node):
         dropoff_node = self.pickup_to_dropoff[pickup_node]
