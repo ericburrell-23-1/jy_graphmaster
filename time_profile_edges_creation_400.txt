@@ -1,0 +1,146 @@
+         13481895 function calls (13481894 primitive calls) in 13.307 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      2/1    2.485    1.242    6.549    6.549 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:835(_create_actions_with_edge_pair)
+   217984    1.610    0.000    3.367    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\action.py:28(__init__)
+   653952    1.624    0.000    3.344    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:50(dict_2_vec)
+    54938    0.517    0.000    2.859    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:453(_create_pickup_to_pickup_actions)
+    55076    0.408    0.000    2.684    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:572(_create_dropoff_to_dropoff_actions)
+    52894    0.457    0.000    2.678    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:495(_create_pickup_to_dropoff_actions)
+    55076    0.496    0.000    2.402    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:531(_create_dropoff_to_pickup_actions)
+  2179840    1.337    0.000    1.337    0.000 {built-in method numpy.array}
+   653952    1.273    0.000    1.273    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\collections\__init__.py:999(__init__)
+   435968    0.143    0.000    1.190    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1881(nonzero)
+   435968    0.203    0.000    1.047    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:53(_wrapfunc)
+   435968    0.782    0.000    0.782    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
+   653952    0.404    0.000    0.560    0.000 {method 'sort' of 'list' objects}
+   217984    0.053    0.000    0.417    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:958(_default_contribution_vector)
+   217984    0.364    0.000    0.364    0.000 {built-in method numpy.zeros}
+  1883979    0.235    0.000    0.235    0.000 {method 'append' of 'list' objects}
+   217984    0.116    0.000    0.232    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:86(LOAD_AI_partial_map_2_indices_applied)
+   229473    0.144    0.000    0.197    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1160(__iter__)
+  1883979    0.155    0.000    0.155    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\helper.py:62(<lambda>)
+   653952    0.104    0.000    0.104    0.000 {method 'items' of 'dict' objects}
+   217993    0.071    0.000    0.071    0.000 {method 'add' of 'set' objects}
+   435980    0.062    0.000    0.062    0.000 {built-in method builtins.getattr}
+      119    0.001    0.000    0.049    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1198(update)
+      120    0.000    0.000    0.048    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1325(refresh)
+   435968    0.048    0.000    0.048    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\numpy\core\fromnumeric.py:1877(_nonzero_dispatcher)
+      121    0.000    0.000    0.046    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1464(display)
+   217984    0.041    0.000    0.041    0.000 {built-in method builtins.hash}
+   217984    0.040    0.000    0.040    0.000 {method 'keys' of 'dict' objects}
+   217984    0.038    0.000    0.038    0.000 {method 'values' of 'dict' objects}
+      121    0.000    0.000    0.025    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:457(print_status)
+   217984    0.022    0.000    0.022    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:343(_full_resource_vec)
+      121    0.001    0.000    0.021    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1150(__str__)
+      121    0.005    0.000    0.020    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:464(format_meter)
+      121    0.000    0.000    0.019    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:451(fp_write)
+      244    0.000    0.000    0.019    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:194(inner)
+   217984    0.019    0.000    0.019    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\problems\loadAI_cg.py:340(_empty_resource_vec)
+      123    0.019    0.000    0.019    0.000 {method 'write' of '_io.TextIOWrapper' objects}
+      363    0.000    0.000    0.016    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:378(disp_len)
+      363    0.000    0.000    0.016    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:374(_text_width)
+      363    0.004    0.000    0.015    0.000 {built-in method builtins.sum}
+    42156    0.008    0.000    0.011    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:375(<genexpr>)
+      121    0.000    0.000    0.006    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:386(disp_trim)
+    41793    0.004    0.000    0.004    0.000 {built-in method unicodedata.east_asian_width}
+    16600    0.003    0.000    0.003    0.000 {built-in method time.time}
+      242    0.001    0.000    0.001    0.000 {method 'format' of 'str' objects}
+        1    0.000    0.000    0.001    0.001 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:952(__init__)
+      125    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:102(acquire)
+      241    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:400(format_interval)
+      121    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1446(format_dict)
+      715    0.001    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:231(__call__)
+      242    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:273(_is_ascii)
+      125    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:106(release)
+        2    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1265(close)
+      121    0.000    0.000    0.001    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:186(__format__)
+      125    0.000    0.000    0.000    0.000 {method 'acquire' of '_multiprocessing.SemLock' objects}
+      363    0.000    0.000    0.000    0.000 {method 'sub' of 're.Pattern' objects}
+      120    0.000    0.000    0.000    0.000 {built-in method now}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:297(_screen_shape_windows)
+      125    0.000    0.000    0.000    0.000 {method 'release' of '_multiprocessing.SemLock' objects}
+      121    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:153(__init__)
+     2541    0.000    0.000    0.000    0.000 {built-in method builtins.ord}
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1286(fp_write)
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\_monitor.py:47(get_instances)
+      125    0.000    0.000    0.000    0.000 {method 'acquire' of '_thread.RLock' objects}
+      603    0.000    0.000    0.000    0.000 {built-in method builtins.divmod}
+      242    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+       11    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:63(__iter__)
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:95(copy)
+      251    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:37(__init__)
+      121    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:120(update)
+      123    0.000    0.000    0.000    0.000 {method 'flush' of '_io.TextIOWrapper' objects}
+      246    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+        6    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:27(__exit__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:663(__new__)
+      244    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+        5    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:110(__enter__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:679(_get_free_pos)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\ctypes\__init__.py:49(create_string_buffer)
+      125    0.000    0.000    0.000    0.000 {method 'release' of '_thread.RLock' objects}
+        5    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:113(__exit__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:686(_decr_instances)
+      123    0.000    0.000    0.000    0.000 {built-in method builtins.abs}
+        1    0.000    0.000    0.000    0.000 c:\Users\Xiaohang\Downloads\jy_graphmaster 10\jy_graphmaster\src\common\time_profile.py:12(__exit__)
+      121    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:112(__format__)
+        6    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:53(_commit_removals)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:311(_acquire_restore)
+      121    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:108(__init__)
+      121    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:167(colour)
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:85(add)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:213(__init__)
+      121    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:163(colour)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:438(status_printer)
+        6    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:21(__enter__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:266(_supports_unicode)
+        7    0.000    0.000    0.000    0.000 {method 'remove' of 'set' objects}
+        1    0.000    0.000    0.000    0.000 {built-in method _thread.allocate_lock}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:110(remove)
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:760(get_lock)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:302(__exit__)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\functools.py:393(__get__)
+        4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1157(__hash__)
+        6    0.000    0.000    0.000    0.000 {method 'pop' of 'list' objects}
+        3    0.000    0.000    0.000    0.000 {method 'acquire' of '_thread.lock' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:299(__enter__)
+        6    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\_weakrefset.py:17(__init__)
+        1    0.000    0.000    0.000    0.000 <frozen importlib._bootstrap>:1390(_handle_fromlist)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:252(_is_utf)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:308(_release_save)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:156(__init__)
+        4    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:222(__eq__)
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:187(disable_on_exception)
+        1    0.000    0.000    0.000    0.000 {built-in method fromtimestamp}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:314(_is_owned)
+        1    0.000    0.000    0.000    0.000 {built-in method _struct.unpack}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:125(__eq__)
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:152(wrapper_setattr)
+        4    0.000    0.000    0.000    0.000 {built-in method builtins.id}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\_monitor.py:94(report)
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:139(__getattr__)
+        1    0.000    0.000    0.000    0.000 {method 'remove' of 'collections.deque' objects}
+        1    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
+        2    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1153(_comparable)
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\threading.py:601(is_set)
+        1    0.000    0.000    0.000    0.000 {method '__exit__' of '_thread.lock' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1147(__del__)
+        1    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x00007FFB057E68F0}
+        1    0.000    0.000    0.000    0.000 {method 'append' of 'collections.deque' objects}
+        1    0.000    0.000    0.000    0.000 {method '__enter__' of '_thread.lock' objects}
+        1    0.000    0.000    0.000    0.000 {built-in method builtins.min}
+        2    0.000    0.000    0.000    0.000 {built-in method _weakref.proxy}
+        3    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:226(__init__)
+        1    0.000    0.000    0.000    0.000 {method 'difference' of 'set' objects}
+        1    0.000    0.000    0.000    0.000 {method 'release' of '_thread.lock' objects}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\utils.py:282(_screen_shape_wrapper)
+        1    0.000    0.000    0.000    0.000 {built-in method sys.audit}
+        1    0.000    0.000    0.000    0.000 C:\Users\Xiaohang\AppData\Local\Programs\Python\Python312\Lib\site-packages\tqdm\std.py:1301(<lambda>)
+
+

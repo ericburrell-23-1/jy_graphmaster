@@ -26,7 +26,7 @@ class Action:
     _tail_state_cache = {}
 
     def __init__(self, trans_min_input:dict, trans_term_add:dict, trans_term_min:dict, 
-                node_head:int, node_tail:int, Exog_vec, cost, 
+                node_head:int, node_tail:int, Exog_vec, non_zero_exog_vec,cost, 
                 min_resource_vec_indices, min_resource_vec_data, resource_consumption_vec_indices, 
                 resource_consumption_vec_data,indices_non_zero_max:list, max_resource_vec_indices, 
                 max_resource_vec_data,full_resource_vec, empty_resource_vec):
@@ -46,7 +46,6 @@ class Action:
         self.indices_non_zero_max = indices_non_zero_max
         self.max_resource_vec_indices = max_resource_vec_indices
         self.max_resource_vec_data = max_resource_vec_data
-        self.non_zero_indices_exog = np.nonzero(self.Exog_vec)[0]
         self.full_resource_vec = full_resource_vec
         self.empty_resource_vec = empty_resource_vec
         self.max_vals = {}
@@ -63,34 +62,15 @@ class Action:
             self.max_indices = np.array([], dtype=int)
             self.max_values = np.array([], dtype=float)
         self.red_cost_non_zero_cal_vals = self.red_cost_non_zero_cal_vals = Exog_vec[Exog_vec != 0]
-        self.red_cost_non_zero_cal_indices = np.nonzero(Exog_vec)[0]
-        self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
+        self.red_cost_non_zero_cal_indices = non_zero_exog_vec
+        #self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
         self.action_id = hash((self.node_tail,self.node_head))
         
         self.mark_of_null_action = False
         if self.node_tail is None:
             self.mark_of_null_action = True
 
-        # Generate a deterministic hash based on the action's properties
-        # Convert numpy arrays to bytes for hashing
-        # exog_bytes = self.Exog_vec.tobytes() if hasattr(self.Exog_vec, 'tobytes') else str(self.Exog_vec).encode()
-        # min_res_bytes = self.min_resource_vec.data.tobytes() if hasattr(self.min_resource_vec, 'data') else str(self.min_resource_vec).encode()
-        # res_cons_bytes = self.resource_consumption_vec.data.tobytes() if hasattr(self.resource_consumption_vec, 'data') else str(self.resource_consumption_vec).encode()
-        # max_res_bytes = self.max_resource_vec.data.tobytes() if hasattr(self.max_resource_vec, 'data') else str(self.max_resource_vec).encode()
-        
-        # Create a hash from the combined key properties
-        
-    # def comp_red_cost(self, dual_vec):
-    #     """Computes the reduced cost by multiplying the dual vector times the exogenous."""
-    #     # this_red_cost = 0
-    #     # if len(self.non_zero_indices_exog) > 0:
-    #     #     this_red_cost =  self.cost - np.dot(self.Exog_vec[self.non_zero_indices_exog], 
-    #     #                             dual_vec[self.non_zero_indices_exog])
-    #     # else:
-    #     #     this_red_cost =  self.cost
-    #     this_red_cost_2 =  self.cost - np.sum(self.Exog_vec * dual_vec)
 
-    #     return this_red_cost_2
     def comp_red_cost(self, dual_vec):
         return self.cost - np.dot(self.red_cost_non_zero_cal_vals, dual_vec[self.red_cost_non_zero_cal_indices])
     
@@ -129,14 +109,7 @@ class Action:
         #     return None
         # 3. Apply max_resource cap (only on indices of interest)
         head_state_vec = self.fast_max_res_apply(head_state_vec)
-        # if len(self.indices_non_zero_max)>0:
-        #     head_state_vec = head_state_vec.tocsr(copy=True)  # Ensure CSR format and not a view
-        #     for j in self.indices_non_zero_max:
-        #         max_val = int(self.max_resource_vec[0, j])
-        #         current_val = head_state_vec[0, j]
-        #         if current_val > max_val:
-        #             head_state_vec[0, j] = max_val
-        # 4. Create the final State object
+
         if self.node_head == -2:
             head_state = State(self.node_head, self.empty_resource_vec, l_id, is_source=False, is_sink=True)
         else:
