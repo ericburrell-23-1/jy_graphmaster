@@ -34,6 +34,8 @@ MIN_DISTANCE_SAVING = 100
 STANDARD_SERVICE_TIME = 2 * 60
 JY_OPT_SPLIT=1
 THRESHOLD = [1,10,100, np.inf]
+DISTANCE_RATIO = 1
+TIME_RATIO = 0.1
 class loadAI_cg:
     def __init__(self, problem_instance_file_name,instance_name, file_type: str = "Standard_Form"):
         
@@ -255,10 +257,17 @@ class loadAI_cg:
         self._create_default_resource_values()
         self.travel_time, self.distance = self._travel_time_and_distance()
 
-
-        with TimeProfiler(f'time_profile_edges_creation'):
-            self._create_edges()
-        breakpoint()
+        create_edge_pair_first = True
+        if create_edge_pair_first is False:
+            with TimeProfiler(f'time_profile_edges_creation'):
+                self._create_edges()
+                breakpoint()
+        else:
+            self._create_edges_pair()
+            print(f'{len(self.pairs)} edges generated')
+            breakpoint()
+            self._create_actions_with_edge_pair()
+        
         #self._create_edges_pair()
         self._create_source_sink_actions()
         # self._create_pickup_to_pickup_actions()
@@ -442,8 +451,8 @@ class loadAI_cg:
     def _create_pickup_to_pickup_actions(self, origin_node,destination_node):
         if origin_node == destination_node:
             return None
-        travel_time = self.travel_time[(origin_node,destination_node)]
-        distance = self.distance[(origin_node, destination_node)]
+        travel_time = self.travel_time[origin_node,destination_node]
+        distance = self.distance[origin_node, destination_node]
         self.edges[origin_node].add(destination_node)
         cost = distance
         exog_contrib_vec = self._default_contribution_vector()
@@ -482,8 +491,8 @@ class loadAI_cg:
         return action
         
     def _create_pickup_to_dropoff_actions(self,origin_node, destination_node):
-        travel_time = self.travel_time[(origin_node,destination_node)]
-        distance = self.distance[(origin_node,destination_node)]
+        travel_time = self.travel_time[origin_node,destination_node]
+        distance = self.distance[origin_node,destination_node]
         self.edges[origin_node].add(destination_node)
         cost = distance
         exog_contrib_vec = self._default_contribution_vector()
@@ -523,8 +532,8 @@ class loadAI_cg:
         if origin_pickup_node == destination_node:
             return None
 
-        travel_time = self.travel_time[(origin_node,destination_node)]
-        distance = self.distance[(origin_node, destination_node)]
+        travel_time = self.travel_time[origin_node,destination_node]
+        distance = self.distance[origin_node, destination_node]
         self.edges[origin_node].add(destination_node)
         cost = distance
         exog_contrib_vec = self._default_contribution_vector()
@@ -561,8 +570,8 @@ class loadAI_cg:
     def _create_dropoff_to_dropoff_actions(self, origin_node, destination_node):
         if origin_node == destination_node:
             return None
-        travel_time = self.travel_time[(origin_node,destination_node)]
-        distance = self.distance[(origin_node, destination_node)]
+        travel_time = self.travel_time[origin_node,destination_node]
+        distance = self.distance[origin_node, destination_node]
         self.edges[origin_node].add(destination_node)
         cost = distance
         origin_pickup_node = self.dropoff_to_pickup[origin_node]
@@ -646,9 +655,9 @@ class loadAI_cg:
             self.actions[origin_node, destination_node] = [action]
 
     def _ez_check_for_create_group(self,overlap,threshold,u,v):
-        time = self.travel_time[(u,v)]
-        dist = self.distance[(u,v)]
-        if dist < threshold and time < overlap:
+        time = self.travel_time[u,v]
+        dist = self.distance[u,v]
+        if dist < DISTANCE_RATIO*threshold and time < TIME_RATIO*overlap:
             return True
         else:
             return False
@@ -663,34 +672,14 @@ class loadAI_cg:
                     time_window_start_pickup_u = self.time_window_start[u]
                     overlap_1 = time_window_start_pickup_v-time_window_end_dropoff_u
                     overlap_2 = time_window_start_pickup_u-time_window_end_dropoff_v
-                    if overlap_1 >0:
-                        near_threshold = max(self._haversine_distance(u,self.pickup_and_dropoff_node[u]),self._haversine_distance(v,self.pickup_and_dropoff_node[v]))
-                        if self._ez_check_for_create_group(overlap_1,near_threshold,u,v) is True:
+                    overlap = min(overlap_1,overlap_2)
+                    threshold = max(self.distance[u,self.pickup_to_dropoff[u]],self.distance[v,self.pickup_to_dropoff[v]])
+                    minDist = min(self.distance[u,v],self.distance[u,self.pickup_to_dropoff[v]],self.distance[self.pickup_to_dropoff[u],v],self.distance[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
+                    minTime = max(self.travel_time[u,v],self.travel_time[u,self.pickup_to_dropoff[v]],self.travel_time[self.pickup_to_dropoff[u],v],self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]\
+                                  ,self.travel_time[u,self.pickup_to_dropoff[u]],self.travel_time[v,self.pickup_to_dropoff[v]])
+                    if overlap>0:
+                        if minDist<DISTANCE_RATIO*threshold and minTime<TIME_RATIO*min(overlap_1,overlap_2):
                             group[u].append(v)
-                            continue
-                        if self._ez_check_for_create_group(overlap_1,near_threshold,u,self.pickup_and_dropoff_node[v]) is True:
-                            group[u].append(v)
-                            continue
-                        if self._ez_check_for_create_group(overlap_1,near_threshold,self.pickup_and_dropoff_node[u],v) is True:
-                            group[u].append(v)
-                            continue
-                        if self._ez_check_for_create_group(overlap_1,near_threshold,self.pickup_and_dropoff_node[u],self.pickup_and_dropoff_node[v]) is True:
-                            group[u].append(v)
-                            continue
-                    if overlap_2 >0:
-                        near_threshold = max(self._haversine_distance(u,self.pickup_and_dropoff_node[u]),self._haversine_distance(v,self.pickup_and_dropoff_node[v]))
-                        if self._ez_check_for_create_group(overlap_2,near_threshold,u,v) is True:
-                            group[u].append(v)
-                            continue
-                        if self._ez_check_for_create_group(overlap_2,near_threshold,u,self.pickup_and_dropoff_node[v]) is True:
-                            group[u].append(v)
-                            continue
-                        if self._ez_check_for_create_group(overlap_2,near_threshold,self.pickup_and_dropoff_node[u],v) is True:
-                            group[u].append(v)
-                            continue
-                        if self._ez_check_for_create_group(overlap_2,near_threshold,self.pickup_and_dropoff_node[u],self.pickup_and_dropoff_node[v]) is True:
-                            group[u].append(v)
-                            continue
 
                     # near_threshold = max(self._haversine_distance(u,self.pickup_and_dropoff_node[u]),self._haversine_distance(v,self.pickup_and_dropoff_node[v]))
                     # pickup_u_to_pickup_v = self._haversine_distance(u,v)
@@ -713,7 +702,6 @@ class loadAI_cg:
         initial_group = self._create_group()
         self.can_group = defaultdict(set)
 
-        self.max_action_cost = -1
         
         for u in self.pickup_node:
             self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
@@ -722,79 +710,58 @@ class loadAI_cg:
             for v in initial_group[u]:
 
                 did_create_edge = False
-                earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[(u,v)]
+                earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[u,v]
 
                 if earlist_time_arrive_v_pickup>self.time_window_end[v]:
                     earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
                     #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
                     earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
-                        -self.travel_time[(v,self.pickup_to_dropoff[u])]
+                        -self.travel_time[v,self.pickup_to_dropoff[u]]
                     #t2_2,d2_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[v])
                     earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
-                        -self.travel_time[(v,self.pickup_to_dropoff[v])]
+                        -self.travel_time[v,self.pickup_to_dropoff[v]]
                     if earlist_time_arrive_u_dropoff > self.time_window_end[self.pickup_to_dropoff[u]]:
                         earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
                         #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
-                        earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
+                        earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
                         if earlist_time_arrive_v_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[v]]:
                             did_create_edge = True
                             if (u,v) not in self.actions:
                                 this_action = self._create_pickup_to_pickup_actions(u,v)
-
-                                if this_action.cost > self.max_action_cost:
-                                    self.max_action_cost = this_action.cost
                             if (v,self.pickup_to_dropoff[u]) not in self.actions:
                                 this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[u])
-
-                                if this_action.cost > self.max_action_cost:
-                                    self.max_action_cost = this_action.cost
                             if (self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]) not in self.actions:
                                 this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
 
-                                if this_action.cost > self.max_action_cost:
-                                    self.max_action_cost = this_action.cost
                             
 
                     if earlist_time_arrive_v_dropoff>self.time_window_end[self.pickup_to_dropoff[v]]:
                         earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
                         #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
-                        earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])]
+                        earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
                         if earlist_time_arrive_u_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[u]]:
                             did_create_edge= True
                             if (u,v) not in self.actions:
                                 this_action = self._create_pickup_to_pickup_actions(u,v)
-
-                                if this_action.cost > self.max_action_cost:
-                                    self.max_action_cost = this_action.cost
                             if (v,self.pickup_to_dropoff[v]) not in self.actions:
                                 this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[v])
-
-                                if this_action.cost > self.max_action_cost:
-                                    self.max_action_cost = this_action.cost
                             if (self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]) not in self.actions:
                                 this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
 
-                                if this_action.cost > self.max_action_cost:
-                                    self.max_action_cost = this_action.cost
-
-                earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[(u, self.pickup_to_dropoff[u])]
+                earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[u, self.pickup_to_dropoff[u]]
                 earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
                 #t3,d4 = self._travel_time_and_distance(self.pickup_to_dropoff[u],v)
-                earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[(self.pickup_to_dropoff[u],v)]
+                earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],v]
                 if earlist_time_arrive_pickup_v_3 > self.time_window_start[v]:
                     did_create_edge = True
                     if (self.pickup_to_dropoff[u],v) not in self.actions:
                         this_action = self._create_dropoff_to_pickup_actions(self.pickup_to_dropoff[u],v)
 
-                        if this_action.cost > self.max_action_cost:
-                                self.max_action_cost = this_action.cost
                 if did_create_edge == True:
                     self.can_group[u].add(v)
     def _create_edges_pair(self):
         initial_group = self._create_group()
         self.can_group = defaultdict(set)
-
-        self.max_action_cost = -1
         self.pairs = set()
         for u in self.pickup_node:
             #self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
@@ -803,80 +770,69 @@ class loadAI_cg:
             for v in initial_group[u]:
 
                 did_create_edge = False
-                earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[(u,v)]
+                earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[u,v]
 
                 if earlist_time_arrive_v_pickup>self.time_window_end[v]:
                     earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
                     #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
                     earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
-                        -self.travel_time[(v,self.pickup_to_dropoff[u])]
+                        -self.travel_time[v,self.pickup_to_dropoff[u]]
                     #t2_2,d2_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[v])
                     earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
-                        -self.travel_time[(v,self.pickup_to_dropoff[v])]
+                        -self.travel_time[v,self.pickup_to_dropoff[v]]
                     if earlist_time_arrive_u_dropoff > self.time_window_end[self.pickup_to_dropoff[u]]:
                         earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
                         #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
-                        earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]
+                        earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
                         if earlist_time_arrive_v_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[v]]:
                             did_create_edge = True
                             if (u,v) not in self.actions:
-                                #this_action = self._create_pickup_to_pickup_actions(u,v)
                                 self.pairs.add((u,v))
-                                # if this_action.cost > self.max_action_cost:
-                                #     self.max_action_cost = this_action.cost
+
                             if (v,self.pickup_to_dropoff[u]) not in self.actions:
                                 self.pairs.add((v,self.pickup_to_dropoff[u]))
-                                # this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[u])
 
-                                # if this_action.cost > self.max_action_cost:
-                                #     self.max_action_cost = this_action.cost
                             if (self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]) not in self.actions:
                                 self.pairs.add((self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]))
-                                # this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
 
-                                # if this_action.cost > self.max_action_cost:
-                                #     self.max_action_cost = this_action.cost
                             
 
                     if earlist_time_arrive_v_dropoff>self.time_window_end[self.pickup_to_dropoff[v]]:
                         earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
-                        #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
-                        earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])]
+                        #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]
+                        earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
                         if earlist_time_arrive_u_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[u]]:
                             did_create_edge= True
                             if (u,v) not in self.actions:
                                 self.pairs.add((u,v))
-                                # this_action = self._create_pickup_to_pickup_actions(u,v)
 
-                                # if this_action.cost > self.max_action_cost:
-                                #     self.max_action_cost = this_action.cost
                             if (v,self.pickup_to_dropoff[v]) not in self.actions:
                                 self.pairs.add((v,self.pickup_to_dropoff[v]))
-                                # this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[v])
 
-                                # if this_action.cost > self.max_action_cost:
-                                #     self.max_action_cost = this_action.cost
                             if (self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]) not in self.actions:
                                 self.pairs.add((self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]))
-                                # this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
 
-                                # if this_action.cost > self.max_action_cost:
-                                #     self.max_action_cost = this_action.cost
 
-                earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[(u, self.pickup_to_dropoff[u])]
+                earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[u, self.pickup_to_dropoff[u]]
                 earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
-                #t3,d4 = self._travel_time_and_distance(self.pickup_to_dropoff[u],v)
-                earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[(self.pickup_to_dropoff[u],v)]
+                earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],v]
                 if earlist_time_arrive_pickup_v_3 > self.time_window_start[v]:
                     did_create_edge = True
                     if (self.pickup_to_dropoff[u],v) not in self.actions:
                         self.pairs.add((self.pickup_to_dropoff[u],v))
-                        # this_action = self._create_dropoff_to_pickup_actions(self.pickup_to_dropoff[u],v)
 
-                        # if this_action.cost > self.max_action_cost:
-                        #         self.max_action_cost = this_action.cost
                 if did_create_edge == True:
                     self.can_group[u].add(v)
+    def _create_actions_with_edge_pair(self):
+        for (u,v) in self.pairs:
+            if u in self.pickup_node and v in self.pickup_node:
+                a = self._create_pickup_to_pickup_actions(u,v)
+            if u in self.pickup_node and v in self.dropoff_node:
+                a = self._create_pickup_to_dropoff_actions(u,v)
+            if u in self.dropoff_node and v in self.pickup_node:
+                a = self._create_dropoff_to_pickup_actions(u,v)
+            if u in self.dropoff_node and v in self.pickup_node:
+                a = self._create_dropoff_to_dropoff_actions(u,v)
     def _create_preferred_actions(self):
         #self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
         self.preferred_actions = {}
@@ -1034,42 +990,44 @@ class loadAI_cg:
         """
         nodes = list(self.pickup_and_dropoff_node)
         n = len(nodes)
-    
+
+        # APPROACH: Calculate as normal, then pad the matrix to allow 1-indexed access
+
         # 1) extract and radians‐convert coords into arrays
-        lat = np.array([ self.coordinates[u][0] for u in nodes ])
-        lon = np.array([ self.coordinates[u][1] for u in nodes ])
+        lat = np.array([self.coordinates[u][0] for u in nodes])
+        lon = np.array([self.coordinates[u][1] for u in nodes])
         lat_r = np.radians(lat)
         lon_r = np.radians(lon)
-    
-        # 2) pairwise deltas via broadcasting
+
+        # 2) pairwise deltas via broadcasting   
         dlat = lat_r[:, None] - lat_r[None, :]
         dlon = lon_r[:, None] - lon_r[None, :]
-    
+
         # 3) vectorized haversine
         h1 = np.sin(dlat * 0.5)
         h2 = np.sin(dlon * 0.5)
         R = 3958.8  # miles
         a = h1**2 + np.cos(lat_r)[:,None] * np.cos(lat_r)[None,:] * (h2**2)
-        dist_mat = 2 * R * np.arcsin(np.sqrt(a))   # (n,n) matrix
-    
-        # 4) compute travel times
-        drive = dist_mat / AVERAGE_SPEED          # (n,n)
-        rests = np.floor(drive / HOS_DRIVE_TIME)  # (n,n)
-        t_mat = drive + rests * HOS_REST_TIME     # (n,n)
-    
-        # 5) build dicts in one comprehension each
-        distance = {
-            (nodes[i], nodes[j]): dist_mat[i, j]
-            for i in range(n) for j in range(n)
-        }
-        travel_time = {
-            (nodes[i], nodes[j]): t_mat[i, j]
-            for i in range(n) for j in range(n)
-        }
-    
-        self.distance    = distance
-        self.travel_time = travel_time
-        return travel_time, distance
+        dist_mat_0indexed = 2 * R * np.arcsin(np.sqrt(a))   # (n,n) matrix with 0-indexing
+
+        # 4) compute travel times with 0-indexing
+        drive_0indexed = dist_mat_0indexed / AVERAGE_SPEED
+        rests_0indexed = np.floor(drive_0indexed / HOS_DRIVE_TIME)
+        t_mat_0indexed = drive_0indexed + rests_0indexed * HOS_REST_TIME
+
+        # 5) Create padded matrices for 1-indexed access
+        dist_mat = np.zeros((n+1, n+1))
+        dist_mat[1:n+1, 1:n+1] = dist_mat_0indexed
+
+        drive = np.zeros((n+1, n+1))
+        drive[1:n+1, 1:n+1] = drive_0indexed
+
+        rests = np.zeros((n+1, n+1))
+        rests[1:n+1, 1:n+1] = rests_0indexed
+
+        t_mat = np.zeros((n+1, n+1))
+        t_mat[1:n+1, 1:n+1] = t_mat_0indexed
+        return t_mat, dist_mat
     def _slack(self, pickup_node):
         dropoff_node = self.pickup_to_dropoff[pickup_node]
         pickup_dropoff_direct_distance = self._haversine_distance(pickup_node, dropoff_node)
@@ -1212,7 +1170,7 @@ class loadAI_cg:
         # ASSIGN STATE UPDATE MODULE HERE
         self.neighbors_by_distance, self.neighbors = self._create_nearest_node(10)
         #self.plot_pickup_dropoff_locations()
-        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.max_action_cost, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, self.neighbors_by_distance, self.neighbors , self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
+        self.state_update_module = LoadAI_state_input(self.nodes, self.actions, self.weight_capacity, self.weight_demands, self.time_window_start, self.time_window_end, self.pickup_to_dropoff, self.dropoff_to_pickup, self.neighbors_by_distance, self.neighbors , self.travel_time, self.initial_resource_vector, self.resource_name_to_index, self.number_of_resources, self.problem_info)
 
 
     def plot_pickup_dropoff_with_clusters(self, threshold=0.1):

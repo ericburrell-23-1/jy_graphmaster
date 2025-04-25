@@ -26,7 +26,6 @@ class xy_jy_cg_solver:
         self.route_name_to_index = defaultdict()
         self.row_to_col_to_data = defaultdict(lambda:defaultdict(float))
         self.actions = data.actions
-        self.max_action_cost = data.max_action_cost
         self.pickup_node = data.pickup_node
         self.dropoff_node = data.dropoff_node
         self.neighbors = data.neighbors
@@ -49,7 +48,7 @@ class xy_jy_cg_solver:
         for u in self.pickup_node:
             for v in self.pickup_node:
                 if u!= v:
-                    this_rho[(u,v)] = 2*self.distance[(u,v)] + 2*self.distance[(u+len(self.pickup_node),v+len(self.pickup_node))]
+                    this_rho[(u,v)] = 2*self.distance[u,v] + 2*self.distance[u+len(self.pickup_node),v+len(self.pickup_node)]
                     this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
         return this_rho
         

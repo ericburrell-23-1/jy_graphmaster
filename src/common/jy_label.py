@@ -241,11 +241,11 @@ class jy_label:
                         elif d == self.node:
                             tot_benefit_dropoff_dual -= dual[d-1]
                             #tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
-                            tot_benefit_droppoff_cost += self.distance[(self.node, drop_off_of_d)]
+                            tot_benefit_droppoff_cost += self.distance[self.node, drop_off_of_d]
                         else:
                             tot_benefit_dropoff_dual -= dual[d-1] / 2
                             #tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
-                            tot_benefit_droppoff_cost += self.distance[(self.node, drop_off_of_d)]
+                            tot_benefit_droppoff_cost += self.distance[self.node, drop_off_of_d]
             else:
                 if D ==[1]:
                     print('look here')
