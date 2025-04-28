@@ -164,19 +164,7 @@ class GraphMaster_cg:
         print(self.resource_name_to_index)
         node_2_may_pickup_resource_number=dict()
         node_2_must_dropoff_resource_number=dict()
-        for i in pickup_nodes:
-            j=i+load_ai_dict['num_pickups']
-            my_name_may_pickup=str(("may_pickup", i))
-            my_name_may_avoid_dropoff=str(("may_avoid_dropoff", j))
-            idx_pickup=self.resource_name_to_index[my_name_may_pickup]
-            idx_dropoff=self.resource_name_to_index[my_name_may_avoid_dropoff]
-            node_2_may_pickup_resource_number[i]=idx_pickup
-            node_2_may_pickup_resource_number[j]=idx_pickup
-            node_2_must_dropoff_resource_number[i]=idx_dropoff
-            node_2_must_dropoff_resource_number[j]=idx_dropoff
             #self.resource_name_to_index[my_name_pickup]
-        load_ai_dict['node_2_may_pickup_resource_number']=node_2_may_pickup_resource_number
-        load_ai_dict['node_2_must_dropoff_resource_number']=node_2_must_dropoff_resource_number
         self.jy_options_user_defined['load_ai_dict']=load_ai_dict
         print('hi')
 
@@ -212,7 +200,7 @@ class GraphMaster_cg:
         common_nodes = set(actions_from_minus1.keys()).intersection(set(actions_to_minus2.keys()))
         this_list_of_routes = []
         for node in common_nodes:
-            source_state = State(-1,self.initial_resource_vector,0,True,False)
+            source_state = State(-1,self.initial_resource_vector,set(),set(),set(),0,True,False)
             state_action = [source_state]
             first_action = actions_from_minus1[node]
             state_action.append(first_action)
@@ -274,7 +262,7 @@ class GraphMaster_cg:
         cg_solver = xy_jy_cg_solver(skip_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,self.distance, forbidden_omega,self.initial_resource_vector)
         #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
         while iteration < max_iterations:
-            print(type(self.state_update_module.actions))
+            #print(type(self.state_update_module.actions))
             #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
             if self.jy_options_user_defined['new_rmp'] == True:
                 
@@ -312,7 +300,7 @@ class GraphMaster_cg:
                     print(f'value:{value}, red_cost:{red_cost}')
             l_id += 1
 
-            jy_init_res_state = State(-1,self.initial_resource_vector,l_id,True,False)
+            jy_init_res_state = State(-1,self.initial_resource_vector,set(),set(),set(),l_id,True,False)
             this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
             if self.jy_options_user_defined['use_fast_pricing'] == True:
                
@@ -422,7 +410,7 @@ class GraphMaster_cg:
                                 subset_of_routes = route.generate_subset_routes()
                                 for subset_route in subset_of_routes:
                                     if subset_route not in node_sequence_of_routes:
-                                        cur_state = State(-1,self.initial_resource_vector,1,True,False)
+                                        cur_state = State(-1,self.initial_resource_vector,set(),set(),set(),1,True,False)
                                         state_action_alt_repeat=[cur_state]
                                         do_continue = False
                                         for o,d in zip(subset_route[:-1],subset_route[1:]):

@@ -48,7 +48,7 @@ class Helper:
             result[key] = op(cm1[key], cm2[key])
         return result
     @staticmethod
-    def dict_2_vec(key_2_index, vec_sz, key_to_value):
+    def OLD_dict_2_vec(key_2_index, vec_sz, key_to_value):
         # For very sparse vectors, we want to minimize memory operations
     
         # Process only the non-zero elements directly
@@ -74,6 +74,30 @@ class Helper:
 
         
         return indices, data
+    
+    def dict_to_vec(input_dict, resource_name_to_index):
+        result = [None] * len(resource_name_to_index)
+    
+        # Place each dictionary value at the correct index
+        for key, value in input_dict.items():
+            if key in resource_name_to_index:
+                index = resource_name_to_index[key]
+                result[index] = value
+        
+        return result
+    def vec_to_dict(input_array, resource_name_to_index):
+        result_dict = {}
+    
+        # Create reverse mapping: index -> resource_name
+        index_to_resource_name = {index: name for name, index in resource_name_to_index.items()}
+        
+        # Use the reverse mapping to assign array values to the correct keys
+        for index, value in enumerate(input_array):
+            if index in index_to_resource_name:
+                resource_name = index_to_resource_name[index]
+                result_dict[resource_name] = value
+        
+        return result_dict
     def partial_map_2_indices_applied(key_2_index,key_to_value):
         #take in thej partial map and produce the terms where the min operator is applied
         indices = np.array([key_2_index[k] for k in key_to_value], dtype=int)

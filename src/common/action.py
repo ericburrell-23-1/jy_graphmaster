@@ -25,31 +25,24 @@ class Action:
     _head_state_cache = {}
     _tail_state_cache = {}
 
-    def __init__(self, trans_min_input:dict, trans_term_add:dict, trans_term_min:dict, 
-                node_head:int, node_tail:int, Exog_vec, non_zero_exog_vec,cost, 
-                min_resource_vec_indices, min_resource_vec_data, resource_consumption_vec_indices, 
-                resource_consumption_vec_data,indices_non_zero_max:list, max_resource_vec_indices, 
-                max_resource_vec_data,full_resource_vec, empty_resource_vec):
-        self.trans_min_input = trans_min_input
-        self.trans_term_add = trans_term_add
-        self.trans_term_min = trans_term_min
+    def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, Exog_vec, non_zero_exog_vec,cost, 
+                min_resource_vec, resource_consumption_vec, max_resource_vec, 
+                full_resource_vec, empty_resource_vec):
         self.node_tail = node_tail
         self.node_head = node_head
         self.Exog_vec = Exog_vec
         #self.Exog_vec_csr = csr_matrix(Exog_vec) #1
         self.cost = cost
-
-        self.min_resource_vec_indices = min_resource_vec_indices
-        self.min_resource_vec_data = min_resource_vec_data
-        self.resource_consumption_indices = resource_consumption_vec_indices
-        self.resource_consumption_data = resource_consumption_vec_data
-        self.indices_non_zero_max = indices_non_zero_max
-        self.max_resource_vec_indices = max_resource_vec_indices
-        self.max_resource_vec_data = max_resource_vec_data
+        self.pickup = pickup
+        self.dropoff = dropoff
+        self.num_cus = num_cus
+        self.min_resource_vec = min_resource_vec
+        self.resource_consumption = resource_consumption_vec
+        self.max_resource_vec = max_resource_vec
         self.full_resource_vec = full_resource_vec
         self.empty_resource_vec = empty_resource_vec
         self.max_vals = {}
-        for idx, val in zip(self.max_resource_vec_indices, self.max_resource_vec_data):
+        for idx, val in enumerate(max_resource_vec):
             try:
                 self.max_vals[idx] = val
             except:
@@ -72,15 +65,9 @@ class Action:
 
 
     def comp_red_cost(self, dual_vec):
+        print('check here')
         return self.cost - np.dot(self.red_cost_non_zero_cal_vals, dual_vec[self.red_cost_non_zero_cal_indices])
     
-    def _get_state_cache_key(self, state_tail: State) -> int:
-        """
-        Generate a cache key based on the state_tail but excluding l_id.
-        """
-        # Create a hash of the node, is_source, is_sink, and state_vec, but NOT l_id
-        state_vec_hash = tuple(state_tail.state_vec)
-        return hash((state_tail.node, state_tail.is_source, state_tail.is_sink, state_vec_hash))
 
     def _get_head_stat_vec(self, state_tail: State):
         head_state_vec = state_tail.state_vec.copy()
@@ -90,7 +77,7 @@ class Action:
             head_state_vec[col] += self.resource_consumption_data[idx]
         
         return head_state_vec
-
+    
     def get_head_state_fast_load_ai(self, state_tail: State, l_id):
         """
         Fast version to compute head state from tail state and resource consumption.
@@ -99,22 +86,43 @@ class Action:
         # 1. Early rejection using sparse comparison (fast & memory efficient)
         #diff_data = state_tail.state_vec - self.min_resource_vec
         #if self.violates_min_resources(state_tail.state_vec)==True:
-        if self.violates_min_resources(state_tail.state_vec)==True:
-                return None
+        if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up)==True:
+            return None
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
         # 2. Compute tentative head state vector
-        head_state_vec = self._get_head_stat_vec(state_tail)
+        head_state_vec = state_tail.state_vec + self.resource_consumption
         # if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
         #     return None
         # 3. Apply max_resource cap (only on indices of interest)
         head_state_vec = self.fast_max_res_apply(head_state_vec)
+        if self.pickup is not None:
+            picked_up = state_tail.picked_up.copy()
+            picked_up.add(self.pickup)
+            dropped_off = state_tail.dropped_off.copy()
+            must_drop_off = state_tail.must_drop_off.copy()
+            must_drop_off.add(self.pickup)
+
+        if self.dropoff is not None:
+            picked_up = state_tail.picked_up.copy()
+            dropped_off = state_tail.dropped_off.copy()
+            dropped_off.add(self.dropoff) 
+            must_drop_off = state_tail.must_drop_off.copy()
+            try:
+                must_drop_off.remove(self.dropoff)
+            except:
+                print('check here')
+        if dropped_off.issubset(picked_up) is False:
+            print('check here')
+        print(picked_up)
+        print(dropped_off)
 
         if self.node_head == -2:
-            head_state = State(self.node_head, self.empty_resource_vec, l_id, is_source=False, is_sink=True)
+            head_state = State(self.node_head, self.empty_resource_vec,set(),set(),set(), l_id, is_source=False, is_sink=True)
         else:
-            head_state = State(self.node_head, head_state_vec, l_id, is_source=False, is_sink=False)
+            head_state = State(self.node_head, head_state_vec,picked_up,dropped_off,must_drop_off, l_id, is_source=False, is_sink=False)
 
+            
         
         #Handle the case where times are too small to measure
         #print('self.indices_non_zero_max')
@@ -199,19 +207,18 @@ class Action:
 
         return this_dominates_input #return the domination property
     
-    def violates_min_resources(self, tail_vec):   
-        
-        return np.any(tail_vec[self.min_resource_vec_indices] < self.min_resource_vec_data)
+    def violates_min_resources(self, tail_vec, tail_picked_up):   
+        flag = np.any(tail_vec < self.min_resource_vec)
+        can_pick_up = True
+        can_drop_off = True
+        if self.pickup != None:
+            can_pick_up = self.pickup not in tail_picked_up
+        if self.dropoff != None:
+            can_drop_off = (self.dropoff-self.num_cus) in tail_picked_up 
+        flag = flag and can_pick_up and  can_drop_off
+        return flag
 
-        #return False
 
-    def is_null_action(self):
-        """
-        identifies if current action is a null action
-        """
-        return (self.node_tail == self.node_head and
-                self.cost == 0.0 and
-                all(v == 0 for v in self.Exog_vec))
     
     def __eq__(self, other: "Action") -> bool:
        """
@@ -222,13 +229,8 @@ class Action:
        if not isinstance(other, Action):
            return False
 
-       return (
-           self.trans_min_input == other.trans_min_input and
-           self.trans_term_add  == other.trans_term_add  and
-           self.trans_term_min  == other.trans_term_min  and
-           self.Exog_vec        == other.Exog_vec        and
-           self.cost            == other.cost
-        )
+       return self.action_id == other.action_id
+    
     def fast_max_res_apply(self, head_state_vec_array):
         """
         Apply maximum resource constraints using pre-computed arrays.
@@ -250,7 +252,7 @@ class Action:
        """
        Creates a hash based on the fields used in __eq__.
        """
-       return hash(self.action_id)
+       return self.action_id
     
     def pretty_print_action(self):
         print('action is ')
@@ -261,7 +263,7 @@ class Action:
 
     def check_valid(self, state_tail, state_head):
         is_valid = True
-
+        input('it is not in current code')
         if self.mark_of_null_action == True and (state_tail.node != state_head.node):
             is_valid = False
             print('not valid due null action for different')
