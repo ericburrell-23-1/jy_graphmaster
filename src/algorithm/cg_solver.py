@@ -303,7 +303,7 @@ class GraphMaster_cg:
             jy_init_res_state = State(-1,self.initial_resource_vector,set(),set(),set(),l_id,True,False)
             this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
             if self.jy_options_user_defined['use_fast_pricing'] == True:
-                this_dual = [1000 for i in range(len(self.rhs_exog_vec))]
+                #this_dual = [1000 for i in range(len(self.rhs_exog_vec))]
                 jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
                 routes= jy_fast_pricer.run()
                 reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]

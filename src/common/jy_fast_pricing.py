@@ -120,8 +120,8 @@ class jy_fast_pricing():
                 break
         
         # Return the routes found
-        print(self.expanede_label[:10])
-        breakpoint()
+        #print(self.expanede_label[:10])
+        #breakpoint()
         return routes
 
     def _compute_action_reduced_costs(self):
