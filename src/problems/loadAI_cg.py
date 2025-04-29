@@ -20,7 +20,6 @@ from src.common.pgm_approach import Route
 from src.common.line_time_profiler import HierarchicalProfiler
 from src.common.time_profile import TimeProfiler
 from tqdm import tqdm
-from memory_profiler import profile
 import time
 import random
 import cProfile
