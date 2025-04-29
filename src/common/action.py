@@ -59,7 +59,7 @@ class Action:
         # 1. Early rejection using sparse comparison (fast & memory efficient)
         #diff_data = state_tail.state_vec - self.min_resource_vec
         #if self.violates_min_resources(state_tail.state_vec)==True:
-        if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up)==True:
+        if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up, state_tail.must_drop_off)==True:
             return None
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
@@ -81,8 +81,10 @@ class Action:
             dropped_off = state_tail.dropped_off.copy()
             dropped_off.add(self.dropoff) 
             must_drop_off = state_tail.must_drop_off.copy()
-
-            must_drop_off.remove(self.dropoff)
+            try: 
+                must_drop_off.remove(self.dropoff)
+            except:
+                print('check here')
 
 
         if self.node_head == -2:
@@ -219,15 +221,15 @@ class Action:
             this_dominates_input = True
         
         return this_dominates_input
-    def violates_min_resources(self, tail_vec, tail_picked_up):   
+    def violates_min_resources(self, tail_vec, tail_picked_up,tail_must_dropoff):   
         flag = np.any(tail_vec < self.min_resource_vec)
-        can_pick_up = True
-        can_drop_off = True
+        can_pick_up = False
+        can_drop_off = False
         if self.pickup != None:
-            can_pick_up = self.pickup not in tail_picked_up
+            can_pick_up = self.pickup in tail_picked_up
         if self.dropoff != None:
-            can_drop_off = (self.dropoff-self.num_cus) in tail_picked_up 
-        flag = flag and can_pick_up and  can_drop_off
+            can_drop_off = self.dropoff not in tail_must_dropoff 
+        flag = flag or can_pick_up or  can_drop_off
         return flag
 
 

@@ -455,7 +455,7 @@ class loadAI_cg:
             
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
             this_pickup = None
-            this_dropoff = origin_node
+            this_dropoff = origin_node - self.number_of_customers
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_vec,cost, min_resource_vec, 
                             resource_consumption_vec,max_resource_vec)

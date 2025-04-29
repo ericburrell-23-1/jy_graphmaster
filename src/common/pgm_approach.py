@@ -98,7 +98,7 @@ class Route:
         
         for i in range(1,len(self.state_action_alt_repeat),2):
             self.just_actions_ordered.append(self.state_action_alt_repeat[i])
-        print('check here for state and action list')
+        #print('check here for state and action list')
         #print('len(self.just_states_ordered)')
         #print(len(self.just_states_ordered))
         #print('len(self.just_actions_ordered)')
@@ -166,7 +166,7 @@ class Route:
         if self.just_states_ordered[-1].is_sink==False:
             flag=False
             input('error here 2')
-        print('check here')
+        #print('check here')
         for i in range(0,len(self.just_states_ordered)-1):
             s1=self.just_states_ordered[i]
             s2=self.just_states_ordered[i+1]
