@@ -120,6 +120,8 @@ class jy_fast_pricing():
                 break
         
         # Return the routes found
+        print(self.expanded_labels[:10])
+        #breakpoint()
         return routes
 
     def _compute_action_reduced_costs(self):
@@ -316,7 +318,7 @@ class jy_fast_pricing():
         itr_num = 0
         if self.jy_opt['use_comp_col'] == True:
             max_ter =100000
-        
+        self.expanded_labels = []
         while itr_num < max_ter:
             itr_num+=1
             # Re-compute bounds based on dual values
@@ -372,6 +374,7 @@ class jy_fast_pricing():
                     else:
                         incumbant_lb=my_lb
                 curr_label = self.expandable_labels.pop()
+                self.expanded_labels.append(curr_label.all_nodes_ordered)
                 if debug_on==True:
                     self.jy_get_compelition(curr_label)
                 verbose=True
