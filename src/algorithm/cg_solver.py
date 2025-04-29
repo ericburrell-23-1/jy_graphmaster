@@ -349,8 +349,8 @@ class GraphMaster_cg:
                         used_routes = sol['used_routes']
                         #variable_to_value = sol['variable_values']
                         #print('route generated')
-                        for route in list_of_routes:
-                            print(route.node_in_ordered)
+                        # for route in list_of_routes:
+                        #     print(route.node_in_ordered)
                         #print('route used')
                         #used_routes = self.post_procssing(used_routes)
                         for route in used_routes:

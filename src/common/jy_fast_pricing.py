@@ -150,8 +150,8 @@ class jy_fast_pricing():
             #print(pickup_forget)
             #print('dropoff_forget')
             #print(dropoff_forget)
-            print('self.forbidden_nodes')
-            print(self.forbidden_nodes)
+            # print('self.forbidden_nodes')
+            # print(self.forbidden_nodes)
             #print('type(pickup_forget)')
             #print(type(pickup_forget))
             #print('type(dropoff_forget)')
@@ -342,8 +342,8 @@ class jy_fast_pricing():
             for label in self.expandable_labels.objects:
                 if label.lb < min_lb:
                     min_lb = label.lb
-            print('min_lb')
-            print(min_lb)
+            # print('min_lb')
+            # print(min_lb)
             if min_lb >= 0 or len(self.expandable_labels) == 0:
                 break
             
@@ -457,11 +457,13 @@ class jy_fast_pricing():
                 #if curr_label.all_nodes_ordered ==[-1,4,9]:
                 #    print('check here')
 
-
+                #print('check point here')
                 for my_act in poss_actions:
 
                     if my_act.node_head in self.skip_node:
                         continue
+                    if curr_label.all_nodes_ordered == [-1, 1, 4]:
+                        print('check here')
                     new_label= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
 
                     if new_label == None:

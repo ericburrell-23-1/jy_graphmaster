@@ -419,7 +419,7 @@ class loadAI_cg:
             resource_consumption_vec = np.array([0,0,0,0])
             max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.time_window_start[destination_node],MAX_COMBINED_LOADS])
 
-            this_pickup = destination_node
+            this_pickup = None
             this_dropoff = None
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,trans_term_min)
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
@@ -490,7 +490,7 @@ class loadAI_cg:
                                              MAX_COMBINED_LOADS] )     
         #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
         #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
-        this_pick_up = destination_node
+        this_pick_up = origin_node
         this_drop_off = None
         action = Action(destination_node, origin_node, this_pick_up,this_drop_off, self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec,resource_consumption_vec, 
@@ -524,8 +524,8 @@ class loadAI_cg:
         # max_resource_vec_indices,max_resource_vec_data = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_min)     
         #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
         #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
-        this_pick_up = None
-        this_drop_off = destination_node - self.number_of_customers
+        this_pick_up = origin_node
+        this_drop_off = None
         action = Action( destination_node, origin_node, this_pick_up,this_drop_off,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, max_resource_vec)
@@ -565,8 +565,8 @@ class loadAI_cg:
  
         #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
         #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
-        this_pickup = destination_node
-        this_dropoff=None
+        this_pickup = None
+        this_dropoff= origin_node - self.number_of_customers
         action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                             non_zero_exog_val, non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
@@ -599,7 +599,7 @@ class loadAI_cg:
         #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
         #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
         this_pickup = None
-        this_dropoff = destination_node - self.number_of_customers
+        this_dropoff = origin_node - self.number_of_customers
         action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                             non_zero_exog_val , non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 

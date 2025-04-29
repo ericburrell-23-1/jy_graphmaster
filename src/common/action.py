@@ -69,6 +69,9 @@ class Action:
         #     return None
         # 3. Apply max_resource cap (only on indices of interest)
         head_state_vec = self.fast_max_res_apply(head_state_vec)
+        picked_up=set()
+        dropped_off=set()
+        must_drop_off=set()
         if self.pickup is not None:
             picked_up = state_tail.picked_up.copy()
             picked_up.add(self.pickup)
