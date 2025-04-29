@@ -333,9 +333,9 @@ class xy_jy_cg_solver:
             for _, route, _ in cols_to_add:
                 # Add route to the problem
                 self.add_route(route)  # Assuming this method exists and adds a route correctly
-                print('Added route:')
-                print('Cost:', route.cost)
-                print('Nodes:', route.just_nodes_ordered if hasattr(route, 'just_nodes_ordered') else 'N/A')
+                # print('Added route:')
+                # print('Cost:', route.cost)
+                # print('Nodes:', route.just_nodes_ordered if hasattr(route, 'just_nodes_ordered') else 'N/A')
                 col_added += 1
                 
             # Step 9: Decrement iterations counter
@@ -343,8 +343,8 @@ class xy_jy_cg_solver:
             
             if debug_on == True:
                 this_sol = self.solve()
-                print('this_sol')
-                print(this_sol)
+                # print('this_sol')
+                # print(this_sol)
                 this_obj_val = this_sol['objective_value']
                 if this_obj_val > before_obj:
                     print('error here: obj not improving with new col')
@@ -679,7 +679,7 @@ class xy_jy_cg_solver:
         # Check if this route already exists
         route_tuple = tuple(route.node_in_ordered) if hasattr(route, 'node_in_ordered') else None
         if route_tuple in self.node_sequence_of_routes:
-            print(f"Route {route_tuple} already exists in the model")
+            #print(f"Route {route_tuple} already exists in the model")
             # Find the existing route index
             route_idx = self.node_sequence_of_routes.index(route_tuple)
             route_name = ('route', route_idx)
@@ -699,11 +699,11 @@ class xy_jy_cg_solver:
         # Determine variable index - reuse from index_sorted_slot if available
         if hasattr(self, 'index_sorted_slot') and self.index_sorted_slot:
             var_idx = self.index_sorted_slot.pop(0)  # Get the smallest available index
-            print(f"Reusing index {var_idx} for new route")
+            #print(f"Reusing index {var_idx} for new route")
         else:
             # Use next available index
             var_idx = len(self.var_to_obj_coef)
-            print(f"Assigned new index {var_idx} for new route")
+            #print(f"Assigned new index {var_idx} for new route")
         
         # Update mappings
         self.var_to_obj_coef[var_idx] = route.cost
@@ -720,8 +720,8 @@ class xy_jy_cg_solver:
         self.index_to_route_name[var_idx] = ('route', route_idx)
         self.route_name_to_index[('route', route_idx)] = var_idx
         
-        print(f"Added route with variable index {var_idx}, route index {route_idx}")
-        print(f"Route cost: {route.cost}")
+        #print(f"Added route with variable index {var_idx}, route index {route_idx}")
+        #print(f"Route cost: {route.cost}")
         if hasattr(route, 'just_nodes_ordered'):
             print(f"Route nodes: {route.just_nodes_ordered}")
         
@@ -782,7 +782,7 @@ class xy_jy_cg_solver:
             
             self.forbidden.add((u, v))
             
-            print(f"Successfully removed omega variable mapping for pair ({u},{v})")
+            #print(f"Successfully removed omega variable mapping for pair ({u},{v})")
             return True
             
         except Exception as e:

@@ -6,6 +6,8 @@ from src.common.helper import Helper
 from scipy.sparse import csr_matrix
 class State:
     def __init__(self, node:int, state_vec,picked_up, dropped_off,must_dropoff, l_id: int, is_source: bool, is_sink: bool):
+        if node == None:
+            input('error here for state')
         self.node = node
         self.state_vec = state_vec
         self.picked_up = picked_up
@@ -50,12 +52,16 @@ class State:
         picked_up_2 = other_state.picked_up
         dropped_off_2 = other_state.dropped_off
         # Compute element-wise difference
-        res_vec_diff = vec1_dense - vec2_dense
+        try:
+            res_vec_diff = vec1_dense - vec2_dense
+        
 
-        # Compute min and sum values
-        min_value = res_vec_diff.min()  # Minimum difference
-        sum_value = np.abs(res_vec_diff).sum()  # Absolute sum of differences
-
+            # Compute min and sum values
+            min_value = res_vec_diff.min()  # Minimum difference
+        
+            sum_value = np.abs(res_vec_diff).sum()  # Absolute sum of differences
+        except:
+            print('check error for state here')
         # Domination condition
         if min_value >= 0 and sum_value > 0 and picked_up_2==self.picked_up and dropped_off_2.issubset(self.dropped_off):
             does_dom = True

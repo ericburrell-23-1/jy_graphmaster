@@ -142,7 +142,7 @@ class GraphMaster_cg:
         pickup_nodes=set(my_list_pickups)
         load_ai_dict['pickup_nodes']=pickup_nodes
         my_list_dropoffs=np.arange(NC+1,(2*NC)+1).astype('int')
-        print(my_list_dropoffs)
+        #print(my_list_dropoffs)
         drop_off_nodes=set(my_list_dropoffs)
         load_ai_dict['drop_off_nodes']=drop_off_nodes
         my_list_AUX=np.arange((NC*2)+1,(3*NC)+1).astype('int')
@@ -160,13 +160,13 @@ class GraphMaster_cg:
             dropoff_node_2_pickup_node[i]=i-load_ai_dict['num_pickups']
         load_ai_dict['dropoff_node_2_pickup_node']=dropoff_node_2_pickup_node
 
-        print('self.resource_name_to_index')
-        print(self.resource_name_to_index)
+        # print('self.resource_name_to_index')
+        # print(self.resource_name_to_index)
         node_2_may_pickup_resource_number=dict()
         node_2_must_dropoff_resource_number=dict()
             #self.resource_name_to_index[my_name_pickup]
         self.jy_options_user_defined['load_ai_dict']=load_ai_dict
-        print('hi')
+        #print('hi')
 
     def LOAD_AI_CHECK_Valid_states(self):
         #pn, dn for a pickup and dropoff pair
@@ -241,7 +241,7 @@ class GraphMaster_cg:
         self.action_id_2_actions={my_action.action_id: my_action for my_action in self.actions}
         self.lp_before_operations=np.inf
         self.complete_routes=[]
-        print('starting Graph Master System')
+        #print('starting Graph Master System')
         
         cg_iteration_time =1
         self.path_added = set()
@@ -272,11 +272,11 @@ class GraphMaster_cg:
                 before_num = len(node_sequence_of_routes)
                 output,node_sequence_of_routes, list_of_routes = cg_solver.solve_2()
                 #output,list_of_routes, node_sequence_of_routes = cg_solver_pulp.solve_2()
-                print('before : len(list_of_routes)')
-                print(before_num)
-                print('after : len(list_of_routes)')
-                print(len(node_sequence_of_routes))
-                print('check')
+                # print('before : len(list_of_routes)')
+                # print(before_num)
+                # print('after : len(list_of_routes)')
+                # print(len(node_sequence_of_routes))
+                # print('check')
                 #input('during')
                 #output = cg_solver.solve()
                 #input('after')
@@ -297,7 +297,7 @@ class GraphMaster_cg:
                     red_cost = this_route.get_red_cost(this_dual)
                     if red_cost <-1:
                         input('error here')
-                    print(f'value:{value}, red_cost:{red_cost}')
+                    #print(f'value:{value}, red_cost:{red_cost}')
             l_id += 1
 
             jy_init_res_state = State(-1,self.initial_resource_vector,set(),set(),set(),l_id,True,False)
@@ -348,10 +348,10 @@ class GraphMaster_cg:
                         
                         used_routes = sol['used_routes']
                         #variable_to_value = sol['variable_values']
-                        print('route generated')
+                        #print('route generated')
                         for route in list_of_routes:
                             print(route.node_in_ordered)
-                        print('route used')
+                        #print('route used')
                         #used_routes = self.post_procssing(used_routes)
                         for route in used_routes:
                             print(route.node_in_ordered)
@@ -360,20 +360,20 @@ class GraphMaster_cg:
                                 input('invalid route here')
                         route_num = 1
                         for route in used_routes:
-                            print(f'=========route {route_num}============')
-                            print('node in route ordered')
-                            print(route.node_in_ordered)
-                            print('time remaining')
-                            print([s.state_vec[:2] for s in route.just_states_ordered])
+                            # print(f'=========route {route_num}============')
+                            # print('node in route ordered')
+                            # print(route.node_in_ordered)
+                            # print('time remaining')
+                            # print([s.state_vec[:2] for s in route.just_states_ordered])
                             # if len(route.just_states_ordered) >3:
                             #     print('time window start')
                             #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
                             #     print('time window end')
                             #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
                             #     print('weight remain')
-                            print([s.state_vec[0] for s in route.just_states_ordered])
-                            print('volume remain')
-                            print([s.state_vec[1] for s in route.just_states_ordered])
+                            # print([s.state_vec[0] for s in route.just_states_ordered])
+                            # print('volume remain')
+                            # print([s.state_vec[1] for s in route.just_states_ordered])
                             route_num+=1
                         return {
                             'status': 'optimal',
@@ -400,8 +400,8 @@ class GraphMaster_cg:
                         print(red_cost)
                         input('error here: route added has negative red cost')
                     if red_cost<-1e-3 :
-                        print('route added')
-                        print(route.node_in_ordered)
+                        # print('route added')
+                        # print(route.node_in_ordered)
                         node_sequence_of_routes.append(route.node_in_ordered)
                         list_of_routes.append(route)
                         cg_solver.add_route(route)
@@ -438,7 +438,7 @@ class GraphMaster_cg:
                 for i in range(self.jy_options_user_defined['complementary_col']):
                     jy_pricer_my =jy_slow_general_pricing_solver(self.actions,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.jy_options_user_defined)
                     [list_of_nodes_in_shortest_path, list_of_actions_used_in_col, state_in_ordered,reduced_cost,jy_actions_node] =jy_pricer_my.return_solution()
-                    print('done jy pricing ')
+                    #print('done jy pricing ')
                     state_action_list =[]
                     for idx in range(len(list_of_actions_used_in_col)):
                         state_action_list.append(state_in_ordered[idx])

@@ -9,28 +9,12 @@ from scipy.sparse import csr_matrix
 import scipy.sparse as sp
 import time
 class Action:
-    """
-    Represents an action in the graph.
-    Attributes:
-        origin_node: The starting node of the action.
-        destination_node: The ending node of the action.
-        cost: The cost associated with this action.
-        contribution_vector: The contribution vector of the action.
-        trans_min_input: Dict describing minimum amount of each resource needed for the action to happen.
-        trans_term_vec: Dict describing resource consumption.
-        trans_term_min: Dict describing the maximum amount of a resource allowed for the action to happen.
-    """
 
-    # Class-level caches for head and tail states
-    _head_state_cache = {}
-    _tail_state_cache = {}
 
-    def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, Exog_vec, non_zero_exog_vec,cost, 
-                min_resource_vec, resource_consumption_vec, max_resource_vec, 
-                full_resource_vec, empty_resource_vec):
+    def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, non_zero_exog_val,non_zero_exog_vec,cost, 
+                min_resource_vec, resource_consumption_vec, max_resource_vec):
         self.node_tail = node_tail
         self.node_head = node_head
-        self.Exog_vec = Exog_vec
         #self.Exog_vec_csr = csr_matrix(Exog_vec) #1
         self.cost = cost
         self.pickup = pickup
@@ -39,22 +23,8 @@ class Action:
         self.min_resource_vec = min_resource_vec
         self.resource_consumption = resource_consumption_vec
         self.max_resource_vec = max_resource_vec
-        self.full_resource_vec = full_resource_vec
-        self.empty_resource_vec = empty_resource_vec
-        self.max_vals = {}
-        for idx, val in enumerate(max_resource_vec):
-            try:
-                self.max_vals[idx] = val
-            except:
-                print('check here')
-        
-        if self.max_vals:
-            self.max_indices = np.array(list(self.max_vals.keys()), dtype=int)
-            self.max_values = np.array(list(self.max_vals.values()))
-        else:
-            self.max_indices = np.array([], dtype=int)
-            self.max_values = np.array([], dtype=float)
-        self.red_cost_non_zero_cal_vals = self.red_cost_non_zero_cal_vals = Exog_vec[Exog_vec != 0]
+        #self.full_resource_vec = full_resource_vec
+        self.red_cost_non_zero_cal_vals = non_zero_exog_val
         self.red_cost_non_zero_cal_indices = non_zero_exog_vec
         #self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
         self.action_id = hash((self.node_tail,self.node_head))
@@ -65,8 +35,11 @@ class Action:
 
 
     def comp_red_cost(self, dual_vec):
-        print('check here')
-        return self.cost - np.dot(self.red_cost_non_zero_cal_vals, dual_vec[self.red_cost_non_zero_cal_indices])
+        if self.red_cost_non_zero_cal_indices != None:
+            return self.cost - self.red_cost_non_zero_cal_vals*dual_vec[self.red_cost_non_zero_cal_indices]
+        else:
+            return self.cost
+        #return self.cost - np.dot(self.red_cost_non_zero_cal_vals, dual_vec[self.red_cost_non_zero_cal_indices])
     
 
     def _get_head_stat_vec(self, state_tail: State):
@@ -108,17 +81,12 @@ class Action:
             dropped_off = state_tail.dropped_off.copy()
             dropped_off.add(self.dropoff) 
             must_drop_off = state_tail.must_drop_off.copy()
-            try:
-                must_drop_off.remove(self.dropoff)
-            except:
-                print('check here')
-        if dropped_off.issubset(picked_up) is False:
-            print('check here')
-        print(picked_up)
-        print(dropped_off)
+
+            must_drop_off.remove(self.dropoff)
+
 
         if self.node_head == -2:
-            head_state = State(self.node_head, self.empty_resource_vec,set(),set(),set(), l_id, is_source=False, is_sink=True)
+            head_state = State(self.node_head, np.array([0,0,0,0]),set(),set(),set(), l_id, is_source=False, is_sink=True)
         else:
             head_state = State(self.node_head, head_state_vec,picked_up,dropped_off,must_drop_off, l_id, is_source=False, is_sink=False)
 
@@ -189,7 +157,7 @@ class Action:
         
         return tail_state
 
-    def get_is_dominated(self, otherAction):
+    def OLD_get_is_dominated(self, otherAction):
         """Find out if this action dominates the input action"""
         
         this_dominates_input = False
@@ -206,7 +174,51 @@ class Action:
             this_dominates_input = True #set the domination to true
 
         return this_dominates_input #return the domination property
+    def get_is_dominated(self, otherAction):
+        this_dominates_input = False
     
+        if self.node_head != otherAction.node_head or self.node_tail != otherAction.node_tail:
+            # Please don't comment this out if you want code to be fast
+            input('I should not have been called here if you are looping over all actions pairs that is inefficient')
+        
+        # Check if cost is at least as good
+        term_1 = self.cost <= otherAction.cost
+        
+        # Create dictionaries for fast lookup
+        self_dict = dict(zip(self.red_cost_non_zero_cal_indices, self.red_cost_non_zero_cal_vals))
+        other_dict = dict(zip(otherAction.red_cost_non_zero_cal_indices, otherAction.red_cost_non_zero_cal_vals))
+        
+        # Find the maximum difference
+        max_diff = float('-inf')
+        
+        # Check all indices that appear in either vector
+        all_indices = set(self.red_cost_non_zero_cal_indices) | set(otherAction.red_cost_non_zero_cal_indices)
+        for idx in all_indices:
+            self_val = self_dict.get(idx, 0)  # Default to 0 if index not present
+            other_val = other_dict.get(idx, 0)  # Default to 0 if index not present
+            diff = self_val - other_val
+            max_diff = max(max_diff, diff)
+        
+        term_2 = 0 <= max_diff
+        
+        # Check for strict dominance in cost
+        term_1_strict = self.cost < otherAction.cost
+        
+        # Check for strict dominance in exogenous vector
+        sum_diff = 0
+        for idx in all_indices:
+            self_val = self_dict.get(idx, 0)
+            other_val = other_dict.get(idx, 0)
+            diff = self_val - other_val
+            sum_diff += diff
+        
+        term_2_strict = sum_diff > 0
+        term_3 = term_1_strict or term_2_strict
+        
+        if term_1 and term_2 and term_3:
+            this_dominates_input = True
+        
+        return this_dominates_input
     def violates_min_resources(self, tail_vec, tail_picked_up):   
         flag = np.any(tail_vec < self.min_resource_vec)
         can_pick_up = True
@@ -236,15 +248,8 @@ class Action:
         Apply maximum resource constraints using pre-computed arrays.
         For 1D arrays.
         """
-        # Get current values at the constrained indices
-        current_values = head_state_vec_array[self.max_indices]
-        
-        # Find which values exceed their maximum
-        mask = current_values > self.max_values
-        
-        # Only apply constraints where necessary
-        if np.any(mask):
-            head_state_vec_array[self.max_indices[mask]] = self.max_values[mask]
+
+        head_state_vec_array[2] = min(self.max_resource_vec[2],head_state_vec_array[2])
         
         return head_state_vec_array
 
@@ -259,7 +264,9 @@ class Action:
         print("self.action_id:  "+str(self.action_id))
         print("self.node_tail:  "+str(self.node_tail))
         print("self.node_head:  "+str(self.node_head))
-        print("self.exog_vec:  "+str(self.Exog_vec))
+        print(f'self.red_cost_non_zero_cal_vals:{self.red_cost_non_zero_cal_vals}')
+        print(f'self.red_cost_non_zero_cal_indices:{self.red_cost_non_zero_cal_indices}')
+        #print("self.exog_vec:  "+str(self.Exog_vec))
 
     def check_valid(self, state_tail, state_head):
         is_valid = True

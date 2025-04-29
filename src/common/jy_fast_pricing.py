@@ -368,7 +368,7 @@ class jy_fast_pricing():
                         print(incumbant_lb)
                         print('my_lb')
                         print(my_lb)
-                        input('error here')
+                        input('error here: my_lb<incumbant_lb')
                     else:
                         incumbant_lb=my_lb
                 curr_label = self.expandable_labels.pop()
@@ -384,7 +384,7 @@ class jy_fast_pricing():
                     print(itr_num)
                     print('curr_label.all_nodes')
                     print(curr_label.all_nodes_ordered)
-                    input('error here')
+                    input('error here:curr_label.lb>self.jy_opt')
                 if curr_label.lb>self.jy_opt['min_dual_val_expand']:
                     continue
                 if verbose==True and num_expansion_in % 100==0:
@@ -406,6 +406,7 @@ class jy_fast_pricing():
                     print(num_expansion_in)
                     print('num_expansion_out')
                     print(num_expansion_out)
+                    input('error: verbose==True and num_expansion_in % 100==0')
                 if debug_on==True:
                     #check the lower bound
                     old_lb=curr_label.lb
@@ -501,12 +502,12 @@ class jy_fast_pricing():
                         #input('making route')
                         route = new_label.convert_2_route()
                         all_routes.append(route)
-                        print('route made')
-                        print('new_label.all_nodes_ordered')
-                        print(new_label.all_nodes_ordered)
-                        print('new_label.all_nodes_ordered')
-                        print('new_label.red_cost')
-                        print(new_label.red_cost)
+                        # print('route made')
+                        # print('new_label.all_nodes_ordered')
+                        # print(new_label.all_nodes_ordered)
+                        # print('new_label.all_nodes_ordered')
+                        # print('new_label.red_cost')
+                        # print(new_label.red_cost)
                         #input('paused')
                         self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
                         route_gen_count=route_gen_count+1
@@ -563,16 +564,16 @@ class jy_fast_pricing():
                 can_complete=self.jy_get_compelition(new_label)
                 print('can_complete')
                 print(can_complete)
-                input('big error here')
+                input('big error here:use_completion_on and did_gen_possible_expansion==False')
 
 
         #print('DOEN T the CG process')
         #print('lowest_so_far')
         #print(lowest_so_far)
         #input('----')time_expand_action
-        print(len(all_routes))
-        print('route_gen_count')
-        print(route_gen_count)
+        # print(len(all_routes))
+        # print('route_gen_count')
+        # print(route_gen_count)
         return all_routes
     
     def _get_dual_index_for_customer(self, customer):

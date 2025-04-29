@@ -70,12 +70,22 @@ class Route:
         
         
         self.cost=0
-        self.Exog_vec=self.just_actions_ordered[0].Exog_vec*0
+        self.Exog_vec = np.zeros(len(self.pickup_node))
+        #self.Exog_vec=self.just_actions_ordered[0].Exog_vec*0
 
         for i  in range(0,len(self.just_actions_ordered)):
             my_act=self.just_actions_ordered[i]
             self.cost=self.cost+my_act.cost
-            self.Exog_vec=self.Exog_vec+self.just_actions_ordered[i].Exog_vec
+            #self.Exog_vec=self.Exog_vec+self.just_actions_ordered[i].Exog_vec
+            non_zero_indices = my_act.red_cost_non_zero_cal_indices
+            non_zero_val = my_act.red_cost_non_zero_cal_vals
+            # if len(non_zero_indices)>0:
+            if non_zero_indices!=None:
+                self.Exog_vec[non_zero_indices] += non_zero_val
+
+            # for i,idx in enumerate(non_zero_indices):
+            #     self.Exog_vec[idx] += self.Exog_vec[idx] + non_zero_val[i]
+
         
     def generate_states_nodes_actions_ordered(self):
         #generate all states and actions in order
@@ -88,7 +98,7 @@ class Route:
         
         for i in range(1,len(self.state_action_alt_repeat),2):
             self.just_actions_ordered.append(self.state_action_alt_repeat[i])
-
+        print('check here for state and action list')
         #print('len(self.just_states_ordered)')
         #print(len(self.just_states_ordered))
         #print('len(self.just_actions_ordered)')
@@ -156,7 +166,7 @@ class Route:
         if self.just_states_ordered[-1].is_sink==False:
             flag=False
             input('error here 2')
-        
+        print('check here')
         for i in range(0,len(self.just_states_ordered)-1):
             s1=self.just_states_ordered[i]
             s2=self.just_states_ordered[i+1]

@@ -27,7 +27,7 @@ class jy_label:
             self.red_cost_non_zero_cal_indices = np.array([], dtype=int)
             self.red_cost_non_zero_cal_vals = np.array([])
         else:
-            self.Exog_vec = np.zeros_like(my_actions_ordered[0].Exog_vec)
+            self.Exog_vec = np.zeros(len(pickup_nodes))
 
             # Track non-zero indices directly during addition to avoid scanning the whole array later
             self.red_cost_non_zero_cal_indices = set()
@@ -35,17 +35,28 @@ class jy_label:
             indices_to_pos = {}
             # Process only actions with non-zero elements
             for a in my_actions_ordered:
-                if len(a.red_cost_non_zero_cal_indices) > 0:
-                    for i, idx in enumerate(a.red_cost_non_zero_cal_indices):
-                        self.Exog_vec[idx] += a.Exog_vec[idx]
-                        if self.Exog_vec[idx] != 0:
-                            if idx not in self.red_cost_non_zero_cal_indices:
-                                self.red_cost_non_zero_cal_indices.add(idx)
-                                indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
-                                self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
-                            else:
-                                # Update existing value
-                                self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
+                idx = a.red_cost_non_zero_cal_indices
+                if idx != None:
+                    self.Exog_vec[a.red_cost_non_zero_cal_indices] += a.red_cost_non_zero_cal_vals
+                    if self.Exog_vec[idx] != 0:
+                        if idx not in self.red_cost_non_zero_cal_indices:
+                            self.red_cost_non_zero_cal_indices.add(idx)
+                            indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
+                            self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
+                        else:
+                            # Update existing value
+                            self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
+                # if len(a.red_cost_non_zero_cal_indices) > 0:
+                #     for i, idx in enumerate(a.red_cost_non_zero_cal_indices):
+                #         self.Exog_vec[idx] += a.Exog_vec[idx]
+                #         if self.Exog_vec[idx] != 0:
+                #             if idx not in self.red_cost_non_zero_cal_indices:
+                #                 self.red_cost_non_zero_cal_indices.add(idx)
+                #                 indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
+                #                 self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
+                #             else:
+                #                 # Update existing value
+                #                 self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
 
             self.red_cost_non_zero_cal_indices = np.array(sorted(self.red_cost_non_zero_cal_indices))
             sorted_vals = np.zeros(len(self.red_cost_non_zero_cal_indices))
@@ -234,8 +245,6 @@ class jy_label:
                 for d in D:
                     drop_off_of_d = d + pickup_nodes_len
                     if drop_off_of_d in self.edges[self.node]:
-                        if self.node == 8 and drop_off_of_d == 22:
-                            print('check here')
                         if drop_off_of_d == self.node:
                             tot_benefit_dropoff_dual -= dual[d-1] / 2
                         elif d == self.node:
@@ -247,8 +256,6 @@ class jy_label:
                             #tot_benefit_droppoff_cost += self.action_dict[(self.node, drop_off_of_d)][0].cost
                             tot_benefit_droppoff_cost += self.distance[self.node, drop_off_of_d]
             else:
-                if D ==[1]:
-                    print('look here')
                 D_copy = D.copy()
                 processed = set()  # Track which nodes we've successfully processed
                 pending = []  # Track nodes we couldn't process directly
