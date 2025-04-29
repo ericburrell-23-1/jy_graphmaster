@@ -52,16 +52,15 @@ class State:
         picked_up_2 = other_state.picked_up
         dropped_off_2 = other_state.dropped_off
         # Compute element-wise difference
-        try:
-            res_vec_diff = vec1_dense - vec2_dense
-        
 
-            # Compute min and sum values
-            min_value = res_vec_diff.min()  # Minimum difference
-        
-            sum_value = np.abs(res_vec_diff).sum()  # Absolute sum of differences
-        except:
-            print('check error for state here')
+        res_vec_diff = vec1_dense - vec2_dense
+    
+
+        # Compute min and sum values
+        min_value = res_vec_diff.min()  # Minimum difference
+    
+        sum_value = np.abs(res_vec_diff).sum()  # Absolute sum of differences
+
         # Domination condition
         if min_value >= 0 and sum_value > 0 and picked_up_2==self.picked_up and dropped_off_2.issubset(self.dropped_off):
             does_dom = True

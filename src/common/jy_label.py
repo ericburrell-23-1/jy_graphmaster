@@ -37,7 +37,7 @@ class jy_label:
             for a in my_actions_ordered:
                 idx = a.red_cost_non_zero_cal_indices
                 if idx != None:
-                    self.Exog_vec[a.red_cost_non_zero_cal_indices] += a.red_cost_non_zero_cal_vals
+                    self.Exog_vec[idx] += a.red_cost_non_zero_cal_vals
                     if self.Exog_vec[idx] != 0:
                         if idx not in self.red_cost_non_zero_cal_indices:
                             self.red_cost_non_zero_cal_indices.add(idx)

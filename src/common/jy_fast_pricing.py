@@ -120,6 +120,8 @@ class jy_fast_pricing():
                 break
         
         # Return the routes found
+        print(self.expanede_label[:10])
+        breakpoint()
         return routes
 
     def _compute_action_reduced_costs(self):
@@ -316,7 +318,7 @@ class jy_fast_pricing():
         itr_num = 0
         if self.jy_opt['use_comp_col'] == True:
             max_ter =100000
-        
+        self.expanede_label = []
         while itr_num < max_ter:
             itr_num+=1
             # Re-compute bounds based on dual values
@@ -372,6 +374,7 @@ class jy_fast_pricing():
                     else:
                         incumbant_lb=my_lb
                 curr_label = self.expandable_labels.pop()
+                self.expanede_label.append(curr_label.all_nodes_ordered)
                 if debug_on==True:
                     self.jy_get_compelition(curr_label)
                 verbose=True
@@ -387,26 +390,27 @@ class jy_fast_pricing():
                     input('error here:curr_label.lb>self.jy_opt')
                 if curr_label.lb>self.jy_opt['min_dual_val_expand']:
                     continue
-                if verbose==True and num_expansion_in % 100==0:
-                    print('incumbant_lb')
-                    print(incumbant_lb)
-                    print('curr_label.red_cost')
-                    print(curr_label.red_cost)
-                    print('curr_label.LB')
-                    print(curr_label.lb)
-                    print('len(curr_label.my_states_ordered)')
-                    print(len(curr_label.my_states_ordered))
-                    print('curr_label.all_nodes_ordered')
-                    print(curr_label.all_nodes_ordered)
-                    print('self.forbidden_nodes')
-                    print(self.forbidden_nodes)
-                    print('len(self.expandable_labels)')
-                    print(len(self.expandable_labels))
-                    print('num_expansion_in')
-                    print(num_expansion_in)
-                    print('num_expansion_out')
-                    print(num_expansion_out)
-                    input('error: verbose==True and num_expansion_in % 100==0')
+                if 0>0:
+                    if verbose==True and num_expansion_in % 100==0:
+                        print('incumbant_lb')
+                        print(incumbant_lb)
+                        print('curr_label.red_cost')
+                        print(curr_label.red_cost)
+                        print('curr_label.LB')
+                        print(curr_label.lb)
+                        print('len(curr_label.my_states_ordered)')
+                        print(len(curr_label.my_states_ordered))
+                        print('curr_label.all_nodes_ordered')
+                        print(curr_label.all_nodes_ordered)
+                        print('self.forbidden_nodes')
+                        print(self.forbidden_nodes)
+                        print('len(self.expandable_labels)')
+                        print(len(self.expandable_labels))
+                        print('num_expansion_in')
+                        print(num_expansion_in)
+                        print('num_expansion_out')
+                        print(num_expansion_out)
+                        #input('error: verbose==True and num_expansion_in % 100==0')
                 if debug_on==True:
                     #check the lower bound
                     old_lb=curr_label.lb

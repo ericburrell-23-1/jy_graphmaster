@@ -74,7 +74,6 @@ class loadAI_cg:
     def solve(self):
         """Creates a GraphMasterSolver instance from problem data and calls its solve() method"""
         #node_to_list = self._group_states_by_node_l(self.initial_res_states)
-        print('check input here')
         self.solver = GraphMaster_cg(
             self.nodes,
             self.actions,
@@ -414,7 +413,7 @@ class loadAI_cg:
             cost = 0
             #exog_contrib_vec = self._default_contribution_vector()
             non_zero_exog_val = None
-            non_zero_exog_vec = None
+            non_zero_exog_indices = None
 
             min_resource_vec = np.array([0,0,0,0])
             resource_consumption_vec = np.array([0,0,0,0])
@@ -425,7 +424,7 @@ class loadAI_cg:
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,trans_term_min)
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
-            action = Action(destination_node, origin_node, this_pickup, this_dropoff, self.number_of_customers, non_zero_exog_val,non_zero_exog_vec,cost,min_resource_vec, 
+            action = Action(destination_node, origin_node, this_pickup, this_dropoff, self.number_of_customers, non_zero_exog_val,non_zero_exog_indices,cost,min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec)
             self.actions[origin_node, destination_node] = [action]
@@ -440,7 +439,7 @@ class loadAI_cg:
                 cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
                 #exog_contrib_vec[cover_constraint_index] = 0.5
                 non_zero_exog_val = 0.5
-                non_zero_exog_vec = cover_constraint_index
+                non_zero_exog_indices = cover_constraint_index
                 #print('cover_constraint_index')
                 #print(cover_constraint_index)
                 #print('origin_node')
@@ -457,7 +456,7 @@ class loadAI_cg:
             this_pickup = None
             this_dropoff = origin_node - self.number_of_customers
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
-                             non_zero_exog_val,non_zero_exog_vec,cost, min_resource_vec, 
+                             non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec,max_resource_vec)
         
             self.actions[origin_node, destination_node] = [action]
@@ -474,7 +473,7 @@ class loadAI_cg:
         non_zero_exog_val = 1.0
 
         
-        non_zero_exog_vec = cover_constraint_index
+        non_zero_exog_indices = cover_constraint_index
         if JY_OPT_SPLIT==1:
             non_zero_exog_val = 0.5
 
@@ -494,7 +493,7 @@ class loadAI_cg:
         this_pick_up = destination_node
         this_drop_off = None
         action = Action(destination_node, origin_node, this_pick_up,this_drop_off, self.number_of_customers,
-                             non_zero_exog_val,non_zero_exog_vec,cost, min_resource_vec,resource_consumption_vec, 
+                             non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec,resource_consumption_vec, 
                             max_resource_vec)
         self.actions[(origin_node, destination_node)] = [action]
         #return action
@@ -509,7 +508,7 @@ class loadAI_cg:
         non_zero_exog_val = None
         #exog_contrib_vec[cover_constraint_index] = 1
         
-        non_zero_exog_vec = cover_constraint_index
+        non_zero_exog_indices = cover_constraint_index
         if JY_OPT_SPLIT==1:
             non_zero_exog_val = 0.5
             #exog_contrib_vec[cover_constraint_index] = 0.5
@@ -528,7 +527,7 @@ class loadAI_cg:
         this_pick_up = None
         this_drop_off = destination_node - self.number_of_customers
         action = Action( destination_node, origin_node, this_pick_up,this_drop_off,self.number_of_customers,
-                             non_zero_exog_val,non_zero_exog_vec,cost, min_resource_vec, 
+                             non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, max_resource_vec)
         self.actions[(origin_node, destination_node)] = [action]
         #return action
@@ -548,7 +547,7 @@ class loadAI_cg:
             cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
             non_zero_exog_val = 0.5
             #exog_contrib_vec[cover_constraint_index] = 0.5
-            non_zero_exog_vec = cover_constraint_index
+            non_zero_exog_indices = cover_constraint_index
         min_resource_vec = np.array([self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
                                     self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
                                     travel_time + self.service_time[origin_node] + self.time_window_end[destination_node], 
@@ -569,7 +568,7 @@ class loadAI_cg:
         this_pickup = destination_node
         this_dropoff=None
         action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
-                            non_zero_exog_val, non_zero_exog_vec, cost, min_resource_vec, 
+                            non_zero_exog_val, non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec)
         self.actions[(origin_node, destination_node)] = [action]
@@ -588,7 +587,7 @@ class loadAI_cg:
             cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", self.dropoff_to_pickup[origin_node]))]
             non_zero_exog_val = 0.5
             #exog_contrib_vec[cover_constraint_index] = 0.5
-            non_zero_exog_vec = cover_constraint_index
+            non_zero_exog_indices = cover_constraint_index
 
         min_resource_vec = np.array([0,0,travel_time + self.service_time[origin_node] + self.time_window_end[destination_node],0])
         resource_consumption_vec = np.array([ -self.weight_demands[origin_pickup_node],-self.volume_demands[origin_pickup_node],
@@ -602,7 +601,7 @@ class loadAI_cg:
         this_pickup = None
         this_dropoff = destination_node - self.number_of_customers
         action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
-                            non_zero_exog_val , non_zero_exog_vec, cost, min_resource_vec, 
+                            non_zero_exog_val , non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec)
         self.actions[(origin_node, destination_node)] = [action]
@@ -618,7 +617,7 @@ class loadAI_cg:
             cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", destination_node))]
             #exog_contrib_vec[cover_constraint_index] = 1
             non_zero_exog_val = 1
-            non_zero_exog_vec = cover_constraint_index
+            non_zero_exog_indices = cover_constraint_index
             # trans_min_input = ChainMap({}, self.default_trans_min_input)
             # trans_term_vec = ChainMap({}, self.default_trans_term_vec)
             # trans_term_min = ChainMap({}, self.default_trans_term_min)
@@ -632,7 +631,7 @@ class loadAI_cg:
             this_dropoff = None
             destination_node = destination_node + 2 * self.number_of_customers
             action = Action( destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
-                            non_zero_exog_val ,non_zero_exog_vec,cost, min_resource_vec, 
+                            non_zero_exog_val ,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec)
         
@@ -644,7 +643,7 @@ class loadAI_cg:
             cost = 0
             #exog_contrib_vec = self._default_contribution_vector()
             non_zero_exog_val = None
-            non_zero_exog_vec = None
+            non_zero_exog_indices = None
             min_resource_vec = np.array([0,0,0,0])
             resource_consumption_vec = np.array([0,0,0,0])
             max_resource_vec= np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time, MAX_COMBINED_LOADS])
@@ -657,7 +656,7 @@ class loadAI_cg:
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
-                             non_zero_exog_val,non_zero_exog_vec,cost, min_resource_vec, 
+                             non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec)
             self.actions[origin_node, destination_node] = [action]
@@ -1079,7 +1078,7 @@ class loadAI_cg:
         #contribution_vector = np.zeros(len(self.rhs_vector)
         contribution_vector = np.zeros(len(self.rhs_vector)).reshape(1,-1)
         non_zero_exog_val = None
-        non_zero_exog_vec = None
+        non_zero_exog_indices = None
         cost = 0
         min_resource_vec = np.array([0,0,0,0])
 
@@ -1090,7 +1089,7 @@ class loadAI_cg:
         this_dropoff = None
 
         self.the_single_null_action= Action(None,None,this_pickup,this_dropoff,self.number_of_customers,
-                                            non_zero_exog_val,non_zero_exog_vec,cost,min_resource_vec,
+                                            non_zero_exog_val,non_zero_exog_indices,cost,min_resource_vec,
                                             resource_consumption_vec,
                                             max_resource_vec)
                     

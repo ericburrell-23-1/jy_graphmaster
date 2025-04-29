@@ -98,7 +98,7 @@ class LoadAI_state_input():
                         if self.betaTime[this_pickup_nodes] < self.betaTime[other_pickup_node]:
                             minterm_vec[0,self.resource_name_to_index[str((f'may_pickup',other_pickup_node))]] = 0
                     except:
-                        print('check here')
+                        input('check here loadAI_state_input')
                     min_term_vec_dict[this_pickup_nodes] =csr_matrix(minterm_vec)
             else:
                 minterm_vec = np.full((1,self.number_of_resources), np.inf)

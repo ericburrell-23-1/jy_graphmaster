@@ -171,7 +171,9 @@ class Route:
             s1=self.just_states_ordered[i]
             s2=self.just_states_ordered[i+1]
             my_act=self.just_actions_ordered[i]
-            #my_act.check_valid(s1,s2)
+            valid = my_act.check_valid(s1,s2)
+            if valid == False:
+                input('action not valide for s1 s2 here')
         
         if flag==False:
             input('error here ')

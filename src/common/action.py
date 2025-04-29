@@ -11,7 +11,7 @@ import time
 class Action:
 
 
-    def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, non_zero_exog_val,non_zero_exog_vec,cost, 
+    def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, non_zero_exog_val,non_zero_exog_indices,cost, 
                 min_resource_vec, resource_consumption_vec, max_resource_vec):
         self.node_tail = node_tail
         self.node_head = node_head
@@ -25,7 +25,7 @@ class Action:
         self.max_resource_vec = max_resource_vec
         #self.full_resource_vec = full_resource_vec
         self.red_cost_non_zero_cal_vals = non_zero_exog_val
-        self.red_cost_non_zero_cal_indices = non_zero_exog_vec
+        self.red_cost_non_zero_cal_indices = non_zero_exog_indices
         #self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
         self.action_id = hash((self.node_tail,self.node_head))
         
@@ -81,11 +81,8 @@ class Action:
             dropped_off = state_tail.dropped_off.copy()
             dropped_off.add(self.dropoff) 
             must_drop_off = state_tail.must_drop_off.copy()
-            try: 
-                must_drop_off.remove(self.dropoff)
-            except:
-                print('check here')
-
+            must_drop_off.remove(self.dropoff)
+            
 
         if self.node_head == -2:
             head_state = State(self.node_head, np.array([0,0,0,0]),set(),set(),set(), l_id, is_source=False, is_sink=True)
@@ -272,7 +269,7 @@ class Action:
 
     def check_valid(self, state_tail, state_head):
         is_valid = True
-        input('it is not in current code')
+        #input('it is not in current code')
         if self.mark_of_null_action == True and (state_tail.node != state_head.node):
             is_valid = False
             print('not valid due null action for different')
