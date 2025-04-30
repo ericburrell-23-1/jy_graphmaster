@@ -187,11 +187,12 @@ class xy_jy_cg_solver:
             raise ValueError("Master problem not initialized.")
         
         # Set solver parameters
-        try:
+
             # Use only the most basic control settings
-            self.model.setControl({'outputlog': 1})  # Enable output logging
-        except Exception as e:
-            print(f"Warning: Error setting control parameters: {e}")
+        self.model.setControl({'outputlog': 1})  # Enable output logging
+        self.model.setControl("THREADS",1)
+        self.model.setControl("DEFAULTALG",4)
+
             # Proceed without setting controls if they're not supported
         
         # Solve the problem

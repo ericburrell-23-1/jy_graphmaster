@@ -39,6 +39,7 @@ JY_OPT_SPLIT=1
 THRESHOLD = [1,10,100, np.inf]
 DISTANCE_RATIO = 1
 TIME_RATIO = 1
+SCORE_RATIO = 1 #best k percent of edge for given shipments
 class loadAI_cg:
     def __init__(self, problem_instance_file_name,instance_name, file_type: str = "Standard_Form"):
         
@@ -699,7 +700,6 @@ class loadAI_cg:
     def _create_edges(self):
         initial_group = self._create_group()
         self.can_group = defaultdict(set)
-
         
         for u in self.pickup_node:
             self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
@@ -764,69 +764,82 @@ class loadAI_cg:
         self.pickup_dropoff_pairs = set()
         self.dropoff_pickup_pairs = set()
         self.dropoff_dropoff_pairs = set()
+        self.action_pair_to_actions = defaultdict(lambda: defaultdict(tuple))
         for u in self.pickup_node:
             #self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
             self.pickup_dropoff_pairs.add((u,self.pickup_to_dropoff[u]))
+
         for u in tqdm(self.pickup_node,desc='creating edges pairs'):
             for v in self.pickup_node:
                 if u != v:
                     did_create_edge = False
                     earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[u,v]
-
-                    if earlist_time_arrive_v_pickup>self.time_window_end[v]:
+                    time_freedom_uv = earlist_time_arrive_v_pickup - self.time_window_end[v]
+                    if time_freedom_uv>0:
                         earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
                         #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
                         earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
                             -self.travel_time[v,self.pickup_to_dropoff[u]]
+                        time_freedom_uvu = earlist_time_arrive_u_dropoff - self.time_window_end[self.pickup_to_dropoff[u]]
                         #t2_2,d2_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[v])
                         earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
                             -self.travel_time[v,self.pickup_to_dropoff[v]]
-                        if earlist_time_arrive_u_dropoff > self.time_window_end[self.pickup_to_dropoff[u]]:
+                        time_freedom_uvv = earlist_time_arrive_v_dropoff-self.time_window_end[self.pickup_to_dropoff[v]]
+                        if time_freedom_uvu>0:
                             earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
                             #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
                             earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
-                            if earlist_time_arrive_v_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[v]]:
+                            time_freedom_uvuv = earlist_time_arrive_v_dropoff_2-self.time_window_end[self.pickup_to_dropoff[v]]
+                            if time_freedom_uvuv>0:
                                 did_create_edge = True
-                                if (u,v) not in self.actions:
-                                    self.pickup_pickup_pairs.add((u,v))
 
-                                if (v,self.pickup_to_dropoff[u]) not in self.actions:
-                                    self.pickup_dropoff_pairs.add((v,self.pickup_to_dropoff[u]))
+                                this_time_freedom = min(time_freedom_uv,time_freedom_uvu,time_freedom_uvuv)
+                                self.action_pair_to_actions[u][this_time_freedom]=[1,u,v,self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
 
-                                if (self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]) not in self.actions:
-                                    self.dropoff_dropoff_pairs.add((self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]))
-
-                                
-
-                        if earlist_time_arrive_v_dropoff>self.time_window_end[self.pickup_to_dropoff[v]]:
+                        if time_freedom_uvv>0:
                             earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
                             #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]
                             earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
-                            if earlist_time_arrive_u_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[u]]:
+                            time_freedom_uvvu = earlist_time_arrive_u_dropoff_2 - self.time_window_end[self.pickup_to_dropoff[u]]
+                            if time_freedom_uvvu>0:
                                 did_create_edge= True
-                                if (u,v) not in self.actions:
-                                    self.pickup_pickup_pairs.add((u,v))
 
-                                if (v,self.pickup_to_dropoff[v]) not in self.actions:
-                                    self.pickup_dropoff_pairs.add((v,self.pickup_to_dropoff[v]))
-
-                                if (self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]) not in self.actions:
-                                    self.dropoff_dropoff_pairs.add((self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]))
-
-
+                                this_time_freedom = min(time_freedom_uv,time_freedom_uvv,time_freedom_uvvu)
+                                self.action_pair_to_actions[u][this_time_freedom]=[1,u,v,self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
                     earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[u, self.pickup_to_dropoff[u]]
+                    time_freedom_uu = earlist_time_arrive_dropoff_u_3 - self.time_window_end[self.pickup_to_dropoff[u]]
                     earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
+                    
                     earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],v]
-                    if earlist_time_arrive_pickup_v_3 > self.time_window_start[v]:
+                    time_freedom_uuv = earlist_time_arrive_pickup_v_3 - self.time_window_end[v]
+                    if time_freedom_uuv >0:
                         did_create_edge = True
-                        if (self.pickup_to_dropoff[u],v) not in self.actions:
-                            self.dropoff_pickup_pairs.add((self.pickup_to_dropoff[u],v))
 
+                        earlist_time_depart_pickup_v_3 = min(self.time_window_start[v],earlist_time_arrive_pickup_v_3)
+                        earlist_time_arrive_dropoff_v_3 = earlist_time_depart_pickup_v_3 - self.service_time[v]-self.travel_time[v,self.pickup_to_dropoff[v]]
+                        time_freedom_uuvv = earlist_time_arrive_dropoff_v_3 - self.time_window_end[self.pickup_to_dropoff[v]]
+                        this_time_freedom = min(time_freedom_uu,time_freedom_uuv,time_freedom_uuvv)
+                        self.action_pair_to_actions[u][this_time_freedom] = [2,u,self.pickup_to_dropoff[u],v,self.pickup_to_dropoff[v]]
                     if did_create_edge == True:
                         self.can_group[u].add(v)
+        self._get_best_edge_by_score()
         print(f'total {len(self.pickup_pickup_pairs)+len(self.pickup_dropoff_pairs)+len(self.dropoff_pickup_pairs)+len(self.dropoff_dropoff_pairs)} generated')
+        print('check here')
+        breakpoint()
+    def _get_best_edge_by_score(self):
+        for u,this_dict in self.action_pair_to_actions.items():
+            sorted_dict = dict(sorted(this_dict.items(), key=lambda item: item[1], reverse=True))
+            best_k = int(len(sorted_dict) * SCORE_RATIO)
+            for key, value in list(sorted_dict.items())[:best_k]:
+                if value[0] == 1:
+                    self.pickup_pickup_pairs.add((value[1],value[2]))
+                    self.pickup_dropoff_pairs.add((value[2],value[3]))
+                    self.dropoff_dropoff_pairs.add((value[3],value[4]))
+                if value[0] == 2:
+                    self.dropoff_pickup_pairs.add((value[2],value[3]))
     def _create_actions_with_edge_pair(self):
         print('create edge from pairs')
+                
         for (u,v) in tqdm(self.pickup_pickup_pairs, desc='create action for pickup to pickup'):
             self._create_pickup_to_pickup_actions(u,v)
         for (u,v) in tqdm(self.pickup_dropoff_pairs, desc='create action for pickup to dropoff'):

@@ -318,9 +318,8 @@ class jy_fast_pricing():
             #input('starting inner')
             num_expanded_this_round=0
             incumbant_lb=-np.inf
-            time_before_action_add=0
-            time_action_add = 0
-            
+            print('len(self.expandable_labels)')
+            print(len(self.expandable_labels))
             while len(self.expandable_labels) > 0:
                 num_expansion_in=num_expansion_in+1
                 num_expanded_this_round=num_expanded_this_round+1
@@ -513,7 +512,7 @@ class jy_fast_pricing():
                 # print(f'Sum of all components: {total_component_time}, percent: {(total_component_time/time_action_add)*100:.2f}%')
                 # print('check for each action expand while loop')
                 if did_gen_neg_red_cost==True:
-                    print('found complete path with this dual')
+                    #print('found complete path with this dual')
                     break
             #print('num_expanded_this_round')
             #print(num_expanded_this_round)
