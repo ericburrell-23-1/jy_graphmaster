@@ -53,7 +53,7 @@ class jy_fast_pricing():
         self.edges = edges
         self.preferred_actions = preferred_actions
         self.distance = distance
-        self.forbidden_nodes=[]
+        self.forbidden_nodes=set()
         self.dual_vec = dual_vec.copy()
         self.dual_vec_orig = dual_vec.copy()
         self.init_res_state = init_res_state
@@ -142,41 +142,9 @@ class jy_fast_pricing():
         if len(ignore_vals)>0:
             pickup_forget=ignore_vals+1
             dropoff_forget=len(self.pickup_node)+pickup_forget
-            dropoff_forget=list(dropoff_forget)
-            pickup_forget=list(pickup_forget)
-            self.forbidden_nodes=self.forbidden_nodes+pickup_forget+dropoff_forget
-            self.forbidden_nodes=list(set(self.forbidden_nodes))
-            #print('pickup_forget')
-            #print(pickup_forget)
-            #print('dropoff_forget')
-            #print(dropoff_forget)
-            # print('self.forbidden_nodes')
-            # print(self.forbidden_nodes)
-            #print('type(pickup_forget)')
-            #print(type(pickup_forget))
-            #print('type(dropoff_forget)')
-            #print(type(dropoff_forget))
-            #input('all_forget')
-        bigVal=999999999999
-        # for action in self.all_actions:
-        #     time2 = time.time()
-        #     red_cost = action.comp_red_cost(self.dual_vec)
-        #     time3 = time.time()
-        #     comp_action_red_cost += (time3-time2)
-        #     if action.node_head in self.forbidden_nodes or action.node_tail in self.forbidden_nodes:
-        #         red_cost=bigVal
-        #         #input('hihihi')
-        #     self.action_2_red_cost_dict[action] = red_cost
-            
-        #     if red_cost < self.lowest_action_contrib_red_cost:
-        #         self.lowest_action_contrib_red_cost = red_cost
-            #if action.node_head in self.forbidden_nodes or action.node_tail in self.forbidden_nodes:
-            #    self.lowest_action_contrib_red_cost=bigVal
-        #print('self.action_2_red_cost_dict')
-        #print(self.action_2_red_cost_dict)
-        #input('hi')
-        #print(f'compute red cost take:{comp_action_red_cost}, total time {time4-time1}, percent :{comp_action_red_cost/(time4-time1)}')
-        #print('check here 1')
+            self.forbidden_nodes.update(pickup_forget)
+            self.forbidden_nodes.update(dropoff_forget)
+  
     def initiate_RCP_d(self):
         max_width = self.jy_opt['max_pickups_in_a_route']
         self.rcp_d_partial = defaultdict()
@@ -244,30 +212,29 @@ class jy_fast_pricing():
         #print(np.sum(self.dual_vec))
         #input('self.dual_vec')
         self._compute_action_reduced_costs()
-        time_calculate_red_cost_given_dual=0
-        time_for_calculate_lb = 0
-        time_for_intersec = 0
         debug_on=True
+        
         for my_label in self.expandable_labels.objects:
-            my_label.calculate_red_cost_given_dual(self.dual_vec)
-            #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-            if self.jy_opt['lb_option'] == 2:
-                my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-            elif self.jy_opt['lb_option'] == 1:
-                my_label.calculate_better_lb(self.dual_vec)
-            elif self.jy_opt['lb_option'] == 0:
-                my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-            elif self.jy_opt['lb_option'] == 'check':
-                lb1 = my_label.calculate_better_lb(self.dual_vec)
-                lb2 = my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-                if lb1<lb2:
-                    input('lb error here')
-            else:
-                input('no lb option used')
-            tmp=set(my_label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
-            if len(tmp)>0.5:
-                my_label.red_cost=np.inf
-                my_label.lb=np.inf
+            if my_label.red_cost != np.inf:
+                my_label.calculate_red_cost_given_dual(self.dual_vec)
+                #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+                if self.jy_opt['lb_option'] == 2:
+                    my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
+                elif self.jy_opt['lb_option'] == 1:
+                    my_label.calculate_better_lb(self.dual_vec)
+                elif self.jy_opt['lb_option'] == 0:
+                    my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+                elif self.jy_opt['lb_option'] == 'check':
+                    lb1 = my_label.calculate_better_lb(self.dual_vec)
+                    lb2 = my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
+                    if lb1<lb2:
+                        input('lb error here')
+                else:
+                    input('no lb option used')
+                tmp=set(my_label.all_nodes_ordered).intersection(self.forbidden_nodes)
+                if len(tmp)>0.5:
+                    my_label.red_cost=np.inf
+                    my_label.lb=np.inf
 
     def get_lowest_lb(self):
         lowest_lb=np.inf
@@ -605,7 +572,7 @@ class jy_fast_pricing():
         for i, label in enumerate(self.expandable_labels.objects):
             if label.lb <= -0.0001:
                 if debug_on==True:
-                    tmp=set(label.all_nodes_ordered).intersection(set(self.forbidden_nodes))
+                    tmp=set(label.all_nodes_ordered).intersection(self.forbidden_nodes)
                     if len(tmp)>0.5:
                         input('errorr')
                 #my_tup=tuple([-len(label.my_states_ordered),label.red_cost,my_noise])
