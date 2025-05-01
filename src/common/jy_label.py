@@ -206,7 +206,9 @@ class jy_label:
             #print(lb)
             #input('----')
     def calculate_better_lb_2(self, dual,sorted_node_with_k):
-        self.calculate_red_cost_given_dual(dual)
+
+        if self.red_cost>0:
+            self.calculate_red_cost_given_dual(dual)
         
         if self.node == -1:
             self.lb = -np.inf
@@ -262,7 +264,7 @@ class jy_label:
             # Optimize the final loop to calculate the best lower bound
             for k in range(1,extra_customer_can_pick_up+1):
                 myDenom = k + self.num_pickups_in_route
-                sorted_key = list(sorted_node_with_k[k].keys())
+                sorted_key = list(sorted_node_with_k[myDenom].keys())
                 
                 # Skip unnecessary computation if there are no keys
                 if not sorted_key:
@@ -273,15 +275,14 @@ class jy_label:
                 
                 # Only calculate if we have enough nodes
                 if len(nodes_to_use) == k:
-                    benefit_sum = sum(sorted_node_with_k[k][key] for key in nodes_to_use)
+                    benefit_sum = sum(sorted_node_with_k[myDenom][key] for key in nodes_to_use)
                     this_red_cost = base_cost + tot_benefit_droppoff_cost / myDenom + benefit_sum
-                    
-
                     if this_red_cost < lowest_red_cost:
                         lowest_red_cost = this_red_cost
                 else:
                     input('error here: if len(nodes_to_use) == k')
             self.lb = lowest_red_cost
+            
             return self.lb
     def this_label_dominates_input(self,candid_label):
         

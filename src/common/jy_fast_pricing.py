@@ -211,14 +211,23 @@ class jy_fast_pricing():
         #print(np.sum(self.dual_vec))
         #input('self.dual_vec')
         self._compute_action_reduced_costs()
-        debug_on=True
-        
+        self.expandable_labels.objects = [
+            label for label in self.expandable_labels.objects
+            if not any(node in self.forbidden_nodes for node in label.all_nodes_ordered)
+        ]
         for my_label in self.expandable_labels.objects:
             if my_label.red_cost != np.inf:
-                my_label.calculate_red_cost_given_dual(self.dual_vec)
+                #my_label.calculate_red_cost_given_dual(self.dual_vec)
                 #my_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
                 if self.jy_opt['lb_option'] == 2:
+                    this_lb = my_label.lb
                     my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
+                    if my_label.lb>-1:
+                        print('lb before')
+                        print(this_lb)
+                        print('lb after')
+                        print(my_label.lb)
+                        input('check here')
                 elif self.jy_opt['lb_option'] == 1:
                     my_label.calculate_better_lb(self.dual_vec)
                 elif self.jy_opt['lb_option'] == 0:
@@ -230,10 +239,11 @@ class jy_fast_pricing():
                         input('lb error here')
                 else:
                     input('no lb option used')
-                tmp=set(my_label.all_nodes_ordered).intersection(self.forbidden_nodes)
-                if len(tmp)>0.5:
-                    my_label.red_cost=np.inf
-                    my_label.lb=np.inf
+        self.expandable_labels.objects = [
+            label for label in self.expandable_labels.objects
+            if my_label.lb<=self.jy_opt['min_dual_val_expand']
+        ]
+ 
 
     def get_lowest_lb(self):
         lowest_lb=np.inf
@@ -321,14 +331,10 @@ class jy_fast_pricing():
             while len(self.expandable_labels) > 0:
                 num_expansion_in=num_expansion_in+1
                 num_expanded_this_round=num_expanded_this_round+1
-                #print('num_expansion_out,num_expansion_in')
-                #print([num_expansion_out,num_expansion_in])
-                # Pop label with minimum current reduced cost
+
                 if debug_on==True:  
                     my_lb=self.get_lowest_lb()
-                    #print('my_lb')
-                    #print(my_lb)
-                    #input('my_lb')
+
                     if my_lb<incumbant_lb:
                         print('incumbant_lb')
                         print(incumbant_lb)
@@ -404,26 +410,8 @@ class jy_fast_pricing():
                 else:
                     input('error')
 
-
-                # print('old label num')
-                # print(len(poss_actions))
-                # print('new label num')
-                # print(len(poss_actions_2))
-                # print('check ')
-                #print('len(poss_actions)')
-                #print(len(poss_actions))
                 did_gen_neg_red_cost=False
                 did_gen_possible_expansion=False
-                # Process each expanded label
-                #print('------')
-                #print('------')
-                #print('------')
-                #print('------')
-                #print('------')
-                #if curr_label.all_nodes_ordered ==[-1,4,9]:
-                #    print('check here')
-
-                #print('check point here')
                 for my_act in poss_actions:
 
                     if my_act.node_head in self.skip_node:
@@ -448,7 +436,6 @@ class jy_fast_pricing():
                             input('lb error here')
                     else:
                         input('no lb option used')
-
                     if use_completion_on:
                         can_complete=self.jy_get_compelition(new_label)
 
@@ -485,32 +472,12 @@ class jy_fast_pricing():
                         route_gen_count=route_gen_count+1
                         did_gen_neg_red_cost=True
                         break
-                        #if alpha>.99:
-                        #    continue
 
                     elif not new_label.is_complete_route:
                         #new_label.calculate_better_lb(self.dual_vec)
                         new_tuple=self.label_2_tuple(new_label)
                         if new_label.lb<self.jy_opt['min_dual_val_expand']:
                             self.expandable_labels.insert(new_label,new_tuple)
-                # print('======check for each action expand while loop=======')
-                # print(f'time_action_add: {time_action_add}')
-                # print(f'time_expand_action:{time_expand_action}, percent:{(time_expand_action/time_action_add)*100} %')
-                # print(f'time_create_label_time:{time_create_label_time}, percent:{(time_create_label_time/time_action_add)*100} %')
-                # print(f'get_head_state_time:{time_get_head_state}, percent:{(time_get_head_state/time_action_add)*100} %')
-                # print(f'time_clip_time:{time_clip_time}, percent:{(time_clip_time/time_action_add)*100} %')
-                # print(f'time_cal_lb:{time_cal_lb}, percent:{(time_cal_lb/time_action_add)*100} %')
-                # print(f'time_if:{time_if}, percent:{(time_if/time_action_add)*100} %')
-                # print(f'time_get_completion:{time_get_completion}, percent:{(time_get_completion/time_action_add)*100} %')
-                # print(f'time_alter_frontier:{time_alter_frontier}, percent:{(time_alter_frontier/time_action_add)*100} %')
-                # print(f'rest_time:{rest_time}, percent:{(rest_time/time_action_add)*100} %')
-                # total_component_time = (time_if + time_expand_action + time_cal_lb + 
-                #         time_get_completion + time_alter_frontier + 
-                #         time_clip_time + time_get_head_state + 
-                #         time_create_label_time + rest_time)
-
-                # print(f'Sum of all components: {total_component_time}, percent: {(total_component_time/time_action_add)*100:.2f}%')
-                # print('check for each action expand while loop')
                 if did_gen_neg_red_cost==True:
                     #print('found complete path with this dual')
                     break
