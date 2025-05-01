@@ -69,22 +69,18 @@ class Action:
         #     return None
         # 3. Apply max_resource cap (only on indices of interest)
         head_state_vec = self.fast_max_res_apply(head_state_vec)
-        picked_up=set()
-        dropped_off=set()
-        must_drop_off=set()
+        picked_up = state_tail.picked_up
+        dropped_off = state_tail.dropped_off
+        must_drop_off = state_tail.must_drop_off
+    
         if self.pickup is not None:
-            picked_up = state_tail.picked_up.copy()
-            picked_up.add(self.pickup)
-            dropped_off = state_tail.dropped_off.copy()
-            must_drop_off = state_tail.must_drop_off.copy()
-            must_drop_off.add(self.pickup)
-
+            picked_up = picked_up | {self.pickup}
+            must_drop_off = must_drop_off | {self.pickup}
+        
         if self.dropoff is not None:
-            picked_up = state_tail.picked_up.copy()
-            dropped_off = state_tail.dropped_off.copy()
-            dropped_off.add(self.dropoff) 
-            must_drop_off = state_tail.must_drop_off.copy()
-            must_drop_off.remove(self.dropoff)
+            dropped_off = dropped_off | {self.dropoff}
+            # Create a new set for must_drop_off only if we're modifying it
+            must_drop_off = must_drop_off - {self.dropoff}
             
 
         if self.node_head == -2:
@@ -222,15 +218,13 @@ class Action:
         
         return this_dominates_input
     def violates_min_resources(self, tail_vec, tail_picked_up,tail_must_dropoff):   
-        flag = np.any(tail_vec < self.min_resource_vec)
-        can_pick_up = False
-        can_drop_off = False
-        if self.pickup != None:
-            can_pick_up = self.pickup in tail_picked_up
-        if self.dropoff != None:
-            can_drop_off = self.dropoff not in tail_must_dropoff 
-        flag = flag or can_pick_up or  can_drop_off
-        return flag
+        if self.pickup != None and self.pickup in tail_picked_up:
+            return True
+        if self.dropoff != None and self.dropoff not in tail_must_dropoff :
+            return True
+        if np.any(tail_vec < self.min_resource_vec):
+            return True
+        return False
 
 
     

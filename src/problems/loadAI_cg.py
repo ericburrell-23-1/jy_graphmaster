@@ -98,13 +98,13 @@ class loadAI_cg:
             #node_to_list
         )
         #with TimeProfiler(f'time_profile_{self.instance_name}_speed'):
-        profiler = cProfile.Profile()
-        profiler.enable()
+        # profiler = cProfile.Profile()
+        # profiler.enable()
 
         output = self.solver.solve()
 
-        profiler.disable()
-        profiler.dump_stats('program_profile.prof')
+        # profiler.disable()
+        # profiler.dump_stats('program_profile.prof')
 
         variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
