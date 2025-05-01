@@ -241,7 +241,7 @@ class jy_fast_pricing():
                     input('no lb option used')
         self.expandable_labels.objects = [
             label for label in self.expandable_labels.objects
-            if my_label.lb<=self.jy_opt['min_dual_val_expand']
+            if label.lb<=self.jy_opt['min_dual_val_expand']
         ]
  
 
@@ -304,15 +304,15 @@ class jy_fast_pricing():
             #input('redoing labels')
             self._update_sorted_node_with_k()
             self.update_red_cost_and_lb()
-            
-            self._remove_labels_with_positive_lb()
-
+            #self._remove_labels_with_positive_lb()
+        
             # Update efficient frontier with current set of expandable labels
             for label in self.expandable_labels.objects:
                 if label.lb<self.jy_opt['min_dual_val_expand']:
                     self.efficient_frontier.alter_fronteir_given_new_element(label)
+
             # Check if we can terminate
-        
+            
             min_lb = float('inf')
             for label in self.expandable_labels.objects:
                 if label.lb < min_lb:
@@ -357,7 +357,7 @@ class jy_fast_pricing():
                     print(num_expansion_in)
                     print('itr_num')
                     print(itr_num)
-                    print('curr_label.all_nodes')
+                    print('curr_label.all_nodes_ordered')
                     print(curr_label.all_nodes_ordered)
                     input('error here:curr_label.lb>self.jy_opt')
                 if curr_label.lb>self.jy_opt['min_dual_val_expand']:
