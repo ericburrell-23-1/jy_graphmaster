@@ -185,6 +185,7 @@ class jy_fast_pricing():
             actions_of_node=self.actions_of_node,
             action_dict = self.action_dict,
             jy_opt=self.jy_opt,
+            cus_num=self.num_cus,
             pickup_nodes=self.pickup_node,
             dropoff_nodes=self.dropoff_node,
             rcp_u_partial = self.rcp_u_partial,

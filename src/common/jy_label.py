@@ -14,9 +14,9 @@ from itertools import combinations
 import time
 class jy_label:
 #     
-    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label,
+    def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label:'jy_label',
                  dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
-                 actions_of_node,action_dict,jy_opt,pickup_nodes,dropoff_nodes,
+                 actions_of_node,action_dict,jy_opt,cus_num,pickup_nodes,dropoff_nodes,
                  rcp_u_partial, rcp_d_partial,rcp_u_partial_2,edges,preferred_actions, distance):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
@@ -46,17 +46,6 @@ class jy_label:
                         else:
                             # Update existing value
                             self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
-                # if len(a.red_cost_non_zero_cal_indices) > 0:
-                #     for i, idx in enumerate(a.red_cost_non_zero_cal_indices):
-                #         self.Exog_vec[idx] += a.Exog_vec[idx]
-                #         if self.Exog_vec[idx] != 0:
-                #             if idx not in self.red_cost_non_zero_cal_indices:
-                #                 self.red_cost_non_zero_cal_indices.add(idx)
-                #                 indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
-                #                 self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
-                #             else:
-                #                 # Update existing value
-                #                 self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
 
             self.red_cost_non_zero_cal_indices = np.array(sorted(self.red_cost_non_zero_cal_indices))
             sorted_vals = np.zeros(len(self.red_cost_non_zero_cal_indices))
@@ -70,6 +59,7 @@ class jy_label:
         self.red_cost=red_cost
         self.cost=cost
         self.dual_vec=dual_vec
+        self.cus_num = cus_num
         self.node=self.my_states_ordered[-1].node
         self.max_actions_in_route=max_actions_in_route
         self.lowest_action_contrib_red_cost=lowest_action_contrib_red_cost
@@ -81,29 +71,46 @@ class jy_label:
         self.dropoff_nodes=dropoff_nodes
 
         self.is_complete_route=self.my_states_ordered[-1].is_sink
-        self.all_nodes_ordered=[]
-        self.num_dropoffs_in_route=0
-        self.num_pickups_in_route=0
-        self.nodes_picked_up = []
-        self.nodes_dropped_off = []
-        self.must_drop_off = []
+        if parent_label == None:
+            self.all_nodes_ordered = [-1]
+            self.nodes_picked_up = set()
+            self.nodes_dropped_off = set()
+            self.must_drop_off = set()
+        else:
+            self.all_nodes_ordered=parent_label.all_nodes_ordered + [self.node]
+
+            
+            self.nodes_picked_up = set(parent_label.nodes_picked_up)
+            self.nodes_dropped_off = set(parent_label.nodes_dropped_off)
+            self.must_drop_off = set(parent_label.must_drop_off)
+            if self.node <= self.cus_num:
+                self.nodes_picked_up.add(self.node)
+                self.must_drop_off.add(self.node)
+            elif self.node != -2:
+                self.nodes_dropped_off.add(self.node - self.cus_num)
+                self.must_drop_off.remove(self.node - self.cus_num)
+
+        self.num_dropoffs_in_route= len(self.nodes_dropped_off)
+        self.num_pickups_in_route=len(self.nodes_picked_up)
+        self.num_dropoffs_needed=len(self.must_drop_off)
         self.rcp_u_partial = rcp_u_partial
         self.rcp_d_partial = rcp_d_partial
         self.rcp_u_partial_2 = rcp_u_partial_2
         self.edges = edges
         self.preferred_actions = preferred_actions
         self.distance = distance
-        for s in self.my_states_ordered:
-            self.all_nodes_ordered.append(s.node)
-            if s.node  in self.pickup_nodes:
-                self.num_pickups_in_route=self.num_pickups_in_route+1
-                self.nodes_picked_up.append(s.node)
-                self.must_drop_off.append(s.node)
-            if s.node  in self.dropoff_nodes:
-                self.num_dropoffs_in_route=self.num_dropoffs_in_route+1
-                self.nodes_dropped_off.append(s.node)
-                self.must_drop_off.remove(s.node-len(self.pickup_nodes))
-        self.num_dropoffs_needed=self.num_pickups_in_route-self.num_dropoffs_in_route
+
+        # for s in self.my_states_ordered:
+        #     self.all_nodes_ordered.append(s.node)
+        #     if s.node  in self.pickup_nodes:
+        #         self.num_pickups_in_route=self.num_pickups_in_route+1
+        #         self.nodes_picked_up.append(s.node)
+        #         self.must_drop_off.append(s.node)
+        #     if s.node  in self.dropoff_nodes:
+        #         self.num_dropoffs_in_route=self.num_dropoffs_in_route+1
+        #         self.nodes_dropped_off.append(s.node)
+        #         self.must_drop_off.remove(s.node-len(self.pickup_nodes))
+        
             #if self.jy_opt['using_load_ai_lazy'] and s.node>=-0.5 and s.node<=self.jy_opt['using_load_ai_lazy_num_pickups']:
             #    self.jy_num_pickups=self.jy_num_pickups+1
         #print('self.all_nodes_ordered')
@@ -141,7 +148,7 @@ class jy_label:
         #if self.all_nodes_ordered == [-1, 4, 2, 9]:
                 #print('check here')
         for d in self.must_drop_off:
-            drop_off_d = d + len(self.pickup_nodes)
+            drop_off_d = d + self.cus_num
             if d == self.node:
                # print('in here')
                # print(d)
@@ -171,12 +178,12 @@ class jy_label:
             #F = list(set(self.pickup_nodes) - set(self.nodes_picked_up))
             D = self.must_drop_off[:]
             if self.node in self.dropoff_nodes:
-                D.append(self.node-len(self.pickup_nodes))
+                D.append(self.node-self.cus_num)
 
             tot_benefit_dropoff_dual = 0
             tot_benefit_droppoff_cost =0
             for d in D:
-                drop_off_of_d = d +len(self.pickup_nodes)
+                drop_off_of_d = d +self.cus_num
                 if drop_off_of_d == self.node:
                     tot_benefit_dropoff_dual -= dual[d-1]/2
                 elif d == self.node:
@@ -201,7 +208,7 @@ class jy_label:
                 myDenom = self.jy_opt['max_pickups_in_a_route']
                 for node in sorted_key[:k+1]:
                     tot_benefit_dropoff_pickup_dual -= dual[node-1]
-                    tot_benefit_dropoff_pickup_cost += self.action_dict[(node,node+len(self.pickup_nodes))][0].cost
+                    tot_benefit_dropoff_pickup_cost += self.action_dict[(node,node+self.cus_num)][0].cost
                 this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_dropoff_pickup_dual + (tot_benefit_droppoff_cost+tot_benefit_dropoff_pickup_cost)/myDenom
                 # myDenom = k + self.num_pickups_in_route+1
                 # tot_benefit_dropoff_pickup_dual -= dual[sorted_key[k]-1]
@@ -229,11 +236,11 @@ class jy_label:
             nodes_picked_up_set = set(self.nodes_picked_up)
             #node_not_picked_up = list(pickup_nodes_set - nodes_picked_up_set)
             
-            D = self.must_drop_off.copy()  # Use .copy() instead of [:] for clarity
+            D = list(self.must_drop_off.copy())  # Use .copy() instead of [:] for clarity
             
             # Check if node is in dropoff nodes once
             is_node_in_dropoff = self.node in self.dropoff_nodes
-            pickup_nodes_len = len(self.pickup_nodes)
+            pickup_nodes_len = self.cus_num
             
             if is_node_in_dropoff:
                 D.append(self.node - pickup_nodes_len)
@@ -444,7 +451,7 @@ class jy_label:
             #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
+            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
         #     if self.jy_opt['lb_option'] == 2:
         #         NEW_label.calculate_better_lb_2(dual_vec)
         #     elif self.jy_opt['lb_option'] == 1:
