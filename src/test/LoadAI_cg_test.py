@@ -14,8 +14,8 @@ class CVRPTest(TestCase):
     def test_thirty_customers(self):
         run_model=True
         
-        #instance_name = "uhual_3178"
-        instance_name = "loadAI_160"
+        instance_name = "uhual_200"
+        #instance_name = "loadAI_160"
         path = os.path.join(os.path.dirname(__file__),
                         "assets", "loadai_instances", f"{instance_name}.csv")
         problem = loadAI_cg(\

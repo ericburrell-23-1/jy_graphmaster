@@ -98,7 +98,13 @@ class loadAI_cg:
             #node_to_list
         )
         #with TimeProfiler(f'time_profile_{self.instance_name}_speed'):
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         output = self.solver.solve()
+
+        profiler.disable()
+        profiler.dump_stats('program_profile.prof')
 
         variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
@@ -270,10 +276,10 @@ class loadAI_cg:
             # print(f'{len(self.pairs)} edges generated')
             #breakpoint()
             
-            profiler = cProfile.Profile()
+            #profiler = cProfile.Profile()
 
             # Start profiling
-            profiler.enable()
+            #profiler.enable()
             #tracemalloc.start()
             #with TimeProfiler(f'time_profile_edges_creation'):
             self._create_actions_with_edge_pair()
@@ -284,13 +290,13 @@ class loadAI_cg:
             #print("[ Top 10 memory usage ]")
             # for stat in top_stats[:10]:
             #     print(stat)
-            profiler.disable()
+            #profiler.disable()
 
             # Save results to a file
-            profiler.dump_stats('program_profile.prof')
+            #profiler.dump_stats('program_profile.prof')
 
             # Print the top 10 time-consuming functions
-            stats = pstats.Stats('program_profile.prof')
+            #stats = pstats.Stats('program_profile.prof')
         
         #breakpoint()
         #self._create_edges_pair()
@@ -825,7 +831,7 @@ class loadAI_cg:
         self._get_best_edge_by_score()
         print(f'total {len(self.pickup_pickup_pairs)+len(self.pickup_dropoff_pairs)+len(self.dropoff_pickup_pairs)+len(self.dropoff_dropoff_pairs)} generated')
         print('check here')
-        breakpoint()
+        #breakpoint()
     def _get_best_edge_by_score(self):
         for u,this_dict in self.action_pair_to_actions.items():
             sorted_dict = dict(sorted(this_dict.items(), key=lambda item: item[1], reverse=True))

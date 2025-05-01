@@ -23,36 +23,47 @@ class jy_label:
         if not my_actions_ordered:
         # Handle empty list case
             self.my_actions_ordered = []
-            self.Exog_vec = np.array([])  # Empty array
             self.red_cost_non_zero_cal_indices = np.array([], dtype=int)
             self.red_cost_non_zero_cal_vals = np.array([])
         else:
-            self.Exog_vec = np.zeros(len(pickup_nodes))
-
+            last_action = my_actions_ordered[-1]
+            Exog_vec_non_zero_indices = last_action.red_cost_non_zero_cal_indices
+            Exog_vec_non_zero_val = last_action.red_cost_non_zero_cal_vals
+            
+            self.red_cost_non_zero_cal_indices = list(parent_label.red_cost_non_zero_cal_indices)
+            self.red_cost_non_zero_cal_vals = list(parent_label.red_cost_non_zero_cal_vals)
+            if Exog_vec_non_zero_indices is not None:
+                if Exog_vec_non_zero_indices not in self.red_cost_non_zero_cal_indices:
+                    self.red_cost_non_zero_cal_indices.append(Exog_vec_non_zero_indices)
+                    self.red_cost_non_zero_cal_vals.append(Exog_vec_non_zero_val)
+                else:
+                    index = self.red_cost_non_zero_cal_indices.index(Exog_vec_non_zero_indices)
+                    self.red_cost_non_zero_cal_vals[index] += Exog_vec_non_zero_val
             # Track non-zero indices directly during addition to avoid scanning the whole array later
-            self.red_cost_non_zero_cal_indices = set()
-            self.red_cost_non_zero_cal_vals = []
-            indices_to_pos = {}
-            # Process only actions with non-zero elements
-            for a in my_actions_ordered:
-                idx = a.red_cost_non_zero_cal_indices
-                if idx != None:
-                    self.Exog_vec[idx] += a.red_cost_non_zero_cal_vals
-                    if self.Exog_vec[idx] != 0:
-                        if idx not in self.red_cost_non_zero_cal_indices:
-                            self.red_cost_non_zero_cal_indices.add(idx)
-                            indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
-                            self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
-                        else:
-                            # Update existing value
-                            self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
+            # self.red_cost_non_zero_cal_indices = set()
+            # self.red_cost_non_zero_cal_vals = []
+            # indices_to_pos = {}
 
-            self.red_cost_non_zero_cal_indices = np.array(sorted(self.red_cost_non_zero_cal_indices))
-            sorted_vals = np.zeros(len(self.red_cost_non_zero_cal_indices))
-            for i, idx in enumerate(self.red_cost_non_zero_cal_indices):
-                pos = indices_to_pos[idx]
-                sorted_vals[i] = self.red_cost_non_zero_cal_vals[pos]
-            self.red_cost_non_zero_cal_vals = sorted_vals
+            # # Process only actions with non-zero elements
+            # for a in my_actions_ordered:
+            #     idx = a.red_cost_non_zero_cal_indices
+            #     if idx != None:
+            #         self.Exog_vec[idx] += a.red_cost_non_zero_cal_vals
+            #         if self.Exog_vec[idx] != 0:
+            #             if idx not in self.red_cost_non_zero_cal_indices:
+            #                 self.red_cost_non_zero_cal_indices.add(idx)
+            #                 indices_to_pos[idx] = len(self.red_cost_non_zero_cal_vals)
+            #                 self.red_cost_non_zero_cal_vals.append(self.Exog_vec[idx])
+            #             else:
+            #                 # Update existing value
+            #                 self.red_cost_non_zero_cal_vals[indices_to_pos[idx]] = self.Exog_vec[idx]
+
+            # self.red_cost_non_zero_cal_indices = np.array(sorted(self.red_cost_non_zero_cal_indices))
+            # sorted_vals = np.zeros(len(self.red_cost_non_zero_cal_indices))
+            # for i, idx in enumerate(self.red_cost_non_zero_cal_indices):
+            #     pos = indices_to_pos[idx]
+            #     sorted_vals[i] = self.red_cost_non_zero_cal_vals[pos]
+            # self.red_cost_non_zero_cal_vals = sorted_vals
 
         self.my_states_ordered=my_states_ordered
         self.parent_label=parent_label
@@ -125,11 +136,14 @@ class jy_label:
         total_cost = sum(a.cost for a in self.my_actions_ordered)
     
         # Use pre-computed values and indices for dot product
-        if len(self.red_cost_non_zero_cal_indices) > 0:
-            dot_product = np.dot(self.red_cost_non_zero_cal_vals, 
-                                dual[self.red_cost_non_zero_cal_indices])
-        else:
-            dot_product = 0
+        try:
+            if len(self.red_cost_non_zero_cal_indices) > 0:
+                dot_product = np.dot(self.red_cost_non_zero_cal_vals, 
+                                    dual[self.red_cost_non_zero_cal_indices])
+            else:
+                dot_product = 0
+        except:
+            print('check here')
         
         self.red_cost = total_cost - dot_product
         return self.red_cost
@@ -452,61 +466,6 @@ class jy_label:
             NEW_cost=self.cost+my_action.cost
             NEW_parent_label=self
             NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,self.dropoff_nodes,self.rcp_u_partial,self.rcp_d_partial,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
-        #     if self.jy_opt['lb_option'] == 2:
-        #         NEW_label.calculate_better_lb_2(dual_vec)
-        #     elif self.jy_opt['lb_option'] == 1:
-        #         NEW_label.calculate_better_lb(dual_vec)
-        #     elif self.jy_opt['lb_option'] == 0:
-        #         NEW_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-        #     elif self.jy_opt['lb_option'] == 'check':
-        #         lb1 = NEW_label.calculate_better_lb(dual_vec)
-        #         lb2 = NEW_label.calculate_better_lb_2(dual_vec)
-        #         if lb1<lb2:
-        #             input('lb error here')
-        #     else:
-        #         input('no lb option used')
-        #     if self.lb>NEW_label.lb+.001:
-        #         print('self.lb')
-        #         print(self.lb)
-        #         print('NEW_label.lb')
-        #         print(NEW_label.lb)
-        #         print('self.all_nodes_ordered')
-        #         print(self.all_nodes_ordered)
-        #         print('NEW_label.all_nodes_ordered')
-        #         print(NEW_label.all_nodes_ordered)
-        #         print('self.red_cost')
-        #         print(self.red_cost)
-        #         print('NEW_label.red_cost')
-        #         print(NEW_label.red_cost)
-        #         print('dual_vec[0]')
-        #         print(dual_vec[0])
-        #         print('self.my_actions_ordered[1].cost')
-        #         print(self.my_actions_ordered[1].cost)
-        #         print('gap is ')
-        #         print('NEW_label.lb-self.lb')
-        #         print(NEW_label.lb-self.lb)
-        #         offset_pickup=1
-        #         offset_dropoff=6
-        #         print('dual_vec[4-1]')
-
-        #         print(dual_vec[4-offset_pickup])
-        #         print('dual_vec[2-1]')
-        #         print(dual_vec[2-offset_pickup])
-        #         print('dual_vec[9-1]')
-        #         print(dual_vec[9-offset_dropoff])
-        #         print('dual_vec[7-1]')
-        #         print(dual_vec[7-offset_dropoff])
-        #         print('self.action_dict[4,2][0].cost')
-        #         print(self.action_dict[4,2][0].cost)
-        #         print('self.action_dict[2,9][0].cost')
-        #         print(self.action_dict[2,9][0].cost)
-        #         print('self.action_dict[9,7][0].cost')
-        #         print(self.action_dict[9,7][0].cost)
-        #         input('error here the lb went down')
-
-        #print(f'rest of time {time3-time2}')
-
-        #print('check here')
         return NEW_label
     
     def convert_2_route(self):
