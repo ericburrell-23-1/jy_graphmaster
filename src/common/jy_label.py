@@ -24,8 +24,10 @@ class jy_label:
             self.my_actions_ordered = []
             self.red_cost_non_zero_cal_indices = np.array([], dtype=int)
             self.red_cost_non_zero_cal_vals = np.array([])
+            self.total_cost = 0
         else:
             last_action = my_actions_ordered[-1]
+            self.total_cost = parent_label.total_cost+last_action.cost
             Exog_vec_non_zero_indices = last_action.red_cost_non_zero_cal_indices
             Exog_vec_non_zero_val = last_action.red_cost_non_zero_cal_vals
             
@@ -105,19 +107,16 @@ class jy_label:
         if not self.my_actions_ordered:
             self.red_cost = 0
             return 0
-        total_cost = sum(a.cost for a in self.my_actions_ordered)
+
     
         # Use pre-computed values and indices for dot product
-        try:
-            if len(self.red_cost_non_zero_cal_indices) > 0:
-                dot_product = np.dot(self.red_cost_non_zero_cal_vals, 
-                                    dual[self.red_cost_non_zero_cal_indices])
-            else:
-                dot_product = 0
-        except:
-            print('check here')
+        if len(self.red_cost_non_zero_cal_indices) > 0:
+            dot_product = np.dot(self.red_cost_non_zero_cal_vals, 
+                                dual[self.red_cost_non_zero_cal_indices])
+        else:
+            dot_product = 0
         
-        self.red_cost = total_cost - dot_product
+        self.red_cost = self.total_cost - dot_product
         return self.red_cost
         
     def calculate_lb_given_lowest_action_contrib_red_cost(self,lowest_action_contrib_red_cost):
@@ -260,7 +259,7 @@ class jy_label:
                 lowest_red_cost = float('inf')  # Use float('inf') instead of np.inf for better performance
             
 
-            
+            base_cost = self.red_cost + tot_benefit_dropoff_dual
             # Optimize the final loop to calculate the best lower bound
             for k in range(1,extra_customer_can_pick_up+1):
                 myDenom = k + self.num_pickups_in_route
@@ -276,12 +275,8 @@ class jy_label:
                 # Only calculate if we have enough nodes
                 if len(nodes_to_use) == k:
                     
-                    this_red_cost = self.red_cost + tot_benefit_dropoff_dual + tot_benefit_droppoff_cost / myDenom
-
-                    # Calculate total benefit in one pass
-                    for i in range(k):
-                        this_key = sorted_key[i]
-                        this_red_cost += sorted_node_with_k[myDenom][this_key]
+                    benefit_sum = sum(sorted_node_with_k[myDenom][key] for key in nodes_to_use)
+                    this_red_cost = base_cost + tot_benefit_droppoff_cost / myDenom + benefit_sum
                     
 
                     if this_red_cost < lowest_red_cost:

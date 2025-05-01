@@ -264,7 +264,6 @@ class jy_fast_pricing():
         self._compute_action_reduced_costs()
         source_label = self.initialize_source_label()
         all_routes = []
-        min_reduce_cost = np.inf
         self.expandable_labels = jy_sortedObject_list()
         #my_tup=tuple([-len(source_label.my_states_ordered),source_label.red_cost,my_noise])
         new_tuple=self.label_2_tuple(source_label)
