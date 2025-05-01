@@ -65,9 +65,7 @@ class Action:
         #     return None
         # 2. Compute tentative head state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption
-        # if head_state_vec.nnz > 0 and (head_state_vec.data < 0).any():
-        #     return None
-        # 3. Apply max_resource cap (only on indices of interest)
+
         head_state_vec = self.fast_max_res_apply(head_state_vec)
         picked_up = state_tail.picked_up
         dropped_off = state_tail.dropped_off

@@ -40,7 +40,6 @@ class jy_label:
                 else:
                     index = self.red_cost_non_zero_cal_indices.index(Exog_vec_non_zero_indices)
                     self.red_cost_non_zero_cal_vals[index] += Exog_vec_non_zero_val
-
         self.my_states_ordered=my_states_ordered
         self.parent_label=parent_label
         self.red_cost=red_cost
@@ -53,7 +52,7 @@ class jy_label:
         #self.action_2_red_cost_dict=action_2_red_cost_dict
         self.actions_of_node=actions_of_node
         self.action_dict = action_dict
-        self.lb=self.red_cost+(max_actions_in_route-len(self.my_actions_ordered))*lowest_action_contrib_red_cost
+        self.lb=np.inf
         self.pickup_nodes=pickup_nodes
         self.dropoff_nodes=dropoff_nodes
 
@@ -263,7 +262,7 @@ class jy_label:
             # Optimize the final loop to calculate the best lower bound
             for k in range(1,extra_customer_can_pick_up+1):
                 myDenom = k + self.num_pickups_in_route
-                sorted_key = list(sorted_node_with_k[myDenom].keys())
+                sorted_key = list(sorted_node_with_k[k].keys())
                 
                 # Skip unnecessary computation if there are no keys
                 if not sorted_key:
@@ -274,8 +273,7 @@ class jy_label:
                 
                 # Only calculate if we have enough nodes
                 if len(nodes_to_use) == k:
-                    
-                    benefit_sum = sum(sorted_node_with_k[myDenom][key] for key in nodes_to_use)
+                    benefit_sum = sum(sorted_node_with_k[k][key] for key in nodes_to_use)
                     this_red_cost = base_cost + tot_benefit_droppoff_cost / myDenom + benefit_sum
                     
 
@@ -353,7 +351,7 @@ class jy_label:
             new_head=my_action.get_head_state(last_state,last_state.l_id)
         else:
             new_head=my_action.get_head_state_fast_load_ai(last_state,last_state.l_id)
-        if self.max_actions_in_route<len(self.my_actions_ordered) :
+        if self.max_actions_in_route<len(self.my_actions_ordered):
             input('errror here not posible')
         if self.max_actions_in_route==len(self.my_actions_ordered) and my_action.node_head!=-2:
             input('errror here not posible 2')
