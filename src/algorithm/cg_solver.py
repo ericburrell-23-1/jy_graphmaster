@@ -112,9 +112,9 @@ class GraphMaster_cg:
         self.jy_options_user_defined['use_load_ai_in_pgm'] =True
         self.jy_options_user_defined['using_load_ai_lazy']=True
         self.jy_options_user_defined['using_load_ai_lazy_num_pickups']=(len(nodes)-2)/3
-        self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=3
+        self.jy_options_user_defined['using_load_ai_lazy_max_pickups']=self.state_update_module.problem_info['max_combined_loads']
         self.jy_options_user_defined['max_actions_in_route']=len(nodes)+2
-        self.jy_options_user_defined['max_pickups_in_a_route']=3
+        self.jy_options_user_defined['max_pickups_in_a_route']=self.state_update_module.problem_info['max_combined_loads']
         self.jy_options_user_defined['use_cg'] = True
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True

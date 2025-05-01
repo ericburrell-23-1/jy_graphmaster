@@ -188,8 +188,6 @@ class jy_fast_pricing():
             cus_num=self.num_cus,
             pickup_nodes=self.pickup_node,
             dropoff_nodes=self.dropoff_node,
-            rcp_u_partial = self.rcp_u_partial,
-            rcp_d_partial = self.rcp_d_partial,
             rcp_u_partial_2 = self.rcp_u_partial_2,
             edges = self.edges,
             preferred_actions = self.preferred_actions,
@@ -348,6 +346,8 @@ class jy_fast_pricing():
                 if curr_label.lb>self.jy_opt['min_dual_val_expand']:
                     print('curr_label.lb')
                     print(curr_label.lb)
+                    print('self.jy_opt')
+                    print(self.jy_opt['min_dual_val_expand'])
                     print('num_expansion_in')
                     print(num_expansion_in)
                     print('itr_num')
