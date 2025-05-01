@@ -222,12 +222,12 @@ class jy_fast_pricing():
                 if self.jy_opt['lb_option'] == 2:
                     this_lb = my_label.lb
                     my_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-                    if my_label.lb>-1:
-                        print('lb before')
-                        print(this_lb)
-                        print('lb after')
-                        print(my_label.lb)
-                        input('check here')
+                    # if my_label.lb>-1:
+                    #     print('lb before')
+                    #     print(this_lb)
+                    #     print('lb after')
+                    #     print(my_label.lb)
+                    #     input('check here')
                 elif self.jy_opt['lb_option'] == 1:
                     my_label.calculate_better_lb(self.dual_vec)
                 elif self.jy_opt['lb_option'] == 0:
@@ -534,7 +534,7 @@ class jy_fast_pricing():
         Remove expandable labels with lower bound > 0.
         """
         new_expandable_labels = jy_sortedObject_list()
-        debug_on=True
+        debug_on=False
         for i, label in enumerate(self.expandable_labels.objects):
             if label.lb <= -0.0001:
                 if debug_on==True:
