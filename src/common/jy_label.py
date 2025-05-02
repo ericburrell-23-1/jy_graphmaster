@@ -374,6 +374,12 @@ class jy_label:
             NEW_my_states_ordered=self.my_states_ordered+[new_head]
             if my_action.node_head in forbidden_nodes or my_action.node_tail in forbidden_nodes:
                 NEW_red_cost = bigVal
+                print('my_action.node_head in forbidden_nodes')
+                print(my_action.node_head in forbidden_nodes)
+                print('my_action.node_tail in forbidden_nodes')
+                print(my_action.node_tail in forbidden_nodes)
+                input('should never ever come up')
+                return None
             else:
                 NEW_red_cost = self.red_cost + my_action.comp_red_cost(dual)
             #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]

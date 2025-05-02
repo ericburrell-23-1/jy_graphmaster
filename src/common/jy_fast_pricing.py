@@ -325,6 +325,7 @@ class jy_fast_pricing():
             #input('redoing labels')
             self._update_sorted_node_with_k()
             self.update_red_cost_and_lb()
+            self.pickup_minus_forbidden=set(self.pickup_node)-set(self.forbidden_nodes)
             #self._remove_labels_with_positive_lb()
         
             # Update efficient frontier with current set of expandable labels
@@ -610,7 +611,7 @@ class jy_fast_pricing():
 
         if my_label.node == -1:
             actions_use = []
-            for n in self.pickup_node:
+            for n in self.pickup_minus_forbidden:
                 actions_use.append(self.action_dict[(my_label.node,n)][0])
             return actions_use
         if len(my_label.must_drop_off) ==0:
