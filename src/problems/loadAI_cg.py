@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from src.algorithm.update_states.state_update_function import StateUpdateFunction
 from itertools import permutations
 from src.algorithm.cg_solver import GraphMaster_cg
-from src.common.pgm_approach import Route
+from src.common.route import Route
 from src.common.line_time_profiler import HierarchicalProfiler
 from src.common.time_profile import TimeProfiler
 from tqdm import tqdm

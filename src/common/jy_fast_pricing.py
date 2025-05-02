@@ -6,7 +6,7 @@ from collections import defaultdict
 from typing import List, Dict, Any, Optional, Union, Tuple, Set
 from src.common.state import State
 from src.common.action import Action
-from src.common.pgm_approach import Route
+from src.common.route import Route
 from src.common.jy_label import jy_label
 from src.common.jy_eff_fronteir import jy_efficient_frontier
 from src.common.jy_sortedObject_list import jy_sortedObject_list
@@ -81,7 +81,10 @@ class jy_fast_pricing():
             updated_benefits = {}
             if len(benefit_group) > self.jy_opt['k_benefit_group']:
                 for v, value in benefit_group.items():
-                    updated_benefits[v] = self.benefit_group_cost[u][v] - self.dual_vec[u-1] - self.dual_vec[v-1]
+                    try:
+                        updated_benefits[v] = self.benefit_group_cost[u][v] - self.dual_vec[u-1] - self.dual_vec[v-1]
+                    except:
+                        print('check here')
                 self.benefit_group[u] = dict(sorted(updated_benefits.items(), key=lambda item: item[1]))
         self.pre_process__partition_actions()
         self.initiate_RCP_d()
@@ -253,7 +256,7 @@ class jy_fast_pricing():
             #lowest_lb=np.min(lowest_lb,)
             #self.node_2_eff_fronteir[my_node]
         return lowest_lb
-    def _update_sorted_node_with_k(self):
+    def OLD_update_sorted_node_with_k(self):
         self.sorted_node_with_k = {}
         for num_pickups in range(1,self.jy_opt['max_pickups_in_a_route']+1):
             # Calculate tot_gain for all nodes at once
@@ -263,6 +266,24 @@ class jy_fast_pricing():
             }
             # Sort once and store the sorted items
             self.sorted_node_with_k[num_pickups] = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
+    def _update_sorted_node_with_k(self):
+        self.sorted_node_with_k = {}
+        self.ORIG_sorted_node_with_k = {}
+        for num_pickups in range(1,self.jy_opt['max_pickups_in_a_route']+1):
+            # Calculate tot_gain for all nodes at once
+            tot_gain = {
+                u: -self.dual_vec[u-1] + self.rcp_u_partial_2[(num_pickups, u)]
+                for u in self.pickup_node
+            }
+            # Sort once and store the sorted items
+            self.ORIG_sorted_node_with_k[num_pickups] = dict(sorted(tot_gain.items(), key=lambda item: item[1]))
+            tmp2 = sorted(tot_gain.items(), key=lambda item: item[1])
+            tmp2=tmp2[0:num_pickups]
+            
+            this_dict=dict()
+            for i in tmp2:
+                this_dict[i[0]]=i[1]
+            self.sorted_node_with_k[num_pickups]=this_dict
     def find_min_reduced_cost_path(self,prefered_actions):
         """
         Main method to find the minimum reduced cost path following the algorithm in the PDF.
@@ -468,7 +489,10 @@ class jy_fast_pricing():
                         # print('new_label.red_cost')
                         # print(new_label.red_cost)
                         #input('paused')
-                        self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
+                        #self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
+                        #reduce_amount = route.get_red_cost(self.dual_vec_orig)
+                        self.dual_vec[route.Exog_vec_non_zero_indices] -= self.dual_vec_orig[route.Exog_vec_non_zero_indices] * alpha
+                        #self.dual_vec = self.dual_vec - reduce_amount*alpha
                         route_gen_count=route_gen_count+1
                         did_gen_neg_red_cost=True
                         break

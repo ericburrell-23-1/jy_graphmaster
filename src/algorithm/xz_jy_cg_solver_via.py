@@ -1,6 +1,6 @@
 import numpy as np
 from collections import defaultdict
-from src.common.pgm_approach import Route
+from src.common.route import Route
 import itertools
 from src.common.state import State
 from scipy.sparse import coo_matrix
@@ -13,6 +13,7 @@ class xy_jy_cg_solver:
     def __init__(self, list_of_route:list[Route], node_sequence_of_routes, rhs_exog_vec, data, distance, forbidden=[], initial_resource_vector=None):
         self.list_of_route = list_of_route
         self.list_of_action_list = []
+        self.route_id_to_route = defaultdict()
         self.node_sequence_of_routes = node_sequence_of_routes
         self.rhs_exog_vec = rhs_exog_vec
         self.var_to_obj_coef = defaultdict()
@@ -57,19 +58,19 @@ class xy_jy_cg_solver:
         data =[]
         cols=[]
         rows=[]
-        for pi in range(len(self.list_of_route)):
-            route = self.list_of_route[pi]
+        for route in self.list_of_route:
+
             self.var_to_obj_coef[var_index] = route.cost
-            this_exog_vec = route.Exog_vec
-            non_zero_indices = np.nonzero(this_exog_vec)[0]
-            
-            for row in non_zero_indices:
+            this_exog_vec_indices = route.Exog_vec_non_zero_indices
+            this_exog_vec_val = route.Exog_vec_non_zero_val
+            self.route_id_to_route[route.path_id] = route
+            for i,row in enumerate(this_exog_vec_indices):
                 rows.append(row)
                 cols.append(var_index)
-                data.append(this_exog_vec[row])
-                self.row_to_col_to_data[row][var_index]  = this_exog_vec[row]
-            self.index_to_route_name[var_index] = (f'route',pi)
-            self.route_name_to_index[(f'route',pi)] = var_index
+                data.append(this_exog_vec_val[i])
+                self.row_to_col_to_data[row][var_index]  = this_exog_vec_val[i]
+            self.index_to_route_name[var_index] = (f'route',route.path_id)
+            self.route_name_to_index[(f'route',route.path_id)] = var_index
             var_index += 1
             self.col_of_path += 1
         for u in self.pickup_node:
@@ -177,6 +178,7 @@ class xy_jy_cg_solver:
             print(f"Error constructing problem: {e}")
             import traceback
             traceback.print_exc()
+            input('error constructing problem')
             return False
 
     def solve(self):
@@ -251,7 +253,7 @@ class xy_jy_cg_solver:
         while num_iter_left > 0:
             # Step 3: Solve current RMP
             solution = self.solve()
-            
+  
             x_values = solution['variable_values']
             
             # If solution is not optimal, break
@@ -272,8 +274,8 @@ class xy_jy_cg_solver:
                 if var_idx in self.index_to_route_name and x_val > 0.00001:
                     route_name = self.index_to_route_name[var_idx]
                     if route_name[0] == 'route':
-                        route_idx = route_name[1]  # Extract the route index from the name tuple
-                        route = self.list_of_route[route_idx]
+                        route_id = route_name[1]  # Extract the route index from the name tuple
+                        route = self.route_id_to_route[route_id]
                         
                         if len(route.node_in_ordered) < 4:
                             continue
@@ -299,10 +301,10 @@ class xy_jy_cg_solver:
                                                 print('this_red_cost')
                                                 print(this_red_cost)
                                                 
-                                                all_mut_scores.append(tuple([this_red_cost, l_hat, route_idx]))
+                                                all_mut_scores.append(tuple([this_red_cost, l_hat, route_id]))
             
             # Step 5: Select columns with negative mutation scores
-            cols_to_add = [(score, route, orig_idx) for score, route, orig_idx in all_mut_scores if score <= -.0001]
+            cols_to_add = [(score, route, route_id) for score, route, orig_idx in all_mut_scores if score <= -.0001]
             
             # Step 6: Remove routes that are already in my_routes
             filtered_cols_to_add = []
@@ -364,9 +366,19 @@ class xy_jy_cg_solver:
                 if this_obj_val < .001:
                     print('HOW CAN COST DROP TO ZERO UPON ADDING THESE TERMS')
                 print('just after additions lp')
-
+        
         # Solve one final time with all the added columns
         final_solution = self.solve()
+        this_debug = False
+        if this_debug == True:
+            for route in self.list_of_route:
+                this_red_cost = route.get_red_cost(self.dual_values)
+                if this_red_cost <-1:
+                    print('this_red_cost')
+                    print(this_red_cost)
+                    print('route.node_in_ordered')
+                    print(route.node_in_ordered)
+                    input('error here, existing column have negative reduce cost')
         
         return final_solution, self.node_sequence_of_routes, self.list_of_route
     def solve_ilp(self):
@@ -374,177 +386,168 @@ class xy_jy_cg_solver:
         Solve the integer version of the problem using Xpress, focusing only on route variables.
         Optimized for speed and efficiency.
         """
-        try:
-            # Initialize Xpress if needed
-            if not hasattr(self, 'xpress_initialized'):
-                xp.init('C:/xpressmp/bin/xpauth.xpr')
-                self.xpress_initialized = True
-            
-            # Create a new ILP model
-            self.ilp_model = xp.problem()
-            self.ilp_variables = {}
-            
-            # Get route variable indices (correct handling of route variables)
-            route_indices = [idx for idx, name in self.index_to_route_name.items() 
-                            if name[0] == 'route']
-            
-            if not route_indices:
-                print("No route variables found in the model")
-                return {'status': 'No routes', 'objective_value': float('inf')}
-            
-            # Create route variables in batch
-            route_vars = []
-            for var_idx in route_indices:
-                # Create binary variable for each route
-                var = xp.var(name=f"r_{var_idx}", lb=0, ub=1, vartype=xp.integer)
-                self.ilp_variables[var_idx] = var
-                route_vars.append(var)
-            
-            # Add variables in batch
-            self.ilp_model.addVariable(route_vars)
-            
-            # Build objective expression more efficiently
-            obj_terms = []
-            for var_idx in route_indices:
-                if var_idx in self.var_to_obj_coef:
-                    coef = float(self.var_to_obj_coef[var_idx])
-                    obj_terms.append(coef * self.ilp_variables[var_idx])
-            
-            obj_expr = sum(obj_terms)
-            self.ilp_model.setObjective(obj_expr, sense=xp.minimize)
-            
-            # Find non-empty constraints (where at least one route variable appears)
-            relevant_rows = set()
-            for row in range(len(self.rhs_exog_vec)):
-                if row in self.row_to_col_to_data:
-                    for var_idx in route_indices:
-                        if var_idx in self.row_to_col_to_data[row]:
-                            relevant_rows.add(row)
-                            break
-            
-            # Build constraints more efficiently
-            self.ilp_constraints = []
-            constraint_batch = []
-            
-            for row in sorted(relevant_rows):
-                # Collect terms for this constraint
-                terms = []
+
+        # Initialize Xpress if needed
+        if not hasattr(self, 'xpress_initialized'):
+            xp.init('C:/xpressmp/bin/xpauth.xpr')
+            self.xpress_initialized = True
+        
+        # Create a new ILP model
+        self.ilp_model = xp.problem()
+        self.ilp_variables = {}
+        
+        # Get route variable indices (correct handling of route variables)
+        route_indices = [idx for idx, name in self.index_to_route_name.items() 
+                        if name[0] == 'route']
+        
+        if not route_indices:
+            print("No route variables found in the model")
+            return {'status': 'No routes', 'objective_value': float('inf')}
+        
+        # Create route variables in batch
+        route_vars = []
+        for var_idx in route_indices:
+            # Create binary variable for each route
+            var = xp.var(name=f"r_{var_idx}", lb=0, ub=1, vartype=xp.integer)
+            self.ilp_variables[var_idx] = var
+            route_vars.append(var)
+        
+        # Add variables in batch
+        self.ilp_model.addVariable(route_vars)
+        
+        # Build objective expression more efficiently
+        obj_terms = []
+        for var_idx in route_indices:
+            if var_idx in self.var_to_obj_coef:
+                coef = float(self.var_to_obj_coef[var_idx])
+                obj_terms.append(coef * self.ilp_variables[var_idx])
+        
+        obj_expr = sum(obj_terms)
+        self.ilp_model.setObjective(obj_expr, sense=xp.minimize)
+        
+        # Find non-empty constraints (where at least one route variable appears)
+        relevant_rows = set()
+        for row in range(len(self.rhs_exog_vec)):
+            if row in self.row_to_col_to_data:
                 for var_idx in route_indices:
                     if var_idx in self.row_to_col_to_data[row]:
-                        coef = float(self.row_to_col_to_data[row][var_idx])
-                        if abs(coef) > 1e-10:  # Skip tiny coefficients
-                            terms.append(coef * self.ilp_variables[var_idx])
-                
-                # Create constraint if there are terms
-                if terms:
-                    constraint = sum(terms) >= self.rhs_exog_vec[row]
-                    constraint_batch.append(constraint)
-                    self.ilp_constraints.append(constraint)
-            
-            # Add all constraints at once
-            if constraint_batch:
-                self.ilp_model.addConstraint(constraint_batch)
-            
-            # Set solver parameters for better performance
-            try:
-                self.ilp_model.setControl({
-                    'presolve': 1,          # Enable presolve
-                    'mipgap': 0.005,        # Set 0.5% MIP gap (tighter than before)
-                    'timeLimit': 600,       # Set 10-minute time limit
-                    'threads': 0,           # Use all available threads
-                    'mipEmphasis': 1,       # Emphasize feasibility over optimality
-                    'heurFreq': 5,          # Run heuristics more frequently
-                    'mipCuts': 2,           # Aggressive cut generation
-                    'backtracking': 3,      # Advanced backtracking strategy
-                    'outputlog': 1          # Enable output logging
-                })
-            except Exception as e:
-                print(f"Warning: Some control parameters not supported: {e}")
-                # Try setting basic controls
-                try:
-                    self.ilp_model.setControl({'presolve': 1, 'timeLimit': 600})
-                except:
-                    pass  # Proceed without controls if not supported
-            
-            print(f"Solving integer program with {len(self.ilp_variables)} variables and {len(self.ilp_constraints)} constraints...")
-            
-            # Solve the problem
-            self.ilp_model.solve()
-
-            
-            # Get solution status
-            status_code = self.ilp_model.getProbStatus()
-            if status_code == xp.mip_optimal:
-                status = "Optimal"
-            elif status_code == xp.mip_feasible:
-                status = "Feasible (not proven optimal)"
-            elif status_code == xp.lp_infeas:
-                status = "Infeasible"
-            else:
-                status = f"Other ({status_code})"
-            
-            # Get objective value
-            objective_value = self.ilp_model.getObjVal() if status in ["Optimal", "Feasible (not proven optimal)"] else float('inf')
-            
-            # Get variable values and used routes more efficiently
-            var_values = {}
-            route_used = []
-            route_indices_used = []
-            
-            if status in ["Optimal", "Feasible (not proven optimal)"]:
-                # Get all solutions at once if possible
-                try:
-                    all_solutions = self.ilp_model.getSolution(list(self.ilp_variables.values()))
-                    for i, var_idx in enumerate(self.ilp_variables.keys()):
-                        var_value = all_solutions[i]
-                        var_values[var_idx] = var_value
-                        
-                        # Check if route is used
-                        if var_value > 0.5:  # For binary variables
-                            route_name = self.index_to_route_name[var_idx]
-                            route_idx = route_name[1]  # Extract route index
-                            route_indices_used.append(route_idx)
-                except:
-                    # Fallback to getting solutions one by one
-                    for var_idx, var in self.ilp_variables.items():
-                        var_value = self.ilp_model.getSolution(var)
-                        var_values[var_idx] = var_value
-                        
-                        # Check if route is used
-                        if var_value > 0.5:
-                            route_name = self.index_to_route_name[var_idx]
-                            route_idx = route_name[1]
-                            route_indices_used.append(route_idx)
-                
-                # Get all used routes at once
-                route_used = [self.list_of_route[idx] for idx in route_indices_used]
-            else:
-                print(f"ILP status: {status} - No solution found")
-            
-            # Calculate total cost
-            total_cost = sum(route.cost for route in route_used)
-            
-            return {
-                'status': status,
-                'objective_value': objective_value,
-                'model_objective': objective_value,
-                'variable_values': var_values,
-                'used_routes': route_used,
-                'total_cost': total_cost,
-                'num_routes': len(route_used),
-                'route_indices': route_indices_used  # Added for easier tracking
-            }
+                        relevant_rows.add(row)
+                        break
         
+        # Build constraints more efficiently
+        self.ilp_constraints = []
+        constraint_batch = []
+        
+        for row in sorted(relevant_rows):
+            # Collect terms for this constraint
+            terms = []
+            for var_idx in route_indices:
+                if var_idx in self.row_to_col_to_data[row]:
+                    coef = float(self.row_to_col_to_data[row][var_idx])
+                    if abs(coef) > 1e-10:  # Skip tiny coefficients
+                        terms.append(coef * self.ilp_variables[var_idx])
+            
+            # Create constraint if there are terms
+            if terms:
+                constraint = sum(terms) >= self.rhs_exog_vec[row]
+                constraint_batch.append(constraint)
+                self.ilp_constraints.append(constraint)
+        
+        # Add all constraints at once
+        if constraint_batch:
+            self.ilp_model.addConstraint(constraint_batch)
+        
+        # Set solver parameters for better performance
+        try:
+            self.ilp_model.setControl({
+                'presolve': 1,          # Enable presolve
+                'mipgap': 0.005,        # Set 0.5% MIP gap (tighter than before)
+                'timeLimit': 600,       # Set 10-minute time limit
+                'threads': 0,           # Use all available threads
+                'mipEmphasis': 1,       # Emphasize feasibility over optimality
+                'heurFreq': 5,          # Run heuristics more frequently
+                'mipCuts': 2,           # Aggressive cut generation
+                'backtracking': 3,      # Advanced backtracking strategy
+                'outputlog': 1          # Enable output logging
+            })
         except Exception as e:
-            print(f"Error in solve_ilp: {e}")
-            import traceback
-            traceback.print_exc()
-            return {
-                'status': 'Error',
-                'objective_value': float('inf'),
-                'error_message': str(e)
-            }
+            print(f"Warning: Some control parameters not supported: {e}")
+            # Try setting basic controls
+            try:
+                self.ilp_model.setControl({'presolve': 1, 'timeLimit': 600})
+            except:
+                pass  # Proceed without controls if not supported
         
+        print(f"Solving integer program with {len(self.ilp_variables)} variables and {len(self.ilp_constraints)} constraints...")
+        
+        # Solve the problem
+        self.ilp_model.solve()
+
+        
+        # Get solution status
+        status_code = self.ilp_model.getProbStatus()
+        if status_code == xp.mip_optimal:
+            status = "Optimal"
+        elif status_code == xp.mip_feasible:
+            status = "Feasible (not proven optimal)"
+        elif status_code == xp.lp_infeas:
+            status = "Infeasible"
+        else:
+            status = f"Other ({status_code})"
+        
+        # Get objective value
+        objective_value = self.ilp_model.getObjVal() if status in ["Optimal", "Feasible (not proven optimal)"] else float('inf')
+        
+        # Get variable values and used routes more efficiently
+        var_values = {}
+        route_used = []
+        route_used = []
+        
+        if status in ["Optimal", "Feasible (not proven optimal)"]:
+            # Get all solutions at once if possible
+            try:
+                all_solutions = self.ilp_model.getSolution(list(self.ilp_variables.values()))
+                for i, var_idx in enumerate(self.ilp_variables.keys()):
+                    var_value = all_solutions[i]
+                    var_values[var_idx] = var_value
+                    
+                    # Check if route is used
+                    if var_value > 0.5:  # For binary variables
+                        route_name = self.index_to_route_name[var_idx]
+                        this_route = self.route_id_to_route[route_name[1]]
+                        route_used.append(this_route)
+            except:
+                
+                # Fallback to getting solutions one by one
+                for var_idx, var in self.ilp_variables.items():
+                    var_value = self.ilp_model.getSolution(var)
+                    var_values[var_idx] = var_value
+                    
+                    # Check if route is used
+                    if var_value > 0.5:
+                        route_name = self.index_to_route_name[var_idx]
+                        route_idx = route_name[1]
+                        #route_indices_used.append(route_idx)
+            
+            # Get all used routes at once
+            #route_used = [route.node_in_ordered for route in  route_used]
+        else:
+            print(f"ILP status: {status} - No solution found")
+        
+        # Calculate total cost
+        total_cost = sum(route.cost for route in route_used)
+        
+        return {
+            'status': status,
+            'objective_value': objective_value,
+            'model_objective': objective_value,
+            'variable_values': var_values,
+            'used_routes': route_used,
+            'total_cost': total_cost,
+            'num_routes': len(route_used),
+            'used_routes': route_used  # Added for easier tracking
+        }
+    
     
     def grab_primal_sol(self):
         return self.objective_value, self.var_values
@@ -559,7 +562,7 @@ class xy_jy_cg_solver:
         dual_values = self.model.getDual(self.constraints)
 
         
-        return dual_values
+        return np.array(dual_values)
     def get_active_DOI(self):
         """
         Get all active DOI variables (omega variables with non-zero values).
@@ -574,35 +577,6 @@ class xy_jy_cg_solver:
                 v = omega_name[2]
                 active_DOI.add((u,v))
         return active_DOI
-    def generate_subset_of_routes(self):
-        sub_set_routes = []
-        for route in self.list_of_route:
-            pickup_nodes_in_route = [node for node in route.node_in_ordered 
-                                    if node in self.pickup_node]
-            if len(pickup_nodes_in_route) <=2:
-                continue
-            for size in range(2, len(pickup_nodes_in_route) + 1):
-                for pickup_subset in itertools.combinations(pickup_nodes_in_route, size):
-                    # Check if this subset forms a valid route
-                    if self.is_valid_pickup_subset(pickup_subset, route):
-                        # Create a new route
-                        new_route = self.create_subset_route(pickup_subset, route)
-                        sub_set_routes.append(new_route)
-        for route in sub_set_routes:
-            state_action_alt_repeat = []
-            source_state = State(-1,self.initial_resource_vector,0,True,False)
-            state_action_alt_repeat.append(source_state)
-            cur_state = source_state
-            for (tail,head) in zip(route[:-1],route[1:]):
-                this_act = self.actions[(tail,head)][0]
-                state_action_alt_repeat.append(this_act)
-                next_state = this_act.get_head_state(cur_state)
-                if next_state == None:
-                    input('error here: none state generated from given column')
-                state_action_alt_repeat.append(next_state)
-                cur_state = next_state
-            this_route = Route(state_action_alt_repeat,1,self.pickup_node)
-            self.list_of_route.append(this_route)
     def _swap(self, route, u, v):
         """
         Create a new route by swapping node u with node v.
@@ -641,9 +615,8 @@ class xy_jy_cg_solver:
         state_action_alt_repeat.append(source_state)
         cur_state = source_state
         
-        for i in range(0, len(new_nodes)-1):
-            tail = new_nodes[i]
-            head = new_nodes[i+1]
+        for tail,head in zip(new_nodes[:-1],new_nodes[1:]):
+
             if (tail, head) not in self.actions:
                 return None
             this_act = self.actions[(tail, head)][0]
@@ -662,7 +635,7 @@ class xy_jy_cg_solver:
         new_route = Route(state_action_alt_repeat, 1, self.pickup_node)
         return new_route
 
-    def _route_to_tuple(self, route):
+    def _route_to_tuple(self, route: Route):
         """Convert a route to a hashable tuple for checking if already added."""
         return tuple(route.node_in_ordered)
 
@@ -678,27 +651,32 @@ class xy_jy_cg_solver:
         int: Index of the new variable
         """
         # Check if this route already exists
-        route_tuple = tuple(route.node_in_ordered) if hasattr(route, 'node_in_ordered') else None
+        if route.path_id == None:
+            input('this is not a route been added')
+        route_tuple =route.node_in_ordered
+        route_idx = route.path_id
         if route_tuple in self.node_sequence_of_routes:
             #print(f"Route {route_tuple} already exists in the model")
             # Find the existing route index
-            route_idx = self.node_sequence_of_routes.index(route_tuple)
+            #route_idx = self.node_sequence_of_routes.index(route_tuple)
+            print('node in ordered')
+            print(route_tuple)
             route_name = ('route', route_idx)
             if route_name in self.route_name_to_index:
-                return self.route_name_to_index[route_name]
+                input(' add duplicate route here')
+                #return self.route_name_to_index[route_name]
             else:
-                print(f"Warning: Route exists but no variable mapping found")
+                input(f"Warning: Route exists but no variable mapping found")
         
         # Add route to list_of_route and get its index
-        route_idx = len(self.list_of_route)
+        #route_idx = len(self.list_of_route)
         self.list_of_route.append(route)
         
         # Add route to node sequence if needed
-        if route_tuple and route_tuple not in self.node_sequence_of_routes:
-            self.node_sequence_of_routes.append(route_tuple)
-        
+        self.node_sequence_of_routes.append(route_tuple)
+        self.route_id_to_route[route_idx] = route
         # Determine variable index - reuse from index_sorted_slot if available
-        if hasattr(self, 'index_sorted_slot') and self.index_sorted_slot:
+        if self.index_sorted_slot:
             var_idx = self.index_sorted_slot.pop(0)  # Get the smallest available index
             #print(f"Reusing index {var_idx} for new route")
         else:
@@ -710,21 +688,18 @@ class xy_jy_cg_solver:
         self.var_to_obj_coef[var_idx] = route.cost
         
         # Update constraint coefficient mappings
-        exog_vec = route.Exog_vec
-        non_zero_indices = np.nonzero(exog_vec)[0]
+        exog_vec_non_zero_indices = route.Exog_vec_non_zero_indices
+        exog_vec_non_zero_val = route.Exog_vec_non_zero_val
+
         
-        for row in non_zero_indices:
-            coef = float(exog_vec[row])
+        for index, row in enumerate(exog_vec_non_zero_indices):
+            coef = exog_vec_non_zero_val[index]
             self.row_to_col_to_data[row][var_idx] = coef
         
         # Update route mappings
         self.index_to_route_name[var_idx] = ('route', route_idx)
         self.route_name_to_index[('route', route_idx)] = var_idx
         
-        #print(f"Added route with variable index {var_idx}, route index {route_idx}")
-        #print(f"Route cost: {route.cost}")
-        if hasattr(route, 'just_nodes_ordered'):
-            print(f"Route nodes: {route.just_nodes_ordered}")
         
         # Return the index of the new variable
         return var_idx
@@ -744,7 +719,7 @@ class xy_jy_cg_solver:
         # Check if this omega variable exists
         omega_name = ('omega', u, v)
         if omega_name not in self.omega_name_to_index:
-            print(f"Warning: Omega variable for pair ({u},{v}) does not exist")
+            input(f"Warning: Omega variable for pair ({u},{v}) does not exist")
             return False
             
         # Get the variable index
@@ -752,35 +727,30 @@ class xy_jy_cg_solver:
         
         try:
             # Remove from constraint coefficient mappings
-            for row in range(len(self.rhs_exog_vec)):
-                if row in self.row_to_col_to_data and var_idx in self.row_to_col_to_data[row]:
-                    del self.row_to_col_to_data[row][var_idx]
+            del self.row_to_col_to_data[u-1][var_idx]
+            del self.row_to_col_to_data[v-1][var_idx]
+
             
             # Remove from objective coefficient mapping
-            if var_idx in self.var_to_obj_coef:
-                del self.var_to_obj_coef[var_idx]
+
+            del self.var_to_obj_coef[var_idx]
             
             # Remove from omega mappings
             del self.index_to_omega_name[var_idx]
             del self.omega_name_to_index[omega_name]
             
             # Add index to reuse list, ensuring it exists first
-            if not hasattr(self, 'index_sorted_slot'):
-                from sortedcontainers import SortedList
-                self.index_sorted_slot = SortedList()
+
             self.index_sorted_slot.add(var_idx)
             
             # If we had the solution values, remove this variable's value
-            if hasattr(self, 'var_values') and var_idx in self.var_values:
-                del self.var_values[var_idx]
+
+            del self.var_values[var_idx]
                 
             # Decrement omega count
             self.col_of_omega -= 1
             
-            # Add this pair to forbidden pairs
-            if not hasattr(self, 'forbidden'):
-                self.forbidden = set()
-            
+
             self.forbidden.add((u, v))
             
             #print(f"Successfully removed omega variable mapping for pair ({u},{v})")

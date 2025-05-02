@@ -1,7 +1,7 @@
 import numpy as np
 from collections import defaultdict
 import pulp
-from src.common.pgm_approach import Route
+from src.common.route import Route
 import itertools
 from src.common.state import State
 class CG_RMP:
@@ -268,7 +268,7 @@ class CG_RMP:
                     dual_values.append(None)
                     #print(f"Warning: Couldn't find dual value for constraint {i}")
         
-        return dual_values
+        return np.array([dual_values])
         
     def add_column(self, column_coef, obj_coef):
 

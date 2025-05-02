@@ -7,7 +7,7 @@ from src.algorithm.update_states.state_update_function import StateUpdateFunctio
 from src.common.full_multi_graph_object_given_l import Full_Multi_Graph_Object_given_l
 from src.common.rmp_graph_given_1 import RMP_graph_given_l
 from src.common.pgm_approach import PGM_appraoch
-from src.common.pgm_approach import Route
+from src.common.route import Route
 from src.algorithm.update_states.standard_CVRP import CVRP_state_update_function
 from src.algorithm.gwo_pricing_solver import GWOPricingSolver
 from src.algorithm.gwo_pricing_solver_LoadAI import GWOPricingSolverLoadAI
@@ -266,20 +266,8 @@ class GraphMaster_cg:
             #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
             if self.jy_options_user_defined['new_rmp'] == True:
                 
-                #output = cg_solver.solve()
-                #input('before')
-                
-                before_num = len(node_sequence_of_routes)
+
                 output,node_sequence_of_routes, list_of_routes = cg_solver.solve_2()
-                #output,list_of_routes, node_sequence_of_routes = cg_solver_pulp.solve_2()
-                # print('before : len(list_of_routes)')
-                # print(before_num)
-                # print('after : len(list_of_routes)')
-                # print(len(node_sequence_of_routes))
-                # print('check')
-                #input('during')
-                #output = cg_solver.solve()
-                #input('after')
 
             else:
                 output = cg_solver.solve()
@@ -292,18 +280,16 @@ class GraphMaster_cg:
             for index, route_name in cg_solver.index_to_route_name.items():
                 value = this_sol[index]
                 if value > 0.0001:
-                    route_index = route_name[1]
-                    this_route = list_of_routes[route_index]
+                    route_id = route_name[1]
+                    this_route = cg_solver.route_id_to_route[route_id]
                     red_cost = this_route.get_red_cost(this_dual)
                     if red_cost <-1:
                         input('error here')
-                    #print(f'value:{value}, red_cost:{red_cost}')
             l_id += 1
 
             jy_init_res_state = State(-1,self.initial_resource_vector,set(),set(),set(),l_id,True,False)
-            this_dual = [0 if abs(x) < 0.0001 else x for x in this_dual]
+            this_dual = np.array([0 if abs(x) < 0.0001 else x for x in this_dual])
             if self.jy_options_user_defined['use_fast_pricing'] == True:
-                #this_dual = [1000 for i in range(len(self.rhs_exog_vec))]
                 jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
                 routes= jy_fast_pricer.run()
                 reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
@@ -389,11 +375,10 @@ class GraphMaster_cg:
 
                 #list_of_routes.extend(routes)
                 add_route_num = 0
-                for idx in range(len(routes)):
-                    route = routes[idx]
+                for idx, route in enumerate(routes):
                     #red_cost = route.get_red_cost(this_dual)
                     red_cost = reduced_cost_list[idx]
-                    if route.node_in_ordered in node_sequence_of_routes and red_cost<-1:
+                    if route.node_in_ordered in cg_solver.node_sequence_of_routes and red_cost<-1:
                         print('node_in_ordered')
                         print(route.node_in_ordered)
                         print('red_cost')
@@ -402,14 +387,14 @@ class GraphMaster_cg:
                     if red_cost<-1e-3 :
                         # print('route added')
                         # print(route.node_in_ordered)
-                        node_sequence_of_routes.append(route.node_in_ordered)
-                        list_of_routes.append(route)
+                        #node_sequence_of_routes.append(route.node_in_ordered)
+                        #list_of_routes.append(route)
                         cg_solver.add_route(route)
                         if self.jy_options_user_defined['subset_route'] == True:
                             if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
                                 subset_of_routes = route.generate_subset_routes()
                                 for subset_route in subset_of_routes:
-                                    if subset_route not in node_sequence_of_routes:
+                                    if subset_route not in cg_solver.node_sequence_of_routes:
                                         cur_state = State(-1,self.initial_resource_vector,set(),set(),set(),1,True,False)
                                         state_action_alt_repeat=[cur_state]
                                         do_continue = False
@@ -426,8 +411,8 @@ class GraphMaster_cg:
                                         if do_continue == True:
                                             continue
                                         this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
-                                        list_of_routes.append(this_sub_route)
-                                        node_sequence_of_routes.append(this_sub_route.node_in_ordered)
+                                        cg_solver.add_route(this_sub_route)
+                                        
                         add_route_num += 1
                 path_col_generated.append(add_route_num)
                 

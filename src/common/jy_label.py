@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Optional, Union, Tuple, Set
 from src.common.state import State
 from src.common.action import Action
 import numpy as np
-from src.common.pgm_approach import Route
+from src.common.route import Route
 from itertools import combinations
 import time
 class jy_label:
@@ -22,8 +22,8 @@ class jy_label:
         if not my_actions_ordered:
         # Handle empty list case
             self.my_actions_ordered = []
-            self.red_cost_non_zero_cal_indices = np.array([], dtype=int)
-            self.red_cost_non_zero_cal_vals = np.array([])
+            self.red_cost_non_zero_cal_indices = []
+            self.red_cost_non_zero_cal_vals = []
             self.total_cost = 0
         else:
             last_action = my_actions_ordered[-1]
