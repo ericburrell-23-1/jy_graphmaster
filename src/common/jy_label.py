@@ -378,6 +378,8 @@ class jy_label:
                 print(my_action.node_head in forbidden_nodes)
                 print('my_action.node_tail in forbidden_nodes')
                 print(my_action.node_tail in forbidden_nodes)
+                print('my_action.node_head in self.pickup_minus_forbidden')
+                print(my_action.node_head in self.pickup_minus_forbidden)
                 input('should never ever come up')
                 return None
             else:

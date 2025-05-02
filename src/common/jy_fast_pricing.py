@@ -315,6 +315,7 @@ class jy_fast_pricing():
         if self.jy_opt['use_comp_col'] == True:
             max_ter =100000
         self.expanede_label = []
+        tot_red_cost=0
         while itr_num < max_ter:
             itr_num+=1
             # Re-compute bounds based on dual values
@@ -325,7 +326,6 @@ class jy_fast_pricing():
             #input('redoing labels')
             self._update_sorted_node_with_k()
             self.update_red_cost_and_lb()
-            self.pickup_minus_forbidden=set(self.pickup_node)-set(self.forbidden_nodes)
             #self._remove_labels_with_positive_lb()
         
             # Update efficient frontier with current set of expandable labels
@@ -350,7 +350,13 @@ class jy_fast_pricing():
             incumbant_lb=-np.inf
             print('len(self.expandable_labels)')
             print(len(self.expandable_labels))
+            print('tot_red_cost')
+            print(tot_red_cost)
+            print('len(all_routes)')
+            print(len(all_routes))
             while len(self.expandable_labels) > 0:
+                self.pickup_minus_forbidden=set(self.pickup_node)-set(self.forbidden_nodes)
+
                 num_expansion_in=num_expansion_in+1
                 num_expanded_this_round=num_expanded_this_round+1
 
@@ -384,50 +390,15 @@ class jy_fast_pricing():
                     input('error here:curr_label.lb>self.jy_opt')
                 if curr_label.lb>self.jy_opt['min_dual_val_expand']:
                     continue
-                if 0>0:
-                    if verbose==True and num_expansion_in % 100==0:
-                        print('incumbant_lb')
-                        print(incumbant_lb)
-                        print('curr_label.red_cost')
-                        print(curr_label.red_cost)
-                        print('curr_label.LB')
-                        print(curr_label.lb)
-                        print('len(curr_label.my_states_ordered)')
-                        print(len(curr_label.my_states_ordered))
-                        print('curr_label.all_nodes_ordered')
-                        print(curr_label.all_nodes_ordered)
-                        print('self.forbidden_nodes')
-                        print(self.forbidden_nodes)
-                        print('len(self.expandable_labels)')
-                        print(len(self.expandable_labels))
-                        print('num_expansion_in')
-                        print(num_expansion_in)
-                        print('num_expansion_out')
-                        print(num_expansion_out)
-                        #input('error: verbose==True and num_expansion_in % 100==0')
-                if debug_on==True:
-                    #check the lower bound
-                    old_lb=curr_label.lb
-                    if self.jy_opt['lb_option'] == 2:
-                        curr_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-                    elif self.jy_opt['lb_option'] == 1:
-                        curr_label.calculate_better_lb(self.dual_vec)
-                    elif self.jy_opt['lb_option'] == 0:
-                        curr_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-                    elif self.jy_opt['lb_option'] == 'check':
-                        lb1 = curr_label.calculate_better_lb(self.dual_vec)
-                        lb2 = curr_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-                        if lb1<lb2:
-                            input('lb error here')
-                    else:
-                        input('no lb option used')
-                    if abs(curr_label.lb-old_lb)>.001:
-                        input('error here')
+                
                 # Generate all possible expansions for this label
                 #expanded_labels = curr_label.expand_label_fully()
                 if self.jy_opt['poss_action'] == 1:
+                    print('makeing from 1 ')
+
                     poss_actions  = self.get_actions_from_label(curr_label)
                 elif self.jy_opt['poss_action'] == 2:
+                    #print('makeing from 2 ')
                     poss_actions = self.get_actions_from_label_2(curr_label,prefered_actions)
                 else:
                     input('error')
@@ -440,6 +411,14 @@ class jy_fast_pricing():
                         continue
                     if curr_label.all_nodes_ordered == [-1, 1, 4]:
                         print('check here')
+                    #if my_act.node_head not in self.pickup_minus_forbidden:
+                    #    print('my_act.node_head')
+                    #    print(my_act.node_head)
+                    #    input('error here')
+                    if my_act.node_head in self.forbidden_nodes:
+                        print('my_act.node_head')
+                        print(my_act.node_head)
+                        input('error here2 ')
                     new_label= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
 
                     if new_label == None:
@@ -483,6 +462,7 @@ class jy_fast_pricing():
                         #input('making route')
                         route = new_label.convert_2_route()
                         all_routes.append(route)
+                        tot_red_cost=tot_red_cost+new_label.red_cost
                         # print('route made')
                         # print('new_label.all_nodes_ordered')
                         # print(new_label.all_nodes_ordered)
@@ -643,6 +623,7 @@ class jy_fast_pricing():
         all_neighbors_to_check = must_drop_off_neighbors_drop_off_node | neighbor_for_this_node | must_drop_off_neighbors_pick_up_node
         # Find all valid pickup nodes at once
         valid_pickups = all_neighbors_to_check.intersection(self.pickup_node).difference(my_label.nodes_picked_up)
+        valid_pickups=set(valid_pickups)-self.forbidden_nodes
         actions_use.update(self.action_dict[(my_label.node, node)][0] for node in valid_pickups)
         return list(actions_use)
     def get_actions_from_label(self,my_label:jy_label):
