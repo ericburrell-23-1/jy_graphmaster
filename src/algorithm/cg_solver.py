@@ -390,13 +390,13 @@ class GraphMaster_cg:
                         #node_sequence_of_routes.append(route.node_in_ordered)
                         #list_of_routes.append(route)
                         cg_solver.add_route(route)
-                        if self.jy_options_user_defined['subset_route'] == False:
+                        if self.jy_options_user_defined['subset_route'] == True:
                             if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
                                 subset_of_routes = route.generate_subset_routes()
                                 for subset_route in subset_of_routes:
                                     
                                     if subset_route not in cg_solver.node_sequence_of_routes:
-                                        cur_state = State(-1,[0,np.inf],0,self.initial_resource_vector,set(),set(),set(),1,True,False)
+                                        cur_state = State(-1,[np.inf,0],0,self.initial_resource_vector,set(),set(),set(),1,True,False)
                                         state_action_alt_repeat=[cur_state]
                                         do_continue = False
                                         for o,d in zip(subset_route[:-1],subset_route[1:]):
@@ -406,7 +406,9 @@ class GraphMaster_cg:
                                             this_a:Action = self.action_dict[(o,d)][0]
                                             state_action_alt_repeat.append(this_a)
 
-                                            new_state = this_a.get_head_state_fast_load_ai(cur_state,1)
+                                            new_state = this_a.get_ez_head_state(cur_state,1)
+                                            if new_state == None:
+                                                input('error here for subroute generation')
                                             state_action_alt_repeat.append(new_state)
                                             cur_state = new_state
                                         if do_continue == True:

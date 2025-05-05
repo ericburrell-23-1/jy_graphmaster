@@ -109,7 +109,59 @@ class Action:
         return head_state
 
 
+    def get_ez_head_state(self, state_tail: State, l_id):
+        """
+        Fast version to compute head state from tail state and resource consumption.
+        """
 
+        # 1. Early rejection using sparse comparison (fast & memory efficient)
+        #diff_data = state_tail.state_vec - self.min_resource_vec
+        #if self.violates_min_resources(state_tail.state_vec)==True:
+        if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up, state_tail.must_drop_off)==True:
+            return None
+        # if diff_data.nnz > 0 and (diff_data.data < 0).any():
+        #     return None
+        # 2. Compute tentative head state vector
+        head_state_vec = state_tail.state_vec + self.resource_consumption
+
+        head_state_vec = self.fast_max_res_apply(head_state_vec)
+        picked_up = state_tail.picked_up
+        dropped_off = state_tail.dropped_off
+        must_drop_off = state_tail.must_drop_off
+    
+        if self.pickup is not None:
+            picked_up = picked_up | {self.pickup}
+            must_drop_off = must_drop_off | {self.pickup}
+        
+        if self.dropoff is not None:
+            dropped_off = dropped_off | {self.dropoff}
+            # Create a new set for must_drop_off only if we're modifying it
+            must_drop_off = must_drop_off - {self.dropoff}
+            
+
+        if self.node_head == -2:
+            head_state = State(self.node_head,  self.time_window, self.service_time,np.array([0,0,0,0,0,0]),set(),set(),set(), l_id, is_source=False, is_sink=True)
+        else:
+            head_state = State(self.node_head, self.time_window, self.service_time, head_state_vec,picked_up,dropped_off,must_drop_off, l_id, is_source=False, is_sink=False)
+
+            
+        
+        #Handle the case where times are too small to measure
+        #print('self.indices_non_zero_max')
+        #print(len(self.indices_non_zero_max))
+
+        do_debug=False
+        if do_debug==True:
+            backup_head=self.get_head_state(state_tail,state_tail.l_id)
+            if (backup_head==None)!=(head_state==None):
+                input('error here ')
+            if False==backup_head.equals_minus_id(head_state):
+                print('error ')
+                backup_head.pretty_print_state()
+                backup_head.pretty_print_state()
+                input('error here ')
+            input('GOOD')
+        return head_state
     def get_tail_state(self, state_head: State, l_id):
         """
         Optimized version of get_tail_state with caching for performance.
