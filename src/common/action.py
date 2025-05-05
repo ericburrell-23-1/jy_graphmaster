@@ -87,8 +87,8 @@ class Action:
             # Create a new set for must_drop_off only if we're modifying it
             must_drop_off = must_drop_off - {self.dropoff}
             
-        if np.any(head_state_vec<0):
-            input('error here Action for statec vec <0 ')
+        # if np.any(head_state_vec<0):
+        #     input('error here Action for statec vec <0 ')
         if self.node_head == -2:
             head_state = State(self.node_head,self.time_window, self.service_time,  np.array([0,0,0,0,0,0]), set(),set(),set(), l_id, is_source=False, is_sink=True)
         else:
@@ -294,8 +294,8 @@ class Action:
             new_hos_work_time = tail_vec[5]-self.travel_time
         if earlist_arr_time < self.time_window[1]:
             return True, None, None, None
-        if new_hos_drive_time<0 or new_hos_work_time<0:
-            input('hos less than 0 error')
+        # if new_hos_drive_time<0 or new_hos_work_time<0:
+        #     input('hos less than 0 error')
         return False, earlist_arr_time, new_hos_drive_time, new_hos_work_time
 
     def __eq__(self, other: "Action") -> bool:

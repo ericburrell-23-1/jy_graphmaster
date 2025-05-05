@@ -298,8 +298,6 @@ class xy_jy_cg_solver:
                                             
                                             if l_hat:
                                                 this_red_cost = l_hat.get_red_cost(my_dual_vals)
-                                                print('this_red_cost')
-                                                print(this_red_cost)
                                                 
                                                 all_mut_scores.append(tuple([this_red_cost, l_hat, route_id]))
             
@@ -622,7 +620,7 @@ class xy_jy_cg_solver:
             this_act = self.actions[(tail, head)][0]
             state_action_alt_repeat.append(this_act)
             
-            next_state = this_act.get_head_state_fast_load_ai(cur_state, cur_state.l_id)
+            next_state = this_act.get_ez_head_state(cur_state, cur_state.l_id)
             
             if next_state is None:
                 # Not a valid route

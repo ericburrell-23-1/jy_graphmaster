@@ -405,14 +405,12 @@ class jy_fast_pricing():
 
                 did_gen_neg_red_cost=False
                 did_gen_possible_expansion=False
-                print('curr label')
-                print(curr_label.all_nodes_ordered)
-                print('poss action list')
-                print([(a.node_tail, a.node_head) for a in poss_actions])
-                print('check here')
+                # print('curr label')
+                # print(curr_label.all_nodes_ordered)
+                # print('poss action list')
+                # print([(a.node_tail, a.node_head) for a in poss_actions])
+                # print('check here')
                 for my_act in poss_actions:
-                    if curr_label.all_nodes_ordered[:6] == [-1,4,2,5,9,7] and my_act.node_head ==10:
-                        print('check here')
                     # if curr_label.all_nodes_ordered == [-1,1] and my_act.node_head ==6:
                     #     print('check here')
                     if my_act.node_head in self.skip_node:

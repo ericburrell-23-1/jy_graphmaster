@@ -126,7 +126,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['new_rmp'] =True # true: if generate more routes from omega term
         self.jy_options_user_defined['subset_route'] = True # true: if use subset routes for col service 3 customers
         self.jy_options_user_defined['optimality_gap'] = 0.01 
-        self.jy_options_user_defined['min_dual_val_expand']=-1
+        self.jy_options_user_defined['min_dual_val_expand']=-2
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -304,7 +304,7 @@ class GraphMaster_cg:
                 print(reduced_cost_list)
                     
                 rmp_obj = output['objective_value']
-                if len(reduced_cost_list) < 0.5 or reduced_cost >= -1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
+                if len(reduced_cost_list) < 0.5 or reduced_cost >= -2.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
                     this_forbidden_omega = cg_solver.get_active_DOI()
                     #this_forbidden_omega = cg_solver.get_forbidden_omega()
                     print('this_forbidden_omega')
