@@ -394,6 +394,7 @@ class GraphMaster_cg:
                             if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
                                 subset_of_routes = route.generate_subset_routes()
                                 for subset_route in subset_of_routes:
+                                    
                                     if subset_route not in cg_solver.node_sequence_of_routes:
                                         cur_state = State(-1,[0,np.inf],0,self.initial_resource_vector,set(),set(),set(),1,True,False)
                                         state_action_alt_repeat=[cur_state]

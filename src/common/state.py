@@ -23,7 +23,12 @@ class State:
         if debug_here== True:
             if self.state_vec[5]>840 or self.state_vec[4]>660:
                 input('error here for state check')
-
+        if np.any(self.state_vec<0):
+            print('statevec')
+            print(self.state_vec)
+            print('node')
+            print(self.node)
+            input('error:some vec less than 0')
             
         if self.state_vec[4]>self.state_vec[5]:
             self.state_vec[4] = self.state_vec[5]
@@ -105,10 +110,13 @@ class State:
         if self.state_vec[5]>self.service_time + wait_time:
             this_state_vec = self.state_vec.copy()
             this_state_vec[2] = earlist_service_start-self.service_time
-            this_state_vec[5] -= (self.service_time+wait_time)
-            state_no_rest = State(self.node,self.time_window,self.service_time, this_state_vec,self.picked_up,self.dropped_off,
-                    self.must_drop_off,self.l_id,self.is_source,self.is_sink)
-            depart_states.append(state_no_rest)
+            if this_state_vec[2]>0:
+                this_state_vec[5] -= (self.service_time+wait_time)
+                if np.any(this_state_vec<0):
+                    input('state_no_rest service generate negative resource')
+                state_no_rest = State(self.node,self.time_window,self.service_time, this_state_vec,self.picked_up,self.dropped_off,
+                        self.must_drop_off,self.l_id,self.is_source,self.is_sink)
+                depart_states.append(state_no_rest)
         # waiting time due to ealy arrive does not count for drive time and work time
         #if hoswork is enough to do service and timewindow not violated
 
@@ -128,9 +136,12 @@ class State:
         this_state_vec[2] = earlist_service_start - self.service_time
         this_state_vec[4] = 660
         this_state_vec[5] = 840-self.service_time
-        state_rest_service = State(self.node,self.time_window,self.service_time,this_state_vec,self.picked_up,self.dropped_off,
-                self.must_drop_off,self.l_id,self.is_source,self.is_sink)
-        depart_states.append(state_rest_service)
+        if this_state_vec[2]>0:
+            if np.any(this_state_vec<0):
+                input('state_rest_service service generate negative resource')
+            state_rest_service = State(self.node,self.time_window,self.service_time,this_state_vec,self.picked_up,self.dropped_off,
+                    self.must_drop_off,self.l_id,self.is_source,self.is_sink)
+            depart_states.append(state_rest_service)
 
         return depart_states
         
