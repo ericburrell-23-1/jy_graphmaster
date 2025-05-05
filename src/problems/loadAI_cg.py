@@ -104,7 +104,7 @@ class loadAI_cg:
         output = self.solver.solve()
 
         profiler.disable()
-        profiler.dump_stats('program_profile.prof')
+        profiler.dump_stats('program_profile_400_x.prof')
 
         variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
@@ -264,8 +264,7 @@ class loadAI_cg:
 
         # ACTIONS
         self._create_default_resource_values()
-        self.travel_time, self.distance = self._travel_time_and_distance()
-
+        self.travel_time_hos, self.distance, self.travel_time = self._travel_time_and_distance()
         create_edge_pair_first = True
         if create_edge_pair_first is False:
             with TimeProfiler(f'time_profile_edges_creation'):
@@ -337,31 +336,18 @@ class loadAI_cg:
         self.resource_index_to_name[idx] = "max_combined_loads"
         idx += 1
 
-        # self.initial_resource_dict["HOS_drive_time"] = HOS_DRIVE_TIME
-        # self.initial_resource_vector = append(self.initial_resource_vector, HOS_DRIVE_TIME)
-        # self.resource_name_to_index["HOS_drive_time"] = idx
-        # self.resource_index_to_name[idx] = "HOS_drive_time"
-        # idx += 1
+        self.initial_resource_dict["how_drive"] = self.max_combined_loads
+        self.initial_resource_vector = append(self.initial_resource_vector, self.hos_drive_time)
+        self.resource_name_to_index["hos_drive"] = idx
+        self.resource_index_to_name[idx] = "hos_drive"
+        idx += 1
 
-        # self.initial_resource_dict["HOS_work_time"] = HOS_WORK_TIME
-        # self.initial_resource_vector = append(self.initial_resource_vector, HOS_WORK_TIME)
-        # self.resource_name_to_index["HOS_work_time"] = idx
-        # self.resource_index_to_name[idx] = "HOS_work_time"
-        # idx += 1
+        self.initial_resource_dict["how_work"] = self.max_combined_loads
+        self.initial_resource_vector = append(self.initial_resource_vector, self.hos_work_time)
+        self.resource_name_to_index["how_work"] = idx
+        self.resource_index_to_name[idx] = "how_work"
+        idx += 1
 
-        # for pickup_node in self.pickup_to_dropoff:
-        #     self.initial_resource_dict[str(("may_pickup", pickup_node))] = 1
-        #     self.initial_resource_vector = append(self.initial_resource_vector, 1)
-        #     self.resource_name_to_index[str(("may_pickup", pickup_node))] = idx
-        #     self.resource_index_to_name[idx] = str(("may_pickup", pickup_node))
-        #     idx += 1
-
-        # for dropoff_node in self.dropoff_to_pickup:
-        #     self.initial_resource_dict[str(("may_avoid_dropoff", dropoff_node))] = 1
-        #     self.initial_resource_vector = append(self.initial_resource_vector, 1)
-        #     self.resource_name_to_index[str(("may_avoid_dropoff", dropoff_node))] = idx
-        #     self.resource_index_to_name[idx] = str(("may_avoid_dropoff", dropoff_node))
-        #     idx += 1
 
         self.number_of_resources = len(self.initial_resource_dict)
         #self.initial_resource_vector=csr_matrix(self.initial_resource_vector.reshape(1, -1))
@@ -382,18 +368,24 @@ class loadAI_cg:
             "volume": 0,
             "time": 0,
             "max_combined_loads": 0,
+            'hos_drive':0,
+            'hos_work':0
         }
         self.default_trans_term_vec = {
             "weight": 0,
             "volume": 0,
             "time": 0,
             "max_combined_loads": 0,
+            'hos_drive':0,
+            'hos_work':0
         }
         self.default_trans_term_min = {
             "weight": self.weight_capacity,
             "volume": self.volume_capacity,
             "time": self.maximum_time,
             "max_combined_loads": self.max_combined_loads,
+            'hos_drive':self.hos_drive_time,
+            'how_work':self.hos_work_time
         }
 
         # for pickup in self.pickup_to_dropoff:
@@ -422,9 +414,9 @@ class loadAI_cg:
             non_zero_exog_val = None
             non_zero_exog_indices = None
 
-            min_resource_vec = np.array([0,0,0,0])
-            resource_consumption_vec = np.array([0,0,0,0])
-            max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.time_window_start[destination_node],MAX_COMBINED_LOADS])
+            min_resource_vec = np.array([0,0,0,0,0,0])
+            resource_consumption_vec = np.array([0,0,0,0,0,0])
+            max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.time_window_start[destination_node],MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
 
             this_pickup = None
             this_dropoff = None
@@ -432,8 +424,8 @@ class loadAI_cg:
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
 
             action = Action(destination_node, origin_node, this_pickup, this_dropoff, self.number_of_customers, non_zero_exog_val,non_zero_exog_indices,cost,min_resource_vec, 
-                            resource_consumption_vec, 
-                            max_resource_vec)
+                            resource_consumption_vec,max_resource_vec,[self.time_window_start[destination_node],self.time_window_end[destination_node]],
+                            0,0)
             self.actions[origin_node, destination_node] = [action]
 
         for origin_node in tqdm(self.dropoff_node,desc='create_source_sink_actions_2'):
@@ -455,16 +447,16 @@ class loadAI_cg:
                 #print(self.dropoff_to_pickup[origin_node])
                 #input('----')
 
-            min_resource_vec = np.array([0,0,0,0])
-            resource_consumption_vec = np.array([0,0,0,0])
-            max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time,MAX_COMBINED_LOADS])
+            min_resource_vec = np.array([0,0,0,0,0,0])
+            resource_consumption_vec = np.array([0,0,0,0,0,0])
+            max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time,MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
             
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
             this_pickup = None
             this_dropoff = origin_node - self.number_of_customers
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
-                            resource_consumption_vec,max_resource_vec)
+                            resource_consumption_vec,max_resource_vec,[self.maximum_time,0],0,0)
         
             self.actions[origin_node, destination_node] = [action]
 
@@ -487,21 +479,22 @@ class loadAI_cg:
         min_resource_vec = np.array([self.weight_demands[origin_node] + self.weight_demands[destination_node],
                                      self.volume_demands[origin_node] + self.volume_demands[destination_node],
                                      travel_time + self.service_time[origin_node] + self.time_window_end[destination_node],
-                                     1])
+                                     1,0,0])
         resource_consumption_vec = np.array([-self.weight_demands[origin_node],
                                      -self.volume_demands[origin_node],
-                                     -travel_time - self.service_time[origin_node],
-                                     -1])
+                                     -travel_time,
+                                     -1,0,0])
         max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,
                                              self.time_window_start[destination_node],
-                                             MAX_COMBINED_LOADS] )     
+                                             MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time] )     
         #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
         #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
         this_pick_up = origin_node
         this_drop_off = None
         action = Action(destination_node, origin_node, this_pick_up,this_drop_off, self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec,resource_consumption_vec, 
-                            max_resource_vec)
+                            max_resource_vec, [self.time_window_start[destination_node],self.time_window_end[destination_node]],
+                            travel_time, self.service_time[origin_node])
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -520,11 +513,11 @@ class loadAI_cg:
             non_zero_exog_val = 0.5
             #exog_contrib_vec[cover_constraint_index] = 0.5
 
-        min_resource_vec = np.array([0,0,travel_time + self.service_time[origin_node] + self.time_window_end[destination_node],0])
+        min_resource_vec = np.array([0,0,travel_time + self.service_time[origin_node] + self.time_window_end[destination_node],0,0,0])
         resource_consumption_vec = np.array([-self.weight_demands[origin_node],-self.volume_demands[origin_node],
-                                    -travel_time - self.service_time[origin_node],
-                                    0])
-        max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.time_window_start[destination_node],MAX_COMBINED_LOADS])
+                                    -travel_time ,
+                                    0,0,0])
+        max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.time_window_start[destination_node],MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
         
         # min_resource_vec_indices,min_resource_vec_data = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_min_input)     
         # resource_consumption_vec_indices,resource_consumption_vec_data = Helper.dict_2_vec(self.resource_name_to_index,self.number_of_resources,partial_trans_term_vec)     
@@ -535,7 +528,8 @@ class loadAI_cg:
         this_drop_off = None
         action = Action( destination_node, origin_node, this_pick_up,this_drop_off,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
-                            resource_consumption_vec, max_resource_vec)
+                            resource_consumption_vec, max_resource_vec, [self.time_window_start[destination_node],self.time_window_end[destination_node]],
+                            travel_time, self.service_time[origin_node])
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -558,13 +552,13 @@ class loadAI_cg:
         min_resource_vec = np.array([self.weight_demands[destination_node] - self.weight_demands[origin_pickup_node],
                                     self.volume_demands[destination_node] - self.volume_demands[origin_pickup_node],
                                     travel_time + self.service_time[origin_node] + self.time_window_end[destination_node], 
-                                    1])
+                                    1,0,0])
         resource_consumption_vec =np.array([-self.weight_demands[origin_pickup_node],
                                     -self.volume_demands[origin_pickup_node],
-                                    -travel_time - self.service_time[origin_node], 
-                                    -1])
+                                    -travel_time , 
+                                    -1,0,0])
         max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,
-                                    self.time_window_start[destination_node],MAX_COMBINED_LOADS])
+                                    self.time_window_start[destination_node],MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
         # trans_min_input = ChainMap(partial_trans_min_input, self.default_trans_min_input)
         # trans_term_vec = ChainMap(partial_trans_term_vec, self.default_trans_term_vec)
         # trans_term_min = ChainMap(partial_trans_term_min, self.default_trans_term_min)
@@ -577,7 +571,8 @@ class loadAI_cg:
         action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                             non_zero_exog_val, non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
-                            max_resource_vec)
+                            max_resource_vec,[self.time_window_start[destination_node],self.time_window_end[destination_node]],
+                            travel_time,self.service_time[origin_node])
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -596,10 +591,10 @@ class loadAI_cg:
             #exog_contrib_vec[cover_constraint_index] = 0.5
             non_zero_exog_indices = cover_constraint_index
 
-        min_resource_vec = np.array([0,0,travel_time + self.service_time[origin_node] + self.time_window_end[destination_node],0])
+        min_resource_vec = np.array([0,0,travel_time + self.service_time[origin_node] + self.time_window_end[destination_node],0,0,0])
         resource_consumption_vec = np.array([ -self.weight_demands[origin_pickup_node],-self.volume_demands[origin_pickup_node],
-                                 -travel_time - self.service_time[origin_node], 0])
-        max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY, self.time_window_start[destination_node],MAX_COMBINED_LOADS])
+                                 -travel_time , 0,0,0])
+        max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY, self.time_window_start[destination_node],MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
 
         
         
@@ -610,7 +605,8 @@ class loadAI_cg:
         action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                             non_zero_exog_val , non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
-                            max_resource_vec)
+                            max_resource_vec,[self.time_window_start[destination_node],self.time_window_end[destination_node]],
+                            travel_time, self.service_time[origin_node])
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -628,19 +624,20 @@ class loadAI_cg:
             # trans_min_input = ChainMap({}, self.default_trans_min_input)
             # trans_term_vec = ChainMap({}, self.default_trans_term_vec)
             # trans_term_min = ChainMap({}, self.default_trans_term_min)
-            min_resource_vec = np.array([0,0,0,0])
-            resource_consumption_vec = np.array([0,0,0,0])
-            max_resource_vec= np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time, MAX_COMBINED_LOADS])
+            min_resource_vec = np.array([0,0,0,0,0,0])
+            resource_consumption_vec = np.array([0,0,0,0,0,0])
+            max_resource_vec= np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time, MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
             
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,{})
             #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
             this_pickup = destination_node
             this_dropoff = None
+            time_window = [self.time_window_start[destination_node],self.time_window_end[destination_node]]
             destination_node = destination_node + 2 * self.number_of_customers
             action = Action( destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                             non_zero_exog_val ,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, 
-                            max_resource_vec)
+                            max_resource_vec,time_window,0,0)
         
             self.actions[origin_node, destination_node] = [action]
                
@@ -651,9 +648,9 @@ class loadAI_cg:
             #exog_contrib_vec = self._default_contribution_vector()
             non_zero_exog_val = None
             non_zero_exog_indices = None
-            min_resource_vec = np.array([0,0,0,0])
-            resource_consumption_vec = np.array([0,0,0,0])
-            max_resource_vec= np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time, MAX_COMBINED_LOADS])
+            min_resource_vec = np.array([0,0,0,0,0,0])
+            resource_consumption_vec = np.array([0,0,0,0,0,0])
+            max_resource_vec= np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,self.maximum_time, MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time])
             
             
             #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,{})
@@ -665,9 +662,9 @@ class loadAI_cg:
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, 
-                            max_resource_vec)
+                            max_resource_vec,[self.maximum_time,0],0,0)
             self.actions[origin_node, destination_node] = [action]
-
+        
     def _ez_check_for_create_group(self,overlap,threshold,u,v):
         time = self.travel_time[u,v]
         dist = self.distance[u,v]
@@ -779,22 +776,22 @@ class loadAI_cg:
             for v in self.pickup_node:
                 if u != v:
                     did_create_edge = False
-                    earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[u,v]
+                    earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time_hos[u,v]
                     time_freedom_uv = earlist_time_arrive_v_pickup - self.time_window_end[v]
                     if time_freedom_uv>0:
                         earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
                         #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
                         earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
-                            -self.travel_time[v,self.pickup_to_dropoff[u]]
+                            -self.travel_time_hos[v,self.pickup_to_dropoff[u]]
                         time_freedom_uvu = earlist_time_arrive_u_dropoff - self.time_window_end[self.pickup_to_dropoff[u]]
                         #t2_2,d2_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[v])
                         earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
-                            -self.travel_time[v,self.pickup_to_dropoff[v]]
+                            -self.travel_time_hos[v,self.pickup_to_dropoff[v]]
                         time_freedom_uvv = earlist_time_arrive_v_dropoff-self.time_window_end[self.pickup_to_dropoff[v]]
                         if time_freedom_uvu>0:
                             earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
                             #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
-                            earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
+                            earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time_hos[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
                             time_freedom_uvuv = earlist_time_arrive_v_dropoff_2-self.time_window_end[self.pickup_to_dropoff[v]]
                             if time_freedom_uvuv>0:
                                 did_create_edge = True
@@ -805,24 +802,24 @@ class loadAI_cg:
                         if time_freedom_uvv>0:
                             earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
                             #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]
-                            earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
+                            earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time_hos[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
                             time_freedom_uvvu = earlist_time_arrive_u_dropoff_2 - self.time_window_end[self.pickup_to_dropoff[u]]
                             if time_freedom_uvvu>0:
                                 did_create_edge= True
 
                                 this_time_freedom = min(time_freedom_uv,time_freedom_uvv,time_freedom_uvvu)
                                 self.action_pair_to_actions[u][this_time_freedom]=[1,u,v,self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
-                    earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[u, self.pickup_to_dropoff[u]]
+                    earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time_hos[u, self.pickup_to_dropoff[u]]
                     time_freedom_uu = earlist_time_arrive_dropoff_u_3 - self.time_window_end[self.pickup_to_dropoff[u]]
                     earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
                     
-                    earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],v]
+                    earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time_hos[self.pickup_to_dropoff[u],v]
                     time_freedom_uuv = earlist_time_arrive_pickup_v_3 - self.time_window_end[v]
                     if time_freedom_uuv >0:
                         did_create_edge = True
 
                         earlist_time_depart_pickup_v_3 = min(self.time_window_start[v],earlist_time_arrive_pickup_v_3)
-                        earlist_time_arrive_dropoff_v_3 = earlist_time_depart_pickup_v_3 - self.service_time[v]-self.travel_time[v,self.pickup_to_dropoff[v]]
+                        earlist_time_arrive_dropoff_v_3 = earlist_time_depart_pickup_v_3 - self.service_time[v]-self.travel_time_hos[v,self.pickup_to_dropoff[v]]
                         time_freedom_uuvv = earlist_time_arrive_dropoff_v_3 - self.time_window_end[self.pickup_to_dropoff[v]]
                         this_time_freedom = min(time_freedom_uu,time_freedom_uuv,time_freedom_uuvv)
                         self.action_pair_to_actions[u][this_time_freedom] = [2,u,self.pickup_to_dropoff[u],v,self.pickup_to_dropoff[v]]
@@ -1013,6 +1010,9 @@ class loadAI_cg:
         self._distance_cache[cache_key] = distance
         
         return distance
+    
+
+
     def _travel_time_and_distance(self):
         """
         Vectorized full pairwise travel times & distances using numpy.
@@ -1057,7 +1057,7 @@ class loadAI_cg:
 
         t_mat = np.zeros((n+1, n+1))
         t_mat[1:n+1, 1:n+1] = t_mat_0indexed
-        return t_mat, dist_mat
+        return t_mat, dist_mat, drive
     def _slack(self, pickup_node):
         dropoff_node = self.pickup_to_dropoff[pickup_node]
         pickup_dropoff_direct_distance = self._haversine_distance(pickup_node, dropoff_node)
@@ -1074,19 +1074,15 @@ class loadAI_cg:
 
     
     def _create_initial_res_states(self):
-        self.initial_res_states.add(State(-1, self._full_resource_vec(),set(),set(),set(), 0, True, False))
+        self.initial_res_states.add(State(-1, [self.maximum_time,0],0,self._full_resource_vec(),set(),set(),set(), 0, True, False))
 
         for skip_node in self.nodes[(self.number_of_customers * 2)+1:]:
-            self.initial_res_states.add(State(skip_node, self._full_resource_vec(),set(),set(),set(), 0, False, False))
+            self.initial_res_states.add(State(skip_node, [self.maximum_time,0],0, self._full_resource_vec(),set(),set(),set(), 0, False, False))
 
-        self.initial_res_states.add(State(-2, self._empty_resource_vec(),set(),set(),set(), 0, False, True))
+        self.initial_res_states.add(State(-2, [self.maximum_time,0],0, self._empty_resource_vec(),set(),set(),set(), 0, False, True))
         
     
     def _create_null_action_info(self):
-        full_resource_array = np.ones(self.number_of_resources)
-        full_resource_vec = csr_matrix(full_resource_array.reshape(1, -1))
-        empty_resource_array = np.zeros(self.number_of_resources)
-        empty_resource_vec = csr_matrix(empty_resource_array.reshape(1, -1))
         trans_min_input = {}
         trans_term_add = {}
         trans_term_min = {}
@@ -1110,7 +1106,7 @@ class loadAI_cg:
         self.the_single_null_action= Action(None,None,this_pickup,this_dropoff,self.number_of_customers,
                                             non_zero_exog_val,non_zero_exog_indices,cost,min_resource_vec,
                                             resource_consumption_vec,
-                                            max_resource_vec)
+                                            max_resource_vec, [self.maximum_time,0],0,0)
                     
     def _create_travel_time(self):
         self.travel_time = {}

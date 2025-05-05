@@ -1,11 +1,7 @@
 from random import randint
-import hashlib
 import numpy as np
-from collections import ChainMap
-from src.common.helper import Helper
-from scipy.sparse import csr_matrix
 class State:
-    def __init__(self, node:int, state_vec,picked_up, dropped_off,must_dropoff, l_id: int, is_source: bool, is_sink: bool):
+    def __init__(self, node:int, time_window,service_time,  state_vec,picked_up, dropped_off,must_dropoff, l_id: int, is_source: bool, is_sink: bool):
         if node == None:
             input('error here for state')
         self.node = node
@@ -16,10 +12,22 @@ class State:
         self.l_id=l_id #id for the l in Omega_R.  we can give each graph its own source and sink that does not matter
         self.is_source=is_source #indicates if source
         self.is_sink=is_sink#indicates if sink
+        self.time_window = time_window
+        self.service_time = service_time
         
-
+        self._check_state()
         self.state_id= hash((self.node,self.is_sink,self.is_source,self.l_id,tuple(self.state_vec),tuple(picked_up),tuple(dropped_off)))
 
+    def _check_state(self):
+        debug_here = True
+        if debug_here== True:
+            if self.state_vec[5]>840 or self.state_vec[4]>660:
+                input('error here for state check')
+
+            
+        if self.state_vec[4]>self.state_vec[5]:
+            self.state_vec[4] = self.state_vec[5]
+         
 
     def __eq__(self, other: 'State') -> bool:
         if other is None:
@@ -88,3 +96,41 @@ class State:
     def is_sink(self):
         return self.node == -2
     
+    def service(self):
+        if self.node == -2:
+            return [self]
+        earlist_service_start =  min(self.state_vec[2],self.time_window[0])
+        wait_time = self.state_vec[2]-earlist_service_start
+        depart_states = []
+        if self.state_vec[5]>self.service_time + wait_time:
+            this_state_vec = self.state_vec.copy()
+            this_state_vec[2] = earlist_service_start-self.service_time
+            this_state_vec[5] -= (self.service_time+wait_time)
+            state_no_rest = State(self.node,self.time_window,self.service_time, this_state_vec,self.picked_up,self.dropped_off,
+                    self.must_drop_off,self.l_id,self.is_source,self.is_sink)
+            depart_states.append(state_no_rest)
+        # waiting time due to ealy arrive does not count for drive time and work time
+        #if hoswork is enough to do service and timewindow not violated
+
+
+            # this_state_vec = self.state_vec
+            # this_state_vec[2] = earlist_service_start-self.service_time-660
+            # self.state_vec[4] = 660
+            # self.state_vec[5] = 840
+            # state_service_rest = State(self.node,self.time_window,self.service_time,self.state_vec,self.picked_up,self.dropped_off,
+            #         self.must_drop_off,self.l_id,self.is_source,self.is_sink)
+            # depart_states.append(state_service_rest)
+
+        earlist_service_start = min(self.state_vec[2]-660,self.time_window[0]   )
+
+        
+        this_state_vec = self.state_vec.copy()
+        this_state_vec[2] = earlist_service_start - self.service_time
+        this_state_vec[4] = 660
+        this_state_vec[5] = 840-self.service_time
+        state_rest_service = State(self.node,self.time_window,self.service_time,this_state_vec,self.picked_up,self.dropped_off,
+                self.must_drop_off,self.l_id,self.is_source,self.is_sink)
+        depart_states.append(state_rest_service)
+
+        return depart_states
+        

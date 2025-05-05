@@ -405,12 +405,15 @@ class jy_fast_pricing():
 
                 did_gen_neg_red_cost=False
                 did_gen_possible_expansion=False
+                print('curr label')
+                print(curr_label.all_nodes_ordered)
+                print('poss action list')
+                print([(a.node_tail, a.node_head) for a in poss_actions])
+                print('check here')
                 for my_act in poss_actions:
 
                     if my_act.node_head in self.skip_node:
                         continue
-                    if curr_label.all_nodes_ordered == [-1, 1, 4]:
-                        print('check here')
                     #if my_act.node_head not in self.pickup_minus_forbidden:
                     #    print('my_act.node_head')
                     #    print(my_act.node_head)
@@ -419,70 +422,71 @@ class jy_fast_pricing():
                         print('my_act.node_head')
                         print(my_act.node_head)
                         input('error here2 ')
-                    new_label= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
+                    new_labels= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
 
-                    if new_label == None:
+                    if len(new_labels) == 0:
                         #print('doing none')
                         continue
-                    if self.jy_opt['lb_option'] == 2:
-                        new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-                    elif self.jy_opt['lb_option'] == 1:
-                        new_label.calculate_better_lb(self.dual_vec)
-                    elif self.jy_opt['lb_option'] == 0:
-                        new_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
-                    elif self.jy_opt['lb_option'] == 'check':
-                        lb1 = new_label.calculate_better_lb(self.dual_vec)
-                        lb2 = new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
-                        if lb1<lb2:
-                            input('lb error here')
-                    else:
-                        input('no lb option used')
-                    if use_completion_on:
-                        can_complete=self.jy_get_compelition(new_label)
+                    for new_label in new_labels:
+                        if self.jy_opt['lb_option'] == 2:
+                            new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
+                        elif self.jy_opt['lb_option'] == 1:
+                            new_label.calculate_better_lb(self.dual_vec)
+                        elif self.jy_opt['lb_option'] == 0:
+                            new_label.calculate_lb_given_lowest_action_contrib_red_cost(self.lowest_action_contrib_red_cost)
+                        elif self.jy_opt['lb_option'] == 'check':
+                            lb1 = new_label.calculate_better_lb(self.dual_vec)
+                            lb2 = new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
+                            if lb1<lb2:
+                                input('lb error here')
+                        else:
+                            input('no lb option used')
+                        if use_completion_on:
+                            can_complete=self.jy_get_compelition(new_label)
 
 
-                        if can_complete==False:
-                            #print('no completion')
+                            if can_complete==False:
+                                #print('no completion')
+                                continue
+                        #print('t3')
+                        if my_act.node_head in self.dropoff_node or my_act.node_head==-2:
+                            #print('OKY GOOD ')
+                            did_gen_possible_expansion=True
+                        #print('t4')
+                        if new_label.lb>5:
                             continue
-                    #print('t3')
-                    if my_act.node_head in self.dropoff_node or my_act.node_head==-2:
-                        #print('OKY GOOD ')
-                        did_gen_possible_expansion=True
-                    #print('t4')
-                    if new_label.lb>5:
-                        continue
 
-                    if new_label.lb<self.jy_opt['min_dual_val_expand']:
-                        self.efficient_frontier.alter_fronteir_given_new_element(new_label)
-
-
-                    if new_label.is_complete_route:
-                        lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
-                    if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
-                        #input('making route')
-                        route = new_label.convert_2_route()
-                        all_routes.append(route)
-                        tot_red_cost=tot_red_cost+new_label.red_cost
-                        # print('route made')
-                        # print('new_label.all_nodes_ordered')
-                        # print(new_label.all_nodes_ordered)
-                        # print('new_label.all_nodes_ordered')
-                        # print('new_label.red_cost')
-                        # print(new_label.red_cost)
-                        #input('paused')
-                        #self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
-                        #reduce_amount = route.get_red_cost(self.dual_vec_orig)
-                        self.dual_vec[route.Exog_vec_non_zero_indices] -= self.dual_vec_orig[route.Exog_vec_non_zero_indices] * alpha
-                        #self.dual_vec = self.dual_vec - reduce_amount*alpha
-                        route_gen_count=route_gen_count+1
-                        did_gen_neg_red_cost=True
-                        break
-
-                    elif not new_label.is_complete_route:
-                        #new_label.calculate_better_lb(self.dual_vec)
-                        new_tuple=self.label_2_tuple(new_label)
                         if new_label.lb<self.jy_opt['min_dual_val_expand']:
-                            self.expandable_labels.insert(new_label,new_tuple)
+                            self.efficient_frontier.alter_fronteir_given_new_element(new_label)
+
+
+                        if new_label.is_complete_route:
+                            lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
+                        if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
+                            #input('making route')
+                            route = new_label.convert_2_route()
+                            all_routes.append(route)
+                            tot_red_cost=tot_red_cost+new_label.red_cost
+                            # print('route made')
+                            # print('new_label.all_nodes_ordered')
+                            # print(new_label.all_nodes_ordered)
+                            # print('new_label.all_nodes_ordered')
+                            # print('new_label.red_cost')
+                            # print(new_label.red_cost)
+                            #input('paused')
+                            #self.dual_vec = self.dual_vec - route.Exog_vec*self.dual_vec_orig*alpha
+                            #reduce_amount = route.get_red_cost(self.dual_vec_orig)
+                            self.dual_vec[route.Exog_vec_non_zero_indices] -= self.dual_vec_orig[route.Exog_vec_non_zero_indices] * alpha
+                            #self.dual_vec = self.dual_vec - reduce_amount*alpha
+                            route_gen_count=route_gen_count+1
+                            did_gen_neg_red_cost=True
+                            break
+
+                        elif not new_label.is_complete_route:
+                            #new_label.calculate_better_lb(self.dual_vec)
+                            new_tuple=self.label_2_tuple(new_label)
+                            if new_label.lb<self.jy_opt['min_dual_val_expand']:
+                                self.expandable_labels.insert(new_label,new_tuple)
                 if did_gen_neg_red_cost==True:
                     #print('found complete path with this dual')
                     break

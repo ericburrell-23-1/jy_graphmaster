@@ -200,7 +200,7 @@ class GraphMaster_cg:
         common_nodes = set(actions_from_minus1.keys()).intersection(set(actions_to_minus2.keys()))
         this_list_of_routes = []
         for node in common_nodes:
-            source_state = State(-1,self.initial_resource_vector,set(),set(),set(),0,True,False)
+            source_state = State(-1, [np.inf,0],0,self.initial_resource_vector,set(),set(),set(),0,True,False)
             state_action = [source_state]
             first_action = actions_from_minus1[node]
             state_action.append(first_action)
@@ -287,7 +287,7 @@ class GraphMaster_cg:
                         input('error here')
             l_id += 1
 
-            jy_init_res_state = State(-1,self.initial_resource_vector,set(),set(),set(),l_id,True,False)
+            jy_init_res_state = State(-1,[np.inf,0],0, self.initial_resource_vector,set(),set(),set(),l_id,True,False)
             this_dual = np.array([0 if abs(x) < 0.0001 else x for x in this_dual])
             if self.jy_options_user_defined['use_fast_pricing'] == True:
                 jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
@@ -390,12 +390,12 @@ class GraphMaster_cg:
                         #node_sequence_of_routes.append(route.node_in_ordered)
                         #list_of_routes.append(route)
                         cg_solver.add_route(route)
-                        if self.jy_options_user_defined['subset_route'] == True:
+                        if self.jy_options_user_defined['subset_route'] == False:
                             if len(route.node_in_ordered)>=2+self.jy_options_user_defined['max_pickups_in_a_route']*2:
                                 subset_of_routes = route.generate_subset_routes()
                                 for subset_route in subset_of_routes:
                                     if subset_route not in cg_solver.node_sequence_of_routes:
-                                        cur_state = State(-1,self.initial_resource_vector,set(),set(),set(),1,True,False)
+                                        cur_state = State(-1,[0,np.inf],0,self.initial_resource_vector,set(),set(),set(),1,True,False)
                                         state_action_alt_repeat=[cur_state]
                                         do_continue = False
                                         for o,d in zip(subset_route[:-1],subset_route[1:]):
@@ -462,7 +462,7 @@ class GraphMaster_cg:
                 node_in_ordered = route.node_in_ordered
                 node_in_ordered.remove(over_cover_node)
                 node_in_ordered.remove(over_cover_node+len(self.state_update_module.pickup_node))
-                cur_state = State(-1,self.initial_resource_vector,0,True,False)
+                cur_state = State(-1,[self.maximum_time,0],0,self.initial_resource_vector,0,True,False)
                 state_action_alt_repeat.append(cur_state)
                 for (tail,head) in zip(node_in_ordered[:-1],node_in_ordered[1:]):
                     this_act = self.action_dict[(tail,head)][0]

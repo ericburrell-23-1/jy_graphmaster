@@ -12,7 +12,7 @@ class Action:
 
 
     def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, non_zero_exog_val,non_zero_exog_indices,cost, 
-                min_resource_vec, resource_consumption_vec, max_resource_vec):
+                min_resource_vec, resource_consumption_vec, max_resource_vec,time_window, travel_time, service_time ):
         self.node_tail = node_tail
         self.node_head = node_head
         #self.Exog_vec_csr = csr_matrix(Exog_vec) #1
@@ -28,7 +28,9 @@ class Action:
         self.red_cost_non_zero_cal_indices = non_zero_exog_indices
         #self.red_cost_non_zero_cal_indices = np.array(self.red_cost_non_zero_cal_indices, dtype=int)
         self.action_id = hash((self.node_tail,self.node_head))
-        
+        self.time_window = time_window
+        self.travel_time = travel_time
+        self.service_time = service_time
         self.mark_of_null_action = False
         if self.node_tail is None:
             self.mark_of_null_action = True
@@ -61,12 +63,17 @@ class Action:
         #if self.violates_min_resources(state_tail.state_vec)==True:
         if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up, state_tail.must_drop_off)==True:
             return None
+        violate, earlist_arr_time,new_hos_drive_time, new_hos_work_time = self.hos_violate_and_update(state_tail.state_vec)
+        if violate == True:
+            return None
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
         # 2. Compute tentative head state vector
         head_state_vec = state_tail.state_vec + self.resource_consumption
-
-        head_state_vec = self.fast_max_res_apply(head_state_vec)
+        head_state_vec[2] = earlist_arr_time
+        head_state_vec[4] = new_hos_drive_time
+        head_state_vec[5] = new_hos_work_time
+        #head_state_vec = self.fast_max_res_apply(head_state_vec)
         picked_up = state_tail.picked_up
         dropped_off = state_tail.dropped_off
         must_drop_off = state_tail.must_drop_off
@@ -82,15 +89,10 @@ class Action:
             
 
         if self.node_head == -2:
-            head_state = State(self.node_head, np.array([0,0,0,0]),set(),set(),set(), l_id, is_source=False, is_sink=True)
+            head_state = State(self.node_head,self.time_window, self.service_time,  np.array([0,0,0,0,0,0]), set(),set(),set(), l_id, is_source=False, is_sink=True)
         else:
-            head_state = State(self.node_head, head_state_vec,picked_up,dropped_off,must_drop_off, l_id, is_source=False, is_sink=False)
+            head_state = State(self.node_head, self.time_window, self.service_time, head_state_vec,picked_up,dropped_off,must_drop_off, l_id, is_source=False, is_sink=False)
 
-            
-        
-        #Handle the case where times are too small to measure
-        #print('self.indices_non_zero_max')
-        #print(len(self.indices_non_zero_max))
 
         do_debug=False
         if do_debug==True:
@@ -224,8 +226,23 @@ class Action:
             return True
         return False
 
+    def hos_violate_and_update(self,tail_vec):
+        drive_hos = tail_vec[4]
+        if self.travel_time>drive_hos:
+            rest_time = (self.travel_time-drive_hos) // 660 +1
+            travel_time_with_hos = self.travel_time + rest_time*600
+            earlist_arr_time = tail_vec[2] - travel_time_with_hos 
+            new_hos_drive_time = rest_time*600-self.travel_time
+            new_hos_work_time = rest_time*600-self.travel_time
+        else:
+            travel_time_with_hos = self.travel_time
+            earlist_arr_time = tail_vec[2] - travel_time_with_hos 
+            new_hos_drive_time = tail_vec[4]-self.travel_time
+            new_hos_work_time = tail_vec[5]-self.travel_time
+        if earlist_arr_time < self.time_window[1]:
+            return True, None, None, None
+        return False, earlist_arr_time, new_hos_drive_time, new_hos_work_time
 
-    
     def __eq__(self, other: "Action") -> bool:
        """
        Checks for equality based on the following fields:
@@ -279,14 +296,16 @@ class Action:
         ideal_head = self.get_head_state_fast_load_ai(state_tail, state_tail.l_id)
         if ideal_head==None:
             return False
-        [is_dom, is_equal] = ideal_head.this_state_dominates_input_state(state_head)
-        if is_equal == False and is_dom == False:
-           #state_head.pretty_print_state()
-           # state_tail.pretty_print_state()
-            is_valid = False
-           # print('not valid reason 2')
-            return is_valid
+        # [is_dom, is_equal] = ideal_head.this_state_dominates_input_state(state_head)
+        # if is_equal == False and is_dom == False:
+        #    #state_head.pretty_print_state()
+        #    # state_tail.pretty_print_state()
+        #     is_valid = False
+        #    # print('not valid reason 2')
+        #     return is_valid
         return is_valid
+
+
 
     # Methods to clear the caches
     @classmethod

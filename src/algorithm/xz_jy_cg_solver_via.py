@@ -463,7 +463,7 @@ class xy_jy_cg_solver:
                 'presolve': 1,          # Enable presolve
                 'mipgap': 0.005,        # Set 0.5% MIP gap (tighter than before)
                 'timeLimit': 600,       # Set 10-minute time limit
-                'threads': 0,           # Use all available threads
+                'threads': 1,           # Use all available threads
                 'mipEmphasis': 1,       # Emphasize feasibility over optimality
                 'heurFreq': 5,          # Run heuristics more frequently
                 'mipCuts': 2,           # Aggressive cut generation
@@ -611,7 +611,7 @@ class xy_jy_cg_solver:
             
         # Create state-action sequence for the new route
         state_action_alt_repeat = []
-        source_state = State(-1, self.initial_resource_vector,set(),set(),set(), 0, True, False)
+        source_state = State(-1, [np.inf,0],0,self.initial_resource_vector,set(),set(),set(), 0, True, False)
         state_action_alt_repeat.append(source_state)
         cur_state = source_state
         

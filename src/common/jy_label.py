@@ -369,29 +369,34 @@ class jy_label:
             input('errror here not posible 2')
         bigVal=999999999999
         #print(f'time for get head state {time2-time1}')
+        new_labels = []
         if new_head!=None:
-            NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
-            NEW_my_states_ordered=self.my_states_ordered+[new_head]
-            if my_action.node_head in forbidden_nodes or my_action.node_tail in forbidden_nodes:
-                NEW_red_cost = bigVal
-                print('my_action.node_head in forbidden_nodes')
-                print(my_action.node_head in forbidden_nodes)
-                print('my_action.node_tail in forbidden_nodes')
-                print(my_action.node_tail in forbidden_nodes)
-                print('my_action.node_head in self.pickup_minus_forbidden')
-                print(my_action.node_head in self.pickup_minus_forbidden)
-                input('should never ever come up')
-                return None
-            else:
-                NEW_red_cost = self.red_cost + my_action.comp_red_cost(dual)
-            #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
-            NEW_cost=self.cost+my_action.cost
-            NEW_parent_label=self
-            NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,
-                               self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
-                               self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
-                               self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
-        return NEW_label
+            new_heads_depart = new_head.service()
+            if len(new_heads_depart)>0.5:
+                for head_depart in new_heads_depart:
+                    NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
+                    NEW_my_states_ordered=self.my_states_ordered+[head_depart]
+                    if my_action.node_head in forbidden_nodes or my_action.node_tail in forbidden_nodes:
+                        NEW_red_cost = bigVal
+                        print('my_action.node_head in forbidden_nodes')
+                        print(my_action.node_head in forbidden_nodes)
+                        print('my_action.node_tail in forbidden_nodes')
+                        print(my_action.node_tail in forbidden_nodes)
+                        print('my_action.node_head in self.pickup_minus_forbidden')
+                        print(my_action.node_head in self.pickup_minus_forbidden)
+                        input('should never ever come up')
+                        return None
+                    else:
+                        NEW_red_cost = self.red_cost + my_action.comp_red_cost(dual)
+                    #NEW_red_cost=self.red_cost+self.action_2_red_cost_dict[my_action]
+                    NEW_cost=self.cost+my_action.cost
+                    NEW_parent_label=self
+                    NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,
+                                    self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
+                                    self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
+                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
+                    new_labels.append(NEW_label)
+        return new_labels
     
     def convert_2_route(self):
         if self.my_states_ordered[-1].node!=-2:
