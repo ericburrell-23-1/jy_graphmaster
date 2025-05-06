@@ -22,9 +22,7 @@ from src.common.time_profile import TimeProfiler
 from tqdm import tqdm
 import time
 import random
-import cProfile
-import pstats
-import tracemalloc
+
 # CONSTANTS
 VOLUME_CAPACITY = 3000
 WEIGHT_CAPACITY = 45000
@@ -98,15 +96,13 @@ class loadAI_cg:
             #node_to_list
         )
         #with TimeProfiler(f'time_profile_{self.instance_name}_speed'):
-        profiler = cProfile.Profile()
-        profiler.enable()
+        
 
         output = self.solver.solve()
 
-        profiler.disable()
-        profiler.dump_stats('program_profile_400_x.prof')
+        
 
-        variable_to_values = output['x']
+        #variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
         output_info = output['output_info']
         opt_gap = output['optimality_gap']

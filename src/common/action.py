@@ -279,24 +279,41 @@ class Action:
             return True
         return False
 
-    def hos_violate_and_update(self,tail_vec):
+    def hos_violate_and_update(self, tail_vec):
+        # Define constants to improve readability and avoid magic numbers
+        REST_DURATION = 660
+        REST_PENALTY = 600
+        
         drive_hos = tail_vec[4]
-        if self.travel_time>drive_hos:
-            rest_time = (self.travel_time-drive_hos) // 660 +1
-            travel_time_with_hos = self.travel_time + rest_time*600
-            earlist_arr_time = tail_vec[2] - travel_time_with_hos 
-            new_hos_drive_time = drive_hos+rest_time*660-self.travel_time
-            new_hos_work_time = drive_hos+rest_time*660-self.travel_time
+        
+        # Calculate if rest is needed and consolidate the logic
+        needs_rest = self.travel_time > drive_hos
+        
+        if needs_rest:
+            # Calculate rest periods more efficiently
+            excess_time = self.travel_time - drive_hos
+            rest_time = (excess_time + REST_DURATION - 1) // REST_DURATION  # Ceiling division
+            
+            # Calculate adjusted travel time with rest periods
+            travel_time_with_hos = self.travel_time + rest_time * REST_PENALTY
+            
+            # Calculate new HOS times (same formula for both drive and work time)
+            hos_remaining = drive_hos + rest_time * REST_DURATION - self.travel_time
+            new_hos_drive_time = new_hos_work_time = hos_remaining
         else:
+            # No rest periods needed
             travel_time_with_hos = self.travel_time
-            earlist_arr_time = tail_vec[2] - travel_time_with_hos 
-            new_hos_drive_time = tail_vec[4]-self.travel_time
-            new_hos_work_time = tail_vec[5]-self.travel_time
-        if earlist_arr_time < self.time_window[1]:
+            new_hos_drive_time = tail_vec[4] - self.travel_time
+            new_hos_work_time = tail_vec[5] - self.travel_time
+        
+        # Calculate earliest arrival time (same for both branches)
+        earliest_arr_time = tail_vec[2] - travel_time_with_hos
+        
+        # Check if arrival time is within window
+        if earliest_arr_time < self.time_window[1]:
             return True, None, None, None
-        # if new_hos_drive_time<0 or new_hos_work_time<0:
-        #     input('hos less than 0 error')
-        return False, earlist_arr_time, new_hos_drive_time, new_hos_work_time
+            
+        return False, earliest_arr_time, new_hos_drive_time, new_hos_work_time
 
     def __eq__(self, other: "Action") -> bool:
        """

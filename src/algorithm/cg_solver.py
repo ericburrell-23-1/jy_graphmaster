@@ -24,7 +24,8 @@ from src.algorithm.cg_rmp import CG_RMP
 from src.algorithm.xz_jy_cg_solver_via import xy_jy_cg_solver
 from src.algorithm.cg_solver import CG_RMP
 import random
-import pickle
+import cProfile
+import pstats
 class GraphMaster_cg:
     """
     Entry point to the GraphMaster solver. Takes problem model and initial feasible solution from problem-specific module, and creates the general GraphMaster problem.
@@ -261,6 +262,8 @@ class GraphMaster_cg:
         omega_term_list = []
         cg_solver = xy_jy_cg_solver(skip_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,self.distance, forbidden_omega,self.initial_resource_vector)
         #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+        profiler = cProfile.Profile()
+        profiler.enable()
         while iteration < max_iterations:
             #print(type(self.state_update_module.actions))
             #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
@@ -339,28 +342,13 @@ class GraphMaster_cg:
                         #     print(route.node_in_ordered)
                         #print('route used')
                         #used_routes = self.post_procssing(used_routes)
+                        profiler.disable()
+                        profiler.dump_stats('program_profile_160_x.prof')
                         for route in used_routes:
                             print(route.node_in_ordered)
                             valid = self.validate_route(route)
                             if valid == False:
                                 input('invalid route here')
-                        route_num = 1
-                        for route in used_routes:
-                            # print(f'=========route {route_num}============')
-                            # print('node in route ordered')
-                            # print(route.node_in_ordered)
-                            # print('time remaining')
-                            # print([s.state_vec[:2] for s in route.just_states_ordered])
-                            # if len(route.just_states_ordered) >3:
-                            #     print('time window start')
-                            #     print([self.state_update_module.time_window_start[s.node] for s in route.just_states_ordered])
-                            #     print('time window end')
-                            #     print([self.state_update_module.time_window_end[s.node] for s in route.just_states_ordered])
-                            #     print('weight remain')
-                            # print([s.state_vec[0] for s in route.just_states_ordered])
-                            # print('volume remain')
-                            # print([s.state_vec[1] for s in route.just_states_ordered])
-                            route_num+=1
                         return {
                             'status': 'optimal',
                             'x': sol['variable_values'],

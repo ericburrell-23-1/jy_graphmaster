@@ -109,7 +109,8 @@ class State:
         earlist_service_start =  min(self.state_vec[2],self.time_window[0])
         wait_time = self.state_vec[2]-earlist_service_start
         depart_states = []
-        if self.state_vec[5]>self.service_time + wait_time:
+        earlist_service_start_after_rest = self.state_vec[2]-REST_DURATION 
+        if self.state_vec[5]>self.service_time + wait_time and earlist_service_start_after_rest<self.time_window[0]:
             this_state_vec = self.state_vec.copy()
             this_state_vec[2] = earlist_service_start-self.service_time
             if this_state_vec[2]>0:
@@ -120,11 +121,10 @@ class State:
                         self.must_drop_off,self.l_id,self.is_source,self.is_sink)
                 depart_states.append(state_no_rest)
 
-        earlist_service_start = min(self.state_vec[2]-REST_DURATION,self.time_window[0]   )
 
         
         this_state_vec = self.state_vec.copy()
-        this_state_vec[2] = earlist_service_start - self.service_time
+        this_state_vec[2] = earlist_service_start_after_rest - self.service_time
         this_state_vec[4] = REST_DURATION
         this_state_vec[5] = MAX_WORK_AFTER_REST-self.service_time
         if this_state_vec[2]>0:
