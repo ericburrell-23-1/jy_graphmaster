@@ -611,6 +611,7 @@ class jy_fast_pricing():
             return actions_use
         actions_use = set()
 
+
         # Part 1: Actions for drop-offs
         drop_off_nodes = [n+len(self.pickup_node) for n in my_label.must_drop_off]
         actions_use.update(self.action_dict[(my_label.node, node)][0] for node in drop_off_nodes if node in preferred_actions[my_label.node])

@@ -862,7 +862,7 @@ class loadAI_cg:
         self.dict = self.distance.copy()
         print('====start create preferred edges====')
         use_feasible_edge = True
-        if use_feasible_edge is True:
+        if use_feasible_edge is False:
             self.preferred_actions[np.inf] = self.edges.copy()
         else:
             for threshold in THRESHOLD:

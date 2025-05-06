@@ -122,17 +122,16 @@ class State:
                 depart_states.append(state_no_rest)
 
 
-        else:        
-            this_state_vec = self.state_vec.copy()
-            this_state_vec[2] = earlist_service_start_after_rest - self.service_time
-            this_state_vec[4] = REST_DURATION
-            this_state_vec[5] = MAX_WORK_AFTER_REST-self.service_time
-            if this_state_vec[2]>0:
-                # if np.any(this_state_vec<0):
-                #     input('state_rest_service service generate negative resource')
-                state_rest_service = State(self.node,self.time_window,self.service_time,this_state_vec,self.picked_up,self.dropped_off,
-                        self.must_drop_off,self.l_id,self.is_source,self.is_sink)
-                depart_states.append(state_rest_service)
+        this_state_vec = self.state_vec.copy()
+        this_state_vec[2] = earlist_service_start_after_rest - self.service_time
+        this_state_vec[4] = REST_DURATION
+        this_state_vec[5] = MAX_WORK_AFTER_REST-self.service_time
+        if this_state_vec[2]>0:
+            # if np.any(this_state_vec<0):
+            #     input('state_rest_service service generate negative resource')
+            state_rest_service = State(self.node,self.time_window,self.service_time,this_state_vec,self.picked_up,self.dropped_off,
+                    self.must_drop_off,self.l_id,self.is_source,self.is_sink)
+            depart_states.append(state_rest_service)
 
         return depart_states
         
