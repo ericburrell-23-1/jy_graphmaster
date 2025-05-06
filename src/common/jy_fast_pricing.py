@@ -116,16 +116,18 @@ class jy_fast_pricing():
         self.efficient_frontier = jy_efficient_frontier(self.all_nodes)
         
         # Find minimum reduced cost paths
+        idx = 0
+        count = np.zeros(len(self.preferred_actions))
         for threshold,this_preferred_actions in self.preferred_actions.items():
-
+            count[idx] +=1
             routes = self.find_min_reduced_cost_path(this_preferred_actions)
             if len(routes)>0:
                 break
-        
+            idx+=1
         # Return the routes found
         #print(self.expanede_label[:10])
         #breakpoint()
-        return routes
+        return routes,count
 
     def _compute_action_reduced_costs(self):
         """
@@ -171,7 +173,7 @@ class jy_fast_pricing():
             for u in self.pickup_node:
                 self.rcp_u_partial_2[(k,u)] = self.action_dict[(u,u+len(self.pickup_node))][0].cost/k
             
-    def initialize_source_label(self):
+    def initialize_source_label(self,prefered_actions):
         """
         Initialize the label at the source node.
         """
@@ -193,7 +195,7 @@ class jy_fast_pricing():
             dropoff_nodes=self.dropoff_node,
             rcp_u_partial_2 = self.rcp_u_partial_2,
             edges = self.edges,
-            preferred_actions = self.preferred_actions,
+            preferred_actions = prefered_actions,
             distance = self.distance
         )
 
@@ -293,7 +295,7 @@ class jy_fast_pricing():
         """
         # Initialize with source label
         self._compute_action_reduced_costs()
-        source_label = self.initialize_source_label()
+        source_label = self.initialize_source_label(prefered_actions)
         all_routes = []
         self.expandable_labels = jy_sortedObject_list()
         #my_tup=tuple([-len(source_label.my_states_ordered),source_label.red_cost,my_noise])

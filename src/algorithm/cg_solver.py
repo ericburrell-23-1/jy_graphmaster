@@ -127,7 +127,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['new_rmp'] =True # true: if generate more routes from omega term
         self.jy_options_user_defined['subset_route'] = True # true: if use subset routes for col service 3 customers
         self.jy_options_user_defined['optimality_gap'] = 0.01 
-        self.jy_options_user_defined['min_dual_val_expand']=-2
+        self.jy_options_user_defined['min_dual_val_expand']=-100
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -246,24 +246,24 @@ class GraphMaster_cg:
         
         cg_iteration_time =1
         self.path_added = set()
-        skip_routes = self._initial_routes()
+        list_of_routes = self._initial_routes()
         forbidden_omega = []
         node_sequence_of_routes = []
-        list_of_routes = skip_routes
         all_reduce_cost_list = []
         all_min_reduce_cost = []
         num_path_col_in_rmp = []
         num_omega_col_in_rmp = []
         path_col_generated = []
-        path_added = []
-        for route in skip_routes:
+        for route in list_of_routes:
             node_sequence_of_routes.append(route.node_in_ordered)
         lp_objective_list = []
         omega_term_list = []
-        cg_solver = xy_jy_cg_solver(skip_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,self.distance, forbidden_omega,self.initial_resource_vector)
+        cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,self.distance, forbidden_omega,self.initial_resource_vector)
         #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
+        overall_threshold_count = np.zeros(len(self.preferred_actions))
         profiler = cProfile.Profile()
         profiler.enable()
+    
         while iteration < max_iterations:
             #print(type(self.state_update_module.actions))
             #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
@@ -294,7 +294,8 @@ class GraphMaster_cg:
             this_dual = np.array([0 if abs(x) < 0.0001 else x for x in this_dual])
             if self.jy_options_user_defined['use_fast_pricing'] == True:
                 jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
-                routes= jy_fast_pricer.run()
+                routes, threshold_count= jy_fast_pricer.run()
+                overall_threshold_count = overall_threshold_count + threshold_count
                 reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
                 all_reduce_cost_list.append(reduced_cost_list)
                 reduced_cost=0
@@ -307,15 +308,20 @@ class GraphMaster_cg:
                 print(reduced_cost_list)
                     
                 rmp_obj = output['objective_value']
-                if len(reduced_cost_list) < 0.5 or reduced_cost >= -2.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
-                    this_forbidden_omega = cg_solver.get_active_DOI()
+                if len(reduced_cost_list) < 0.5 or reduced_cost >= self.jy_options_user_defined['min_dual_val_expand']*1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
+                    dict_active_DOI = cg_solver.get_active_DOI()
+                    this_forbidden_omega = list(dict_active_DOI.keys())
+                    obj_value_omega = list(dict_active_DOI.values())
+                    sum_omega_obj = sum(obj_value_omega)
                     #this_forbidden_omega = cg_solver.get_forbidden_omega()
                     print('this_forbidden_omega')
                     print(this_forbidden_omega)
+                    print('omega obj value')
+                    print(obj_value_omega)
                     #breakpoint()
                     omega_term_list.append(len(this_forbidden_omega))
                     output_info = defaultdict()
-                    if len(this_forbidden_omega)<0.5:
+                    if sum_omega_obj<-self.jy_options_user_defined['min_dual_val_expand']:
                         if self.jy_options_user_defined['information_for_iteration'] == True:
                             output_info['list of lp'] = lp_objective_list
                             output_info['list number of positive omega terms (for each iteration lp'] = omega_term_list
@@ -344,6 +350,8 @@ class GraphMaster_cg:
                         #used_routes = self.post_procssing(used_routes)
                         profiler.disable()
                         profiler.dump_stats('program_profile_160_x.prof')
+                        print('===overall threshold count===')
+                        print(overall_threshold_count)
                         for route in used_routes:
                             print(route.node_in_ordered)
                             valid = self.validate_route(route)

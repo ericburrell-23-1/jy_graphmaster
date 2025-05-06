@@ -69,13 +69,15 @@ class jy_label:
             self.nodes_picked_up = set(parent_label.nodes_picked_up)
             self.nodes_dropped_off = set(parent_label.nodes_dropped_off)
             self.must_drop_off = set(parent_label.must_drop_off)
-            if self.node <= self.cus_num:
-                self.nodes_picked_up.add(self.node)
-                self.must_drop_off.add(self.node)
-            elif self.node != -2:
-                self.nodes_dropped_off.add(self.node - self.cus_num)
-                self.must_drop_off.remove(self.node - self.cus_num)
-
+            if self.node != -2:
+                if self.node <= self.cus_num:
+                    self.nodes_picked_up.add(self.node)
+                    self.must_drop_off.add(self.node)
+                else:
+                    self.nodes_dropped_off.add(self.node - self.cus_num)
+                    self.must_drop_off.remove(self.node - self.cus_num)
+        if -2 in self.must_drop_off:
+            print('error here')
         self.num_dropoffs_in_route= len(self.nodes_dropped_off)
         self.num_pickups_in_route=len(self.nodes_picked_up)
         self.num_dropoffs_needed=len(self.must_drop_off)
@@ -395,9 +397,21 @@ class jy_label:
                                     self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
                                     self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
                                     self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
-                    new_labels.append(NEW_label)
+                    if NEW_label.check_time_window_feasible() == True:
+                        new_labels.append(NEW_label)
         return new_labels
-    
+    def check_time_window_feasible(self):
+        if len(self.nodes_picked_up) <= 2:
+            return True
+        must_drop_off = self.must_drop_off
+        last_state = self.my_states_ordered[-1]
+        for node in must_drop_off:
+            if (node+self.cus_num) not in self.preferred_actions[last_state.node]:
+                return False
+            state_for_check = self.action_dict[(last_state.node,node+self.cus_num)][0].get_head_state_fast_load_ai(last_state,last_state.l_id)
+            if state_for_check == None:
+                return False
+        return True
     def convert_2_route(self):
         if self.my_states_ordered[-1].node!=-2:
             input('this route is not done')

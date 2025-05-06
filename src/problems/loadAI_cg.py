@@ -34,7 +34,7 @@ AVERAGE_SPEED = 55 / 60
 MIN_DISTANCE_SAVING = 100
 STANDARD_SERVICE_TIME = 2 * 60
 JY_OPT_SPLIT=1
-THRESHOLD = [1,10,100, np.inf]
+THRESHOLD = [1,np.inf]
 DISTANCE_RATIO = 1
 TIME_RATIO = 1
 SCORE_RATIO = 1 #best k percent of edge for given shipments
@@ -461,9 +461,7 @@ class loadAI_cg:
             return None
         travel_time = self.travel_time[origin_node,destination_node]
         distance = self.distance[origin_node, destination_node]
-        self.edges[origin_node].add(destination_node)
         cost = distance
-
         cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
         non_zero_exog_val = 1.0
 
@@ -497,7 +495,6 @@ class loadAI_cg:
     def _create_pickup_to_dropoff_actions(self,origin_node, destination_node):
         travel_time = self.travel_time[origin_node,destination_node]
         distance = self.distance[origin_node,destination_node]
-        self.edges[origin_node].add(destination_node)
         cost = distance
         #exog_contrib_vec = self._default_contribution_vector()
         cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
@@ -537,7 +534,6 @@ class loadAI_cg:
 
         travel_time = self.travel_time[origin_node,destination_node]
         distance = self.distance[origin_node, destination_node]
-        self.edges[origin_node].add(destination_node)
         cost = distance
         #exog_contrib_vec = self._default_contribution_vector()
         if JY_OPT_SPLIT==1:
@@ -577,7 +573,6 @@ class loadAI_cg:
             return None
         travel_time = self.travel_time[origin_node,destination_node]
         distance = self.distance[origin_node, destination_node]
-        self.edges[origin_node].add(destination_node)
         cost = distance
         origin_pickup_node = self.dropoff_to_pickup[origin_node]
         #exog_contrib_vec = self._default_contribution_vector()
@@ -661,101 +656,6 @@ class loadAI_cg:
                             max_resource_vec,[self.maximum_time,0],0,0)
             self.actions[origin_node, destination_node] = [action]
         
-    def _ez_check_for_create_group(self,overlap,threshold,u,v):
-        time = self.travel_time[u,v]
-        dist = self.distance[u,v]
-        if dist < DISTANCE_RATIO*threshold and time < TIME_RATIO*overlap:
-            return True
-        else:
-            return False
-    def _create_group(self):
-        group = defaultdict(list)
-        for u in tqdm(self.pickup_node,desc='create initial group'):
-            for v in self.pickup_node:
-                if u!=v:
-                    time_window_end_dropoff_u = self.time_window_end[self.pickup_and_dropoff_node[u]]
-                    time_window_start_pickup_v = self.time_window_start[v]
-                    time_window_end_dropoff_v = self.time_window_end[self.pickup_and_dropoff_node[v]]
-                    time_window_start_pickup_u = self.time_window_start[u]
-                    overlap_1 = time_window_start_pickup_v-time_window_end_dropoff_u
-                    overlap_2 = time_window_start_pickup_u-time_window_end_dropoff_v
-                    overlap = min(overlap_1,overlap_2)
-                    threshold = max(self.distance[u,self.pickup_to_dropoff[u]],self.distance[v,self.pickup_to_dropoff[v]])
-                    minDist = min(self.distance[u,v],self.distance[u,self.pickup_to_dropoff[v]],self.distance[self.pickup_to_dropoff[u],v],self.distance[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
-                    minTime = max(self.travel_time[u,v],self.travel_time[u,self.pickup_to_dropoff[v]],self.travel_time[self.pickup_to_dropoff[u],v],self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]\
-                                  ,self.travel_time[u,self.pickup_to_dropoff[u]],self.travel_time[v,self.pickup_to_dropoff[v]])
-                    if overlap>0:
-                        if minDist<DISTANCE_RATIO*threshold and minTime<TIME_RATIO*min(overlap_1,overlap_2):
-                            group[u].append(v)
-                    else:
-                        time_u_v = self.travel_time[self.pickup_to_dropoff[u],v]
-                        time_v_u = self.travel_time[self.pickup_to_dropoff[v],u]
-                        if overlap_1 <0 and time_u_v + overlap_1<0:
-                            group[u].append(v)
-                        if overlap_2 <0 and time_v_u+overlap_2<0:
-                            group[u].append(v)
-
-        return group
-    def _create_edges(self):
-        initial_group = self._create_group()
-        self.can_group = defaultdict(set)
-        
-        for u in self.pickup_node:
-            self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
-
-        for u in tqdm(self.pickup_node,desc='creating edges'):
-            for v in initial_group[u]:
-
-                did_create_edge = False
-                earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time[u,v]
-
-                if earlist_time_arrive_v_pickup>self.time_window_end[v]:
-                    earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
-                    #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
-                    earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
-                        -self.travel_time[v,self.pickup_to_dropoff[u]]
-                    #t2_2,d2_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[v])
-                    earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
-                        -self.travel_time[v,self.pickup_to_dropoff[v]]
-                    if earlist_time_arrive_u_dropoff > self.time_window_end[self.pickup_to_dropoff[u]]:
-                        earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
-                        #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
-                        earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
-                        if earlist_time_arrive_v_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[v]]:
-                            did_create_edge = True
-                            if (u,v) not in self.actions:
-                                this_action = self._create_pickup_to_pickup_actions(u,v)
-                            if (v,self.pickup_to_dropoff[u]) not in self.actions:
-                                this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[u])
-                            if (self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]) not in self.actions:
-                                this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
-
-                            
-
-                    if earlist_time_arrive_v_dropoff>self.time_window_end[self.pickup_to_dropoff[v]]:
-                        earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
-                        #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
-                        earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
-                        if earlist_time_arrive_u_dropoff_2 > self.time_window_end[self.pickup_to_dropoff[u]]:
-                            did_create_edge= True
-                            if (u,v) not in self.actions:
-                                this_action = self._create_pickup_to_pickup_actions(u,v)
-                            if (v,self.pickup_to_dropoff[v]) not in self.actions:
-                                this_action = self._create_pickup_to_dropoff_actions(v,self.pickup_to_dropoff[v])
-                            if (self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]) not in self.actions:
-                                this_action = self._create_dropoff_to_dropoff_actions(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])
-
-                earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time[u, self.pickup_to_dropoff[u]]
-                earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
-                #t3,d4 = self._travel_time_and_distance(self.pickup_to_dropoff[u],v)
-                earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time[self.pickup_to_dropoff[u],v]
-                if earlist_time_arrive_pickup_v_3 > self.time_window_start[v]:
-                    did_create_edge = True
-                    if (self.pickup_to_dropoff[u],v) not in self.actions:
-                        this_action = self._create_dropoff_to_pickup_actions(self.pickup_to_dropoff[u],v)
-
-                if did_create_edge == True:
-                    self.can_group[u].add(v)
     def _create_edges_pair(self):
         #initial_group = self._create_group()
         self.can_group = defaultdict(set)
@@ -766,8 +666,11 @@ class loadAI_cg:
         self.action_pair_to_actions = defaultdict(lambda: defaultdict(tuple))
         for u in self.pickup_node:
             #self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
+            self.edges[u].add(self.pickup_to_dropoff[u])
             self.pickup_dropoff_pairs.add((u,self.pickup_to_dropoff[u]))
-
+        near_travel_time_threshold = 60
+        shape = (self.number_of_customers + 1, self.number_of_customers + 1)
+        self.dict = np.full(shape, np.inf, dtype=float)
         for u in tqdm(self.pickup_node,desc='creating edges pairs'):
             for v in self.pickup_node:
                 if u != v:
@@ -791,10 +694,13 @@ class loadAI_cg:
                             time_freedom_uvuv = earlist_time_arrive_v_dropoff_2-self.time_window_end[self.pickup_to_dropoff[v]]
                             if time_freedom_uvuv>0:
                                 did_create_edge = True
-
+                                if u==1 and v==6:
+                                    print('here to debug')
                                 this_time_freedom = min(time_freedom_uv,time_freedom_uvu,time_freedom_uvuv)
-                                self.action_pair_to_actions[u][this_time_freedom]=[1,u,v,self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
-
+                                self.action_pair_to_actions[u][(1,u,v,self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]=this_time_freedom
+                                min_travel_time = min(self.travel_time[u,v],self.travel_time[(v,self.pickup_to_dropoff[u])],self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
+                                if min_travel_time < near_travel_time_threshold:
+                                    self.dict[u][v]=1
                         if time_freedom_uvv>0:
                             earlist_time_depart_v_dropoff = min(self.time_window_start[self.pickup_to_dropoff[v]],earlist_time_arrive_v_dropoff)
                             #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]
@@ -802,9 +708,13 @@ class loadAI_cg:
                             time_freedom_uvvu = earlist_time_arrive_u_dropoff_2 - self.time_window_end[self.pickup_to_dropoff[u]]
                             if time_freedom_uvvu>0:
                                 did_create_edge= True
-
+                                if u==1 and v==6:
+                                    print('here to debug')
                                 this_time_freedom = min(time_freedom_uv,time_freedom_uvv,time_freedom_uvvu)
-                                self.action_pair_to_actions[u][this_time_freedom]=[1,u,v,self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
+                                self.action_pair_to_actions[u][(1,u,v,self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])]=this_time_freedom
+                                min_travel_time = min(self.travel_time[u,v],self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]])
+                                if min_travel_time < near_travel_time_threshold:
+                                    self.dict[u][v]=1
                     earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time_hos[u, self.pickup_to_dropoff[u]]
                     time_freedom_uu = earlist_time_arrive_dropoff_u_3 - self.time_window_end[self.pickup_to_dropoff[u]]
                     earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
@@ -818,7 +728,10 @@ class loadAI_cg:
                         earlist_time_arrive_dropoff_v_3 = earlist_time_depart_pickup_v_3 - self.service_time[v]-self.travel_time_hos[v,self.pickup_to_dropoff[v]]
                         time_freedom_uuvv = earlist_time_arrive_dropoff_v_3 - self.time_window_end[self.pickup_to_dropoff[v]]
                         this_time_freedom = min(time_freedom_uu,time_freedom_uuv,time_freedom_uuvv)
-                        self.action_pair_to_actions[u][this_time_freedom] = [2,u,self.pickup_to_dropoff[u],v,self.pickup_to_dropoff[v]]
+                        self.action_pair_to_actions[u][(2,u,self.pickup_to_dropoff[u],v,self.pickup_to_dropoff[v])] = this_time_freedom
+                        min_travel_time = self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
+                        if min_travel_time < near_travel_time_threshold:
+                            self.dict[u][v]=1
                     if did_create_edge == True:
                         self.can_group[u].add(v)
         self._get_best_edge_by_score()
@@ -830,22 +743,26 @@ class loadAI_cg:
             sorted_dict = dict(sorted(this_dict.items(), key=lambda item: item[1], reverse=True))
             best_k = int(len(sorted_dict) * SCORE_RATIO)
             for key, value in list(sorted_dict.items())[:best_k]:
-                if value[0] == 1:
-                    self.pickup_pickup_pairs.add((value[1],value[2]))
-                    self.pickup_dropoff_pairs.add((value[2],value[3]))
-                    self.dropoff_dropoff_pairs.add((value[3],value[4]))
-                if value[0] == 2:
-                    self.dropoff_pickup_pairs.add((value[2],value[3]))
+                if key[0] == 1:
+                    self.pickup_pickup_pairs.add((key[1],key[2]))
+                    self.pickup_dropoff_pairs.add((key[2],key[3]))
+                    self.dropoff_dropoff_pairs.add((key[3],key[4]))
+                if key[0] == 2:
+                    self.dropoff_pickup_pairs.add((key[2],key[3]))
     def _create_actions_with_edge_pair(self):
         print('create edge from pairs')
                 
         for (u,v) in tqdm(self.pickup_pickup_pairs, desc='create action for pickup to pickup'):
+            self.edges[u].add(v)
             self._create_pickup_to_pickup_actions(u,v)
         for (u,v) in tqdm(self.pickup_dropoff_pairs, desc='create action for pickup to dropoff'):
+            self.edges[u].add(v)
             self._create_pickup_to_dropoff_actions(u,v)
         for (u,v) in tqdm(self.dropoff_pickup_pairs, desc='create action for dropoff to pickup'):
+            self.edges[u].add(v)
             self._create_dropoff_to_pickup_actions(u,v)
         for (u,v) in tqdm(self.dropoff_dropoff_pairs, desc='create action for dropoff to dropoff'):
+            self.edges[u].add(v)
             self._create_dropoff_to_dropoff_actions(u,v)
         # for (u,v) in tqdm(self.pairs,desc='creating action based on edge pair'):
         #     if u in self.pickup_node and v in self.pickup_node:
@@ -859,22 +776,22 @@ class loadAI_cg:
     def _create_preferred_actions(self):
         #self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
         self.preferred_actions = {}
-        self.dict = self.distance.copy()
         print('====start create preferred edges====')
-        use_feasible_edge = True
-        if use_feasible_edge is False:
+        use_threshold = True
+        if use_threshold is False:
             self.preferred_actions[np.inf] = self.edges.copy()
         else:
+            this_dict = self.dict.copy()
             for threshold in THRESHOLD:
 
                 F = {2:{}}
                 B = {2:{}}
-                for u in self.nodes:
+                for u in self.pickup_node:
                     F[2][u] = set()
-                    for v in self.edges[u]:
+                    for v in self.pickup_node:
                         if v not in B[2]:    # ensure v is initialized
                             B[2][v] = set()
-                        if self.dict[(u,v)] <= threshold:
+                        if this_dict[(u,v)] <= threshold:
                             F[2][u].add(v)
                             B[2][v].add(u)
 
@@ -882,21 +799,21 @@ class loadAI_cg:
                     F[k]={}
                     B[k]={}
 
-                    for u in self.nodes:
-                        for v in self.edges[u]:
-                            min_dist = self.dict[(u,v)]
+                    for u in self.pickup_node:
+                        for v in self.pickup_node:
+                            min_dist = this_dict[(u,v)]
                             for w in set(F[k-1].get(u,set())) & set(B[k-1].get(v,set())):
-                                if self.dict[(u,w)] + self.dict[(w,v)] < min_dist:
-                                    min_dist = self.dict[(u,w)] + self.dict[(w,v)]
-                            self.dict[(u,v)] = min_dist
+                                if this_dict[(u,w)] + this_dict[(w,v)] < min_dist:
+                                    min_dist = this_dict[(u,w)] + this_dict[(w,v)]
+                            this_dict[(u,v)] = min_dist
 
-                    for u in self.nodes:
+                    for u in self.pickup_node:
                         F[k][u] = set()
 
-                        for v in self.edges[u]:
+                        for v in self.pickup_node:
                             if v not in B[k]:    # ensure v is initialized
                                 B[k][v] = set()
-                            if self.dict[(u,v)] <= threshold:
+                            if this_dict[(u,v)] <= threshold:
                                 F[k][u].add(v)
                                 B[k][v].add(u) 
 
@@ -907,8 +824,6 @@ class loadAI_cg:
                 for u in self.dropoff_node:
                     for v in set(self.dropoff_node) & self.edges[u]:
                         preferred_edge[u].add(v)
-
-                
                 # Rule 2: pickup(u) -> dropoff(u) for all u
                 for u in self.pickup_node:
                     preferred_edge[u].add(self.pickup_to_dropoff[u])
@@ -916,23 +831,21 @@ class loadAI_cg:
                 # Rule 3: pickup(u) -> pickup(v) for close enough nodes
                 for u in self.pickup_node:
                     for v in set(self.pickup_node) & self.edges[u] :
-                        if self.dict[(u,v)] <= threshold:
+                        if this_dict[(u,v)] <= threshold:
                             preferred_edge[u].add(v)
                 
                 # Rule 4: pickup(u) -> dropoff(v) for feasible combinations
                 for u in self.pickup_node:
                     for v in set(self.dropoff_node) & self.edges[u]:
-                        if self.dict[(u,v)] <= threshold:
+                        if this_dict[(u,self.dropoff_to_pickup[v])] <= threshold:
                             preferred_edge[u].add(v)
 
                 # Rule 5: dropoff(u) -> pickup(v) for close enough nodes
                 for u in self.dropoff_node:
                     for v in set(self.pickup_node) & self.edges[u]:
-                        try:
-                            if self.dict[(u,v)] <= threshold:
-                                preferred_edge[u].add(v)
-                        except:
-                            print('here')
+                        if this_dict[(self.dropoff_to_pickup[u],v)] <= threshold:
+                            preferred_edge[u].add(v)
+ 
                     
                 for u in self.pickup_node:
                     preferred_edge[-1].add(u)
@@ -952,21 +865,7 @@ class loadAI_cg:
                     if this_edges[u]!=self.edges[u]:
                         print('error edge mismatching between prefered edge and edge')
             print('check here')
-    print('====end create preferred edges====')
-    def _create_distance(self):
-        self.distance = defaultdict()
-        for u in self.pickup_node:
-            self.distance[(-1,u)] = 0
-            skip_node = u + 2 * self.number_of_customers
-            self.distance[(-1,skip_node)]=self._slack(u)
-            self.distance[(skip_node,-2)]= 0
-
-        for v in self.dropoff_node:
-            self.distance[(v,-2)] = 0
-        for u in self.pickup_and_dropoff_node:
-            for v in self.pickup_and_dropoff_node:
-                if u!=v:
-                    self.distance[(u,v)] = self._haversine_distance(u,v)
+        print('====end create preferred edges====')
 
 
     def _default_contribution_vector(self):

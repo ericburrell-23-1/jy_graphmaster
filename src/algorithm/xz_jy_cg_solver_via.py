@@ -46,11 +46,13 @@ class xy_jy_cg_solver:
 
     def _generate_rho(self):
         this_rho = defaultdict()
-        for u in self.pickup_node:
-            for v in self.pickup_node:
-                if u!= v:
-                    this_rho[(u,v)] = 2*self.distance[u,v] + 2*self.distance[u+len(self.pickup_node),v+len(self.pickup_node)]
-                    this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
+        colocated_num = set()
+        for u, v in itertools.combinations(self.pickup_node, 2):
+                
+            this_rho[(u,v)] = 2*self.distance[u,v] + 2*self.distance[u+len(self.pickup_node),v+len(self.pickup_node)]
+            this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
+            if this_rho[(u,v)] == 1:
+                colocated_num.add((u,v))
         return this_rho
         
     def _initiate_col_coeff(self):
@@ -568,12 +570,14 @@ class xy_jy_cg_solver:
         Returns:
         list: List of (u,v) pairs corresponding to active DOI variables
         """
-        active_DOI = set()
+        active_DOI = defaultdict()
         for var_index, omega_name in self.index_to_omega_name.items():
             if var_index in self.var_values and abs(self.var_values[var_index]) > 0.00001:
                 u = omega_name[1]
                 v = omega_name[2]
-                active_DOI.add((u,v))
+                active_DOI[(u,v)] = self.var_values[var_index]*self.rho[(u,v)]
+
+        
         return active_DOI
     def _swap(self, route, u, v):
         """
@@ -755,7 +759,7 @@ class xy_jy_cg_solver:
             return True
             
         except Exception as e:
-            print(f"Error removing omega variable mapping for pair ({u},{v}): {e}")
+            input(f"Error removing omega variable mapping for pair ({u},{v}): {e}")
             import traceback
             traceback.print_exc()
             return False
