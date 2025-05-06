@@ -47,12 +47,13 @@ class xy_jy_cg_solver:
     def _generate_rho(self):
         this_rho = defaultdict()
         colocated_num = set()
-        for u, v in itertools.combinations(self.pickup_node, 2):
-                
-            this_rho[(u,v)] = 2*self.distance[u,v] + 2*self.distance[u+len(self.pickup_node),v+len(self.pickup_node)]
-            this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
-            if this_rho[(u,v)] == 1:
-                colocated_num.add((u,v))
+        for u in self.pickup_node:
+            for v in self.pickup_node:
+                if u!= v:
+                    this_rho[(u,v)] = 2*self.distance[u,v] + 2*self.distance[u+len(self.pickup_node),v+len(self.pickup_node)]
+                    this_rho[(u,v)]=(this_rho[(u,v)]*1.01)+1
+                    if this_rho[(u,v)] == 1:
+                        colocated_num.add((u,v))
         return this_rho
         
     def _initiate_col_coeff(self):
@@ -77,20 +78,20 @@ class xy_jy_cg_solver:
             self.col_of_path += 1
         for u in self.pickup_node:
             for v in set(self.neighbors[u]) & set(self.pickup_node):
-                if (u,v) not in self.forbidden:
-                    self.var_to_obj_coef[var_index] = self.rho[(u,v)]
-                    rows.append(u-1)
-                    cols.append(var_index)
-                    data.append(-1)
-                    self.row_to_col_to_data[u-1][var_index] = -1
-                    rows.append(v-1)
-                    cols.append(var_index)
-                    data.append(1)
-                    self.row_to_col_to_data[v-1][var_index] = 1
-                    self.omega_name_to_index[('omega',u,v)] = var_index
-                    self.index_to_omega_name[var_index] = ('omega',u,v)
-                    var_index += 1
-                    self.col_of_omega +=1
+
+                self.var_to_obj_coef[var_index] = self.rho[(u,v)]
+                rows.append(u-1)
+                cols.append(var_index)
+                data.append(-1)
+                self.row_to_col_to_data[u-1][var_index] = -1
+                rows.append(v-1)
+                cols.append(var_index)
+                data.append(1)
+                self.row_to_col_to_data[v-1][var_index] = 1
+                self.omega_name_to_index[('omega',u,v)] = var_index
+                self.index_to_omega_name[var_index] = ('omega',u,v)
+                var_index += 1
+                self.col_of_omega +=1
         self.index_sorted_slot = SortedList()
         self.constraints_matrix = coo_matrix((data, (rows, cols)), shape=(len(self.rhs_exog_vec), var_index))
 
