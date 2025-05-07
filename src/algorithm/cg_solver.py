@@ -321,7 +321,8 @@ class GraphMaster_cg:
                     #breakpoint()
                     omega_term_list.append(len(this_forbidden_omega))
                     output_info = defaultdict()
-                    if sum_omega_obj<-self.jy_options_user_defined['min_dual_val_expand']:
+                    #if sum_omega_obj<-self.jy_options_user_defined['min_dual_val_expand']:
+                    if len(this_forbidden_omega)<0.5:
                         if self.jy_options_user_defined['information_for_iteration'] == True:
                             output_info['list of lp'] = lp_objective_list
                             output_info['list number of positive omega terms (for each iteration lp'] = omega_term_list

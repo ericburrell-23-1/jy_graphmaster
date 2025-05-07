@@ -301,6 +301,7 @@ class loadAI_cg:
         # self._create_dropoff_to_pickup_actions()
         # self._create_dropoff_to_dropoff_actions()
         self._create_skip_actions()
+        print(f'baseline cost: {self.baseline_cost}')
         self._create_null_action_info()
         self._create_preferred_actions()
         #breakpoint()
@@ -602,11 +603,13 @@ class loadAI_cg:
         #return action
         
     def _create_skip_actions(self):
+        self.baseline_cost = 0
         for destination_node in tqdm(self.pickup_node,desc='create_skip_actions'):
             origin_node = -1
             self.edges[origin_node].add(destination_node + 2 * self.number_of_customers)
 
             cost = self._slack(destination_node)
+            self.baseline_cost += cost
             #exog_contrib_vec = self._default_contribution_vector()
             cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", destination_node))]
             #exog_contrib_vec[cover_constraint_index] = 1

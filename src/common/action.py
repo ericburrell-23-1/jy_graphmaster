@@ -281,8 +281,8 @@ class Action:
 
     def hos_violate_and_update(self, tail_vec):
         # Define constants to improve readability and avoid magic numbers
-        REST_DURATION = 660
-        REST_PENALTY = 600
+        MAX_DRIVE = 660
+        REST_TIME = 600
         
         drive_hos = tail_vec[4]
         
@@ -292,13 +292,13 @@ class Action:
         if needs_rest:
             # Calculate rest periods more efficiently
             excess_time = self.travel_time - drive_hos
-            rest_time = (excess_time + REST_DURATION - 1) // REST_DURATION  # Ceiling division
+            rest_time = (excess_time + MAX_DRIVE - 1) // MAX_DRIVE  # Ceiling division
             
             # Calculate adjusted travel time with rest periods
-            travel_time_with_hos = self.travel_time + rest_time * REST_PENALTY
+            travel_time_with_hos = self.travel_time + rest_time * REST_TIME
             
             # Calculate new HOS times (same formula for both drive and work time)
-            hos_remaining = drive_hos + rest_time * REST_DURATION - self.travel_time
+            hos_remaining = drive_hos + rest_time * MAX_DRIVE - self.travel_time
             new_hos_drive_time = new_hos_work_time = hos_remaining
         else:
             # No rest periods needed

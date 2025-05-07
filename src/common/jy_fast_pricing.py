@@ -426,7 +426,6 @@ class jy_fast_pricing():
                         print(my_act.node_head)
                         input('error here2 ')
                     new_labels= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
-
                     if len(new_labels) == 0:
                         #print('doing none')
                         continue

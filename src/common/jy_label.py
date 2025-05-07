@@ -10,7 +10,7 @@ from src.common.state import State
 from src.common.action import Action
 import numpy as np
 from src.common.route import Route
-from itertools import combinations
+import itertools
 import time
 class jy_label:
 #     
@@ -375,6 +375,7 @@ class jy_label:
         if new_head!=None:
             new_heads_depart = new_head.service()
             if len(new_heads_depart)>0.5:
+                num_remove = 0
                 for head_depart in new_heads_depart:
                     NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
                     NEW_my_states_ordered=self.my_states_ordered+[head_depart]
@@ -397,22 +398,96 @@ class jy_label:
                                     self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
                                     self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
                                     self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
-                    #if NEW_label.check_time_window_feasible() == True:
+                    #print(NEW_label.all_nodes_ordered)
+                    if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible() == False:
+                        continue
+
                     new_labels.append(NEW_label)
         return new_labels
     def check_time_window_feasible(self):
-        if len(self.nodes_picked_up) <= 2:
+        if len(self.nodes_picked_up) <= 1:
             return True
-        must_drop_off = self.must_drop_off
+        must_drop_off = {x+self.cus_num for x in self.must_drop_off}
         last_state = self.my_states_ordered[-1]
-        for node in must_drop_off:
-            if (node+self.cus_num) not in self.preferred_actions[last_state.node]:
-                return False
-            
-            state_for_check = self.action_dict[(last_state.node,node+self.cus_num)][0].get_head_state_fast_load_ai(last_state,last_state.l_id)
-            if state_for_check == None:
-                return False
-        return True
+        this_node = last_state.node
+        if must_drop_off.issubset(self.edges[this_node]) == False:
+            return False
+        else: 
+            #latest_dropoff_time = max(self.action_dict[(this_node,dropoff)][0].time_window[1] for dropoff in must_drop_off)
+            latest_dropoff, latest_dropoff_time = max(
+                        ((dropoff, self.action_dict[(this_node, dropoff)][0].time_window[1]) for dropoff in must_drop_off),
+                            key=lambda x: x[1]
+                        )
+            time_rem = last_state.state_vec[2]
+            drive_time = last_state.state_vec[4]
+            travel_time_needed = self.action_dict[(this_node,latest_dropoff)][0].travel_time
+            if drive_time>travel_time_needed and time_rem-travel_time_needed>latest_dropoff_time:
+                return True
+            if drive_time < travel_time_needed:
+                drive_hours = 660
+                rest_hours = 600
+                rest_num = (travel_time_needed-drive_time)//drive_hours +1
+                hos_travel_time_needed = travel_time_needed + rest_num*rest_hours
+                if time_rem - hos_travel_time_needed > latest_dropoff_time:
+                    return True
+        return False
+    def check_time_window_feasible_2(self):
+        max_drive_time = 660
+        rest_time = 600
+        max_work_time = 840
+        def feasible_route(route):
+            for i in range(len(route)-1):
+                if route[i+1] not in route[i]:
+                    return False
+                
+            time_rem = last_state.state_vec[2]
+            drive_time = last_state.state_vec[4]
+            work_time = last_state.state_vec[5]
+            for node in route:
+                this_action = self.action_dict[(this_node,node)][0]
+                travel_time_needed =this_action.travel_time
+                service_time_needed = this_action.service_time
+                if drive_time>travel_time_needed:
+                    time_rem -= travel_time_needed
+                    if time_rem < this_action.time_window[1]:
+                        return False
+                    drive_time -= travel_time_needed
+                    work_time -=travel_time_needed
+                    if work_time < service_time_needed:
+                         time_rem -= (service_time_needed+rest_time)
+                         drive_time = max_drive_time
+                         work_time = max_work_time
+                    else:
+                        time_rem -= service_time_needed
+                        work_time -= service_time_needed
+                else:
+                    rest_num = (travel_time_needed-drive_time)//max_drive_time +1
+                    hos_travel_time_needed = travel_time_needed + rest_num*rest_time
+                    time_rem -= hos_travel_time_needed
+                    if time_rem < this_action.time_window[1]:
+                        return False
+                    drive_time = drive_time + rest_num*max_drive_time-travel_time_needed
+                    work_time = drive_time
+                    if work_time < service_time_needed:
+                         time_rem -= (service_time_needed+rest_time)
+                         drive_time = max_drive_time
+                         work_time = max_work_time
+                    else:
+                        time_rem -= service_time_needed
+                        work_time -= service_time_needed
+            return True
+        
+        if len(self.nodes_picked_up) <= 1:
+            return True
+        must_drop_off = {x+self.cus_num for x in self.must_drop_off}
+        last_state = self.my_states_ordered[-1]
+        this_node = last_state.node
+        possible_route = list(itertools.permutations(must_drop_off))
+        for route in possible_route:
+            if feasible_route(route):
+                return True
+        
+        return False
     def convert_2_route(self):
         if self.my_states_ordered[-1].node!=-2:
             input('this route is not done')
