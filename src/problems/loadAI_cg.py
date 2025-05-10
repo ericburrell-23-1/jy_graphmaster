@@ -29,9 +29,9 @@ WEIGHT_CAPACITY = 45000
 MAX_COMBINED_LOADS = 3
 HOS_DRIVE_TIME = 11 * 60
 HOS_WORK_TIME = 14 * 60
-HOS_REST_TIME = 9 * 60
+HOS_REST_TIME = 10 * 60
 AVERAGE_SPEED = 55 / 60
-MIN_DISTANCE_SAVING = 100
+MIN_DISTANCE_SAVING = 0
 STANDARD_SERVICE_TIME = 2 * 60
 JY_OPT_SPLIT=1
 THRESHOLD = [1,np.inf]
@@ -66,7 +66,7 @@ class loadAI_cg:
         self._create_initial_res_states()
         self._create_initial_res_actions()
         self._define_state_update_module()
-        self._get_benefit_group()
+        #self._get_benefit_group()
         # path = 'Load_ai.xlsx'
         # self._evaluate_solution(path)
         #self.plot_pickup_dropoff_with_clusters()
@@ -91,8 +91,7 @@ class loadAI_cg:
             self.number_of_resources,
             self.the_single_null_action,
             self.neighbors,
-            self.benefit_group,
-            self.benefit_group_cost
+            self.benefit_group
             #node_to_list
         )
         #with TimeProfiler(f'time_profile_{self.instance_name}_speed'):
@@ -355,7 +354,12 @@ class loadAI_cg:
     def _full_resource_vec(self):
         return self.full_resource_array
 
-
+    def _calculate_time_quotient_remainer(self, travel_time):
+        quotient = travel_time/HOS_DRIVE_TIME
+        remainder = travel_time%HOS_DRIVE_TIME
+        time_q_rest = travel_time + quotient*HOS_REST_TIME
+        time_q1_rest = travel_time + (quotient+1)*HOS_REST_TIME
+        return remainder, time_q_rest, time_q1_rest
     def _create_default_resource_values(self):
         """Defines default resource values for actions."""
         self.empty_resource_array = zeros(self.number_of_resources)
@@ -422,7 +426,7 @@ class loadAI_cg:
 
             action = Action(destination_node, origin_node, this_pickup, this_dropoff, self.number_of_customers, non_zero_exog_val,non_zero_exog_indices,cost,min_resource_vec, 
                             resource_consumption_vec,max_resource_vec,[self.time_window_start[destination_node],self.time_window_end[destination_node]],
-                            0,0)
+                            0,0,0,0,0)
             self.actions[origin_node, destination_node] = [action]
 
         for origin_node in tqdm(self.dropoff_node,desc='create_source_sink_actions_2'):
@@ -453,7 +457,7 @@ class loadAI_cg:
             this_dropoff = origin_node - self.number_of_customers
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
-                            resource_consumption_vec,max_resource_vec,[self.maximum_time,0],0,0)
+                            resource_consumption_vec,max_resource_vec,[self.maximum_time,0],0,0,0,0,0)
         
             self.actions[origin_node, destination_node] = [action]
 
@@ -461,6 +465,7 @@ class loadAI_cg:
         if origin_node == destination_node:
             return None
         travel_time = self.travel_time[origin_node,destination_node]
+        remainder, time_q_rest, time_q1_rest = self._calculate_time_quotient_remainer(travel_time)
         distance = self.distance[origin_node, destination_node]
         cost = distance
         cover_constraint_index = self.rhs_constraint_name_to_index[str(("Cover", origin_node))]
@@ -482,19 +487,18 @@ class loadAI_cg:
         max_resource_vec = np.array([WEIGHT_CAPACITY,VOLUME_CAPACITY,
                                              self.time_window_start[destination_node],
                                              MAX_COMBINED_LOADS,self.hos_drive_time,self.hos_work_time] )     
-        #indices_apply_min_to=Helper.partial_map_2_indices_applied(self.resource_name_to_index,partial_trans_term_min)
-        #indices_apply_min_to=Helper.LOAD_AI_partial_map_2_indices_applied(self.resource_name_to_index,self.pickup_node,self.dropoff_node,destination_node,origin_node,self.number_of_customers)
         this_pick_up = origin_node
         this_drop_off = None
         action = Action(destination_node, origin_node, this_pick_up,this_drop_off, self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec,resource_consumption_vec, 
                             max_resource_vec, [self.time_window_start[destination_node],self.time_window_end[destination_node]],
-                            travel_time, self.service_time[origin_node])
+                            travel_time, self.service_time[origin_node],remainder, time_q_rest, time_q1_rest )
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
     def _create_pickup_to_dropoff_actions(self,origin_node, destination_node):
         travel_time = self.travel_time[origin_node,destination_node]
+        remainder, time_q_rest, time_q1_rest = self._calculate_time_quotient_remainer(travel_time)
         distance = self.distance[origin_node,destination_node]
         cost = distance
         #exog_contrib_vec = self._default_contribution_vector()
@@ -523,7 +527,7 @@ class loadAI_cg:
         action = Action( destination_node, origin_node, this_pick_up,this_drop_off,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, max_resource_vec, [self.time_window_start[destination_node],self.time_window_end[destination_node]],
-                            travel_time, self.service_time[origin_node])
+                            travel_time, self.service_time[origin_node],remainder, time_q_rest, time_q1_rest)
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -534,6 +538,7 @@ class loadAI_cg:
             return None
 
         travel_time = self.travel_time[origin_node,destination_node]
+        remainder, time_q_rest, time_q1_rest = self._calculate_time_quotient_remainer(travel_time)
         distance = self.distance[origin_node, destination_node]
         cost = distance
         #exog_contrib_vec = self._default_contribution_vector()
@@ -565,7 +570,7 @@ class loadAI_cg:
                             non_zero_exog_val, non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec,[self.time_window_start[destination_node],self.time_window_end[destination_node]],
-                            travel_time,self.service_time[origin_node])
+                            travel_time,self.service_time[origin_node],remainder, time_q_rest, time_q1_rest)
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -573,6 +578,7 @@ class loadAI_cg:
         if origin_node == destination_node:
             return None
         travel_time = self.travel_time[origin_node,destination_node]
+        remainder, time_q_rest, time_q1_rest = self._calculate_time_quotient_remainer(travel_time)
         distance = self.distance[origin_node, destination_node]
         cost = distance
         origin_pickup_node = self.dropoff_to_pickup[origin_node]
@@ -598,7 +604,7 @@ class loadAI_cg:
                             non_zero_exog_val , non_zero_exog_indices, cost, min_resource_vec, 
                             resource_consumption_vec, 
                             max_resource_vec,[self.time_window_start[destination_node],self.time_window_end[destination_node]],
-                            travel_time, self.service_time[origin_node])
+                            travel_time, self.service_time[origin_node],remainder, time_q_rest, time_q1_rest)
         self.actions[(origin_node, destination_node)] = [action]
         #return action
         
@@ -631,7 +637,7 @@ class loadAI_cg:
             action = Action( destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                             non_zero_exog_val ,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, 
-                            max_resource_vec,time_window,0,0)
+                            max_resource_vec,time_window,0,0,0,0,0)
         
             self.actions[origin_node, destination_node] = [action]
                
@@ -656,7 +662,7 @@ class loadAI_cg:
             action = Action(destination_node, origin_node, this_pickup,this_dropoff,self.number_of_customers,
                              non_zero_exog_val,non_zero_exog_indices,cost, min_resource_vec, 
                             resource_consumption_vec, 
-                            max_resource_vec,[self.maximum_time,0],0,0)
+                            max_resource_vec,[self.maximum_time,0],0,0,0,0,0)
             self.actions[origin_node, destination_node] = [action]
         
     def _create_edges_pair(self):
@@ -667,6 +673,7 @@ class loadAI_cg:
         self.dropoff_pickup_pairs = set()
         self.dropoff_dropoff_pairs = set()
         self.action_pair_to_actions = defaultdict(lambda: defaultdict(tuple))
+        self.benefit_group = defaultdict()
         for u in self.pickup_node:
             #self._create_pickup_to_dropoff_actions(u,self.pickup_to_dropoff[u])
             self.edges[u].add(self.pickup_to_dropoff[u])
@@ -675,11 +682,15 @@ class loadAI_cg:
         shape = (self.number_of_customers + 1, self.number_of_customers + 1)
         self.dict = np.full(shape, np.inf, dtype=float)
         for u in tqdm(self.pickup_node,desc='creating edges pairs'):
+            this_benefit_group = defaultdict()
             for v in self.pickup_node:
                 if u != v:
+                    
+                    cost1=cost2=np.inf
                     did_create_edge = False
                     earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time_hos[u,v]
                     time_freedom_uv = earlist_time_arrive_v_pickup - self.time_window_end[v]
+                    costuv = self.distance[u][v]
                     if time_freedom_uv>0:
                         earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
                         #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
@@ -690,18 +701,21 @@ class loadAI_cg:
                         earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
                             -self.travel_time_hos[v,self.pickup_to_dropoff[v]]
                         time_freedom_uvv = earlist_time_arrive_v_dropoff-self.time_window_end[self.pickup_to_dropoff[v]]
+                        costuvu = costuv+ self.distance[v][self.pickup_to_dropoff[u]]
+                        costuvv = costuv + self.distance[v][self.pickup_to_dropoff[v]]
+                        max_distance = self._slack(u)+self._slack(v)
                         if time_freedom_uvu>0:
                             earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
                             #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
                             earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time_hos[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
                             time_freedom_uvuv = earlist_time_arrive_v_dropoff_2-self.time_window_end[self.pickup_to_dropoff[v]]
-                            if time_freedom_uvuv>0:
+                            costuvuv = costuvu + self.distance[self.pickup_to_dropoff[u]][self.pickup_to_dropoff[v]]
+                            if time_freedom_uvuv>0 and costuvuv < max_distance:
                                 did_create_edge = True
-                                if u==1 and v==6:
-                                    print('here to debug')
                                 this_time_freedom = min(time_freedom_uv,time_freedom_uvu,time_freedom_uvuv)
                                 self.action_pair_to_actions[u][(1,u,v,self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])]=this_time_freedom
                                 min_travel_time = min(self.travel_time[u,v],self.travel_time[(v,self.pickup_to_dropoff[u])],self.travel_time[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]])
+                                cost1 = costuvuv
                                 if min_travel_time < near_travel_time_threshold:
                                     self.dict[u][v]=1
                         if time_freedom_uvv>0:
@@ -709,19 +723,23 @@ class loadAI_cg:
                             #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]
                             earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time_hos[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
                             time_freedom_uvvu = earlist_time_arrive_u_dropoff_2 - self.time_window_end[self.pickup_to_dropoff[u]]
-                            if time_freedom_uvvu>0:
+                            costuvvu = costuvv + self.distance[self.pickup_to_dropoff[v]][self.pickup_to_dropoff[u]]
+                            if time_freedom_uvvu>0 and costuvvu < max_distance:
                                 did_create_edge= True
                                 if u==1 and v==6:
                                     print('here to debug')
                                 this_time_freedom = min(time_freedom_uv,time_freedom_uvv,time_freedom_uvvu)
                                 self.action_pair_to_actions[u][(1,u,v,self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])]=this_time_freedom
                                 min_travel_time = min(self.travel_time[u,v],self.travel_time[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]])
+                                cost1 = costuvvu
                                 if min_travel_time < near_travel_time_threshold:
                                     self.dict[u][v]=1
+                    this_benefit=  min(cost1,cost2)- max(0,self.distance[u][self.pickup_to_dropoff[u]] - MIN_DISTANCE_SAVING)-max(0,self.distance[v][self.pickup_to_dropoff[v]] - MIN_DISTANCE_SAVING) + random.uniform(-1e-6, 1e-6)
+                    if this_benefit <-0.0001:
+                        this_benefit_group[v] = this_benefit
                     earlist_time_arrive_dropoff_u_3 = self.time_window_start[u] - self.service_time[u]-self.travel_time_hos[u, self.pickup_to_dropoff[u]]
                     time_freedom_uu = earlist_time_arrive_dropoff_u_3 - self.time_window_end[self.pickup_to_dropoff[u]]
                     earlist_time_depart_dropoff_u_3 = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_dropoff_u_3)
-                    
                     earlist_time_arrive_pickup_v_3 = earlist_time_depart_dropoff_u_3 - self.service_time[u]-self.travel_time_hos[self.pickup_to_dropoff[u],v]
                     time_freedom_uuv = earlist_time_arrive_pickup_v_3 - self.time_window_end[v]
                     if time_freedom_uuv >0:
@@ -737,6 +755,8 @@ class loadAI_cg:
                             self.dict[u][v]=1
                     if did_create_edge == True:
                         self.can_group[u].add(v)
+                this_benefit_group = dict(sorted(this_benefit_group.items(), key=lambda item: item[1])) 
+                self.benefit_group[u] =  this_benefit_group
         self._get_best_edge_by_score()
         print(f'total {len(self.pickup_pickup_pairs)+len(self.pickup_dropoff_pairs)+len(self.dropoff_pickup_pairs)+len(self.dropoff_dropoff_pairs)} generated')
         print('check here')
@@ -780,7 +800,7 @@ class loadAI_cg:
         #self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
         self.preferred_actions = {}
         print('====start create preferred edges====')
-        use_threshold = True
+        use_threshold = False
         if use_threshold is False:
             self.preferred_actions[np.inf] = self.edges.copy()
         else:
@@ -957,8 +977,8 @@ class loadAI_cg:
         t_mat[1:n+1, 1:n+1] = t_mat_0indexed
         return t_mat, dist_mat, drive
     def _slack(self, pickup_node):
-        dropoff_node = self.pickup_to_dropoff[pickup_node]
-        pickup_dropoff_direct_distance = self._haversine_distance(pickup_node, dropoff_node)
+
+        pickup_dropoff_direct_distance = self.distance[pickup_node][self.pickup_to_dropoff[pickup_node]]
         slack_coeff = max(0,pickup_dropoff_direct_distance - MIN_DISTANCE_SAVING)
         if slack_coeff > 0:
             return slack_coeff
@@ -1004,7 +1024,7 @@ class loadAI_cg:
         self.the_single_null_action= Action(None,None,this_pickup,this_dropoff,self.number_of_customers,
                                             non_zero_exog_val,non_zero_exog_indices,cost,min_resource_vec,
                                             resource_consumption_vec,
-                                            max_resource_vec, [self.maximum_time,0],0,0)
+                                            max_resource_vec, [self.maximum_time,0],0,0,0,0,0)
                     
     def _create_travel_time(self):
         self.travel_time = {}
@@ -1063,35 +1083,6 @@ class loadAI_cg:
                 raise ValueError(f"Graph {l_id} must have exactly one source and one sink, but found {source_count} source(s) and {sink_count} sink(s).")
     
         return dict_l_node_2_list
-    def _get_benefit_group(self):
-
-        self.benefit_group = defaultdict()
-        self.benefit_group_cost = defaultdict()
-        for u in self.pickup_node:
-            this_benefit_group = defaultdict()
-            this_benefit_group_cost = defaultdict()
-            for v in self.can_group[u]:
-                if u != v:
-                    try:
-                        cost_1 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[u])][0].cost+\
-                        +self.actions[(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])][0].cost + self.actions[(self.pickup_to_dropoff[v],-2)][0].cost
-                    except:
-                        cost_1 = np.inf
-                    try:
-                        cost_2 = self.actions[(-1,u)][0].cost+self.actions[(u,v)][0].cost+self.actions[(v,self.pickup_to_dropoff[v])][0].cost+\
-                        +self.actions[(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u])][0].cost + self.actions[(self.pickup_to_dropoff[u],-2)][0].cost
-                    except:
-                        cost_2 = np.inf
-                    #min_cost[(u,v)] = min(cost_1,cost_2)
-                    this_benefit=  min(cost_1,cost_2)- self._slack(u)-self._slack(v) + random.uniform(-1e-6, 1e-6)
-                    if this_benefit <-0.0001:
-                        this_benefit_group[v] = this_benefit
-                        this_benefit_group_cost[v] = this_benefit
-
-            this_benefit_group = dict(sorted(this_benefit_group.items(), key=lambda item: item[1])) 
-            self.benefit_group[u] =   this_benefit_group
-            self.benefit_group_cost[u] = this_benefit_group_cost
-        print('finish benefit group')
     def _define_state_update_module(self):
         # ASSIGN STATE UPDATE MODULE HERE
         self.neighbors_by_distance, self.neighbors = self._create_nearest_node(10)

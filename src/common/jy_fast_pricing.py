@@ -33,7 +33,6 @@ class jy_fast_pricing():
                  all_nodes,
                  neighbors,
                  benefit_group,
-                 benefit_group_cost,
                  jy_opt):
         """
         Initialize the jy_fast_pricing algorithm.
@@ -62,7 +61,6 @@ class jy_fast_pricing():
         self.all_nodes = all_nodes
         self.neighbors = neighbors
         self.benefit_group = benefit_group
-        self.benefit_group_cost = benefit_group_cost
         self.jy_opt = jy_opt
         self.jy_opt['use_load_ai_fast']=True
         self.num_cus = int((len(self.all_nodes)-2)/3)
@@ -78,17 +76,16 @@ class jy_fast_pricing():
         self.option_do_min_term = False
         self.lowest_action_contrib_red_cost = float('inf')
         for u, benefit_group in self.benefit_group.items():
-            updated_benefits = {}
             if len(benefit_group) > self.jy_opt['k_benefit_group']:
                 for v, value in benefit_group.items():
                     try:
-                        updated_benefits[v] = self.benefit_group_cost[u][v] - self.dual_vec[u-1] - self.dual_vec[v-1]
+                        benefit_group[v] = value - self.dual_vec[u-1] - self.dual_vec[v-1]
                     except:
                         print('check here')
-                self.benefit_group[u] = dict(sorted(updated_benefits.items(), key=lambda item: item[1]))
+                self.benefit_group[u] = dict(sorted(benefit_group.items(), key=lambda item: item[1]))
         self.pre_process__partition_actions()
-        self.initiate_RCP_d()
-        self.initiate_RCP_u()
+        # self.initiate_RCP_d()
+        # self.initiate_RCP_u()
         self.initiate_RCP_u_2()
         print('initialization')
 
@@ -373,6 +370,9 @@ class jy_fast_pricing():
                         input('error here: my_lb<incumbant_lb')
                     else:
                         incumbant_lb=my_lb
+                # print('=====check label added=====')
+                # print('current expanable label')
+                # print([label.all_nodes_ordered for label in self.expandable_labels.objects])
                 curr_label = self.expandable_labels.pop()
                 self.expanede_label.append(curr_label.all_nodes_ordered)
                 if debug_on==True:
@@ -402,17 +402,23 @@ class jy_fast_pricing():
                 elif self.jy_opt['poss_action'] == 2:
                     #print('makeing from 2 ')
                     poss_actions = self.get_actions_from_label_2(curr_label,prefered_actions)
+                elif self.jy_opt['poss_action'] == 3:
+                    poss_actions = self.get_pickup_actions(curr_label,prefered_actions)
                 else:
-                    input('error')
+                    input('poss_action error')
 
                 did_gen_neg_red_cost=False
                 did_gen_possible_expansion=False
+                
                 # print('curr label')
                 # print(curr_label.all_nodes_ordered)
-                # print('poss action list')
-                # print([(a.node_tail, a.node_head) for a in poss_actions])
-                # print('check here')
+                # # print('poss action list')
+                # # print([(a.node_tail, a.node_head) for a in poss_actions])
+                
+                
+                # print('--------------detail ---------------')
                 for my_act in poss_actions:
+                    #print('action',(my_act.node_tail,my_act.node_head))
                     # if curr_label.all_nodes_ordered == [-1,1] and my_act.node_head ==6:
                     #     print('check here')
                     if my_act.node_head in self.skip_node:
@@ -426,10 +432,17 @@ class jy_fast_pricing():
                         print(my_act.node_head)
                         input('error here2 ')
                     new_labels= curr_label.expand_given_action(my_act,self.dual_vec,self.forbidden_nodes)
+                    # print('created label')
+                    # print([label.all_nodes_ordered for label in new_labels])
+                    # print('check here1')
                     if len(new_labels) == 0:
                         #print('doing none')
                         continue
                     for new_label in new_labels:
+                        if new_label.all_nodes_ordered == [-1, 1, 21, -2]:
+                            print('check here')
+                        if new_label.check_label_feasibility() == False:
+                            input('error: infeasible label generated here')
                         if self.jy_opt['lb_option'] == 2:
                             new_label.calculate_better_lb_2(self.dual_vec,self.sorted_node_with_k)
                         elif self.jy_opt['lb_option'] == 1:
@@ -451,12 +464,14 @@ class jy_fast_pricing():
                                 #print('no completion')
                                 continue
                         #print('t3')
-                        if my_act.node_head in self.dropoff_node or my_act.node_head==-2:
-                            #print('OKY GOOD ')
-                            did_gen_possible_expansion=True
-                        #print('t4')
                         if new_label.lb>5:
                             continue
+                        this_act = new_label.my_actions_ordered[-1]
+                        if this_act.node_head in self.dropoff_node or this_act.node_head==-2:
+                            #print('OKY GOOD ')
+                            did_gen_possible_expansion=True
+
+                        
 
                         if new_label.lb<self.jy_opt['min_dual_val_expand']:
                             self.efficient_frontier.alter_fronteir_given_new_element(new_label)
@@ -464,14 +479,14 @@ class jy_fast_pricing():
 
                         if new_label.is_complete_route:
                             lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
-                        if new_label.is_complete_route  and new_label.red_cost<-.001: #< new_label.lb/10:
+                        if new_label.is_complete_route  and new_label.red_cost<-.001 and len(new_label.all_nodes_ordered)>4: #< new_label.lb/10:
                             #input('making route')
                             route = new_label.convert_2_route()
                             all_routes.append(route)
                             tot_red_cost=tot_red_cost+new_label.red_cost
-                            # print('route made')
+                            #print('======route made')
                             # print('new_label.all_nodes_ordered')
-                            # print(new_label.all_nodes_ordered)
+                            print('route added:',new_label.all_nodes_ordered)
                             # print('new_label.all_nodes_ordered')
                             # print('new_label.red_cost')
                             # print(new_label.red_cost)
@@ -489,6 +504,9 @@ class jy_fast_pricing():
                             new_tuple=self.label_2_tuple(new_label)
                             if new_label.lb<self.jy_opt['min_dual_val_expand']:
                                 self.expandable_labels.insert(new_label,new_tuple)
+                                #print('added label to expanable: ' , new_label.all_nodes_ordered)
+                    if did_gen_neg_red_cost==True:
+                        break
                 if did_gen_neg_red_cost==True:
                     #print('found complete path with this dual')
                     break
@@ -592,7 +610,30 @@ class jy_fast_pricing():
     
                 else:
                     self.actions_from_node_MINUS_dest_dropoff[my_origin].append(a)
-        
+    def get_pickup_actions(self,my_label:jy_label,preferred_actions):
+        if my_label.node == -1:
+            actions_use = []
+            for n in self.pickup_minus_forbidden:
+                actions_use.append(self.action_dict[(my_label.node,n)][0])
+            return actions_use
+        # if len(my_label.must_drop_off) ==0:
+        #     actions_use = []
+        #     actions_use.append(self.action_dict[(my_label.node,-2)][0])
+        #     return actions_use
+        if len(my_label.nodes_picked_up) >= self.jy_opt['max_pickups_in_a_route']:
+            actions_use = []
+            return actions_use
+        actions_use = set()
+        neighbor_pickup_for_this_node = set(self.neighbors[my_label.node]) & self.pickup_minus_forbidden
+
+        k= self.jy_opt['k_benefit_group']
+
+        neighbors_pick_up_for_must_drop_off = set().union(*([this_node for this_node in list(self.benefit_group[node].keys())[:k]] 
+                                                                for node in my_label.must_drop_off)) & preferred_actions[my_label.node] &self.pickup_minus_forbidden
+
+        all_neighbor_pick_up = neighbor_pickup_for_this_node|neighbors_pick_up_for_must_drop_off
+        actions_use.update(self.action_dict[(my_label.node, node)][0] for node in all_neighbor_pick_up)
+        return list(actions_use)
     def get_actions_from_label_2(self,my_label:jy_label,preferred_actions):
 
         if my_label.node == -1:

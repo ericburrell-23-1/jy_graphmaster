@@ -70,8 +70,7 @@ class GraphMaster_cg:
                  number_of_resources: int,
                  the_single_null_action: Action,
                  neighbors,
-                 benefit_group,
-                 benefit_group_cost
+                 benefit_group
                  #node_to_list
                  ):
         
@@ -97,7 +96,6 @@ class GraphMaster_cg:
         self.the_single_null_action=the_single_null_action
         self.neighbors = neighbors
         self.benefit_group = benefit_group
-        self.benefit_group_cost = benefit_group_cost
         #self.node_to_list = node_to_list
         self.graph_to_index = {}
         self.rez_states_minus = initial_res_states
@@ -120,7 +118,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
         self.jy_options_user_defined['lb_option'] =2
-        self.jy_options_user_defined['poss_action'] = 2
+        self.jy_options_user_defined['poss_action'] = 3
         self.jy_options_user_defined['k_benefit_group'] = 10
         self.jy_options_user_defined['information_for_iteration'] =True
         self.jy_options_user_defined['use_comp_col'] =True # true: if use complementary column
@@ -293,7 +291,7 @@ class GraphMaster_cg:
             jy_init_res_state = State(-1,[np.inf,0],0, self.initial_resource_vector,set(),set(),set(),l_id,True,False)
             this_dual = np.array([0 if abs(x) < 0.0001 else x for x in this_dual])
             if self.jy_options_user_defined['use_fast_pricing'] == True:
-                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.benefit_group_cost,self.jy_options_user_defined)
+                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.jy_options_user_defined)
                 routes, threshold_count= jy_fast_pricer.run()
                 overall_threshold_count = overall_threshold_count + threshold_count
                 reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]

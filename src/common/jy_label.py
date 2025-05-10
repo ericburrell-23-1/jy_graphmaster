@@ -85,7 +85,7 @@ class jy_label:
         self.edges = edges
         self.preferred_actions = preferred_actions
         self.distance = distance
-
+        self.label_id = hash(tuple([state.state_id for state in self.my_states_ordered]))
         # for s in self.my_states_ordered:
         #     self.all_nodes_ordered.append(s.node)
         #     if s.node  in self.pickup_nodes:
@@ -104,6 +104,8 @@ class jy_label:
         #print('self.node_wait_to_drop_off')
         #print(self.node_wait_to_drop_off)
         #self.DEBUG_check_label_correct()
+    def __hash__(self):
+        return self.label_id
     def calculate_red_cost_given_dual(self,dual):
         if not self.my_actions_ordered:
             self.red_cost = 0
@@ -375,7 +377,7 @@ class jy_label:
         if new_head!=None:
             new_heads_depart = new_head.service()
             if len(new_heads_depart)>0.5:
-                num_remove = 0
+
                 for head_depart in new_heads_depart:
                     NEW_my_actions_ordered=self.my_actions_ordered+[my_action]
                     NEW_my_states_ordered=self.my_states_ordered+[head_depart]
@@ -399,10 +401,14 @@ class jy_label:
                                     self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
                                     self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
                     #print(NEW_label.all_nodes_ordered)
-                    if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible() == False:
-                        continue
-
-                    new_labels.append(NEW_label)
+                    # if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible() == False:
+                    #     continue
+                    if NEW_label.all_nodes_ordered == [-1,1,8]:
+                        print('check here')
+                    this_new_labels = [NEW_label]
+                    if len(NEW_label.must_drop_off)>0:
+                        this_new_labels = NEW_label.check_time_window_feasible_3(dual)
+                    new_labels.extend(this_new_labels)
         return new_labels
     def check_time_window_feasible(self):
         if len(self.nodes_picked_up) <= 1:
@@ -431,63 +437,173 @@ class jy_label:
                 if time_rem - hos_travel_time_needed > latest_dropoff_time:
                     return True
         return False
-    def check_time_window_feasible_2(self):
-        max_drive_time = 660
-        rest_time = 600
-        max_work_time = 840
-        def feasible_route(route):
-            for i in range(len(route)-1):
-                if route[i+1] not in route[i]:
-                    return False
+    def check_time_window_feasible_2(self,dual):
+
+        new_labels = []
+        frontier = [self]
+        while frontier:
+            next_frontier = []
+            for this_label in frontier:
+                this_node = this_label.node
+                this_state = this_label.my_states_ordered[-1]
+                if len(this_label.must_drop_off) ==0:
+                    continue
+                for next_node in this_label.must_drop_off & self.edges[this_node]:
+                    action = self.action_dict[(this_node,next_node)][0]
+                    new_state = action.get_head_state_fast_load_ai(this_state)
+                    if new_state == None:
+                        continue
+                    NEW_my_actions_ordered=this_label.my_actions_ordered+[action]
+                    NEW_my_states_ordered=this_label.my_states_ordered+[new_state]
+                    NEW_red_cost = self.red_cost + action.comp_red_cost(dual)
+                    NEW_cost=self.cost+action.cost
+                    New_label = jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,this_label,
+                                    self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
+                                    self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
+                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
+                    new_labels.append(New_label)
+                    next_frontier.append(New_label)
+        return new_labels
+    def check_time_window_feasible_3(self, dual):
+        """
+        Return every prefix that belongs to at least one complete, feasible
+        route, excluding the input label's prefixes. The input label itself
+        is only included if it can lead to a feasible complete route.
+        """
+        feasible_labels = []          # what we will return
+        seen_ids = set()              # to avoid inserting the same object twice
+        prefix_label_ids = set()      # to store IDs of the prefixes of the input label
+        
+        # Dictionary to store states at each node for domination checks
+        # Key: node ID, Value: list of labels at this node
+        node_to_labels = {}
+        
+        # Identify all prefixes of the input label (but not the label itself)
+        cur = self.parent_label  # Start with the parent of the input label
+        while cur:
+            prefix_label_ids.add(id(cur))
+            cur = cur.parent_label
+        
+        def deposit_chain(label):
+            """Push label and all its ancestors into feasible_labels once, excluding input label prefixes."""
+            cur = label
+            while cur and id(cur) not in seen_ids:
+                # Only add if it's not a prefix of the input label
+                if id(cur) not in prefix_label_ids:
+                    feasible_labels.append(cur)
+                seen_ids.add(id(cur))
+                cur = cur.parent_label
+        
+        def is_dominated(label):
+            """
+            Check if the label's state is dominated by any existing state
+            at the same node with fewer or equal must_drop_off nodes.
+            """
+            node = label.node
+            current_state = label.my_states_ordered[-1]
+            
+            if node not in node_to_labels:
+                node_to_labels[node] = []
+                return False
+            
+            # Check against existing labels at the same node
+            for existing_label in node_to_labels[node]:
+                existing_state = existing_label.my_states_ordered[-1]
                 
-            time_rem = last_state.state_vec[2]
-            drive_time = last_state.state_vec[4]
-            work_time = last_state.state_vec[5]
-            for node in route:
-                this_action = self.action_dict[(this_node,node)][0]
-                travel_time_needed =this_action.travel_time
-                service_time_needed = this_action.service_time
-                if drive_time>travel_time_needed:
-                    time_rem -= travel_time_needed
-                    if time_rem < this_action.time_window[1]:
-                        return False
-                    drive_time -= travel_time_needed
-                    work_time -=travel_time_needed
-                    if work_time < service_time_needed:
-                         time_rem -= (service_time_needed+rest_time)
-                         drive_time = max_drive_time
-                         work_time = max_work_time
-                    else:
-                        time_rem -= service_time_needed
-                        work_time -= service_time_needed
-                else:
-                    rest_num = (travel_time_needed-drive_time)//max_drive_time +1
-                    hos_travel_time_needed = travel_time_needed + rest_num*rest_time
-                    time_rem -= hos_travel_time_needed
-                    if time_rem < this_action.time_window[1]:
-                        return False
-                    drive_time = drive_time + rest_num*max_drive_time-travel_time_needed
-                    work_time = drive_time
-                    if work_time < service_time_needed:
-                         time_rem -= (service_time_needed+rest_time)
-                         drive_time = max_drive_time
-                         work_time = max_work_time
-                    else:
-                        time_rem -= service_time_needed
-                        work_time -= service_time_needed
-            return True
+                # Compare the number of remaining mandatory nodes directly
+                if len(existing_label.must_drop_off) <= len(label.must_drop_off) and \
+                existing_state.this_state_dominates_input_state(current_state):
+                    return True
+            
+            # Add this label to the node's label list for future domination checks
+            node_to_labels[node].append(label)
+            return False
         
-        if len(self.nodes_picked_up) <= 1:
-            return True
-        must_drop_off = {x+self.cus_num for x in self.must_drop_off}
-        last_state = self.my_states_ordered[-1]
-        this_node = last_state.node
-        possible_route = list(itertools.permutations(must_drop_off))
-        for route in possible_route:
-            if feasible_route(route):
-                return True
+        def dfs(label):
+            """
+            Depth-first search. Returns True if *any* completion below `label`
+            is feasible and can reach node -2. Only deposits chains for fully
+            feasible routes.
+            """
+            # Check if this label is dominated by an existing one
+            if is_dominated(label):
+                return False  # Early termination - this branch won't lead to an optimal solution
+            
+            # -----------------------------------------------------------------
+            # LEAF ⇢ no mandatory nodes left → check if can reach node -2
+            # -----------------------------------------------------------------
+            if not label.must_drop_off:
+                this_node = label.node
+                this_state = label.my_states_ordered[-1]
+                
+                # Add the final node -2 to the route
+                if -2 in self.edges[this_node]:  # Check if there's an edge to node -2
+                    action = self.action_dict[(this_node, -2)][0]
+                    new_state = action.get_head_state_fast_load_ai(this_state,this_state.l_id)
+                    
+                    if new_state is not None:  # If the connection to -2 is feasible
+                        # Create the final label with node -2
+                        final_label = jy_label(
+                            label.my_actions_ordered + [action],
+                            label.my_states_ordered + [new_state],
+                            label.red_cost + action.comp_red_cost(dual),
+                            label.cost + action.cost,
+                            label,                                  # parent link
+                            self.dual_vec, self.max_actions_in_route,
+                            self.lowest_action_contrib_red_cost,
+                            self.actions_of_node, self.action_dict, self.jy_opt,
+                            self.cus_num, self.pickup_nodes, self.dropoff_nodes,
+                            self.rcp_u_partial_2, self.edges,
+                            self.preferred_actions, self.distance
+                        )
+                        
+                        # Only deposit the chain if we can reach node -2
+                        deposit_chain(final_label)
+                        return True
+                    
+                # If we can't reach node -2, this route is not feasible
+                return False
+            
+            # -----------------------------------------------------------------
+            # INTERNAL NODE
+            # -----------------------------------------------------------------
+            this_node = label.node
+            this_state = label.my_states_ordered[-1]
+            
+            any_child_feasible = False
+            # Convert pickup indices to drop-off indices for edge checking
+            must_drop_off = {pickup+self.cus_num for pickup in label.must_drop_off}
+            
+            for next_node in (must_drop_off & self.edges[this_node]):
+                action = self.action_dict[(this_node, next_node)][0]
+                new_state = action.get_head_state_fast_load_ai(this_state,this_state.l_id)
+                if new_state is None:  # arc violates time windows
+                    continue           # skip this branch
+                
+                # Build the child label
+                child = jy_label(
+                    label.my_actions_ordered + [action],
+                    label.my_states_ordered + [new_state],
+                    label.red_cost + action.comp_red_cost(dual),
+                    label.cost + action.cost,
+                    label,                                  # parent link
+                    self.dual_vec, self.max_actions_in_route,
+                    self.lowest_action_contrib_red_cost,
+                    self.actions_of_node, self.action_dict, self.jy_opt,
+                    self.cus_num, self.pickup_nodes, self.dropoff_nodes,
+                    self.rcp_u_partial_2, self.edges,
+                    self.preferred_actions, self.distance
+                )
+                
+                if dfs(child):  # recurse
+                    any_child_feasible = True
+            
+            return any_child_feasible
         
-        return False
+        # kick off the search from the current label (`self`)
+        dfs(self)
+        
+        return feasible_labels
     def convert_2_route(self):
         if self.my_states_ordered[-1].node!=-2:
             input('this route is not done')
@@ -516,3 +632,11 @@ class jy_label:
             
         if np.abs(cur_cost-self.cost)>.0001 or (cur_red_cost-self.red_cost)>.0001:
             input('errror here in cost')
+    def check_label_feasibility(self):
+        for index in range(len(self.my_states_ordered)-1):
+            s1 = self.my_states_ordered[index]
+            s2 = self.my_states_ordered[index+1]
+            a = self.my_actions_ordered[index]
+            if a.check_valid(s1,s2) == False:
+                return False
+        return True

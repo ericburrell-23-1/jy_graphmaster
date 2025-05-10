@@ -20,9 +20,10 @@ class jy_sortedObject_list:
         #print('keys')
         #print(keys)
         #input('---')
-        index = bisect.bisect_left(self.keys, keys)
-        self.keys.insert(index, keys)
-        self.objects.insert(index, obj)
+        if obj not in self.objects:
+            index = bisect.bisect_left(self.keys, keys)
+            self.keys.insert(index, keys)
+            self.objects.insert(index, obj)
 
     def pop(self):
         """

@@ -12,7 +12,8 @@ class Action:
 
 
     def __init__(self,node_head:int, node_tail:int,pickup, dropoff, num_cus, non_zero_exog_val,non_zero_exog_indices,cost, 
-                min_resource_vec, resource_consumption_vec, max_resource_vec,time_window, travel_time, service_time ):
+                min_resource_vec, resource_consumption_vec, max_resource_vec,time_window, travel_time, service_time,
+                remainder, time_q_rest, time_q1_rest):
         self.node_tail = node_tail
         self.node_head = node_head
         #self.Exog_vec_csr = csr_matrix(Exog_vec) #1
@@ -31,6 +32,9 @@ class Action:
         self.time_window = time_window
         self.travel_time = travel_time
         self.service_time = service_time
+        self.remainder = remainder
+        self.time_q_rest = time_q_rest
+        self.time_q1_rest = time_q1_rest
         self.mark_of_null_action = False
         if self.node_tail is None:
             self.mark_of_null_action = True
@@ -61,11 +65,13 @@ class Action:
         # 1. Early rejection using sparse comparison (fast & memory efficient)
         #diff_data = state_tail.state_vec - self.min_resource_vec
         #if self.violates_min_resources(state_tail.state_vec)==True:
-        if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up, state_tail.must_drop_off)==True:
-            return None
-        violate, earlist_arr_time,new_hos_drive_time, new_hos_work_time = self.hos_violate_and_update(state_tail.state_vec)
+        violate, earlist_arr_time,new_hos_drive_time, new_hos_work_time = self.hos_violate_and_update_better(state_tail.state_vec)
         if violate == True:
             return None
+        
+        if self.violates_min_resources(state_tail.state_vec, state_tail.picked_up, state_tail.must_drop_off)==True:
+            return None
+        
         # if diff_data.nnz > 0 and (diff_data.data < 0).any():
         #     return None
         # 2. Compute tentative head state vector
@@ -278,7 +284,29 @@ class Action:
         if np.any(tail_vec < self.min_resource_vec):
             return True
         return False
-
+    def hos_violate_and_update_better(self,tail_vec):
+        # Define constants to improve readability and avoid magic numbers
+        MAX_DRIVE = 660
+        drive_hos = tail_vec[4]
+        
+        # Calculate if rest is needed and consolidate the logic
+        if self.travel_time <= drive_hos:
+            earliest_arr_time = tail_vec[2] - self.travel_time
+            new_hos_drive_time = new_hos_work_time= drive_hos - self.remainder
+            if earliest_arr_time < self.time_window[1]:
+                return True, None, None, None
+            return False, earliest_arr_time, new_hos_drive_time, new_hos_work_time
+        if drive_hos>=self.remainder:
+            earliest_arr_time = tail_vec[2]-self.time_q_rest
+            new_hos_drive_time = new_hos_work_time= drive_hos - self.remainder
+            if earliest_arr_time < self.time_window[1]:
+                return True, None, None, None
+            return False, earliest_arr_time, new_hos_drive_time, new_hos_work_time
+        earliest_arr_time = tail_vec[2] - self.time_q1_rest
+        new_hos_drive_time = new_hos_work_time=MAX_DRIVE-(self.remainder-drive_hos)
+        if earliest_arr_time < self.time_window[1]:
+                return True, None, None, None
+        return False, earliest_arr_time, new_hos_drive_time, new_hos_work_time
     def hos_violate_and_update(self, tail_vec):
         # Define constants to improve readability and avoid magic numbers
         MAX_DRIVE = 660
@@ -368,6 +396,15 @@ class Action:
         ideal_head = self.get_head_state_fast_load_ai(state_tail, state_tail.l_id)
         if ideal_head==None:
             return False
+        
+        res_vec_diff = state_tail.state_vec[:4] - state_head.state_vec[:4]
+
+
+        # Compute min and sum values
+        min_value = res_vec_diff.min() 
+        sum_value = np.abs(res_vec_diff).sum()
+        if min_value < 0 or sum_value < 0:
+            is_valid == False
         # [is_dom, is_equal] = ideal_head.this_state_dominates_input_state(state_head)
         # if is_equal == False and is_dom == False:
         #    #state_head.pretty_print_state()
