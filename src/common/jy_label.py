@@ -16,7 +16,8 @@ class jy_label:
 #     
     def __init__(self,my_actions_ordered,my_states_ordered,red_cost,cost,parent_label:'jy_label',
                  dual_vec,max_actions_in_route,lowest_action_contrib_red_cost,
-                 actions_of_node,action_dict,jy_opt,cus_num,pickup_nodes,dropoff_nodes,rcp_u_partial_2,edges,preferred_actions, distance):
+                 actions_of_node,action_dict,jy_opt,cus_num,pickup_nodes,dropoff_nodes,rcp_u_partial_2,edges,preferred_actions, 
+                 distance, travel_time, time_window_end):
         self.jy_opt=jy_opt
         self.my_actions_ordered=my_actions_ordered
         if not my_actions_ordered:
@@ -85,6 +86,8 @@ class jy_label:
         self.edges = edges
         self.preferred_actions = preferred_actions
         self.distance = distance
+        self.travel_time = travel_time
+        self.time_window_end = time_window_end
         self.label_id = hash(tuple([state.state_id for state in self.my_states_ordered]))
         # for s in self.my_states_ordered:
         #     self.all_nodes_ordered.append(s.node)
@@ -399,16 +402,19 @@ class jy_label:
                     NEW_label=jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,NEW_parent_label,
                                     self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
                                     self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
-                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
+                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance, 
+                                    self.travel_time,self.time_window_end)
                     #print(NEW_label.all_nodes_ordered)
-                    # if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible() == False:
-                    #     continue
-                    if NEW_label.all_nodes_ordered == [-1,1,8]:
-                        print('check here')
-                    this_new_labels = [NEW_label]
-                    if len(NEW_label.must_drop_off)>0:
-                        this_new_labels = NEW_label.check_time_window_feasible_3(dual)
-                    new_labels.extend(this_new_labels)
+                    if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible() == False:
+                        continue
+                    new_labels.append(NEW_label)
+                    #TODO: this_new_labels should be empty if it not able to serve dropoff
+                    # this_new_labels = []
+                    # if len(NEW_label.must_drop_off)>0:
+                    #     # if feasible label found, add all prefix include itself
+                    #     this_new_labels = NEW_label.check_time_window_feasible_3(dual)
+                    #new_labels.extend(this_new_labels)
+                    
         return new_labels
     def check_time_window_feasible(self):
         if len(self.nodes_picked_up) <= 1:
@@ -416,17 +422,21 @@ class jy_label:
         must_drop_off = {x+self.cus_num for x in self.must_drop_off}
         last_state = self.my_states_ordered[-1]
         this_node = last_state.node
-        if must_drop_off.issubset(self.edges[this_node]) == False:
+        feasible_dropoff = must_drop_off
+        if len(feasible_dropoff) == 0:
             return False
-        else: 
-            #latest_dropoff_time = max(self.action_dict[(this_node,dropoff)][0].time_window[1] for dropoff in must_drop_off)
-            latest_dropoff, latest_dropoff_time = max(
-                        ((dropoff, self.action_dict[(this_node, dropoff)][0].time_window[1]) for dropoff in must_drop_off),
-                            key=lambda x: x[1]
-                        )
+        #latest_dropoff_time = max(self.action_dict[(this_node,dropoff)][0].time_window[1] for dropoff in must_drop_off)
+        latest_dropoff, latest_dropoff_time = max(
+            ((n, self.time_window_end[n]) for n in feasible_dropoff),
+            key=lambda pair: pair[1]          # compare by the time (index 1)
+        )
+        if latest_dropoff in self.edges[this_node]:
+            violate, _, _, _ = self.action_dict[(this_node, latest_dropoff)][0].hos_violate_and_update_better(last_state.state_vec)
+            return not violate
+        else:
             time_rem = last_state.state_vec[2]
             drive_time = last_state.state_vec[4]
-            travel_time_needed = self.action_dict[(this_node,latest_dropoff)][0].travel_time
+            travel_time_needed = self.travel_time[this_node][latest_dropoff]
             if drive_time>travel_time_needed and time_rem-travel_time_needed>latest_dropoff_time:
                 return True
             if drive_time < travel_time_needed:
@@ -436,7 +446,7 @@ class jy_label:
                 hos_travel_time_needed = travel_time_needed + rest_num*rest_hours
                 if time_rem - hos_travel_time_needed > latest_dropoff_time:
                     return True
-        return False
+            return False
     def check_time_window_feasible_2(self,dual):
 
         new_labels = []
@@ -460,7 +470,8 @@ class jy_label:
                     New_label = jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,this_label,
                                     self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
                                     self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
-                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance)
+                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance,
+                                    self.travel_time,self.time_window_end)
                     new_labels.append(New_label)
                     next_frontier.append(New_label)
         return new_labels
@@ -554,7 +565,7 @@ class jy_label:
                             self.actions_of_node, self.action_dict, self.jy_opt,
                             self.cus_num, self.pickup_nodes, self.dropoff_nodes,
                             self.rcp_u_partial_2, self.edges,
-                            self.preferred_actions, self.distance
+                            self.preferred_actions, self.distance,self.travel_time,self.time_window_end
                         )
                         
                         # Only deposit the chain if we can reach node -2
@@ -592,7 +603,7 @@ class jy_label:
                     self.actions_of_node, self.action_dict, self.jy_opt,
                     self.cus_num, self.pickup_nodes, self.dropoff_nodes,
                     self.rcp_u_partial_2, self.edges,
-                    self.preferred_actions, self.distance
+                    self.preferred_actions, self.distance, self.travel_time,self.time_window_end
                 )
                 
                 if dfs(child):  # recurse

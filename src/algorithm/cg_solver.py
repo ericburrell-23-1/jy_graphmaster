@@ -59,6 +59,8 @@ class GraphMaster_cg:
                  edges,
                  preferred_actions,
                  distance,
+                 travel_time,
+                 time_window_end,
                  rhs_exog_vec: np.ndarray,
                  initial_resource_state: Dict[str, int],
                  initial_resource_vector:np.ndarray,
@@ -70,8 +72,8 @@ class GraphMaster_cg:
                  number_of_resources: int,
                  the_single_null_action: Action,
                  neighbors,
-                 benefit_group
-                 #node_to_list
+                 benefit_group,
+                 baseline_cost
                  ):
         
         self.nodes = nodes
@@ -81,6 +83,8 @@ class GraphMaster_cg:
         self.edges = edges
         self.preferred_actions = preferred_actions
         self.distance = distance
+        self.travel_time = travel_time
+        self.time_window_end = time_window_end
         self.rhs_exog_vec = rhs_exog_vec
         self.initial_resource_state = initial_resource_state
         self.initial_resource_vector = initial_resource_vector
@@ -96,7 +100,7 @@ class GraphMaster_cg:
         self.the_single_null_action=the_single_null_action
         self.neighbors = neighbors
         self.benefit_group = benefit_group
-        #self.node_to_list = node_to_list
+        self.baseline_cost = baseline_cost
         self.graph_to_index = {}
         self.rez_states_minus = initial_res_states
         self.res_actions_minus = initial_res_actions
@@ -118,14 +122,15 @@ class GraphMaster_cg:
         self.jy_options_user_defined['complementary_col'] = 1
         self.jy_options_user_defined['use_fast_pricing'] = True
         self.jy_options_user_defined['lb_option'] =2
-        self.jy_options_user_defined['poss_action'] = 3
+        self.jy_options_user_defined['poss_action'] = 2
         self.jy_options_user_defined['k_benefit_group'] = 10
         self.jy_options_user_defined['information_for_iteration'] =True
         self.jy_options_user_defined['use_comp_col'] =True # true: if use complementary column
         self.jy_options_user_defined['new_rmp'] =True # true: if generate more routes from omega term
         self.jy_options_user_defined['subset_route'] = True # true: if use subset routes for col service 3 customers
         self.jy_options_user_defined['optimality_gap'] = 0.01 
-        self.jy_options_user_defined['min_dual_val_expand']=-100
+        self.jy_options_user_defined['min_dual_val_expand']=-self.baseline_cost/1000
+        self.jy_options_user_defined['max_iteration'] = 20
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -291,7 +296,11 @@ class GraphMaster_cg:
             jy_init_res_state = State(-1,[np.inf,0],0, self.initial_resource_vector,set(),set(),set(),l_id,True,False)
             this_dual = np.array([0 if abs(x) < 0.0001 else x for x in this_dual])
             if self.jy_options_user_defined['use_fast_pricing'] == True:
-                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,self.distance,this_dual,jy_init_res_state,self.jy_options_user_defined['max_actions_in_route'],jy_actions_node,self.nodes,self.neighbors, self.benefit_group,self.jy_options_user_defined)
+                jy_fast_pricer = jy_fast_pricing(self.actions,self.action_dict,self.can_group,self.edges,self.preferred_actions,
+                                                 self.distance,self.travel_time,self.time_window_end, this_dual,jy_init_res_state,
+                                                 self.jy_options_user_defined['max_actions_in_route'],
+                                                 jy_actions_node,self.nodes,self.neighbors, 
+                                                 self.benefit_group,self.jy_options_user_defined)
                 routes, threshold_count= jy_fast_pricer.run()
                 overall_threshold_count = overall_threshold_count + threshold_count
                 reduced_cost_list = [r.get_red_cost(this_dual) for r in routes]
@@ -306,7 +315,9 @@ class GraphMaster_cg:
                 print(reduced_cost_list)
                     
                 rmp_obj = output['objective_value']
-                if len(reduced_cost_list) < 0.5 or reduced_cost >= self.jy_options_user_defined['min_dual_val_expand']*1.1 or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap']:
+                if len(reduced_cost_list) < 0.5 or reduced_cost >= self.jy_options_user_defined['min_dual_val_expand']*1.1 \
+                or abs(sum(x for x in reduced_cost_list if x < 0)) < rmp_obj*self.jy_options_user_defined['optimality_gap'] \
+                or iteration>self.jy_options_user_defined['max_iteration']:
                     dict_active_DOI = cg_solver.get_active_DOI()
                     this_forbidden_omega = list(dict_active_DOI.keys())
                     obj_value_omega = list(dict_active_DOI.values())
@@ -320,7 +331,7 @@ class GraphMaster_cg:
                     omega_term_list.append(len(this_forbidden_omega))
                     output_info = defaultdict()
                     #if sum_omega_obj<-self.jy_options_user_defined['min_dual_val_expand']:
-                    if len(this_forbidden_omega)<0.5:
+                    if len(this_forbidden_omega)<0.5 or iteration < self.jy_options_user_defined['max_iteration']:
                         if self.jy_options_user_defined['information_for_iteration'] == True:
                             output_info['list of lp'] = lp_objective_list
                             output_info['list number of positive omega terms (for each iteration lp'] = omega_term_list
@@ -403,13 +414,17 @@ class GraphMaster_cg:
 
                                             new_state = this_a.get_ez_head_state(cur_state,1)
                                             if new_state == None:
+                                                do_continue = True
+                                                break
+                                            
                                                 input('error here for subroute generation')
                                             state_action_alt_repeat.append(new_state)
                                             cur_state = new_state
                                         if do_continue == True:
                                             continue
                                         this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
-                                        cg_solver.add_route(this_sub_route)
+                                        if this_sub_route.verify_feasibility() == True:
+                                            cg_solver.add_route(this_sub_route)
                                         
                         add_route_num += 1
                 path_col_generated.append(add_route_num)

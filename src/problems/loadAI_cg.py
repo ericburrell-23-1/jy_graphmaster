@@ -80,6 +80,8 @@ class loadAI_cg:
             self.edges,
             self.preferred_actions,
             self.distance,
+            self.travel_time,
+            self.time_window_end,
             self.rhs_vector,
             self.initial_resource_dict,
             self.initial_resource_vector,
@@ -91,7 +93,8 @@ class loadAI_cg:
             self.number_of_resources,
             self.the_single_null_action,
             self.neighbors,
-            self.benefit_group
+            self.benefit_group,
+            self.baseline_cost
             #node_to_list
         )
         #with TimeProfiler(f'time_profile_{self.instance_name}_speed'):

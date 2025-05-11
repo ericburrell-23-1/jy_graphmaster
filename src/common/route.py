@@ -12,7 +12,7 @@ class Route:
         self.generate_states_nodes_actions_ordered()
         self.generate_all_node_pairs_ordered()
         self.generate_cost_exog_vector()
-        self.verify_feasibility()
+        #self.verify_feasibility()
         self.path_id = hash(tuple(self.node_in_ordered))
     def get_red_cost(self,dual):
         if len(self.Exog_vec_non_zero_indices) < 0.5:
@@ -138,10 +138,10 @@ class Route:
             my_act=self.just_actions_ordered[i]
             valid = my_act.check_valid(s1,s2)
             if valid == False:
-                input('action not valide for s1 s2 here')
+                flag = False
+                #input('action not valide for s1 s2 here')
         
-        if flag==False:
-            input('error here ')
+        return flag
     def __eq__(self, other: 'Route') -> bool:
         if other is None:
             return False

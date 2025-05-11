@@ -26,6 +26,8 @@ class jy_fast_pricing():
                  edges,
                  preferred_actions,
                  distance,
+                 travel_time,
+                 time_window_end,
                  dual_vec, 
                  init_res_state, 
                  max_actions_in_route, 
@@ -52,6 +54,8 @@ class jy_fast_pricing():
         self.edges = edges
         self.preferred_actions = preferred_actions
         self.distance = distance
+        self.travel_time = travel_time
+        self.time_window_end = time_window_end
         self.forbidden_nodes=set()
         self.dual_vec = dual_vec.copy()
         self.dual_vec_orig = dual_vec.copy()
@@ -91,7 +95,7 @@ class jy_fast_pricing():
 
     def label_2_tuple(self,my_lab):
         #order of expansion 
-        f1=my_lab.num_dropoffs_needed
+        f1=+my_lab.num_dropoffs_needed
         f2=my_lab.red_cost
         f3=-len(my_lab.all_nodes_ordered)
         f4=my_lab.all_nodes_ordered[-1]
@@ -193,7 +197,9 @@ class jy_fast_pricing():
             rcp_u_partial_2 = self.rcp_u_partial_2,
             edges = self.edges,
             preferred_actions = prefered_actions,
-            distance = self.distance
+            distance = self.distance,
+            travel_time= self.travel_time,
+            time_window_end = self.time_window_end
         )
 
         new_tuple=self.label_2_tuple(source_label)
@@ -439,8 +445,7 @@ class jy_fast_pricing():
                         #print('doing none')
                         continue
                     for new_label in new_labels:
-                        if new_label.all_nodes_ordered == [-1, 1, 21, -2]:
-                            print('check here')
+
                         if new_label.check_label_feasibility() == False:
                             input('error: infeasible label generated here')
                         if self.jy_opt['lb_option'] == 2:
@@ -660,17 +665,17 @@ class jy_fast_pricing():
 
         # Get all relevant neighbors (from drop-offs and current node)
         #neighbor for must drop off (drop off)
-        must_drop_off_neighbors_drop_off_node = set().union(*([this_node for this_node in self.neighbors[node] if this_node in preferred_actions[my_label.node]]
+        must_drop_off_neighbors_drop_off_node = set().union(*([this_node for this_node in set(self.neighbors[node])& set(self.pickup_node) if this_node in preferred_actions[my_label.node]]
                                                                     for node in drop_off_nodes))
         #neighbor for current node
-        neighbor_for_this_node = set(self.neighbors[my_label.node])
+        neighbor_for_this_node = set(self.neighbors[my_label.node]) & set(self.pickup_node)
         #neighbor for must drop off (pick up)
         k= self.jy_opt['k_benefit_group']
-        must_drop_off_neighbors_pick_up_node = set().union(*([this_node for this_node in list(self.benefit_group[node].keys() )[:k] if this_node in preferred_actions[my_label.node]] for node in my_label.must_drop_off))
+        must_drop_off_neighbors_pick_up_node = set().union(*([this_node for this_node in list(self.benefit_group[node].keys() )[:k] if this_node in preferred_actions[my_label.node]] for node in my_label.nodes_picked_up))
         
         all_neighbors_to_check = must_drop_off_neighbors_drop_off_node | neighbor_for_this_node | must_drop_off_neighbors_pick_up_node
         # Find all valid pickup nodes at once
-        valid_pickups = all_neighbors_to_check.intersection(self.pickup_node).difference(my_label.nodes_picked_up)
+        valid_pickups = all_neighbors_to_check.difference(my_label.nodes_picked_up)
         valid_pickups=set(valid_pickups)-self.forbidden_nodes
         actions_use.update(self.action_dict[(my_label.node, node)][0] for node in valid_pickups)
         return list(actions_use)
