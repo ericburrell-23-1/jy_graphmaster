@@ -484,7 +484,7 @@ class jy_fast_pricing():
 
                         if new_label.is_complete_route:
                             lowest_so_far=np.min([lowest_so_far,new_label.red_cost])
-                        if new_label.is_complete_route  and new_label.red_cost<-.001 and len(new_label.all_nodes_ordered)>4: #< new_label.lb/10:
+                        if new_label.is_complete_route  and new_label.red_cost<-0.001 and len(new_label.all_nodes_ordered)>4: #< new_label.lb/10:
                             #input('making route')
                             route = new_label.convert_2_route()
                             all_routes.append(route)

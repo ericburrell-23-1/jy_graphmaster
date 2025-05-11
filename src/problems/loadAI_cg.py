@@ -821,7 +821,7 @@ class loadAI_cg:
             self.preferred_actions[np.inf] = self.edges.copy()
         else:
             this_dict = self.dict.copy()
-            for threshold in THRESHOLD:
+            for threshold in THRESHOLD[:1]:
 
                 F = {2:{}}
                 B = {2:{}}
@@ -895,9 +895,12 @@ class loadAI_cg:
                     preferred_edge[v].add(-2)
                 preferred_edge[-2] = set()
                 self.preferred_actions[threshold] = preferred_edge
+            self.preferred_actions[np.inf] = self.edges
             print('complete preferred action generation')
+            for threshold, edges in self.preferred_actions.items():
+                print(f'threshold {threshold}, num edge:{sum(len(v) for v in edges.values())}')
             #debug 
-            debug = True
+            debug = False
             if debug is True:
                 this_edges = self.preferred_actions[np.inf]
                 for u in this_edges:

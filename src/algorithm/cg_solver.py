@@ -131,6 +131,7 @@ class GraphMaster_cg:
         self.jy_options_user_defined['optimality_gap'] = 0.01 
         self.jy_options_user_defined['min_dual_val_expand']=-self.baseline_cost/1000
         self.jy_options_user_defined['max_iteration'] = 20
+        self.jy_options_user_defined['do_time_profile'] = False
         if self.jy_options_user_defined['use_load_ai_in_pgm']==True:
             self.jy_options_user_defined['max_actions_in_route']=2+(self.jy_options_user_defined['using_load_ai_lazy_max_pickups']*2)
             self.LOAD_AI_setup()
@@ -264,8 +265,9 @@ class GraphMaster_cg:
         cg_solver = xy_jy_cg_solver(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,self.distance, forbidden_omega,self.initial_resource_vector)
         #cg_solver_pulp = CG_RMP(list_of_routes,node_sequence_of_routes,self.rhs_exog_vec,self.state_update_module,forbidden_omega,self.initial_resource_vector)
         overall_threshold_count = np.zeros(len(self.preferred_actions))
-        profiler = cProfile.Profile()
-        profiler.enable()
+        if self.jy_options_user_defined['do_time_profile'] == True:
+            profiler = cProfile.Profile()
+            profiler.enable()
     
         while iteration < max_iterations:
             #print(type(self.state_update_module.actions))
@@ -358,8 +360,9 @@ class GraphMaster_cg:
                         #     print(route.node_in_ordered)
                         #print('route used')
                         #used_routes = self.post_procssing(used_routes)
-                        profiler.disable()
-                        profiler.dump_stats('program_profile_160_x.prof')
+                        if self.jy_options_user_defined['do_time_profile'] == True:
+                            profiler.disable()
+                            profiler.dump_stats('program_profile_160_x.prof')
                         print('===overall threshold count===')
                         print(overall_threshold_count)
                         for route in used_routes:
