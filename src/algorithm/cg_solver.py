@@ -321,7 +321,7 @@ class GraphMaster_cg:
                     dict_active_DOI = cg_solver.get_active_DOI()
                     this_forbidden_omega = list(dict_active_DOI.keys())
                     obj_value_omega = list(dict_active_DOI.values())
-                    sum_omega_obj = sum(obj_value_omega)
+                    #sum_omega_obj = sum(obj_value_omega)
                     #this_forbidden_omega = cg_solver.get_forbidden_omega()
                     print('this_forbidden_omega')
                     print(this_forbidden_omega)
@@ -373,7 +373,8 @@ class GraphMaster_cg:
                             'iterations': iteration,
                             'used_routes':used_routes,
                             'output_info':output_info,
-                            'optimality_gap':gap
+                            'optimality_gap':gap,
+                            'optimal_dual':this_dual
                         }
                     else:
                         for (u,v) in this_forbidden_omega:

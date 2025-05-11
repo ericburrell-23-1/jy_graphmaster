@@ -23,6 +23,7 @@ from tqdm import tqdm
 import time
 import random
 
+
 # CONSTANTS
 VOLUME_CAPACITY = 3000
 WEIGHT_CAPACITY = 45000
@@ -107,6 +108,18 @@ class loadAI_cg:
         #variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
         output_info = output['output_info']
+        import csv
+        dual = output['optimal_dual']
+        pickup_to_dropoff_distance = [self.distance[n][n+self.number_of_customers] for n in self.pickup_node]
+        with open('data.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            # Write header row
+            writer.writerow(['dual', 'pickup_to_dropoff_distance'])
+            # Write data rows
+            for d, dist in zip(dual, pickup_to_dropoff_distance):
+                writer.writerow([d, dist])
+
+        print("CSV file created successfully!")
         opt_gap = output['optimality_gap']
         print('=======output info=======')
         for name,value in output_info.items():
@@ -115,7 +128,7 @@ class loadAI_cg:
             print(value)
         print(f'optimality gap: {opt_gap*100}%')
         import csv
-        filename="output.csv"
+        filename="solution.csv"
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             
@@ -803,7 +816,7 @@ class loadAI_cg:
         #self.parefered_actions = {threshold:[] for threshold in THRESHOLD}
         self.preferred_actions = {}
         print('====start create preferred edges====')
-        use_threshold = False
+        use_threshold = True
         if use_threshold is False:
             self.preferred_actions[np.inf] = self.edges.copy()
         else:
