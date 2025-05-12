@@ -35,7 +35,7 @@ AVERAGE_SPEED = 55 / 60
 MIN_DISTANCE_SAVING = 0
 STANDARD_SERVICE_TIME = 2 * 60
 JY_OPT_SPLIT=1
-THRESHOLD = [1,np.inf]
+THRESHOLD = [1,2,np.inf]
 DISTANCE_RATIO = 1
 TIME_RATIO = 1
 SCORE_RATIO = 1 #best k percent of edge for given shipments
@@ -701,13 +701,13 @@ class loadAI_cg:
             this_benefit_group = defaultdict()
             for v in self.pickup_node:
                 if u != v:
-                    
                     cost1=cost2=np.inf
                     did_create_edge = False
                     earlist_time_arrive_v_pickup = self.time_window_start[u]-self.service_time[u]-self.travel_time_hos[u,v]
                     time_freedom_uv = earlist_time_arrive_v_pickup - self.time_window_end[v]
-                    costuv = self.distance[u][v]
-                    if time_freedom_uv>0:
+                    costuvuv = self.distance[u][v] +self.distance[v][self.pickup_to_dropoff[u]]+self.distance[self.pickup_to_dropoff[u]][self.pickup_to_dropoff[v]]
+                    costuvvu = self.distance[u][v]+self.distance[v][self.pickup_to_dropoff[v]]+self.distance[self.pickup_to_dropoff[v]][self.pickup_to_dropoff[u]]
+                    if time_freedom_uv>0 and  min(costuvuv,costuvvu) < self._slack(u)+self._slack(v):
                         earlist_time_depart_v_pickup = min(self.time_window_start[v],earlist_time_arrive_v_pickup)
                         #t1_2,d1_2 = self._travel_time_and_distance(v,self.pickup_to_dropoff[u])
                         earlist_time_arrive_u_dropoff = earlist_time_depart_v_pickup-self.service_time[v]\
@@ -717,15 +717,12 @@ class loadAI_cg:
                         earlist_time_arrive_v_dropoff = earlist_time_depart_v_pickup - self.service_time[v]\
                             -self.travel_time_hos[v,self.pickup_to_dropoff[v]]
                         time_freedom_uvv = earlist_time_arrive_v_dropoff-self.time_window_end[self.pickup_to_dropoff[v]]
-                        costuvu = costuv+ self.distance[v][self.pickup_to_dropoff[u]]
-                        costuvv = costuv + self.distance[v][self.pickup_to_dropoff[v]]
                         max_distance = self._slack(u)+self._slack(v)
                         if time_freedom_uvu>0:
                             earlist_time_depart_u_dropoff = min(self.time_window_start[self.pickup_to_dropoff[u]],earlist_time_arrive_u_dropoff)
                             #t1_3,d1_3 = self._travel_time_and_distance(self.pickup_to_dropoff[u],self.pickup_to_dropoff[v])
                             earlist_time_arrive_v_dropoff_2 = earlist_time_depart_u_dropoff - self.service_time[u]-self.travel_time_hos[self.pickup_to_dropoff[u],self.pickup_to_dropoff[v]]
                             time_freedom_uvuv = earlist_time_arrive_v_dropoff_2-self.time_window_end[self.pickup_to_dropoff[v]]
-                            costuvuv = costuvu + self.distance[self.pickup_to_dropoff[u]][self.pickup_to_dropoff[v]]
                             if time_freedom_uvuv>0 and costuvuv < max_distance:
                                 did_create_edge = True
                                 this_time_freedom = min(time_freedom_uv,time_freedom_uvu,time_freedom_uvuv)
@@ -739,7 +736,6 @@ class loadAI_cg:
                             #t2_3,d2_3 = self._travel_time_and_distance(self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]
                             earlist_time_arrive_u_dropoff_2 = earlist_time_depart_v_dropoff -self.service_time[v]-self.travel_time_hos[self.pickup_to_dropoff[v],self.pickup_to_dropoff[u]]
                             time_freedom_uvvu = earlist_time_arrive_u_dropoff_2 - self.time_window_end[self.pickup_to_dropoff[u]]
-                            costuvvu = costuvv + self.distance[self.pickup_to_dropoff[v]][self.pickup_to_dropoff[u]]
                             if time_freedom_uvvu>0 and costuvvu < max_distance:
                                 did_create_edge= True
                                 if u==1 and v==6:
@@ -821,7 +817,7 @@ class loadAI_cg:
             self.preferred_actions[np.inf] = self.edges.copy()
         else:
             this_dict = self.dict.copy()
-            for threshold in THRESHOLD[:1]:
+            for threshold in THRESHOLD[:-1]:
 
                 F = {2:{}}
                 B = {2:{}}

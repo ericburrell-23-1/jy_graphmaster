@@ -405,7 +405,7 @@ class jy_label:
                                     self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance, 
                                     self.travel_time,self.time_window_end)
                     #print(NEW_label.all_nodes_ordered)
-                    if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible() == False:
+                    if len(NEW_label.must_drop_off)>0 and NEW_label.check_time_window_feasible_2() == False:
                         continue
                     new_labels.append(NEW_label)
                     #TODO: this_new_labels should be empty if it not able to serve dropoff
@@ -431,50 +431,93 @@ class jy_label:
             key=lambda pair: pair[1]          # compare by the time (index 1)
         )
         if latest_dropoff in self.edges[this_node]:
-            violate, _, _, _ = self.action_dict[(this_node, latest_dropoff)][0].hos_violate_and_update_better(last_state.state_vec)
+            violate, earliest_arr_time, new_hos_drive_time, new_hos_work_time = self.action_dict[(this_node, latest_dropoff)][0].hos_violate_and_update_better(last_state.state_vec)
             return not violate
         else:
-            time_rem = last_state.state_vec[2]
-            drive_time = last_state.state_vec[4]
-            travel_time_needed = self.travel_time[this_node][latest_dropoff]
-            if drive_time>travel_time_needed and time_rem-travel_time_needed>latest_dropoff_time:
-                return True
-            if drive_time < travel_time_needed:
-                drive_hours = 660
-                rest_hours = 600
-                rest_num = (travel_time_needed-drive_time)//drive_hours +1
-                hos_travel_time_needed = travel_time_needed + rest_num*rest_hours
-                if time_rem - hos_travel_time_needed > latest_dropoff_time:
-                    return True
+            # time_rem = last_state.state_vec[2]
+            # drive_time = last_state.state_vec[4]
+            # travel_time_needed = self.travel_time[this_node][latest_dropoff]
+            # if drive_time>travel_time_needed and time_rem-travel_time_needed>latest_dropoff_time:
+            #     return True
+            # if drive_time < travel_time_needed:
+            #     drive_hours = 660
+            #     rest_hours = 600
+            #     rest_num = (travel_time_needed-drive_time)//drive_hours +1
+            #     hos_travel_time_needed = travel_time_needed + rest_num*rest_hours
+            #     if time_rem - hos_travel_time_needed > latest_dropoff_time:
+            #         return True
             return False
-    def check_time_window_feasible_2(self,dual):
+    def check_time_window_feasible_2(self):
+        """
+        Check if the current label can feasibly drop off all packages that must be dropped off.
+        Uses dynamic programming to avoid redundant checks.
+        """
+        if len(self.nodes_picked_up) <= 1:
+            return True
+        
+        must_drop_off = {x+self.cus_num for x in self.must_drop_off}
+        last_state = self.my_states_ordered[-1]
+        
+        # If no mandatory drop-offs left, we're done
+        if len(must_drop_off) == 0:
+            return True
+        
+        # Use memoization to avoid redundant calculations
+        memo_dict = {}
+        
+        def can_reach_from(node, state_vec, remaining_dropoffs):
+            """
+            Recursive function to check if all remaining drop-offs can be reached from the current node.
+            Uses dynamic programming to avoid redundant checks.
+            """
+            # Base case: no more drop-offs needed
+            if not remaining_dropoffs:
+                # Check if we can reach node -2 from here
+                if -2 in self.edges[node]:
+                    action = self.action_dict[(node, -2)][0]
+                    violate, _, _, _ = action.hos_violate_and_update_better(state_vec)
+                    return not violate
+                return False
+            
+            # Convert to frozenset for hashable key
+            remaining_frozenset = frozenset(remaining_dropoffs)
+            
+            # Create a hashable key for memoization
+            # Using node, state vector, and remaining dropoffs as the key
+            # Note: state_vec might need to be converted to a tuple if it's a list
+            memo_key = (node, tuple(state_vec), remaining_frozenset)
+            
+            # Check if we've already computed this subproblem
+            if memo_key in memo_dict:
+                return memo_dict[memo_key]
+            
+            # Try each possible next drop-off
+            for next_node in remaining_dropoffs & self.edges[node]:
+                action = self.action_dict[(node, next_node)][0]
+                violate, earliest_arr_time, new_hos_drive_time, new_hos_work_time = action.hos_violate_and_update_better(state_vec)
+                
+                if not violate:
+                    # Create new state vector with updated times
+                    new_state_vec = state_vec.copy()
+                    new_state_vec[2] = earliest_arr_time
+                    new_state_vec[4] = new_hos_drive_time
+                    new_state_vec[5] = new_hos_work_time
+                    
+                    # Recursively try to complete the route from the next node
+                    new_remaining = set(remaining_dropoffs) - {next_node}
+                    if can_reach_from(next_node, new_state_vec, new_remaining):
+                        memo_dict[memo_key] = True
+                        return True
+            
+            # If we get here, no feasible route was found
+            memo_dict[memo_key] = False
+            return False
+        
+        # Start the recursive check
+        return can_reach_from(last_state.node, last_state.state_vec.copy(), must_drop_off)
 
-        new_labels = []
-        frontier = [self]
-        while frontier:
-            next_frontier = []
-            for this_label in frontier:
-                this_node = this_label.node
-                this_state = this_label.my_states_ordered[-1]
-                if len(this_label.must_drop_off) ==0:
-                    continue
-                for next_node in this_label.must_drop_off & self.edges[this_node]:
-                    action = self.action_dict[(this_node,next_node)][0]
-                    new_state = action.get_head_state_fast_load_ai(this_state)
-                    if new_state == None:
-                        continue
-                    NEW_my_actions_ordered=this_label.my_actions_ordered+[action]
-                    NEW_my_states_ordered=this_label.my_states_ordered+[new_state]
-                    NEW_red_cost = self.red_cost + action.comp_red_cost(dual)
-                    NEW_cost=self.cost+action.cost
-                    New_label = jy_label(NEW_my_actions_ordered,NEW_my_states_ordered,NEW_red_cost,NEW_cost,this_label,
-                                    self.dual_vec,self.max_actions_in_route,self.lowest_action_contrib_red_cost,
-                                    self.actions_of_node,self.action_dict,self.jy_opt,self.cus_num,self.pickup_nodes,
-                                    self.dropoff_nodes,self.rcp_u_partial_2,self.edges,self.preferred_actions,self.distance,
-                                    self.travel_time,self.time_window_end)
-                    new_labels.append(New_label)
-                    next_frontier.append(New_label)
-        return new_labels
+        
+        
     def check_time_window_feasible_3(self, dual):
         """
         Return every prefix that belongs to at least one complete, feasible
