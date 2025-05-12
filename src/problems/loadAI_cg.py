@@ -108,18 +108,9 @@ class loadAI_cg:
         #variable_to_values = output['x']
         routes:List[Route] = output['used_routes']
         output_info = output['output_info']
-        import csv
         dual = output['optimal_dual']
-        pickup_to_dropoff_distance = [self.distance[n][n+self.number_of_customers] for n in self.pickup_node]
-        with open('data.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            # Write header row
-            writer.writerow(['dual', 'pickup_to_dropoff_distance'])
-            # Write data rows
-            for d, dist in zip(dual, pickup_to_dropoff_distance):
-                writer.writerow([d, dist])
+        pickup_to_dropoff_distance = {n:self.distance[n][n+self.number_of_customers] for n in self.pickup_node}
 
-        print("CSV file created successfully!")
         opt_gap = output['optimality_gap']
         print('=======output info=======')
         for name,value in output_info.items():
@@ -128,19 +119,31 @@ class loadAI_cg:
             print(value)
         print(f'optimality gap: {opt_gap*100}%')
         import csv
-        filename="solution.csv"
-        with open(filename, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            
-            # Write header
-            writer.writerow(['sequence_of_nodes', 'cost'])
+
+        filename = "solution.csv"
+
+        with open(filename, "w", newline="", encoding="utf-8") as csvfile:
+            fieldnames = ["sequence_of_nodes", "cost", "sum_dual", "sum_distance"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_MINIMAL)
+            writer.writeheader()
+
             for route in routes:
-                sequece_of_node = route.node_in_ordered
+                nodes_in_order = route.node_in_ordered  # ← adjust to match your class
+                picked_nodes  = route.nodes_picked_up  # ← plural for clarity
+
                 cost = route.cost
-                sequence_str = ','.join(map(str, sequece_of_node))
-            
-                # Write row with sequence (as string) and cost
-                writer.writerow([sequence_str, cost])
+                dual_sum  = sum(dual[node-1] for node in picked_nodes)
+                slack_sum = sum(pickup_to_dropoff_distance[n]for n in picked_nodes)
+
+                writer.writerow(
+                    {
+                        "sequence_of_nodes": ",".join(map(str, nodes_in_order)),
+                        "cost": cost,
+                        "sum_dual": dual_sum,
+                        "sum_distance": slack_sum,
+                    }
+                )
+
         print(f"Routes successfully saved to {filename}")
             
 

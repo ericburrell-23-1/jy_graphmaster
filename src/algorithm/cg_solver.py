@@ -215,7 +215,7 @@ class GraphMaster_cg:
             state_action.append(second_action)
             this_state = second_action.get_head_state_fast_load_ai(this_state,source_state.l_id)
             state_action.append(this_state)
-            route = Route(state_action,1,self.state_update_module.pickup_node)
+            route = Route(state_action,1)
             this_list_of_routes.append(route)
         return this_list_of_routes
     
@@ -426,7 +426,7 @@ class GraphMaster_cg:
                                             cur_state = new_state
                                         if do_continue == True:
                                             continue
-                                        this_sub_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
+                                        this_sub_route = Route(state_action_alt_repeat,1)
                                         if this_sub_route.verify_feasibility() == True:
                                             cg_solver.add_route(this_sub_route)
                                         
@@ -444,7 +444,7 @@ class GraphMaster_cg:
                         state_action_list.append(state_in_ordered[idx])
                         state_action_list.append(list_of_actions_used_in_col[idx])
                     state_action_list.append(state_in_ordered[-1])
-                    this_route = Route(state_action_list,1,self.state_update_module.pickup_node)
+                    this_route = Route(state_action_list,1)
                     list_of_routes.append(this_route)
                     self._check_path_duplicate(list_of_nodes_in_shortest_path,reduced_cost)
                     nonzero_indices = np.nonzero(this_route.Exog_vec)[0]
@@ -489,7 +489,7 @@ class GraphMaster_cg:
                         input('error here: none state generated from given column')
                     state_action_alt_repeat.append(next_state)
                     cur_state = next_state
-                this_route = Route(state_action_alt_repeat,1,self.state_update_module.pickup_node)
+                this_route = Route(state_action_alt_repeat,1)
                 routes_no_over_cover.remove(route)
                 routes_no_over_cover.append(this_route)
         return routes_no_over_cover

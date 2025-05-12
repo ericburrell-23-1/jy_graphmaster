@@ -666,7 +666,7 @@ class jy_label:
         for i in range(0,len(self.my_actions_ordered)):
             state_action_alt_repeat.append(self.my_actions_ordered[i])
             state_action_alt_repeat.append(self.my_states_ordered[i+1])
-        my_route=Route(state_action_alt_repeat,0,self.pickup_nodes)
+        my_route=Route(state_action_alt_repeat,0)
         
         return my_route
 

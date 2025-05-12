@@ -635,7 +635,7 @@ class xy_jy_cg_solver:
             cur_state = next_state
         
         # Create and return the new route
-        new_route = Route(state_action_alt_repeat, 1, self.pickup_node)
+        new_route = Route(state_action_alt_repeat, 1)
         return new_route
 
     def _route_to_tuple(self, route: Route):

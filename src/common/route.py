@@ -1,13 +1,11 @@
 import numpy as np
 class Route:
-    def __init__(self,state_action_alt_repeat,weight,pickup_node):
+    def __init__(self,state_action_alt_repeat,weight):
 
         self.Exog_vec_non_zero_indices = []
         self.Exog_vec_non_zero_val = []
         self.state_action_alt_repeat=state_action_alt_repeat #input is states and actions alternating
-        self.pickup_node = pickup_node
         self.clean_state_action_alt_repeat_by_removing_null()
-
         self.weight=weight #what is the corresponding amounf of this in the solution
         self.generate_states_nodes_actions_ordered()
         self.generate_all_node_pairs_ordered()
@@ -78,9 +76,8 @@ class Route:
         # Extract pickup nodes from the route
         pickup_nodes = []
         
-        for node in route[1:-1]:  # Skip start/end depot
-            if node in self.pickup_node:
-                pickup_nodes.append(node)
+        for node in self.nodes_picked_up:  # Skip start/end depot
+            pickup_nodes.append(node)
         
         # If fewer than 2 pickups, return empty list
         if len(pickup_nodes) < 2:
@@ -111,14 +108,15 @@ class Route:
     def generate_all_node_pairs_ordered(self):
         self.all_node_pairs_ordered=set([])
         self.node_in_ordered = []
+        self.nodes_picked_up =self.just_states_ordered[-1].picked_up
         for i in range(0,len(self.just_states_ordered)):
             s1=self.just_states_ordered[i]
             self.node_in_ordered.append(s1.node)
+
             self.all_node_pairs_ordered.add((s1.node,s1.node))
             for j in range(i+1,len(self.just_states_ordered)):
                 s2=self.just_states_ordered[j]
                 self.all_node_pairs_ordered.add((s1.node,s2.node))
-    
     def verify_feasibility(self):
 
         #verify that hte route is feasible
